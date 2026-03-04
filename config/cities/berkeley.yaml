@@ -1,0 +1,40 @@
+# Berkeley, CA — City Configuration
+# Used for first validation run (compare against Berkeley Fire Evacuation Study)
+
+city_name: "Berkeley"
+state: "CA"
+state_fips: "06"
+county_fips: "001"  # Alameda County
+place_fips: "06000"  # Berkeley city FIPS
+
+# OSMnx place query string
+osmnx_place: "Berkeley, California, USA"
+
+# Census TIGER city boundary URL
+# (Alameda County places shapefile)
+tiger_url: "https://www2.census.gov/geo/tiger/TIGER2023/PLACE/tl_2023_06_place.zip"
+
+# Coordinate Reference System
+crs: "EPSG:4326"   # WGS84 for storage
+analysis_crs: "EPSG:26910"  # UTM Zone 10N for distance calculations (meters)
+
+# City-specific parameter overrides (leave empty to use parameters.yaml defaults)
+overrides: {}
+# Example overrides:
+# vc_threshold: 0.75
+# unit_threshold: 25
+
+# Key evacuation routes for validation (from Berkeley study)
+# These should appear in the output for cross-check
+known_evacuation_routes:
+  - "Tunnel Road"
+  - "Fish Ranch Road"
+  - "Grizzly Peak Boulevard"
+  - "Claremont Avenue"
+  - "College Avenue"
+
+# Notes
+notes: >
+  Berkeley Hills in FHSZ Zones 2-3. First city analyzed for MVP validation.
+  Compare v/c ratios against published Berkeley Fire Evacuation Capacity Study.
+  Target accuracy: within 10% of published values for primary evacuation routes.

@@ -1,0 +1,158 @@
+# Fire Evacuation Capacity Analysis — Default Parameters
+# All thresholds and factors used in objective standards calculations.
+# These values must be explicitly cited in any legal documentation.
+# Override city-specific values in config/cities/{city}.yaml
+
+# ============================================================
+# Objective Standards Thresholds
+# ============================================================
+
+# Volume-to-capacity threshold triggering discretionary review
+# Basis: LOS E/F boundary per Highway Capacity Manual 2022
+vc_threshold: 0.80
+
+# Minimum dwelling units triggering Standards review
+# Basis: CEQA categorical exemption threshold for residential projects
+unit_threshold: 50
+
+# Evacuation route search radius from project location (miles)
+# Basis: Standard 3, defined in objective standards ordinance
+evacuation_route_radius_miles: 0.5
+
+# ============================================================
+# Vehicle Generation (Standard 4 inputs)
+# ============================================================
+
+# Average vehicles per household
+# Source: U.S. Census American Community Survey (ACS)
+vehicles_per_unit: 2.5
+
+# Peak hour mobilization factor (fraction of households mobilizing per hour)
+# Source: Berkeley Fire Evacuation Study
+peak_hour_mobilization: 0.57
+
+# AADT to peak hour conversion factor (if hourly data unavailable)
+# Source: Standard traffic engineering practice
+aadt_peak_hour_factor: 0.10
+
+# ============================================================
+# HCM 2022 Capacity Table (passenger cars per hour)
+# Source: Highway Capacity Manual, 7th Edition (2022)
+# ============================================================
+
+hcm_capacity:
+  freeway:
+    capacity_per_lane: 2250   # pc/h per lane, conservative estimate
+  multilane:
+    capacity_per_lane: 1900   # pc/h per lane
+  two_lane:
+    # Capacity by posted speed limit (mph)
+    by_speed:
+      20: 900
+      25: 1125
+      30: 1350
+      35: 1575
+      40: 1700
+      45: 1700
+      50: 1700
+      55: 1700
+      65: 1700
+
+# ============================================================
+# Road Type Classification (OSM highway tag → HCM type)
+# ============================================================
+
+road_type_mapping:
+  freeway:
+    - motorway
+    - motorway_link
+    - trunk
+    - trunk_link
+  multilane:
+    - primary
+    - primary_link
+    - secondary
+    - secondary_link
+  two_lane:
+    - tertiary
+    - tertiary_link
+    - residential
+    - living_street
+    - unclassified
+    - road
+
+# ============================================================
+# Lane Count Estimates (when OSM data is missing)
+# ============================================================
+
+lane_defaults:
+  motorway: 3
+  motorway_link: 2
+  trunk: 2
+  trunk_link: 1
+  primary: 2
+  primary_link: 1
+  secondary: 2
+  secondary_link: 1
+  tertiary: 1
+  tertiary_link: 1
+  residential: 1
+  living_street: 1
+  unclassified: 1
+  road: 1
+
+# ============================================================
+# Speed Defaults (mph) when OSM maxspeed is missing
+# ============================================================
+
+speed_defaults:
+  motorway: 65
+  motorway_link: 45
+  trunk: 55
+  trunk_link: 35
+  primary: 45
+  primary_link: 35
+  secondary: 35
+  secondary_link: 25
+  tertiary: 25
+  tertiary_link: 20
+  residential: 25
+  living_street: 15
+  unclassified: 25
+  road: 25
+
+# ============================================================
+# LOS (Level of Service) Thresholds
+# Source: HCM 2022
+# ============================================================
+
+los_thresholds:
+  A: 0.10
+  B: 0.20
+  C: 0.40
+  D: 0.60
+  E: 0.95
+  F: 999.0   # anything above E
+
+# ============================================================
+# Data Caching
+# ============================================================
+
+# Days before cached data is considered stale and re-downloaded
+cache_ttl_days: 90
+
+# ============================================================
+# FHSZ Zone Configuration
+# Source: CAL FIRE Office of State Fire Marshal
+# ============================================================
+
+fhsz:
+  # Zones 2 and 3 trigger the objective standards
+  trigger_zones:
+    - 2
+    - 3
+  # ArcGIS REST API endpoint
+  api_base: "https://egis.fire.ca.gov/arcgis/rest/services/FHSZ/MapServer"
+  # Layer IDs: 0=SRA, 1=LRA (check current API)
+  sra_layer: 0
+  lra_layer: 1

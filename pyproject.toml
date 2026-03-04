@@ -1,0 +1,20 @@
+[project]
+name = "csf-fire"
+version = "0.1.0"
+description = "Fire Evacuation Capacity Analysis System — legally defensible AI agent system for California cities"
+requires-python = ">=3.11"
+dependencies = [
+    "geopandas>=0.14",
+    "osmnx>=1.9",
+    "networkx>=3.2",
+    "pandas>=2.1",
+    "requests>=2.31",
+    "pyyaml>=6.0",
+    "shapely>=2.0",
+    "pyproj>=3.6",
+    "click>=8.1",
+    "rich>=13.0",
+]
+
+[project.scripts]
+csf-fire = "main:cli"
