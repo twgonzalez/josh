@@ -201,12 +201,13 @@ def create_evaluation_map(
             name_str = str(row.get("name", "Unnamed") or "Unnamed")
             vc = row.get("vc_ratio", 0)
             cap = row.get("capacity_vph", 0)
+            weight = max(_highway_weight(row.get("highway", "")) * 0.40, 1.0)
             folium.GeoJson(
                 mapping(row.geometry),
-                style_function=lambda _, c=color: {
+                style_function=lambda _, c=color, w=weight: {
                     "color": c,
-                    "weight": 2,
-                    "opacity": 0.55,
+                    "weight": w,
+                    "opacity": 0.50,
                 },
                 tooltip=f"{name_str} | LOS {los} | v/c {vc:.2f} | {cap:.0f} vph cap",
             ).add_to(all_roads_layer)
@@ -225,12 +226,13 @@ def create_evaluation_map(
         name_str = str(row.get("name", "Unnamed") or "Unnamed")
         vc = row.get("vc_ratio", 0)
         conn = row.get("connectivity_score", 0)
+        weight = max(_highway_weight(row.get("highway", "")) * 0.50, 2.5)  # scaled, min 2.5px
         folium.GeoJson(
             mapping(row.geometry),
-            style_function=lambda _, c=color: {
+            style_function=lambda _, c=color, w=weight: {
                 "color": c,
-                "weight": 4,
-                "opacity": 0.85,
+                "weight": w,
+                "opacity": 0.60,
             },
             tooltip=f"[EVAC] {name_str} | LOS {los} | v/c {vc:.2f} | conn {conn}",
         ).add_to(evac_layer)
@@ -909,6 +911,61 @@ _TRAFFIC_BG_BUCKETS = [
     (9999, "#ee8080"),   # over-cap    — coral
 ]
 
+# Line weights (pixels) by OSM highway type.
+# These approximate road width: at low zoom lines are thin and subtle;
+# as the user zooms in they fill the actual road width and the v/c
+# color coding becomes clearly legible.
+_HIGHWAY_WEIGHT: dict = {
+    "motorway":        12,
+    "motorway_link":    7,
+    "trunk":           11,
+    "trunk_link":       6,
+    "primary":          9,
+    "primary_link":     5,
+    "secondary":        7,
+    "secondary_link":   4,
+    "tertiary":         5,
+    "tertiary_link":    3,
+    "residential":      4,
+    "living_street":    3,
+    "unclassified":     3,
+    "service":          2,
+    "track":            2,
+    "path":             1,
+    "cycleway":         1,
+}
+_HIGHWAY_WEIGHT_DEFAULT = 3   # fallback for unknown types
+
+# v/c weight multipliers — applied on top of the highway base weight so that
+# congested roads are both a different color AND visibly thicker.
+# Keyed by the traffic background color (same 5 buckets as _TRAFFIC_BG_BUCKETS).
+_VC_WEIGHT_MULTIPLIER: dict = {
+    "#d6d6d6": 0.6,   # v/c < 0.40 — uncongested: noticeably thinner
+    "#f5dfc0": 0.85,  # v/c 0.40–0.60 — moderate
+    "#f5c096": 1.1,   # v/c 0.60–0.80 — heavy: slightly above baseline
+    "#f5a0a0": 1.45,  # v/c 0.80–1.00 — near capacity: clearly thicker
+    "#ee8080": 1.9,   # v/c > 1.00    — over capacity: boldly thick
+}
+
+
+def _highway_weight(highway_val) -> float:
+    """Return a line weight for an OSM highway value (which may be a list)."""
+    if isinstance(highway_val, list):
+        highway_val = highway_val[0] if highway_val else ""
+    return _HIGHWAY_WEIGHT.get(str(highway_val or ""), _HIGHWAY_WEIGHT_DEFAULT)
+
+
+def _traffic_weight(highway_val, vc_color: str) -> float:
+    """
+    Combine road-class base weight with a v/c congestion multiplier.
+    Result is rounded to 0.5 px increments to keep (color, weight) bucket
+    count low (≤ ~70) while still showing clear width differences.
+    """
+    base = _highway_weight(highway_val)
+    mult = _VC_WEIGHT_MULTIPLIER.get(vc_color, 1.0)
+    raw  = base * mult
+    return round(raw * 2) / 2   # round to nearest 0.5
+
 
 def _vc_background_color(vc: float) -> str:
     """Return a muted pastel color for the road traffic background layer."""
@@ -983,18 +1040,20 @@ def create_demo_map(
             ).add_to(m)
 
     # ── Layer 2: Traffic load background (all roads, pastel by v/c) ────────
-    # Bucket roads by color to minimise the number of Leaflet layer objects.
-    # 5 buckets → 5 GeoJson elements instead of ~5800 — much faster to render.
+    # Bucket by (color, weight) so line width approximates road width.
+    # At low zoom lines are subtle; zooming in fills road width and makes the
+    # v/c color coding clearly legible.  ~50 buckets vs ~5800 segments.
     if "vc_ratio" in roads_wgs84.columns:
         buckets: dict = defaultdict(list)
         for _, row in roads_wgs84.iterrows():
             if row.geometry is None or row.geometry.is_empty:
                 continue
-            vc    = float(row.get("vc_ratio", 0) or 0)
-            color = _vc_background_color(vc)
-            buckets[color].append(mapping(row.geometry))
+            vc     = float(row.get("vc_ratio", 0) or 0)
+            color  = _vc_background_color(vc)
+            weight = _traffic_weight(row.get("highway"), color)
+            buckets[(color, weight)].append(mapping(row.geometry))
 
-        for color, geoms in buckets.items():
+        for (color, weight), geoms in buckets.items():
             fc = {
                 "type": "FeatureCollection",
                 "features": [
@@ -1004,8 +1063,8 @@ def create_demo_map(
             }
             folium.GeoJson(
                 fc,
-                style_function=lambda _, c=color: {
-                    "color": c, "weight": 1.5, "opacity": 0.45,
+                style_function=lambda _, c=color, w=weight: {
+                    "color": c, "weight": w, "opacity": 0.32,
                 },
             ).add_to(m)
 
