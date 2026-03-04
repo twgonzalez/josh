@@ -144,8 +144,9 @@ def analyze(city: str, state: str, refresh: bool):
 @click.option("--name", default="", help="Project name (optional)")
 @click.option("--address", default="", help="Project address (optional)")
 @click.option("--apn", default="", help="Assessor Parcel Number (optional)")
+@click.option("--map", "generate_map", is_flag=True, help="Generate interactive HTML map")
 def evaluate(city: str, lat: float, lon: float, units: int,
-             name: str, address: str, apn: str):
+             name: str, address: str, apn: str, generate_map: bool):
     """
     Evaluate a proposed project -- produce ministerial/discretionary determination.
 
@@ -219,6 +220,22 @@ def evaluate(city: str, lat: float, lon: float, units: int,
 
     _print_determination(project, audit)
     console.print(f"\n  Full audit trail: [cyan]{audit_path}[/cyan]")
+
+    if generate_map:
+        console.print("\n[bold]Generating map...[/bold]")
+        from agents.visualization import create_evaluation_map
+        map_filename = f"map_{lat_str}_{lon_str}.html"
+        map_path = output_dir / map_filename
+        create_evaluation_map(
+            project=project,
+            roads_gdf=roads_gdf,
+            fhsz_gdf=fhsz_gdf,
+            boundary_gdf=boundary_gdf,
+            config=config,
+            output_path=map_path,
+        )
+        console.print(f"  Map saved: [cyan]{map_path}[/cyan]")
+        console.print(f"  Open with: [dim]open {map_path}[/dim]")
 
 
 # ---------------------------------------------------------------------------

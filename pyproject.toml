@@ -15,6 +15,7 @@ dependencies = [
     "click>=8.1",
     "rich>=13.0",
     "scipy>=1.17.1",
+    "folium>=0.20.0",
 ]
 
 [project.scripts]
