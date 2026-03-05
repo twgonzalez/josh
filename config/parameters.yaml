@@ -248,3 +248,43 @@ determination_tiers:
     #   - no serving evacuation routes identified, OR
     #   - city has no FHSZ zones (framework not applicable)
     legal_basis: "Project below applicable significance threshold; ministerial approval eligible without evacuation conditions"
+
+# ============================================================
+# Standard 5: Local Evacuation Density (SB 79 / Transit-Adjacent)
+# Legal basis: Government Code §65302(g) — General Plan Safety Element;
+#              California Fire Code 503 — fire apparatus access;
+#              SB 79 (2025) — objective health and safety standard carve-out.
+#
+# STATUS: Disabled by default. Requires GTFS transit data for activation.
+# Enable by setting enabled: true once transit data is configured.
+# See legal.md §Scenario B for activation requirements.
+# ============================================================
+
+local_density:
+  # Master switch — set true to activate Standard 5 evaluation
+  enabled: true
+
+  # Minimum dwelling units to trigger Standard 5 analysis
+  unit_threshold: 50
+
+  # Volume-to-capacity threshold (same as wildland scenario for consistency)
+  vc_threshold: 0.80
+
+  # Buffer radius around project to collect local egress roads
+  # Source: KLD Engineering quarter-mile methodology
+  radius_miles: 0.25
+
+  # Gate Standard 5 on transit proximity (SB 79 by-right projects)
+  # Set true when GTFS data is available (Phase 3 feature)
+  require_transit_proximity: false
+
+  # Transit station buffer for SB 79 applicability gate
+  # Source: SB 79 — 0.5 mile (2,640 feet) from qualifying transit station
+  transit_buffer_feet: 2640
+
+  # Road types counted as local egress routes (freeways excluded)
+  local_egress_road_types:
+    - multilane
+    - two_lane
+
+  legal_basis: "Government Code §65302(g) — General Plan Safety Element evacuation route capacity; California Fire Code 503 — fire apparatus access road capacity; SB 79 (2025) objective health and safety standard carve-out"

@@ -243,6 +243,7 @@ def evaluate(city: str, lat: float, lon: float, units: int,
             boundary_gdf=boundary_gdf,
             config=config,
             output_path=map_path,
+            audit=audit,
         )
         console.print(f"  Map saved: [cyan]{map_path}[/cyan]")
         console.print(f"  Open with: [dim]open {map_path}[/dim]")
@@ -326,6 +327,12 @@ def _print_determination(project, audit: dict):
         "CONDITIONAL MINISTERIAL": "yellow",
         "MINISTERIAL":             "green",
     }
+    _TIER_COLOR_DIM = {
+        "DISCRETIONARY":           "red",
+        "CONDITIONAL MINISTERIAL": "yellow",
+        "MINISTERIAL":             "green",
+        "NOT_APPLICABLE":          "dim",
+    }
     color = _TIER_COLOR.get(det, "white")
 
     console.print()
@@ -335,65 +342,58 @@ def _print_determination(project, audit: dict):
         border_style=color,
     ))
 
-    table = Table(title="Standards Results", show_header=True, header_style="bold")
-    table.add_column("Check")
-    table.add_column("Result")
-    table.add_column("Details")
+    # Per-scenario results table (one row per scenario)
+    table = Table(title="Scenario Results (5-Step Algorithm)", show_header=True, header_style="bold")
+    table.add_column("Scenario", min_width=20)
+    table.add_column("Tier")
+    table.add_column("Triggered")
+    table.add_column("Step Details")
 
-    d = audit["determination"]
-    s1 = audit["standards"]["standard_1_citywide_fhsz"]
-    fz = audit["standards"]["fire_zone_severity_modifier"]
-    s2 = audit["standards"]["standard_2_size_threshold"]
-    s4 = audit["standards"]["standard_4_capacity_threshold"]
+    for sname, sdata in audit.get("scenarios", {}).items():
+        stier     = sdata.get("tier", "")
+        triggered = sdata.get("triggered", False)
+        steps     = sdata.get("steps", {})
+        sc        = _TIER_COLOR_DIM.get(stier, "white")
 
-    std_rows = [
-        (
-            "Std 1: Citywide FHSZ",
-            d["standard_1_citywide"],
-            f"{s1.get('fhsz_polygon_count', 0)} FHSZ polygon(s) in city",
-        ),
-        (
-            "Fire Zone Modifier",
-            d["fire_zone_modifier"],
-            fz.get("zone_description", "Not in FHSZ"),
-        ),
-        (
-            "Std 2: Size (DISC path)",
-            d["standard_2_disc_triggered"],
-            f"{project.dwelling_units} units vs. {s2['discretionary_check']['threshold']} threshold",
-        ),
-        (
-            "Std 2: Size (COND path)",
-            d["standard_2_cond_triggered"],
-            f"{project.dwelling_units} units vs. {s2['conditional_check']['threshold']} threshold",
-        ),
-        (
-            "Std 3: Serving Routes",
-            d["standard_3_triggered"],
-            f"{len(project.serving_route_ids)} route segment(s) within {project.search_radius_miles} mi",
-        ),
-        (
-            "Std 4: Capacity Exceeded",
-            d["standard_4_triggered"],
-            f"{project.project_vehicles_peak_hour:.1f} peak-hour vehicles generated",
-        ),
-    ]
-    for label, triggered, detail in std_rows:
-        style = "red" if triggered else "green"
+        step_parts = []
+        s1 = steps.get("step1_applicability", {})
+        s2 = steps.get("step2_scale", {})
+        s3 = steps.get("step3_routes", {})
+        s5 = steps.get("step5_ratio_test", {})
+
+        if stier == "NOT_APPLICABLE":
+            step_parts.append(s1.get("note", "Not applicable")[:55])
+        else:
+            if s2:
+                step_parts.append(
+                    f"Size {s2.get('dwelling_units')}≥{s2.get('threshold')}: "
+                    f"{'✓' if s2.get('result') else '✗'}"
+                )
+            if s3:
+                step_parts.append(f"Routes: {s3.get('serving_route_count', 0)}")
+            if s5:
+                step_parts.append(f"Flagged: {len(s5.get('flagged_route_ids', []))}")
+            fz = s1.get("fire_zone_severity_modifier", {})
+            if fz:
+                step_parts.append(f"Fire zone: {fz.get('zone_description', 'N/A')}")
+
         table.add_row(
-            label,
-            f"[{style}]{'YES' if triggered else 'NO'}[/{style}]",
-            detail,
+            sname,
+            f"[{sc}]{stier}[/{sc}]",
+            f"[{'red' if triggered else 'green'}]{'YES' if triggered else 'NO'}[/{'red' if triggered else 'green'}]",
+            " | ".join(step_parts),
         )
 
     console.print(table)
 
-    # Tier logic reminder
+    d = audit.get("determination", {})
     console.print(
-        "\n  [dim]Tier logic: "
-        "DISCRETIONARY if std2_disc AND std4 (capacity exceeded — fire zone is severity modifier only) | "
-        "CONDITIONAL MINISTERIAL if std1_citywide AND std2_cond | "
-        "else MINISTERIAL[/dim]"
+        f"\n  [dim]Peak-hour vehicles: {project.project_vehicles_peak_hour:.1f} vph · "
+        f"Serving routes: {len(project.serving_route_ids or [])} · "
+        f"Flagged routes: {len(project.flagged_route_ids or [])}[/dim]"
+    )
+    console.print(
+        f"  [dim]Aggregation: {d.get('logic', '')}[/dim]"
     )
 
 

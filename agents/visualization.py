@@ -18,6 +18,7 @@ Fixed UI panels (non-map overlays):
   - Legend (bottom-right) — LOS scale, FHSZ zones, route types
 """
 import logging
+import math
 from pathlib import Path
 
 import folium
@@ -120,6 +121,7 @@ def create_evaluation_map(
     boundary_gdf: gpd.GeoDataFrame,
     config: dict,
     output_path: Path,
+    audit: dict = None,
 ) -> Path:
     """
     Generate an interactive Folium HTML map for a project evaluation.
@@ -136,6 +138,25 @@ def create_evaluation_map(
     # Project vehicle contribution per serving route (for impact visualisation)
     num_serving = max(len(project.serving_route_ids or []), 1)
     project_vph_per_route = project.project_vehicles_peak_hour / num_serving
+
+    # Extract Standard 5 local egress route data from audit (if available)
+    local5_serving_set: set = set()
+    local5_flagged_set: set = set()
+    local5_tier: str = "NOT_APPLICABLE"
+    local5_triggered: bool = False
+    local5_n_serving: int = 0
+    local5_n_flagged: int = 0
+    if audit:
+        ld_data = audit.get("scenarios", {}).get("local_density_sb79", {})
+        local5_tier      = ld_data.get("tier", "NOT_APPLICABLE")
+        local5_triggered = ld_data.get("triggered", False)
+        ld_steps = ld_data.get("steps", {})
+        s3_ld = ld_steps.get("step3_routes", {})
+        s5_ld = ld_steps.get("step5_ratio_test", {})
+        local5_serving_set = _osmid_set([r["osmid"] for r in s3_ld.get("serving_routes", [])])
+        local5_flagged_set = _osmid_set(s5_ld.get("flagged_route_ids", []))
+        local5_n_serving   = s3_ld.get("serving_route_count", 0)
+        local5_n_flagged   = len(s5_ld.get("flagged_route_ids", []))
 
     # Reproject roads to WGS84 once
     roads_wgs84 = roads_gdf.to_crs("EPSG:4326")
@@ -314,7 +335,79 @@ def create_evaluation_map(
     flagged_layer.add_to(m)
 
     # -----------------------------------------------------------------------
-    # Layer 7: Search Radius Buffer
+    # Layer 7: Standard 5 — Local Egress Routes (0.25 mi collector/arterial)
+    # Only rendered when Standard 5 is enabled and routes were identified.
+    # -----------------------------------------------------------------------
+    if local5_serving_set:
+        ld_radius = config.get("local_density", {}).get("radius_miles", 0.25)
+        local5_layer = folium.FeatureGroup(
+            name=f"Std 5 — Local Egress Routes ({ld_radius} mi)", show=True
+        )
+        if "osmid" in roads_wgs84.columns:
+            local5_mask = roads_wgs84["osmid"].apply(
+                lambda o: _osmid_matches(o, local5_serving_set)
+            )
+            local5_gdf = roads_wgs84[local5_mask]
+        else:
+            local5_gdf = roads_wgs84.iloc[0:0]
+
+        for _, row in local5_gdf.iterrows():
+            if row.geometry is None or row.geometry.is_empty:
+                continue
+            osmid_val  = row.get("osmid")
+            is_flagged = _osmid_matches(osmid_val, local5_flagged_set)
+            name_str   = str(row.get("name", "Unnamed") or "Unnamed")
+            vc_base    = float(row.get("vc_ratio", 0) or 0)
+            los        = str(row.get("los", "?"))
+            cap        = float(row.get("capacity_vph", 1) or 1)
+            demand_base = float(row.get("baseline_demand_vph", 0) or 0)
+            demand_proposed = demand_base + project_vph_per_route
+            vc_proposed = demand_proposed / cap if cap > 0 else vc_base
+
+            # Teal for local serving, orange for local flagged
+            route_color = "#ea580c" if is_flagged else "#0d9488"
+            weight      = 6 if is_flagged else 4
+
+            popup_html = _build_route_impact_popup(
+                name_str, los, cap, demand_base, demand_proposed,
+                vc_base, vc_proposed, vc_threshold, project_vph_per_route, is_flagged,
+            )
+            scenario_tag = "⚠ Std5 FLAGGED" if is_flagged else "Std5 →"
+            tip = f"{scenario_tag} {name_str} | LOS {los} | v/c {vc_base:.3f}"
+
+            folium.GeoJson(
+                mapping(row.geometry),
+                style_function=lambda _, c=route_color, w=weight: {
+                    "color": c,
+                    "weight": w,
+                    "opacity": 0.90,
+                },
+                popup=folium.Popup(popup_html, max_width=360),
+                tooltip=tip,
+            ).add_to(local5_layer)
+
+        local5_layer.add_to(m)
+
+        # Std 5 local radius circle (dashed teal, smaller than wildland radius)
+        ld_radius_m = ld_radius * 1609.344
+        local5_buf_layer = folium.FeatureGroup(
+            name=f"Std 5 — Local Radius ({ld_radius} mi)", show=True
+        )
+        folium.Circle(
+            location=[lat, lon],
+            radius=ld_radius_m,
+            color="#0d9488",
+            weight=1.5,
+            fill=True,
+            fill_color="#0d9488",
+            fill_opacity=0.05,
+            dash_array="6 4",
+            tooltip=f"Standard 5 local egress search radius — {ld_radius} mi",
+        ).add_to(local5_buf_layer)
+        local5_buf_layer.add_to(m)
+
+    # -----------------------------------------------------------------------
+    # Layer 8: Search Radius Buffer (wildland — 0.5 mi)
     # -----------------------------------------------------------------------
     radius_miles = config.get("evacuation_route_radius_miles", 0.5)
     radius_meters = radius_miles * 1609.344
@@ -335,7 +428,7 @@ def create_evaluation_map(
     buffer_layer.add_to(m)
 
     # -----------------------------------------------------------------------
-    # Layer 8: Project Marker
+    # Layer 9: Project Marker
     # -----------------------------------------------------------------------
     det = project.determination or "UNKNOWN"
     marker_color = _TIER_MARKER_COLOR.get(det, "gray")
@@ -355,10 +448,15 @@ def create_evaluation_map(
     # Fixed HTML panels: Project Card + Legend + global styles
     # -----------------------------------------------------------------------
     m.get_root().html.add_child(folium.Element(
-        _build_project_card_html(project, serving_set, flagged_set, config)
+        _build_project_card_html(
+            project, serving_set, flagged_set, config,
+            local5_tier=local5_tier, local5_n_serving=local5_n_serving,
+            local5_n_flagged=local5_n_flagged, local5_triggered=local5_triggered,
+        )
     ))
     m.get_root().html.add_child(folium.Element(_build_legend_html(config)))
     m.get_root().html.add_child(folium.Element(_build_global_styles()))
+    _add_zoom_weight_scaler(m, ref_zoom=14)
 
     # Layer control (collapsed by default for cleaner initial view)
     folium.LayerControl(collapsed=True).add_to(m)
@@ -502,6 +600,10 @@ def _build_project_card_html(
     serving_set: set,
     flagged_set: set,
     config: dict,
+    local5_tier: str = "NOT_APPLICABLE",
+    local5_n_serving: int = 0,
+    local5_n_flagged: int = 0,
+    local5_triggered: bool = False,
 ) -> str:
     det = project.determination or "UNKNOWN"
     det_color = _TIER_CSS_COLOR.get(det, "#555555")
@@ -593,11 +695,49 @@ def _build_project_card_html(
         )
     )
 
+    # ---- Standard 5 rows (shown when not NOT_APPLICABLE) ----
+    local5_color = "#c0392b" if local5_triggered else ("#0d9488" if local5_tier != "NOT_APPLICABLE" else "#adb5bd")
+    local5_label_color = "#c0392b" if local5_triggered else "#0d9488"
+    if local5_tier != "NOT_APPLICABLE":
+        std5_rows = (
+            std_row(
+                "Std 5 · Local egress routes",
+                local5_n_serving > 0,
+                f"{local5_n_serving} segment(s) within 0.25 mi",
+            )
+            + std_row(
+                "Std 5 · Local capacity exceeded",
+                local5_triggered,
+                f"{local5_n_flagged} route(s) at v/c ≥ {vc_threshold_display:.2f}",
+            )
+        )
+        std5_section = (
+            f'<div style="border-top:1px solid #f1f3f5; padding-top:11px; margin-bottom:12px;">'
+            f'<div style="font-weight:600; font-size:10px; color:#868e96; text-transform:uppercase; '
+            f'letter-spacing:0.6px; margin-bottom:8px;">'
+            f'Scenario B — Local Density (Std 5)'
+            f'<span style="margin-left:6px; padding:1px 6px; border-radius:8px; font-size:9px; '
+            f'font-weight:700; background:{"#fde8e8" if local5_triggered else "#e0f7f5"}; '
+            f'color:{local5_label_color};">{local5_tier}</span>'
+            f'</div>'
+            f'{std5_rows}'
+            f'</div>'
+        )
+    else:
+        std5_section = (
+            '<div style="border-top:1px solid #f1f3f5; padding-top:8px; margin-bottom:10px;">'
+            '<div style="font-size:10px; color:#adb5bd;">Std 5 · Local Density: not enabled</div>'
+            '</div>'
+        )
+
     # ---- Impact summary ----
     impact_rows = (
         info_row("Peak vehicles generated", f"{project.project_vehicles_peak_hour:.1f} vph", "#7c55b8")
-        + info_row("Serving route segments", str(n_serving))
-        + info_row("Flagged segments", str(n_flagged), "#c0392b" if n_flagged > 0 else "#27ae60")
+        + info_row("Wildland serving segments", str(n_serving))
+        + info_row("Wildland flagged segments", str(n_flagged), "#c0392b" if n_flagged > 0 else "#27ae60")
+        + (info_row("Std 5 local flagged", str(local5_n_flagged),
+                    "#c0392b" if local5_n_flagged > 0 else "#0d9488")
+           if local5_tier != "NOT_APPLICABLE" else "")
         + info_row("Fire zone modifier", "YES" if project.in_fire_zone else "NO",
                    "#c0392b" if project.in_fire_zone else "#555")
     )
@@ -656,12 +796,15 @@ def _build_project_card_html(
       {project_info}
     </div>
 
-    <!-- Standards checklist -->
+    <!-- Scenario A: Wildland (Standards 1-4) -->
     <div style="border-top:1px solid #f1f3f5; padding-top:11px; margin-bottom:12px;">
       <div style="font-weight:600; font-size:10px; color:#868e96; text-transform:uppercase;
-                  letter-spacing:0.6px; margin-bottom:8px;">Standards</div>
+                  letter-spacing:0.6px; margin-bottom:8px;">Scenario A — Wildland (Std 1–4)</div>
       {standards_rows}
     </div>
+
+    <!-- Scenario B: Local Density (Standard 5) -->
+    {std5_section}
 
     <!-- Impact metrics -->
     <div style="border-top:1px solid #f1f3f5; padding-top:11px;">
@@ -731,14 +874,24 @@ def _build_legend_html(config: dict) -> str:
     )
 
     route_items = (
+        '<div style="font-size:10px; color:#adb5bd; margin-bottom:3px;">Scenario A — Wildland</div>'
         '<div style="display:flex; align-items:center; gap:7px; margin-bottom:4px;">'
         '<span style="display:inline-block; width:28px; height:5px; '
         'background:#7c55b8; border-radius:2px; flex-shrink:0;"></span>'
         '<span style="color:#444;">Serving routes</span></div>'
-        '<div style="display:flex; align-items:center; gap:7px; margin-bottom:4px;">'
+        '<div style="display:flex; align-items:center; gap:7px; margin-bottom:6px;">'
         '<span style="display:inline-block; width:28px; height:5px; '
         'background:#e8186d; border-radius:2px; flex-shrink:0;"></span>'
         '<span style="color:#444;">Flagged (v/c exceeded)</span></div>'
+        '<div style="font-size:10px; color:#adb5bd; margin-bottom:3px;">Scenario B — Local Density</div>'
+        '<div style="display:flex; align-items:center; gap:7px; margin-bottom:4px;">'
+        '<span style="display:inline-block; width:28px; height:5px; '
+        'background:#0d9488; border-radius:2px; flex-shrink:0;"></span>'
+        '<span style="color:#444;">Local egress routes</span></div>'
+        '<div style="display:flex; align-items:center; gap:7px; margin-bottom:4px;">'
+        '<span style="display:inline-block; width:28px; height:5px; '
+        'background:#ea580c; border-radius:2px; flex-shrink:0;"></span>'
+        '<span style="color:#444;">Local flagged</span></div>'
     )
 
     return f"""
@@ -975,6 +1128,128 @@ def _vc_background_color(vc: float) -> str:
     return _TRAFFIC_BG_BUCKETS[-1][1]
 
 
+# Normal-day (non-evacuation) v/c utilization by road_type.
+# Mirrors _estimate_demand_from_road_class() in capacity_analysis.py.
+# Freeway/multilane PM-peak rates are empirical; two-lane is conservative.
+_ROAD_CLASS_NORMAL_VC: dict = {
+    "freeway":   0.65,   # LOS E — congested urban freeway PM peak
+    "multilane": 0.50,   # LOS D — busy arterial
+    "two_lane":  0.25,   # LOS C — local street
+}
+
+
+def _normal_traffic_vc(road_type: str) -> float:
+    """
+    Return an estimated normal-day v/c ratio for a road segment.
+
+    Used for the city-wide background layer so roads show realistic
+    non-evacuation traffic levels rather than the worst-case KLD
+    buffer demand (which puts virtually all Berkeley roads at LOS F).
+    """
+    return _ROAD_CLASS_NORMAL_VC.get(str(road_type or ""), 0.25)
+
+
+def _road_class_bg_color(highway_val) -> str:
+    """
+    Return a neutral gray for the city-wide road reference background.
+
+    Darker = higher road class, giving spatial orientation without
+    implying any congestion signal.  The KLD evacuation demand colors
+    are reserved for the per-project impact-zone overlay drawn on top
+    within the project's search radius.
+    """
+    if isinstance(highway_val, list):
+        highway_val = highway_val[0] if highway_val else ""
+    hw = str(highway_val or "")
+    if hw in ("motorway", "motorway_link", "trunk", "trunk_link"):
+        return "#b4b4b4"
+    if hw in ("primary", "primary_link"):
+        return "#bebebe"
+    if hw in ("secondary", "secondary_link"):
+        return "#c8c8c8"
+    if hw in ("tertiary", "tertiary_link"):
+        return "#d4d4d4"
+    return "#dedede"   # residential, service, unclassified, living_street, etc.
+
+
+def _add_zoom_weight_scaler(m: "folium.Map", ref_zoom: int) -> None:
+    """
+    Inject JavaScript that scales all Leaflet path line weights proportionally
+    as the user zooms in/out.
+
+    At ``ref_zoom`` the weights equal their static (Python-side) values.
+    Each zoom level above ``ref_zoom`` multiplies weights by 2**0.65 ≈ 1.57×,
+    so road lines visually approximate their real-world pixel width.  Weights
+    are clamped to [0.3, 30] px.
+
+    Performance notes:
+    - Only hooks ``zoomend`` (NOT ``layeradd`` — that fired 600+ times on load).
+    - ``zoomend`` is debounced 80 ms to avoid redundant calls during fast zoom.
+    - ``eachPath`` checks ``_path`` (SVG) or ``options.weight`` (Canvas) so it
+      works with ``prefer_canvas=True``.
+    """
+    map_var = m.get_name()
+    js = f"""<script>
+(function () {{
+  /* Recurse into FeatureGroup / LayerGroup to find individual path layers.
+     Works for both SVG paths (_path) and Canvas paths (options.weight set). */
+  function eachPath(layer, cb) {{
+    if (layer && layer._layers) {{
+      Object.values(layer._layers).forEach(function (sub) {{ eachPath(sub, cb); }});
+    }} else if (layer && (layer._path ||
+                          (layer.options && layer.options.weight !== undefined &&
+                           typeof layer.setStyle === 'function'))) {{
+      cb(layer);
+    }}
+  }}
+
+  /* Apply a uniform scale factor to every path on the map. */
+  function applyScale(map, scale) {{
+    map.eachLayer(function (layer) {{
+      eachPath(layer, function (path) {{
+        if (path._baseWeight === undefined) {{
+          path._baseWeight = (path.options && path.options.weight) || 1;
+        }}
+        var w = Math.max(0.3, Math.min(path._baseWeight * scale, 30));
+        path.setStyle({{ weight: w }});
+      }});
+    }});
+  }}
+
+  /* Compute scale from current zoom vs. reference zoom.
+     Power 0.65: each zoom level ≈ 1.57× — close to real-world road pixel growth. */
+  function getScale(zoom) {{
+    var s = Math.pow(2, (zoom - {ref_zoom}) * 0.65);
+    return Math.max(0.2, Math.min(s, 12));
+  }}
+
+  function init() {{
+    var map = window['{map_var}'];
+    if (!map) {{ setTimeout(init, 50); return; }}
+
+    /* Debounce: avoid redundant redraws during rapid zoom gestures. */
+    var _scaleTimer = null;
+    map.on('zoomend', function () {{
+      clearTimeout(_scaleTimer);
+      _scaleTimer = setTimeout(function () {{
+        applyScale(map, getScale(map.getZoom()));
+      }}, 80);
+    }});
+
+    /* Apply initial scale immediately. */
+    applyScale(map, getScale(map.getZoom()));
+  }}
+
+  if (document.readyState === 'complete') {{
+    init();
+  }} else {{
+    window.addEventListener('load', init);
+  }}
+}})();
+</script>"""
+    m.get_root().html.add_child(folium.Element(js))
+
+
 def create_demo_map(
     projects: list,
     roads_gdf: gpd.GeoDataFrame,
@@ -1019,6 +1294,7 @@ def create_demo_map(
         location=[center_lat, center_lon],
         zoom_start=13,
         tiles="CartoDB positron",
+        prefer_canvas=True,   # Canvas renderer: ~5–10× faster than SVG for 500+ paths
     )
     map_js_name = m.get_name()
     roads_wgs84 = roads_gdf.to_crs("EPSG:4326")
@@ -1039,34 +1315,42 @@ def create_demo_map(
                 tooltip=label,
             ).add_to(m)
 
-    # ── Layer 2: Traffic load background (all roads, pastel by v/c) ────────
-    # Bucket by (color, weight) so line width approximates road width.
-    # At low zoom lines are subtle; zooming in fills road width and makes the
-    # v/c color coding clearly legible.  ~50 buckets vs ~5800 segments.
-    if "vc_ratio" in roads_wgs84.columns:
-        buckets: dict = defaultdict(list)
-        for _, row in roads_wgs84.iterrows():
-            if row.geometry is None or row.geometry.is_empty:
-                continue
-            vc     = float(row.get("vc_ratio", 0) or 0)
-            color  = _vc_background_color(vc)
-            weight = max(_highway_weight(row.get("highway")) * 0.25, 0.5)
-            buckets[(color, weight)].append(mapping(row.geometry))
+    # ── Layer 2: City-wide evacuation capacity background ────────────────────
+    # Colors use actual KLD vc_ratio so every road shows its real evacuation
+    # load (LOS A–F) at maximum demand — giving context for the entire city,
+    # not just the project impact zone.  The per-project impact-zone overlay
+    # drawn inside each FeatureGroup uses the same palette at higher opacity
+    # (0.45) so the zone of influence stands out clearly against this base.
+    bg_buckets: dict = defaultdict(list)
+    has_vc = "vc_ratio" in roads_wgs84.columns
+    for _, row in roads_wgs84.iterrows():
+        if row.geometry is None or row.geometry.is_empty:
+            continue
+        if has_vc:
+            vc = float(row.get("vc_ratio", 0) or 0)
+        else:
+            # Fallback if capacity analysis hasn't run yet
+            road_type = str(row.get("road_type") or "two_lane")
+            vc = _normal_traffic_vc(road_type)
+        color  = _vc_background_color(vc)
+        weight = max(_highway_weight(row.get("highway")) * 0.25, 0.5)
+        bg_buckets[(color, weight)].append(mapping(row.geometry))
 
-        for (color, weight), geoms in buckets.items():
-            fc = {
-                "type": "FeatureCollection",
-                "features": [
-                    {"type": "Feature", "geometry": g, "properties": {}}
-                    for g in geoms
-                ],
-            }
-            folium.GeoJson(
-                fc,
-                style_function=lambda _, c=color, w=weight: {
-                    "color": c, "weight": w, "opacity": 0.15,
-                },
-            ).add_to(m)
+    for (color, weight), geoms in bg_buckets.items():
+        fc = {
+            "type": "FeatureCollection",
+            "features": [
+                {"type": "Feature", "geometry": g, "properties": {}}
+                for g in geoms
+            ],
+        }
+        folium.GeoJson(
+            fc,
+            style_function=lambda _, c=color, w=weight: {
+                "color": c, "weight": w, "opacity": 0.20,
+            },
+            smooth_factor=2,   # Reduce coordinate density at low zoom (default=1)
+        ).add_to(m)
 
     # ── Layer 3: City Boundary (on top of background, under routes) ────────
     boundary_wgs84 = boundary_gdf.to_crs("EPSG:4326")
@@ -1098,7 +1382,10 @@ def create_demo_map(
 
         proj_group = folium.FeatureGroup(
             name=f"{project.project_name or f'Project {i+1}'} — {tier}",
-            show=True,
+            # Project 0 pre-renders on canvas at page load (immediate display).
+            # Projects 1-N are lazy: canvas-rendered on first selectProject() call.
+            # With prefer_canvas=True each first-add is a fast canvas draw, not DOM.
+            show=(i == 0),
         )
         proj_js_names.append(proj_group.get_name())
 
@@ -1115,7 +1402,49 @@ def create_demo_map(
             tooltip=f"{project.project_name} — {radius_miles} mi search radius",
         ).add_to(proj_group)
 
-        # ---- Serving routes (tier-colored, thick) ----
+        # ---- Impact zone: KLD evacuation demand for roads within radius ----
+        # Within the project's search radius, re-draws the same KLD v/c colors
+        # at higher opacity + heavier weight so the impact zone stands out
+        # clearly against the city-wide background (same palette, louder signal).
+        if "vc_ratio" in roads_wgs84.columns:
+            lat_rad    = math.radians(project.location_lat)
+            radius_deg = radius_meters / (111139.0 * math.cos(lat_rad))
+            proj_buf   = Point(
+                project.location_lon, project.location_lat
+            ).buffer(radius_deg)
+            impact_mask      = roads_wgs84.geometry.intersects(proj_buf)
+            impact_roads_gdf = roads_wgs84[impact_mask]
+
+            iz_buckets: dict = defaultdict(list)
+            for _, row in impact_roads_gdf.iterrows():
+                if row.geometry is None or row.geometry.is_empty:
+                    continue
+                vc        = float(row.get("vc_ratio", 0) or 0)
+                iz_color  = _vc_background_color(vc)
+                iz_weight = max(_highway_weight(row.get("highway")) * 0.30, 0.6)
+                iz_buckets[(iz_color, iz_weight)].append(mapping(row.geometry))
+
+            for (iz_color, iz_weight), geoms in iz_buckets.items():
+                fc = {
+                    "type": "FeatureCollection",
+                    "features": [
+                        {"type": "Feature", "geometry": g, "properties": {}}
+                        for g in geoms
+                    ],
+                }
+                folium.GeoJson(
+                    fc,
+                    style_function=lambda _, c=iz_color, w=iz_weight: {
+                        "color": c, "weight": w, "opacity": 0.55,
+                    },
+                ).add_to(proj_group)
+
+        # ---- Serving routes — one GeoJson per segment ----
+        # Per-segment keeps popup HTML out of GeoJSON properties (avoids large
+        # JSON blobs that cause addLayer latency) and avoids the Python
+        # closure-in-loop bug that would give every project the last project's
+        # route color.  With prefer_canvas=True these are canvas paths, not
+        # SVG DOM elements, so 600+ segments add no DOM overhead.
         if serving_set and "osmid" in roads_wgs84.columns:
             serving_mask   = roads_wgs84["osmid"].apply(
                 lambda o: _osmid_matches(o, serving_set)
@@ -1129,6 +1458,7 @@ def create_demo_map(
                 is_flagged  = _osmid_matches(osmid_val, flagged_set)
                 seg_color   = route_flagged_color if is_flagged else route_color
                 weight      = 7 if is_flagged else 4
+                opacity     = 0.60 if is_flagged else 0.45
 
                 name_str    = str(row.get("name", "Unnamed") or "Unnamed")
                 vc_base     = float(row.get("vc_ratio", 0) or 0)
@@ -1147,10 +1477,11 @@ def create_demo_map(
                     f"{'⚠ ' if is_flagged else ''}{name_str} "
                     f"| v/c {vc_base:.3f} | {tier}"
                 )
+                # Capture loop vars explicitly to avoid Python closure-in-loop bug
                 folium.GeoJson(
                     mapping(row.geometry),
-                    style_function=lambda _, c=seg_color, w=weight: {
-                        "color": c, "weight": w, "opacity": 0.92,
+                    style_function=lambda _, c=seg_color, w=weight, o=opacity: {
+                        "color": c, "weight": w, "opacity": o,
                     },
                     popup=folium.Popup(popup_html, max_width=360),
                     tooltip=tip,
@@ -1179,6 +1510,7 @@ def create_demo_map(
     ))
     m.get_root().html.add_child(folium.Element(_build_demo_legend_html(config)))
     m.get_root().html.add_child(folium.Element(_build_global_styles()))
+    _add_zoom_weight_scaler(m, ref_zoom=13)
 
     output_path.parent.mkdir(parents=True, exist_ok=True)
     m.save(str(output_path))
@@ -1266,9 +1598,11 @@ def _build_demo_legend_html(config: dict) -> str:
   </div>
 
   <div style="font-weight:600; font-size:10px; color:#868e96; text-transform:uppercase;
-              letter-spacing:0.5px; margin-bottom:6px;">Traffic Load (background)</div>
+              letter-spacing:0.5px; margin-bottom:6px;">Evacuation Capacity (v/c)</div>
   {traffic_items}
-  <div style="margin-bottom:10px;"></div>
+  <div style="font-size:10px; color:#adb5bd; margin-top:2px; margin-bottom:10px;">
+    KLD AB 747 max demand · impact zone bolder
+  </div>
 
   <div style="font-weight:600; font-size:10px; color:#868e96; text-transform:uppercase;
               letter-spacing:0.5px; margin-bottom:6px;">Fire Hazard Zones</div>
@@ -1444,8 +1778,12 @@ def _build_demo_panel_html(
     btn.textContent    = (body.style.display === 'none') ? '▶' : '▼';
   }};
 
-  // ── Init: show only project 0 ──────────────────────────────────────
-  setTimeout(function () {{ window.selectProject(0); }}, 0);
+  // ── Init: show only project 0 (poll until Leaflet map is ready) ───
+  (function initSelect() {{
+    var mapObj = window[MAP_NAME];
+    if (!mapObj) {{ setTimeout(initSelect, 50); return; }}
+    window.selectProject(0);
+  }})();
 
 }})();
 </script>
