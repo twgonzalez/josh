@@ -23,6 +23,7 @@ from .themes import (
 from .helpers import (
     _osmid_set, _osmid_matches, _to_int_safe,
     _highway_weight, _add_zoom_weight_scaler, _build_global_styles,
+    _brief_filename,
 )
 from .popups import _build_route_impact_popup, _build_project_popup
 
@@ -513,6 +514,14 @@ def _build_project_card_html(project: Project, ad: dict, config: dict) -> str:
       </div>
       {standards_html}
     </div>
+    <a href="{_brief_filename(project.location_lat, project.location_lon, project.dwelling_units)}"
+       target="_blank"
+       style="display:block; text-align:center; margin-top:12px; padding:7px 10px;
+              background:#f0f4f8; border:1px solid #ccd6e0; border-radius:6px;
+              font-size:11px; font-weight:600; color:#1c4a6e; text-decoration:none;
+              letter-spacing:0.2px;">
+      View Determination Brief &rarr;
+    </a>
   </div>
 </div>
 

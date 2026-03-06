@@ -12,6 +12,13 @@ from .themes import _HIGHWAY_WEIGHT, _HIGHWAY_WEIGHT_DEFAULT, _VC_WEIGHT_MULTIPL
 # OSMid matching
 # ---------------------------------------------------------------------------
 
+def _brief_filename(lat: float, lon: float, units: int) -> str:
+    """Return the filename (not path) of the determination brief for a project."""
+    lat_str = f"{lat:.4f}".replace(".", "_").replace("-", "n")
+    lon_str = f"{lon:.4f}".replace(".", "_").replace("-", "n")
+    return f"brief_{lat_str}_{lon_str}_{units}u.html"
+
+
 def _osmid_set(ids) -> set:
     """
     Flatten a list of osmids (each may be an int, string, or list) into a flat
