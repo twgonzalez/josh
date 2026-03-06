@@ -17,11 +17,14 @@ The wildland scenario evaluates citywide evacuation routes serving FHSZ areas.
 The local density scenario evaluates collector and arterial roads within 0.25 miles
 of the project — the streets that provide immediate egress regardless of FHSZ status.
 
-STATUS: Scaffolded — returns NOT_APPLICABLE until GTFS transit data is configured.
-Enable via config["local_density"]["enabled"] = true.
-When enabled, Standard 5 reuses baseline_demand_vph already on roads_gdf
-from the Phase 2b KLD buffer model (no separate demand calculation needed).
-GTFS transit proximity check is a Phase 3 feature.
+STATUS: Active (enabled: true in parameters.yaml). Applied citywide — no transit proximity gate.
+Standard 5 reuses baseline_demand_vph already on roads_gdf from the Phase 2b KLD buffer
+model (no separate demand calculation needed). Fallback tier is MINISTERIAL (not CONDITIONAL
+MINISTERIAL) because Standard 5 has no FHSZ-citywide applicability gate — this is intentional.
+
+Phase 3 feature: GTFS transit proximity gating (require_transit_proximity: false → true once
+GTFS data is configured). When true, Standard 5 will only apply to projects within 0.5 miles
+of a qualifying SB 79 transit station.
 """
 import logging
 
@@ -73,7 +76,7 @@ class LocalDensityScenario(EvacuationScenario):
     def vc_threshold(self) -> float:
         return float(
             self.config.get("local_density", {})
-            .get("vc_threshold", self.config.get("vc_threshold", 0.80))
+            .get("vc_threshold", self.config.get("vc_threshold", 0.95))
         )
 
     @property
@@ -102,9 +105,9 @@ class LocalDensityScenario(EvacuationScenario):
                 "result": False,
                 "method": "Config flag check: local_density.enabled",
                 "note":   (
-                    "Standard 5 (Local Evacuation Density) is not yet enabled. "
-                    "Enable via config['local_density']['enabled'] = true once GTFS "
-                    "transit data is configured. See legal.md §Scenario B for activation steps."
+                    "Standard 5 (Local Evacuation Density) is disabled in parameters.yaml "
+                    "(local_density.enabled: false). Set to true to activate citywide. "
+                    "GTFS transit gating is optional (Phase 3). See legal.md §Scenario B."
                 ),
             }
 

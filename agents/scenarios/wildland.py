@@ -5,7 +5,7 @@ Legal basis: AB 747 (California Government Code §65302.15) and HCM 2022.
 
 This scenario evaluates whether a proposed project adds vehicles to citywide
 evacuation routes that serve FHSZ Zone 2 or 3 areas, and whether those routes
-operate at or above LOS E/F (v/c ≥ 0.80) under the maximum evacuation demand scenario.
+operate at or above LOS E/F (v/c ≥ 0.95) under the maximum evacuation demand scenario.
 
 Three-tier output:
   DISCRETIONARY          — size threshold met AND capacity exceeded on any serving route
@@ -61,7 +61,7 @@ class WildlandScenario(EvacuationScenario):
         return float(
             self.config.get("determination_tiers", {})
             .get("discretionary", {})
-            .get("vc_threshold", self.config.get("vc_threshold", 0.80))
+            .get("vc_threshold", self.config.get("vc_threshold", 0.95))
         )
 
     @property

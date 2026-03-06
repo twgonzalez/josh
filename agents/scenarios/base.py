@@ -128,7 +128,7 @@ class EvacuationScenario(ABC):
     @property
     @abstractmethod
     def vc_threshold(self) -> float:
-        """Volume-to-capacity ratio threshold (e.g. 0.80)."""
+        """Volume-to-capacity ratio threshold (e.g. 0.95)."""
         ...
 
     @property

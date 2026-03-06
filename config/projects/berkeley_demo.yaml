@@ -8,13 +8,28 @@
 # on the output map so reviewers can compare impacts side-by-side.
 #
 # Tier logic (Phase 2c — demand model fix, marginal causation):
-#   DISCRETIONARY           — size >= 50 AND project causes a serving route
+#   DISCRETIONARY           — size >= 50 AND project CAUSES a serving route
 #                             to cross v/c 0.95 (baseline < 0.95, proposed >= 0.95)
+#                             NOTE: routes already failing at baseline (vc >= 0.95)
+#                             do NOT trigger DISCRETIONARY — the project didn't cause it.
 #   CONDITIONAL MINISTERIAL — city has FHSZ AND size >= 50 (Standard 4 not triggered)
 #   MINISTERIAL             — size < 50 OR no FHSZ in city
 #
 # Demand model: catchment-based (network path analysis) for baseline_demand_vph.
 # Standard 4 impact: worst-case marginal test (full project vph per route).
+#
+# Coverage matrix (one project per distinct legal concept):
+#   Size gate below threshold, no FHSZ → Project 1 (10 units, flat)
+#   Size gate below threshold, IN FHSZ → Project 4 (35 units, hills Zone 3)
+#   Size met, capacity headroom, no FHSZ → Project 2 (Downtown)
+#   Size met, capacity headroom, IN FHSZ → Project 3 (Hills Gateway, Zone 3)
+#   Size met, capacity exceeded, NOT in FHSZ, hillside road → Project 5 (Claremont Hills)
+#   Dual standard (Std 4 + Std 5), NOT in FHSZ → Project 6 (Cedar Street)
+#
+# Removed (redundant — no distinct legal concept beyond the 6 kept):
+#   Telegraph Corridor (60u) — same Cedar St bottleneck as Cedar Street Infill
+#   North Berkeley TOD (200u) — scale only, not a distinct legal concept
+#   West Berkeley Flex (55u) — DISCRETIONARY, different geography but no new concept
 # ============================================================
 
 city: "Berkeley"
@@ -55,22 +70,7 @@ projects:
     expected_tier: "CONDITIONAL MINISTERIAL"
 
   # -----------------------------------------------------------
-  # 3 — Telegraph corridor: near-capacity local roads → DISCRETIONARY
-  # -----------------------------------------------------------
-  - name: "Telegraph Corridor"
-    address: "Telegraph Ave & Ashby Ave"
-    lat: 37.8558
-    lon: -122.2596
-    units: 60
-    description: >
-      60-unit project at Telegraph/Ashby.  Cedar Street (within 0.5 miles)
-      is already at LOS E (v/c = 0.91); 86 peak-hour project vehicles
-      push it above the 0.95 threshold.  Standard 4 triggered →
-      DISCRETIONARY review required.
-    expected_tier: "DISCRETIONARY"
-
-  # -----------------------------------------------------------
-  # 4 — Hills gateway: in FHSZ area, arterials have headroom → CONDITIONAL
+  # 3 — Hills gateway: in FHSZ Zone 3, arterials have headroom → CONDITIONAL
   # -----------------------------------------------------------
   - name: "Hills Gateway"
     address: "Claremont Ave & Tunnel Rd"
@@ -78,45 +78,34 @@ projects:
     lon: -122.2494
     units: 80
     description: >
-      80-unit project near the Berkeley Hills.  City is in FHSZ zone area;
-      fire zone is recorded as a severity modifier in the audit trail (not
-      a tier gate).  Serving evacuation routes within 0.5 miles have
-      catchment-based demand below the v/c 0.95 threshold, so Standard 4
-      is NOT triggered → CONDITIONAL MINISTERIAL with fire zone conditions.
+      80-unit project near the Berkeley Hills in FHSZ Zone 3.  Fire zone is
+      recorded as a severity modifier in the audit trail (not a tier gate).
+      Serving evacuation routes within 0.5 miles have catchment-based demand
+      below the v/c 0.95 threshold, so Standard 4 is NOT triggered →
+      CONDITIONAL MINISTERIAL with fire zone conditions.
     expected_tier: "CONDITIONAL MINISTERIAL"
 
   # -----------------------------------------------------------
-  # 5 — Large transit-oriented: 200 units → DISCRETIONARY (severe)
+  # 4 — Small hills infill IN FHSZ: size gate overrides fire zone → MINISTERIAL
+  #     Same location as Project 3 (Hills Gateway, 80 units → CONDITIONAL).
+  #     Paired comparison proves FHSZ location alone cannot trigger discretionary.
   # -----------------------------------------------------------
-  - name: "North Berkeley TOD"
-    address: "North Shattuck Ave & Rose St"
-    lat: 37.8810
-    lon: -122.2695
-    units: 200
+  - name: "Hills FHSZ Small Infill"
+    address: "Tunnel Rd & Claremont Ave, Berkeley Hills (FHSZ Zone 3 area)"
+    lat: 37.8914
+    lon: -122.2494
+    units: 35
     description: >
-      200-unit transit-oriented development.  Generates 285 peak-hour
-      vehicles.  Multiple near-capacity evacuation routes (Cedar Street,
-      others) are pushed above v/c 0.95 by the project's load.
-      Standard 4 triggered → DISCRETIONARY.
-    expected_tier: "DISCRETIONARY"
+      35-unit project in the Berkeley Hills FHSZ Zone 3 area — same location
+      as Hills Gateway (Project 3, 80 units → CONDITIONAL MINISTERIAL).
+      Despite the fire zone, Standard 2 (size gate) is NOT triggered: 35 < 50.
+      The wildland scenario short-circuits at Step 2 and returns MINISTERIAL.
+      FHSZ designation is a severity modifier, not an independent trigger.
+    expected_tier: "MINISTERIAL"
 
   # -----------------------------------------------------------
-  # 6 — West Berkeley: near-capacity local streets → DISCRETIONARY
-  # -----------------------------------------------------------
-  - name: "West Berkeley Flex"
-    address: "Heinz Ave & 4th St, West Berkeley"
-    lat: 37.8680
-    lon: -122.3050
-    units: 55
-    description: >
-      55-unit mixed-use project in the West Berkeley industrial corridor.
-      Local two-lane evacuation routes serving this area are near capacity
-      (LOS E). The project's 78 peak-hour vehicles push at least one route
-      above v/c 0.95 → DISCRETIONARY.
-    expected_tier: "DISCRETIONARY"
-
-  # -----------------------------------------------------------
-  # 7 — Hills hillside: Standard 4 (wildland) triggers via Ridge Road
+  # 5 — Claremont Hills: NOT in FHSZ, hillside road bottleneck → DISCRETIONARY
+  #     Proves fire zone location is NOT required to trigger DISCRETIONARY.
   # -----------------------------------------------------------
   - name: "Claremont Hills Terrace"
     address: "Ridge Road & Claremont Ave, Berkeley Hills"
@@ -124,16 +113,18 @@ projects:
     lon: -122.260
     units: 75
     description: >
-      75-unit hillside project at the edge of the Berkeley Hills.
-      Ridge Road — a narrow two-lane access road (cap 1,125 vph) — carries
-      evacuation demand at v/c 0.94 at baseline.  The project's 107 peak-hour
-      vehicles push Ridge Road from v/c 0.94 to 1.03, crossing the 0.95
-      LOS E/F threshold.  Standard 4 (wildland) triggered →
-      DISCRETIONARY review required.
+      75-unit hillside project NOT in a mapped FHSZ zone — proves that fire
+      zone location is NOT required to trigger DISCRETIONARY.  Ridge Road
+      (narrow two-lane, cap 1,125 vph) carries evacuation demand at v/c 0.94
+      at baseline; 107 peak-hour project vehicles push it to 1.03, crossing
+      the 0.95 LOS E/F threshold.  Standard 4 triggered → DISCRETIONARY.
+      Contrast with Hills Gateway (Project 3, same hills, in FHSZ, CONDITIONAL):
+      fire zone elevates conditions but capacity impact alone drives the tier.
     expected_tier: "DISCRETIONARY"
 
   # -----------------------------------------------------------
-  # 8 — Cedar Street corridor: Standard 5 (local density) + Standard 4
+  # 6 — Cedar Street: Standard 4 + Standard 5 both triggered → DISCRETIONARY
+  #     Project site NOT in FHSZ. Dual-standard case.
   # -----------------------------------------------------------
   - name: "Cedar Street Infill"
     address: "Cedar Street & Shattuck Ave, North Berkeley"
@@ -141,10 +132,10 @@ projects:
     lon: -122.278
     units: 75
     description: >
-      75-unit project in the North Berkeley residential corridor.
-      Cedar Street (two-lane, cap 1,125 vph) is at v/c 0.91 at baseline;
-      the project's 107 vehicles push it to 1.00 (LOS F).
-      Standard 4 (wildland, 0.5-mile) AND Standard 5 (local density,
-      0.25-mile) are both triggered — project is within the local egress
-      radius of the near-capacity street.  DISCRETIONARY.
+      75-unit project in the North Berkeley residential corridor, NOT in FHSZ.
+      Cedar Street (two-lane, cap 1,125 vph) is at v/c 0.91 at baseline; 107
+      project vehicles push it to 1.00 (LOS F).  Standard 4 (wildland, 0.5-mile
+      radius) AND Standard 5 (local density, 0.25-mile radius) are both
+      triggered — the project is within the local egress radius of the
+      near-capacity street.  DISCRETIONARY driven entirely by capacity impact.
     expected_tier: "DISCRETIONARY"
