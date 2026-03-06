@@ -62,18 +62,27 @@ _TIER_BORDER_COLOR = {
 # Route color maps (demo map — keyed by tier)
 # ---------------------------------------------------------------------------
 
-# Serving route colors keyed by determination tier.
+# Non-flagged serving routes — neutral "analysis footprint" color.
+# These roads are within the search radius and were analyzed, but do NOT cause
+# an exceedance. Shown muted so flagged routes stand out clearly.
+_SERVING_ROUTE_NEUTRAL_COLOR  = "#d4a017"   # muted amber
+_SERVING_ROUTE_NEUTRAL_WEIGHT  = 2
+_SERVING_ROUTE_NEUTRAL_OPACITY = 0.35
+
+# Flagged route colors keyed by tier — prominently shown; project causes exceedance.
+_TIER_ROUTE_COLOR_FLAGGED = {
+    "DISCRETIONARY":           "#c0392b",
+    "CONDITIONAL MINISTERIAL": "#e07000",
+    "MINISTERIAL":             "#1a7a1a",
+}
+_FLAGGED_ROUTE_WEIGHT  = 7
+_FLAGGED_ROUTE_OPACITY = 0.80
+
+# Legacy: tier-keyed serving color still used for search-radius circle color.
 _TIER_ROUTE_COLOR = {
-    "DISCRETIONARY":           "#d62728",
+    "DISCRETIONARY":           "#c0392b",
     "CONDITIONAL MINISTERIAL": "#e07000",
     "MINISTERIAL":             "#2ca02c",
-}
-
-# Flagged-route variant (darker / heavier weight)
-_TIER_ROUTE_COLOR_FLAGGED = {
-    "DISCRETIONARY":           "#a01010",
-    "CONDITIONAL MINISTERIAL": "#a05000",
-    "MINISTERIAL":             "#1a7a1a",
 }
 
 # Standard 5 (local density) route colors — fixed, not tier-dependent

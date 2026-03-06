@@ -25,6 +25,8 @@ from .themes import (
     FHSZ_COLORS, FHSZ_LABELS,
     _TIER_MARKER_COLOR, _TIER_CSS_COLOR, _TIER_BG_COLOR,
     _TIER_ROUTE_COLOR, _TIER_ROUTE_COLOR_FLAGGED,
+    _SERVING_ROUTE_NEUTRAL_COLOR, _SERVING_ROUTE_NEUTRAL_WEIGHT, _SERVING_ROUTE_NEUTRAL_OPACITY,
+    _FLAGGED_ROUTE_WEIGHT, _FLAGGED_ROUTE_OPACITY,
     _TRAFFIC_BG_BUCKETS,
     _vc_background_color, _normal_traffic_vc,
 )
@@ -254,9 +256,9 @@ def create_demo_map(
                     continue
                 osmid_val   = row.get("osmid")
                 is_flagged  = _osmid_matches(osmid_val, flagged_set)
-                seg_color   = route_flagged_color if is_flagged else route_color
-                weight      = 7 if is_flagged else 4
-                opacity     = 0.60 if is_flagged else 0.45
+                seg_color   = route_flagged_color if is_flagged else _SERVING_ROUTE_NEUTRAL_COLOR
+                weight      = _FLAGGED_ROUTE_WEIGHT if is_flagged else _SERVING_ROUTE_NEUTRAL_WEIGHT
+                opacity     = _FLAGGED_ROUTE_OPACITY if is_flagged else _SERVING_ROUTE_NEUTRAL_OPACITY
 
                 name_str    = str(row.get("name", "Unnamed") or "Unnamed")
                 vc_base     = float(row.get("vc_ratio", 0) or 0)
