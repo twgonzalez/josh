@@ -577,14 +577,22 @@ def _build_standards_analysis(tier: str, wildland: dict, local5: dict, config: d
 
     flagged_table = ""
     if route_details and s2_result:
+        # Deduplicate by osmid — OSM road names map to multiple geometry segments
+        seen_osmids: set = set()
+        deduped_details = []
+        for r in route_details:
+            oid = r.get("osmid", "")
+            if oid not in seen_osmids:
+                seen_osmids.add(oid)
+                deduped_details.append(r)
         # Show: all project-caused exceedances + up to 3 near-threshold examples, truncate rest
-        caused_rows  = [r for r in route_details if r.get("project_causes_exceedance")]
-        near_rows    = [r for r in route_details
+        caused_rows  = [r for r in deduped_details if r.get("project_causes_exceedance")]
+        near_rows    = [r for r in deduped_details
                         if not r.get("project_causes_exceedance")
                         and not r.get("baseline_exceeds")
                         and r.get("proposed_vc", 0) > 0.80][:3]
         display_rows = caused_rows + near_rows
-        n_omitted    = len(route_details) - len(display_rows)
+        n_omitted    = len(deduped_details) - len(display_rows)
 
         flagged_table = "<br><table class='route-table'><thead><tr>" \
             "<th>Route Name</th><th>Baseline v/c</th><th>Project adds</th>" \
@@ -656,13 +664,20 @@ def _build_standards_analysis(tier: str, wildland: dict, local5: dict, config: d
 
         l5_table = ""
         if l5_details:
-            l5_caused = [r for r in l5_details if r.get("project_causes_exceedance")]
-            l5_near   = [r for r in l5_details
+            seen_l5: set = set()
+            l5_deduped = []
+            for r in l5_details:
+                oid = r.get("osmid", "")
+                if oid not in seen_l5:
+                    seen_l5.add(oid)
+                    l5_deduped.append(r)
+            l5_caused = [r for r in l5_deduped if r.get("project_causes_exceedance")]
+            l5_near   = [r for r in l5_deduped
                          if not r.get("project_causes_exceedance")
                          and not r.get("baseline_exceeds")
                          and r.get("proposed_vc", 0) > 0.80][:3]
             l5_display = l5_caused + l5_near
-            l5_omitted = len(l5_details) - len(l5_display)
+            l5_omitted = len(l5_deduped) - len(l5_display)
             l5_table = "<br><table class='route-table'><thead><tr>" \
                 "<th>Local Route</th><th>Road Type</th><th>Baseline v/c</th>" \
                 "<th>Project adds</th><th>Proposed v/c</th><th>Status</th></tr></thead><tbody>"

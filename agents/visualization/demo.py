@@ -272,8 +272,8 @@ def create_demo_map(
                     project_vph_per_rt, is_flagged,
                 )
                 tip = (
-                    f"{'⚠ ' if is_flagged else ''}{name_str} "
-                    f"| v/c {vc_base:.3f} | {tier}"
+                    f"{'⚠ causes exceedance' if is_flagged else 'serving route'}"
+                    f" — {name_str} | baseline v/c {vc_base:.3f}"
                 )
                 folium.GeoJson(
                     mapping(row.geometry),
