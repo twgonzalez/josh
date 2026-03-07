@@ -19,17 +19,17 @@ This system answers that question using only objective, measurable math. No one 
 
 ## Step 1 — Is the Project Big Enough to Matter?
 
-Small projects don't generate enough cars to measurably change traffic on evacuation routes. A 4-unit ADU adds roughly 6 peak-hour vehicles. That's within the noise of normal daily traffic variation — the roads wouldn't know the difference.
+Small projects don't generate enough cars to measurably change traffic on evacuation routes. A 4-unit ADU adds roughly 6 peak-hour vehicles; a 14-unit project adds roughly 20. Both are within the noise of normal daily traffic variation — the roads wouldn't know the difference.
 
 The size threshold exists to screen out projects that are mathematically too small to affect evacuation capacity. Projects below the threshold get **ministerial approval automatically** — no traffic analysis needed.
 
-**How the threshold is set:** The minimum project size is the number of units at which the project's peak-hour vehicle load becomes large enough to produce a measurable change in the v/c ratio of a constrained road. The formula is:
+**How the threshold is set:** The minimum project size is the number of units at which the project's peak-hour vehicle load crosses the traffic engineering *de minimis* — the level at which the impact becomes statistically distinguishable from background variation. The formula is:
 
 ```
 peak-hour vehicles = units × 2.5 vehicles/unit × 0.57 evacuation mobilization rate
 ```
 
-Below the threshold floor, the project's vehicle contribution is smaller than the uncertainty in the road capacity model itself — the impact is not distinguishable from background variation.
+At 15 units: `15 × 2.5 × 0.57 = 21.4 peak-hour vehicles`. This exceeds the ITE Trip Generation Handbook de minimis of 10–15 peak-hour trips widely used in California traffic studies. That is the technical basis for the 15-unit threshold. The statutory anchor is California's Housing Crisis Act (SB 330), which applies heightened protections to projects of 10+ units — a legislative recognition that projects of that scale have material impacts. 15 units sits just above the ITE de minimis within that class.
 
 ---
 
@@ -114,7 +114,7 @@ That reproducibility is what makes the determination legally defensible if chall
 
 | Parameter | Value | Source |
 |-----------|-------|--------|
-| Size threshold (default) | 50 units | City-adopted; set at vehicle-generation floor |
+| Size threshold (default) | 15 units | ITE de minimis (21.4 vph); SB 330 statutory anchor |
 | Evacuation mobilization rate | 0.57 | KLD Engineering Berkeley AB 747 Study (March 2024) |
 | Vehicles per unit | 2.5 | U.S. Census ACS |
 | Serving route radius | 0.5 miles | Standard 3 |

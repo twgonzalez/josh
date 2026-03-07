@@ -14,8 +14,14 @@
 vc_threshold: 0.95
 
 # Minimum dwelling units triggering Standards review
-# Basis: CEQA categorical exemption threshold for residential projects
-unit_threshold: 50
+# Basis: 15 units × 2.5 vph/unit × 0.57 mobilization = 21.4 peak-hour trips,
+# exceeding the ITE Trip Generation Handbook de minimis of 10–15 peak-hour trips
+# commonly applied in California traffic studies. At this size the project's
+# contribution is statistically distinguishable from background traffic variation.
+# Statutory anchor: California Housing Crisis Act (SB 330, Gov. Code §65905.5)
+# applies heightened protections to projects of 10+ units; 15 is the first
+# integer above the ITE de minimis that falls within the SB 330 project class.
+unit_threshold: 15
 
 # Evacuation route search radius from project location (miles)
 # Basis: Standard 3, defined in objective standards ordinance
@@ -240,7 +246,7 @@ determination_tiers:
     # Triggers: size >= threshold AND capacity exceeded (Standard 4)
     # Fire zone location is a severity modifier recorded in audit trail, NOT a gate
     # Legal basis: AB 747 (California Government Code §65302.15) + HCM 2022
-    unit_threshold: 50    # minimum dwelling units; if absent, inherits unit_threshold
+    unit_threshold: 15    # minimum dwelling units; if absent, inherits unit_threshold
     vc_threshold: 0.95    # v/c exceedance trigger; if absent, inherits vc_threshold (exact HCM LOS E/F boundary)
     legal_basis: "AB 747 (Gov. Code §65302.15) and HCM 2022 v/c capacity threshold — project causes a serving evacuation route to cross the LOS E/F boundary (v/c = 0.95) from below"
 
@@ -249,7 +255,7 @@ determination_tiers:
     # Ministerial approval eligible with mandatory evacuation conditions to be defined by city.
     # Legal basis: General Plan Safety Element consistency + AB 1600 nexus
     #   (project adds vehicles to shared evacuation network regardless of location)
-    unit_threshold: 50    # minimum dwelling units; if absent, inherits unit_threshold
+    unit_threshold: 15    # minimum dwelling units; if absent, inherits unit_threshold
     legal_basis: "General Plan Safety Element consistency and AB 1600 nexus (project adds vehicles to shared evacuation network regardless of project location)"
 
   ministerial:
@@ -275,7 +281,7 @@ local_density:
   enabled: true
 
   # Minimum dwelling units to trigger Standard 5 analysis
-  unit_threshold: 50
+  unit_threshold: 15
 
   # Volume-to-capacity threshold (same as wildland scenario for consistency — exact HCM LOS E/F boundary)
   vc_threshold: 0.95

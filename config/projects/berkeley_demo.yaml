@@ -8,19 +8,19 @@
 # on the output map so reviewers can compare impacts side-by-side.
 #
 # Tier logic (Phase 2c — demand model fix, marginal causation):
-#   DISCRETIONARY           — size >= 50 AND project CAUSES a serving route
+#   DISCRETIONARY           — size >= 15 AND project CAUSES a serving route
 #                             to cross v/c 0.95 (baseline < 0.95, proposed >= 0.95)
 #                             NOTE: routes already failing at baseline (vc >= 0.95)
 #                             do NOT trigger DISCRETIONARY — the project didn't cause it.
-#   CONDITIONAL MINISTERIAL — city has FHSZ AND size >= 50 (Standard 4 not triggered)
-#   MINISTERIAL             — size < 50 OR no FHSZ in city
+#   CONDITIONAL MINISTERIAL — city has FHSZ AND size >= 15 (Standard 4 not triggered)
+#   MINISTERIAL             — size < 15 OR no FHSZ in city
 #
 # Demand model: catchment-based (network path analysis) for baseline_demand_vph.
 # Standard 4 impact: worst-case marginal test (full project vph per route).
 #
 # Coverage matrix (one project per distinct legal concept):
 #   Size gate below threshold, no FHSZ → Project 1 (10 units, flat)
-#   Size gate below threshold, IN FHSZ → Project 4 (35 units, hills Zone 3)
+#   Size gate below threshold, IN FHSZ → Project 4 (10 units, hills Zone 3)
 #   Size met, capacity headroom, no FHSZ → Project 2 (Downtown)
 #   Size met, capacity headroom, IN FHSZ → Project 3 (Hills Gateway, Zone 3)
 #   Size met, capacity exceeded, NOT in FHSZ, hillside road → Project 5 (Claremont Hills)
@@ -39,7 +39,7 @@ description: "Berkeley AB 747 — Ministerial vs Discretionary Demo"
 projects:
 
   # -----------------------------------------------------------
-  # 1 — Small infill: below the 50-unit threshold → MINISTERIAL
+  # 1 — Small infill: below the 15-unit threshold → MINISTERIAL
   # -----------------------------------------------------------
   - name: "Ashby Small Infill"
     address: "Ashby BART Station Area"
@@ -47,7 +47,7 @@ projects:
     lon: -122.2699
     units: 10
     description: >
-      10-unit project at Ashby BART — well below the 50-unit size threshold.
+      10-unit project at Ashby BART — below the 15-unit size threshold.
       Standard 2 is not triggered, so the project qualifies for ministerial
       approval regardless of evacuation route congestion.
     expected_tier: "MINISTERIAL"
@@ -61,7 +61,7 @@ projects:
     lon: -122.2685
     units: 75
     description: >
-      75-unit project on Shattuck Ave.  Exceeds the 50-unit threshold and
+      75-unit project on Shattuck Ave.  Exceeds the 15-unit threshold and
       has 75 serving evacuation routes within 0.5 miles.  The high-capacity
       arterials here (Shattuck, University) have sufficient headroom that
       107 peak-hour project vehicles do not push any single route from below
@@ -94,11 +94,11 @@ projects:
     address: "Tunnel Rd & Claremont Ave, Berkeley Hills (FHSZ Zone 3 area)"
     lat: 37.8914
     lon: -122.2494
-    units: 35
+    units: 10
     description: >
-      35-unit project in the Berkeley Hills FHSZ Zone 3 area — same location
+      10-unit project in the Berkeley Hills FHSZ Zone 3 area — same location
       as Hills Gateway (Project 3, 80 units → CONDITIONAL MINISTERIAL).
-      Despite the fire zone, Standard 2 (size gate) is NOT triggered: 35 < 50.
+      Despite the fire zone, Standard 2 (size gate) is NOT triggered: 10 < 15.
       The wildland scenario short-circuits at Step 2 and returns MINISTERIAL.
       FHSZ designation is a severity modifier, not an independent trigger.
     expected_tier: "MINISTERIAL"

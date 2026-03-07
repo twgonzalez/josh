@@ -85,7 +85,7 @@ output/{city}/          # Results (git-ignored)
 | Parameter | Default | Source |
 |-----------|---------|--------|
 | `vc_threshold` | 0.95 | Exact LOS E/F boundary, HCM 2022 |
-| `unit_threshold` | 50 | CEQA categorical exemption |
+| `unit_threshold` | 15 | ITE de minimis (21.4 vph at 15 units); SB 330 statutory anchor |
 | `vehicles_per_unit` | 2.5 | U.S. Census ACS |
 | `peak_hour_mobilization` | 0.57 | Berkeley mobilization study |
 | `aadt_peak_hour_factor` | 0.10 | Standard peak-hour conversion |
@@ -119,7 +119,7 @@ output/{city}/          # Results (git-ignored)
 All four standards are algorithmic — zero discretion allowed. Do NOT add any "professional judgment" or "reasonable estimate" language to the standards engine.
 
 1. **Standard 1**: GIS point-in-polygon test against FHSZ Zone 2 or 3
-2. **Standard 2**: `units >= 50` (integer comparison)
+2. **Standard 2**: `units >= 15` (integer comparison)
 3. **Standard 3**: Network analysis to find evacuation routes within 0.5 miles
 4. **Standard 4**: `baseline_vc < 0.95` AND `proposed_vc >= 0.95` for any serving route — marginal causation test; project must itself cause the threshold crossing (0.95 = exact HCM LOS E/F boundary)
 

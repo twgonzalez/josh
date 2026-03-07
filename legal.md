@@ -48,10 +48,10 @@ The check is a fixed geographic or categorical test (details in §4 and §5). It
 > *Does the project meet the minimum size threshold?*
 
 ```
-dwelling_units >= unit_threshold   (integer comparison)
+dwelling_units >= unit_threshold   (integer comparison; default: 15)
 ```
 
-If the project is below the threshold, it receives **MINISTERIAL** treatment for this scenario. No capacity analysis is run. This prevents regulatory burden on small infill projects that add negligible vehicles to the road network.
+If the project is below the threshold, it receives **MINISTERIAL** treatment for this scenario. No capacity analysis is run. This prevents regulatory burden on small infill projects whose vehicle contribution is statistically indistinguishable from background traffic variation.
 
 **Discretion: zero.**
 
@@ -172,7 +172,7 @@ Fire zone location is recorded as a **severity modifier** (it affects required c
 |------|-----------|-------|--------|
 | Step 1 | City has FHSZ zones | Non-empty polygon count in city boundary | CAL FIRE FHSZ (OSFM ArcGIS REST API) |
 | Step 1 | Project in FHSZ | GIS point-in-polygon | CAL FIRE FHSZ, HAZ_CLASS ≥ 2 (severity modifier only) |
-| Step 2 | Unit threshold | 50 dwelling units | Vehicle-generation floor — city-adopted |
+| Step 2 | Unit threshold | 15 dwelling units | ITE de minimis (15 units × 2.5 × 0.57 = 21.4 peak-hour trips); SB 330 (Gov. Code §65905.5) statutory scale anchor |
 | Step 3 | Route type | `is_evacuation_route == True` | Network analysis: all city block group centroids → city exits |
 | Step 3 | Search radius | 0.5 miles | City-adopted objective standard |
 | Step 5 | V/C threshold | 0.95 | HCM 2022 exact LOS E/F boundary |
@@ -207,7 +207,7 @@ This is distinct from Scenario A (citywide wildland routes). A project could pas
 | Step | Parameter | Value | Source |
 |------|-----------|-------|--------|
 | Step 1 | Applicability | `local_density.enabled == true` | Structure fires occur anywhere, not just FHSZ |
-| Step 2 | Unit threshold | 50 dwelling units | Consistent with Scenario A |
+| Step 2 | Unit threshold | 15 dwelling units | Consistent with Scenario A (ITE de minimis; SB 330 statutory anchor) |
 | Step 3 | Route type | Multilane and two-lane roads (freeways excluded) | Local egress roads only |
 | Step 3 | Search radius | 0.25 miles | KLD Engineering quarter-mile methodology |
 | Step 5 | V/C threshold | 0.95 | HCM 2022 exact LOS E/F boundary |
@@ -226,12 +226,12 @@ The city attorney must confirm adoption timing satisfies SB 79's prior-adoption 
 ## 6. Common Legal Challenges and Responses
 
 ### "This is discretionary, not objective."
-Every step is arithmetic against a city-adopted threshold. Step 1 queries a polygon dataset. Step 2 is `units >= 50`. Step 3 is a GIS buffer. Step 4 is multiplication. Step 5 is `demand / capacity >= 0.95`. No city official exercises judgment at any step. The standard satisfies Gov. Code §65913.4.
+Every step is arithmetic against a city-adopted threshold. Step 1 queries a polygon dataset. Step 2 is `units >= 15`. Step 3 is a GIS buffer. Step 4 is multiplication. Step 5 is `demand / capacity >= 0.95`. No city official exercises judgment at any step. The standard satisfies Gov. Code §65913.4.
 
 ### "The parameters are arbitrary."
 No parameter was invented for this system:
 - **0.95** — Exact LOS E/F boundary in HCM 2022, cited in Caltrans guidance and federal transportation planning.
-- **50 units** — Vehicle-generation floor: the minimum size at which peak-hour load (`units × 2.5 × 0.57`) produces a measurable change in v/c on a constrained route.
+- **15 units** — The minimum size at which peak-hour load (`15 × 2.5 × 0.57 = 21.4 vph`) exceeds the ITE Trip Generation Handbook de minimis of 10–15 peak-hour trips commonly applied in California traffic studies — the point at which a project's contribution is statistically distinguishable from background traffic variation. Statutory anchor: California's Housing Crisis Act (SB 330, Gov. Code §65905.5) applies heightened review protections to projects of 10+ units, establishing legislative recognition that 10+ unit projects have material scale; 15 is the first integer above the ITE de minimis that falls squarely within that class. Projects below 15 units — including all SB 9 duplexes and most ADUs — receive ministerial approval without analysis.
 - **2.5 vehicles/unit** — U.S. Census ACS, the standard source for all trip generation studies.
 - **0.57 mobilization rate** — The fraction of housing units generating vehicle trips simultaneously during the peak hour of evacuation, measured from observed traffic data during actual California wildfire evacuations. Source: KLD Engineering TR-1381, Berkeley AB 747 Study, March 2024, Figure 12. Other cities adopt their own factor using four documented sourcing options; the OPR AB 747 state guidance range is 0.40–0.75.[^1]
 - **0.25-mile radius** — KLD Engineering quarter-mile buffer methodology (same study).
@@ -304,7 +304,7 @@ All parameters live in `config/parameters.yaml` or `config/cities/{city}.yaml`. 
 
 | Parameter | Default | Config Key | Source | Adopted By |
 |-----------|---------|------------|--------|------------|
-| Unit threshold | 50 units | `determination_tiers.discretionary.unit_threshold` | Vehicle-generation floor (HCM 2022) | City council |
+| Unit threshold | 15 units | `determination_tiers.discretionary.unit_threshold` | ITE de minimis (21.4 vph); SB 330 (Gov. Code §65905.5) scale anchor | City council |
 | V/C threshold | 0.95 | `determination_tiers.discretionary.vc_threshold` | HCM 2022 exact LOS E/F boundary | City council |
 | Vehicles per unit | 2.5 | `vehicles_per_unit` | U.S. Census ACS | U.S. Census (city inherits) |
 | Peak-hour mobilization | 0.57 | `peak_hour_mobilization` | KLD Engineering AB 747 study | City council |
@@ -314,7 +314,7 @@ All parameters live in `config/parameters.yaml` or `config/cities/{city}.yaml`. 
 | Buffer demand radius | 0.25 mi | `demand.buffer_radius_miles` | KLD Engineering AB 747 methodology | City council |
 | Employee mobilization (day) | 1.00 | `demand.employee_mobilization_day` | KLD Engineering AB 747 methodology | City council |
 | Cache TTL | 90 days | `cache_ttl_days` | Operational parameter | City IT / planning dept. |
-| Std 5 unit threshold | 50 units | `local_density.unit_threshold` | Consistent with Scenario A | City council |
+| Std 5 unit threshold | 15 units | `local_density.unit_threshold` | Consistent with Scenario A (ITE de minimis; SB 330 anchor) | City council |
 | Std 5 V/C threshold | 0.95 | `local_density.vc_threshold` | HCM 2022 exact LOS E/F boundary | City council |
 | Std 5 local radius | 0.25 mi | `local_density.radius_miles` | KLD Engineering quarter-mile | City council |
 | Std 5 transit buffer | 2,640 ft | `local_density.transit_buffer_feet` | SB 79 — 0.5-mile transit definition | State (SB 79) |
