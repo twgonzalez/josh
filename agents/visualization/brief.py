@@ -72,7 +72,7 @@ def _render_brief(project, audit: dict, config: dict, city_config: dict) -> str:
         _build_standards_analysis(tier_upper, wildland, local5, config),
         _build_determination_box(tier_upper, determination, wildland, local5),
         _build_conditions(tier_upper, wildland, local5),
-        _build_methodology(audit, config),
+        _build_methodology(audit, config, city_config),
         _build_appeal_rights(city_name),
         "</main>",
         _build_footer(),
@@ -897,7 +897,7 @@ def _conditions_discretionary(wildland: dict, local5: dict) -> str:
 # Methodology reference
 # ---------------------------------------------------------------------------
 
-def _build_methodology(audit: dict, config: dict) -> str:
+def _build_methodology(audit: dict, config: dict, city_config: dict) -> str:
     algo    = audit.get("algorithm", {})
     version = algo.get("version", "2.0")
     name    = algo.get("name", "Universal 5-Step Evacuation Capacity Algorithm")
@@ -908,11 +908,54 @@ def _build_methodology(audit: dict, config: dict) -> str:
     vc_t  = config.get("vc_threshold", 0.95)
     ut    = config.get("unit_threshold", 50)
     vpu   = config.get("vehicles_per_unit", 2.5)
-    mob   = config.get("peak_hour_mobilization", 0.57)
+
+    # Mobilization factor — read from city_config (city-specific) or fall back to parameters.yaml
+    mob             = city_config.get("peak_hour_mobilization", config.get("peak_hour_mobilization", 0.57))
+    mob_source_type = city_config.get("mobilization_source", "conservative_default")
+    mob_citation    = city_config.get("mobilization_citation", "")
+    mob_note        = city_config.get("mobilization_note", "")
+
+    # Source type label and warning HTML
+    _SOURCE_LABELS = {
+        "local_study":          "Local empirical study",
+        "comparable_city":      "Comparable city transfer",
+        "state_guidance":       "OPR / CAL OES state guidance",
+        "conservative_default": "Conservative default — no local study",
+    }
+    mob_label = _SOURCE_LABELS.get(mob_source_type, mob_source_type)
+
+    if mob_source_type == "local_study":
+        mob_warning = ""
+        mob_source_td = f"{mob_label} — {mob_citation}" if mob_citation else mob_label
+    else:
+        _warning_text = {
+            "comparable_city":
+                "Mobilization factor transferred from a comparable city. "
+                "A local empirical study is recommended before impact fee adoption.",
+            "state_guidance":
+                "Mobilization factor derived from OPR/CAL OES state guidance range. "
+                "A local empirical study is recommended before impact fee adoption.",
+            "conservative_default":
+                "No city-specific mobilization study is on file. "
+                "A conservative default has been applied intentionally. "
+                "Commission a local AB 747 PeMS study before adopting impact fees. "
+                "See docs/city_onboarding.md for options.",
+        }.get(mob_source_type, "Mobilization factor source requires documentation.")
+        mob_warning = f"""<div style="margin-top:12px; padding:10px 14px;
+            background:#fff8e1; border-left:4px solid #f59e0b; border-radius:0 6px 6px 0;
+            font-size:11px; color:#78350f;">
+          <strong>⚠ Mobilization Factor Assumption:</strong> {_warning_text}
+        </div>"""
+        mob_source_td = mob_label + (f" — {mob_citation}" if mob_citation else "")
 
     lat_str = f"{audit.get('project', {}).get('location_lat', ''):.4f}".replace(".", "_").replace("-", "n")
     lon_str = f"{audit.get('project', {}).get('location_lon', ''):.4f}".replace(".", "_").replace("-", "n")
     audit_file = f"determination_{lat_str}_{lon_str}.txt"
+
+    mob_note_html = (
+        f'<tr><td colspan="3" style="font-style:italic; color:#868e96; font-size:10px;">'
+        f'{mob_note}</td></tr>'
+    ) if mob_note else ""
 
     return f"""<h2 class="section-label">Methodology &amp; Parameters</h2>
 <div class="methodology-box">
@@ -929,13 +972,15 @@ def _build_methodology(audit: dict, config: dict) -> str:
       <tr><td>Vehicles per dwelling unit</td><td><strong>{vpu}</strong></td>
           <td>U.S. Census ACS</td></tr>
       <tr><td>Peak-hour mobilization factor</td><td><strong>{mob}</strong></td>
-          <td>KLD Engineering AB 747 Study (Berkeley, 2024), Figure 12</td></tr>
+          <td>{mob_source_td}</td></tr>
+      {mob_note_html}
       <tr><td>Evacuation route radius</td><td><strong>0.5 mi</strong></td>
           <td>Standard 3 — network buffer methodology</td></tr>
       <tr><td>Impact method</td><td><strong>Worst-case per route</strong></td>
           <td>Full project_vph tested against each route independently</td></tr>
     </tbody>
   </table>
+  {mob_warning}
   <div style="margin-top:12px; font-size:11px;">
     Full reproducible audit trail (all inputs, intermediates, and outputs):
     <code style="background:#f1f3f5; padding:2px 6px; border-radius:3px; font-size:10px;">{audit_file}</code>

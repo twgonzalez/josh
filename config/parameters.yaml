@@ -29,8 +29,16 @@ evacuation_route_radius_miles: 0.5
 # Source: U.S. Census American Community Survey (ACS)
 vehicles_per_unit: 2.5
 
-# Peak hour mobilization factor (fraction of households mobilizing per hour)
-# Source: Berkeley Fire Evacuation Study
+# Peak hour mobilization factor (fraction of households mobilizing in the peak hour)
+# Default: 0.57 — KLD Engineering AB 747 Study (Berkeley, 2024), Figure 12
+#
+# CITY ONBOARDING: Override peak_hour_mobilization in config/cities/{city}.yaml.
+# Also set mobilization_source to one of:
+#   local_study         — city has an empirical AB 747 / PeMS study (strongest)
+#   comparable_city     — transferred from a comparable CA city with documented justification
+#   state_guidance      — OPR AB 747 guidance range (0.40–0.75); cite the specific table
+#   conservative_default — no study available; use 0.70 with explicit disclosure
+# See docs/city_onboarding.md for full guidance.
 peak_hour_mobilization: 0.57
 
 # AADT to peak hour conversion factor (if hourly data unavailable)

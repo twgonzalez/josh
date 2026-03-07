@@ -195,19 +195,38 @@ class EvacuationScenario(ABC):
         Step 4: How many peak-hour vehicles does the project generate?
 
         Formula: dwelling_units × vehicles_per_unit × peak_hour_mobilization
-        Source:  U.S. Census ACS (vehicles_per_unit) + KLD Engineering AB 747 study (mobilization)
+        Source:  U.S. Census ACS (vehicles_per_unit) + city-adopted mobilization factor.
         Discretion: Zero — formula is fixed; inputs are Census-derived or city-adopted.
+
+        Mobilization source is read from city_config.mobilization_source and
+        city_config.mobilization_citation — set these in config/cities/{city}.yaml.
+        See docs/city_onboarding.md for guidance on establishing a defensible factor.
         """
         vpu = self.config.get("vehicles_per_unit", 2.5)
-        mob = self.config.get("peak_hour_mobilization", 0.57)
+        # City config overrides parameters.yaml default — allows per-city calibration
+        mob = self.city_config.get(
+            "peak_hour_mobilization",
+            self.config.get("peak_hour_mobilization", 0.57),
+        )
         project_vph = project.dwelling_units * vpu * mob
+
+        mob_source_type = self.city_config.get("mobilization_source", "conservative_default")
+        mob_citation    = self.city_config.get(
+            "mobilization_citation",
+            "No city-specific study on file — conservative California WUI default applied. "
+            "See docs/city_onboarding.md.",
+        )
+        mob_note = self.city_config.get("mobilization_note", "")
+
         return project_vph, {
-            "vehicles_per_unit":        vpu,
-            "peak_hour_mobilization":   mob,
-            "formula":                  f"{project.dwelling_units} units × {vpu} veh/unit × {mob} peak factor",
+            "vehicles_per_unit":          vpu,
+            "peak_hour_mobilization":     mob,
+            "mobilization_source_type":   mob_source_type,
+            "formula":                    f"{project.dwelling_units} units × {vpu} veh/unit × {mob} peak factor",
             "project_vehicles_peak_hour": round(project_vph, 1),
-            "source_vehicles_per_unit": "U.S. Census ACS",
-            "source_mobilization":      "KLD Engineering AB 747 study (Berkeley, 2024), Figure 12",
+            "source_vehicles_per_unit":   "U.S. Census ACS",
+            "source_mobilization":        mob_citation,
+            "mobilization_note":          mob_note,
         }
 
     def ratio_test(
