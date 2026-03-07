@@ -36,7 +36,7 @@ from .helpers import (
     _add_zoom_weight_scaler, _build_global_styles,
     _brief_filename,
 )
-from .popups import _build_route_impact_popup, _build_demo_project_popup
+from .popups import _build_route_impact_popup, _build_demo_project_popup, _build_heatmap_route_popup
 
 logger = logging.getLogger(__name__)
 
@@ -78,8 +78,15 @@ def _build_capacity_heatmap_layer(
         if name_str in ("nan", "None", ""):
             name_str = "Unnamed"
 
-        los = str(row.get("los", "?") or "?")
+        los         = str(row.get("los", "?") or "?")
+        cap         = float(row.get("capacity_vph", 1) or 1)
+        demand_base = float(row.get("baseline_demand_vph", 0) or 0)
+        vc_threshold = config.get("vc_threshold", 0.95)
+
         tooltip_text = f"{name_str} | v/c {vc:.3f} | LOS {los}"
+        popup_html   = _build_heatmap_route_popup(
+            name_str, los, cap, demand_base, vc, vc_threshold,
+        )
 
         folium.GeoJson(
             mapping(row.geometry),
@@ -87,6 +94,7 @@ def _build_capacity_heatmap_layer(
                 "color": c, "weight": 3, "opacity": o,
             },
             tooltip=tooltip_text,
+            popup=folium.Popup(popup_html, max_width=340),
         ).add_to(fg)
 
     logger.info(f"Heatmap: {evac_mask.sum()} evacuation route segments rendered.")
@@ -395,8 +403,8 @@ def _build_brand_header_html() -> str:
     top: 0; left: 0; right: 0;
     z-index: 10001;
     height: 54px;
-    background: #1e1612;
-    border-bottom: 3px solid #7a3f3f;
+    background: #1c4a6e;
+    border-bottom: 3px solid #154e80;
     display: flex;
     align-items: center;
     padding: 0 18px;
@@ -459,7 +467,7 @@ def _build_brand_header_html() -> str:
                   letter-spacing: 0.15px;">
         Jurisdictional Objective Standards for Housing
       </div>
-      <div style="font-size: 9px; color: #9c8878; letter-spacing: 0.4px; margin-top: 2px;">
+      <div style="font-size: 9px; color: #93b8d5; letter-spacing: 0.4px; margin-top: 2px;">
         Fire Evacuation Capacity Analysis &nbsp;&middot;&nbsp; AB 747
       </div>
     </div>
@@ -470,7 +478,7 @@ def _build_brand_header_html() -> str:
 
   <!-- Right: version badge -->
   <div style="
-      font-size: 9px; color: #7a6858;
+      font-size: 9px; color: #7aadc9;
       letter-spacing: 1px; text-transform: uppercase;
       font-weight: 600; text-align: right; flex-shrink: 0;
   ">BETA</div>

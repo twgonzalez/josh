@@ -105,6 +105,63 @@ def _build_route_impact_popup(
 
 
 # ---------------------------------------------------------------------------
+# Heatmap baseline popup (citywide layer — no project context)
+# ---------------------------------------------------------------------------
+
+def _build_heatmap_route_popup(
+    name_str: str,
+    los: str,
+    cap: float,
+    demand_base: float,
+    vc_base: float,
+    vc_threshold: float,
+) -> str:
+    """
+    Popup shown when clicking an evacuation route segment on the heatmap base
+    layer. Shows baseline capacity state only — no project comparison.
+    Visual style matches _build_route_impact_popup() for consistency.
+    """
+    if vc_base >= vc_threshold:
+        status_color = "#c0392b"
+        status_icon  = "⚠"
+        status_text  = f"At/over capacity — v/c {vc_base:.3f} ≥ {vc_threshold:.2f}"
+    elif vc_base >= 0.60:
+        status_color = "#e67e22"
+        status_icon  = "◑"
+        status_text  = f"Moderate stress — v/c {vc_base:.3f}"
+    else:
+        status_color = "#27ae60"
+        status_icon  = "✓"
+        status_text  = f"Within capacity — v/c {vc_base:.3f}"
+
+    return (
+        '<div style="font-family:system-ui,-apple-system,BlinkMacSystemFont,'
+        '\'Segoe UI\',sans-serif; font-size:12px; min-width:280px; max-width:340px; '
+        'color:#333; line-height:1.5;">'
+        f'<div style="font-weight:700; font-size:13px; margin-bottom:4px; color:#111;">'
+        f'{name_str[:45]}</div>'
+        f'<div style="color:{status_color}; font-weight:600; font-size:11px; '
+        f'margin-bottom:10px;">{status_icon} {status_text}</div>'
+        '<table style="width:100%; border-collapse:collapse; font-size:11px; '
+        'color:#555; margin-bottom:12px;">'
+        f'<tr><td style="padding:2px 0;">Capacity</td>'
+        f'<td style="text-align:right; font-weight:600;">{cap:.0f} vph</td></tr>'
+        f'<tr><td style="padding:2px 0;">Baseline demand</td>'
+        f'<td style="text-align:right; font-weight:600;">{demand_base:.0f} vph</td></tr>'
+        '</table>'
+        f'<div style="font-weight:600; font-size:11px; color:#444; margin-bottom:2px;">'
+        f'Baseline v/c &nbsp; <span style="font-weight:700;">{vc_base:.3f}</span></div>'
+        f'{_vc_bar_html(vc_base, vc_threshold)}'
+        f'<div style="border-top:1px solid #dee2e6; padding-top:6px; '
+        f'font-size:10px; color:#868e96;">'
+        f'Threshold: {vc_threshold:.2f} &nbsp;|&nbsp; LOS: {los}'
+        f'<br>Select a project to see baseline → projected impact'
+        f'</div>'
+        '</div>'
+    )
+
+
+# ---------------------------------------------------------------------------
 # Demo map project marker popup
 # ---------------------------------------------------------------------------
 
