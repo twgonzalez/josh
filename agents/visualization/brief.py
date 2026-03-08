@@ -1041,7 +1041,9 @@ def _build_methodology(audit: dict, config: dict, city_config: dict) -> str:
   {mob_warning}
   <div style="margin-top:12px; font-size:11px;">
     Full reproducible audit trail (all inputs, intermediates, and outputs):
-    <code style="background:#f1f3f5; padding:2px 6px; border-radius:3px; font-size:10px;">{audit_file}</code>
+    <a href="{audit_file}" style="font-family:monospace; font-size:10px; background:#f1f3f5;
+       padding:2px 6px; border-radius:3px; color:#1a56db; text-decoration:none;"
+       title="Open full audit trail">{audit_file}</a>
   </div>
 </div>"""
 
