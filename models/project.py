@@ -31,7 +31,7 @@ class Project:
 
     # Standard 1 results (size threshold)
     meets_size_threshold: bool = False
-    size_threshold_used: int = 50
+    unit_threshold_used: int = 15
 
     # Standard 2 results (serving evacuation routes)
     serving_route_ids: list = field(default_factory=list)
@@ -44,7 +44,6 @@ class Project:
 
     # Final determination
     determination: str = ""         # "MINISTERIAL" | "CONDITIONAL MINISTERIAL" | "DISCRETIONARY"
-    determination_tier: str = ""    # same value as determination; explicit tier field
     determination_reason: str = ""
 
     def vehicle_generation(self, vehicles_per_unit: float, peak_hour_factor: float) -> float:
@@ -68,5 +67,4 @@ class Project:
             "project_vehicles_peak_hour": round(self.project_vehicles_peak_hour, 1),
             "exceeds_capacity_threshold": self.exceeds_capacity_threshold,
             "determination": self.determination,
-            "determination_tier": self.determination_tier,
         }

@@ -81,8 +81,7 @@ def evaluate_project(
     wildland_result = next(r for r in results if r.scenario_name == "wildland_ab747")
     _update_project_from_wildland(project, wildland_result, config)
 
-    project.determination       = final_tier.value
-    project.determination_tier  = final_tier.value
+    project.determination        = final_tier.value
     project.determination_reason = _build_combined_reason(results, final_tier)
 
     audit = {
@@ -146,7 +145,7 @@ def _update_project_from_wildland(
     # Scale check
     s2 = steps.get("step2_scale", {})
     project.meets_size_threshold = s2.get("result", False)
-    project.size_threshold_used  = s2.get("threshold", config.get("unit_threshold", 50))
+    project.unit_threshold_used  = s2.get("threshold", config.get("unit_threshold", 15))
 
     # Route identification
     s3 = steps.get("step3_routes", {})
@@ -259,15 +258,13 @@ def generate_audit_trail(
         if "note" in s1:
             lines.append(f"  Note: {s1['note']}")
 
-        # Wildland-specific: citywide FHSZ + fire zone modifier
-        if "citywide_fhsz" in s1:
-            cf = s1["citywide_fhsz"]
-            lines.append(f"  Citywide FHSZ: {cf.get('fhsz_polygon_count', 0)} polygon(s) — {cf.get('note', '')}")
+        # Standard 3: FHSZ modifier (surge multiplier applied in Std 4 when flagged)
         if "fire_zone_severity_modifier" in s1:
             fz = s1["fire_zone_severity_modifier"]
+            surge = s1.get("std3_surge_multiplier_active", 1.0)
             lines.append(
-                f"  Fire Zone Severity Modifier: {fz.get('zone_description', 'N/A')} "
-                f"({'IN FIRE ZONE' if fz.get('result') else 'NOT in fire zone'}) — {fz.get('role', '')}"
+                f"  Standard 3 (FHSZ Modifier): {fz.get('zone_description', 'Not in FHSZ')} "
+                f"({'IN FIRE ZONE — surge multiplier ' + str(surge) + '× applied in Std 4' if fz.get('result') else 'not in FHSZ — surge multiplier not applied'})"
             )
 
         # Step 2: Scale Gate

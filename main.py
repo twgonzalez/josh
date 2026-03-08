@@ -599,7 +599,7 @@ def demo(city: str, state: str, projects_file: str, output_name: str):
 def _print_demo_summary(projects: list, config: dict):
     """Print a multi-project comparison table."""
     vc_threshold = config.get("vc_threshold", 0.95)
-    unit_threshold = config.get("unit_threshold", 50)
+    unit_threshold = config.get("unit_threshold", 15)
 
     table = Table(
         title="Demo Project Summary",

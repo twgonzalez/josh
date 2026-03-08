@@ -283,7 +283,7 @@ def check_fire_zone(
         "input_lon":   lon,
         "method":      "GIS point-in-polygon (shapely/geopandas sjoin)",
         "data_source": "CAL FIRE FHSZ",
-        "role":        "Severity modifier — affects required conditions, NOT the DISCRETIONARY gate",
+        "role":        "FHSZ modifier — activates surge multiplier in Standard 4 when flagged",
     }
 
     if fhsz_gdf.empty:
