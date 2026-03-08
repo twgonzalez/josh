@@ -474,7 +474,7 @@ def _build_standards_analysis(tier: str, wildland: dict, local5: dict, config: d
     l5_applicable = l5_tier != "NOT_APPLICABLE"
 
     vc_threshold = config.get("vc_threshold", 0.95)
-    unit_threshold = config.get("unit_threshold", 50)
+    unit_threshold = config.get("unit_threshold", 15)
 
     rows = []
 
@@ -510,10 +510,13 @@ def _build_standards_analysis(tier: str, wildland: dict, local5: dict, config: d
     s2_chip_cls = "chip-pass" if s2_result else "chip-na"
     s2_detail = f"""<div class="detail-block">
       {du} dwelling units proposed &nbsp;&ge;&nbsp; {unit_threshold} unit threshold
-      (source: Gov. Code §65589.4 vehicle-generation floor; city-adopted)
+      (basis: ITE de minimis — {unit_threshold} units &times; 2.5 vpu &times; 0.57 mob =
+      {round(unit_threshold * 2.5 * 0.57, 1)} peak-hour trips, exceeding the ITE Trip Generation
+      Handbook de minimis of 10–15 trips; statutory anchor: SB 330, Gov. Code §65905.5)
     </div>""" if s2_result else f"""<div class="detail-block">
       {du} dwelling units proposed &nbsp;&lt;&nbsp; {unit_threshold} unit threshold —
-      project is below the vehicle-generation floor for measurable evacuation impact.
+      project is below the ITE de minimis for measurable evacuation impact
+      ({unit_threshold} &times; 2.5 &times; 0.57 = {round(unit_threshold * 2.5 * 0.57, 1)} vph).
       Standards 3 and 4 are not evaluated.
     </div>"""
 
@@ -906,7 +909,7 @@ def _build_methodology(audit: dict, config: dict, city_config: dict) -> str:
         ev_date = ev_date.split("T")[0]
 
     vc_t  = config.get("vc_threshold", 0.95)
-    ut    = config.get("unit_threshold", 50)
+    ut    = config.get("unit_threshold", 15)
     vpu   = config.get("vehicles_per_unit", 2.5)
 
     # Mobilization factor — read from city_config (city-specific) or fall back to parameters.yaml
@@ -968,7 +971,8 @@ def _build_methodology(audit: dict, config: dict, city_config: dict) -> str:
       <tr><td>V/C threshold (LOS E/F boundary)</td><td><strong>{vc_t:.2f}</strong></td>
           <td>HCM 2022 — exact LOS E/F boundary</td></tr>
       <tr><td>Unit threshold (project scale gate)</td><td><strong>{ut}</strong></td>
-          <td>Vehicle-generation floor (city-adopted)</td></tr>
+          <td>ITE de minimis ({ut} &times; 2.5 &times; 0.57 = {round(ut * 2.5 * 0.57, 1)} vph);
+              SB 330, Gov. Code §65905.5</td></tr>
       <tr><td>Vehicles per dwelling unit</td><td><strong>{vpu}</strong></td>
           <td>U.S. Census ACS</td></tr>
       <tr><td>Peak-hour mobilization factor</td><td><strong>{mob}</strong></td>
