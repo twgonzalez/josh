@@ -209,6 +209,8 @@ def evaluate(city: str, lat: float, lon: float, units: int,
         sys.exit(1)
 
     console.rule(f"[bold cyan]Evaluating Project in {city}[/bold cyan]")
+    if name:
+        console.print(f"  Project: {name}")
     console.print(f"  Location: {lat}, {lon}")
     console.print(f"  Units: {units}")
 

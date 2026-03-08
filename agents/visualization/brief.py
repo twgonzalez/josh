@@ -52,7 +52,14 @@ def _render_brief(project, audit: dict, config: dict, city_config: dict) -> str:
     lat_str = f"{lat:.4f}".replace(".", "_").replace("-", "n")
     lon_str = f"{lon:.4f}".replace(".", "_").replace("-", "n")
     units = project.dwelling_units
-    case_num = f"JOSH-{datetime.date.today().year}-{lat_str}-{lon_str}"
+    proj_slug = (
+        getattr(project, "project_name", "") or ""
+    ).strip().upper().replace(" ", "-")[:20]
+    case_num = (
+        f"JOSH-{datetime.date.today().year}-{proj_slug}-{lat_str}-{lon_str}"
+        if proj_slug else
+        f"JOSH-{datetime.date.today().year}-{lat_str}-{lon_str}"
+    )
 
     eval_date = audit.get("evaluation_date", str(datetime.date.today()))
     if "T" in eval_date:
