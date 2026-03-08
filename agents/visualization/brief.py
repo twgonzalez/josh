@@ -557,7 +557,7 @@ def _build_standards_analysis(tier: str, wildland: dict, local5: dict, config: d
     fz_result = s1_applicability.get("std3_fhsz_modifier", fz_mod.get("result", False))
     fz_desc   = s1_applicability.get("std3_zone_level", fz_mod.get("zone_description", "Not in FHSZ"))
     fz_level  = fz_mod.get("zone_level", 0)
-    surge_val = s1_applicability.get("std3_surge_multiplier_active", 1.0)
+    mob_factor_val = s1_applicability.get("std3_mob_factor_active", 0.57)
 
     if not s1_result:
         s3_chip = "NOT EVALUATED"
@@ -570,21 +570,21 @@ def _build_standards_analysis(tier: str, wildland: dict, local5: dict, config: d
         s3_badge_color = "#c0392b"
         s3_detail = f"""<div class="detail-block" style="border-left-color:#c0392b;">
           <strong>Project site:</strong> {fz_desc} (source: CAL FIRE OSFM)<br>
-          <strong>Surge multiplier:</strong> {surge_val}&times; applied to baseline demand in Standard 4
-          — models simultaneous mandatory evacuation vs. staggered peak-hour departure
+          <strong>Mobilization factor:</strong> raised from 57% → 100% for Standard 4 calculation
+          (mandatory simultaneous evacuation)
         </div>"""
     else:
         s3_chip = "NOT IN FHSZ"
         s3_chip_cls = "chip-na"
         s3_badge_color = "#6c757d"
         s3_detail = f"""<div class="detail-block">
-          Project site is not within a designated FHSZ zone — surge multiplier not applied
-          (Standard 4 uses baseline demand without adjustment).
+          Project site is not within a designated FHSZ zone — mobilization factor {mob_factor_val:.0%}
+          applies (staggered peak-hour departure; Standard 4 uses baseline demand without adjustment).
         </div>"""
 
     rows.append(_std_row("3", s3_badge_color,
         "FHSZ Modifier",
-        "GIS point-in-polygon — when flagged, activates surge multiplier in Standard 4",
+        "GIS point-in-polygon — when flagged, raises mobilization factor to 100% in Standard 4",
         s3_chip, s3_chip_cls, s3_detail))
 
     # --- Standard 4: Capacity ratio ---
@@ -617,52 +617,47 @@ def _build_standards_analysis(tier: str, wildland: dict, local5: dict, config: d
         display_rows = caused_rows + near_rows
         n_omitted    = len(deduped_details) - len(display_rows)
 
-        # Show three demand columns: normal / evac (×0.57) / evac+surge (×mob_factor)
-        has_surge = any(r.get("surge_multiplier", 1.0) != 1.0 for r in display_rows)
-        surge_header = "<th>Evac+surge v/c</th>" if has_surge else ""
+        # Determine mob factor from top-level step5 dict (set for whole ratio_test call)
+        row_mob = s5.get("mob_factor", 0.57)
+        if row_mob >= 1.0:
+            evac_col_header = "Evac v/c (mob=1.00)"
+            evac_col_note   = "FHSZ mandatory 100% evacuation"
+        else:
+            evac_col_header = f"Evac v/c (mob={row_mob:.2f})"
+            evac_col_note   = "staggered peak-hour departure"
         flagged_table = (
-            "<br><table class='route-table'><thead><tr>"
+            f"<br><div style='font-size:11px;color:#6c757d;margin-bottom:4px'>"
+            f"Baseline v/c uses mobilization factor {row_mob:.2f} ({evac_col_note})</div>"
+            "<table class='route-table'><thead><tr>"
             "<th>Route Name</th>"
-            "<th>Normal v/c</th>"
-            "<th>Evac v/c (×0.57)</th>"
-            f"{surge_header}"
+            f"<th>{evac_col_header}</th>"
             "<th>Project adds</th>"
             "<th>Proposed v/c</th>"
             "<th>Status</th></tr></thead><tbody>"
         )
         for r in display_rows:
-            nm        = r.get("name") or r.get("osmid", "—")
-            cap       = r.get("capacity_vph", 1)
-            nd        = r.get("normal_demand_vph", 0)
-            ed        = r.get("evac_demand_vph", 0)
-            surge_m   = r.get("surge_multiplier", 1.0)
-            normal_vc = nd / cap if cap > 0 else 0
-            evac_vc   = ed / cap if cap > 0 else 0
-            bvc       = r.get("effective_baseline_vc", 0)
-            pvc       = r.get("proposed_vc", 0)
-            adds      = r.get("vehicles_added", 0)
-            causes    = r.get("project_causes_exceedance", False)
-            bfail     = r.get("baseline_exceeds", False)
+            nm     = r.get("name") or r.get("osmid", "—")
+            bvc    = r.get("effective_baseline_vc", 0)
+            pvc    = r.get("proposed_vc", 0)
+            adds   = r.get("vehicles_added", 0)
+            causes = r.get("project_causes_exceedance", False)
+            bfail  = r.get("baseline_exceeds", False)
             if causes:
                 status = "<span style='color:#c0392b;font-weight:700'>⚠ PROJECT CAUSES EXCEEDANCE</span>"
             elif bfail:
                 status = "<span style='color:#868e96'>pre-existing LOS F</span>"
             else:
                 status = "<span style='color:#27ae60'>below threshold</span>"
-            surge_cell = f"<td style='font-weight:600;color:#c0392b'>{bvc:.3f}</td>" if has_surge else ""
             flagged_table += (
                 f"<tr><td>{nm}</td>"
-                f"<td>{normal_vc:.3f}</td>"
-                f"<td>{evac_vc:.3f}</td>"
-                f"{surge_cell}"
+                f"<td style='font-weight:600'>{bvc:.3f}</td>"
                 f"<td style='color:#6f42c1'>+{adds:.0f} vph</td>"
                 f"<td style='font-weight:600'>{pvc:.3f}</td>"
                 f"<td>{status}</td></tr>"
             )
         if n_omitted > 0:
-            ncols = 7 if has_surge else 6
             flagged_table += (
-                f"<tr><td colspan='{ncols}' style='color:#868e96;font-style:italic'>"
+                f"<tr><td colspan='5' style='color:#868e96;font-style:italic'>"
                 f"{n_omitted} additional route segments below threshold — omitted for brevity. "
                 f"See full audit trail.</td></tr>"
             )

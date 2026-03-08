@@ -81,9 +81,9 @@ class LocalDensityScenario(EvacuationScenario):
     def fallback_tier(self) -> Tier:
         return Tier.MINISTERIAL
 
-    def _get_demand_column(self) -> str:
-        """Standard 5 uses normal peak-hour demand, not evacuation demand."""
-        return "normal_demand_vph"
+    def _get_mob_factor(self, project: Project) -> float:
+        """Standard 5 uses normal peak-hour conditions: aadt_peak_hour_factor (0.10)."""
+        return float(self.config.get("aadt_peak_hour_factor", 0.10))
 
     # ------------------------------------------------------------------
     # Step 1: Applicability

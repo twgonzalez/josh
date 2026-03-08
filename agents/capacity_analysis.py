@@ -184,21 +184,25 @@ def calculate_hcm_capacity(
 
 def _apply_baseline_demand(gdf: gpd.GeoDataFrame, config: dict) -> gpd.GeoDataFrame:
     """
-    Calculate baseline_demand_vph and normal_demand_vph for every segment.
+    Calculate catchment_demand_vph, baseline_demand_vph, and normal_demand_vph for every segment.
 
-    Two demand columns are produced:
-      baseline_demand_vph — evacuation-scenario demand (Standard 4)
+    Three demand columns are produced:
+      catchment_demand_vph — raw per-unit demand with NO mobilization factor applied
+        catchment formula: catchment_units × vpu
+        AADT/road-class formula: baseline_demand_vph / peak_hour_mobilization (approximate raw)
+        Used by ratio_test() with scenario-specific mob_factor at test time.
+
+      baseline_demand_vph — evacuation-scenario demand (for vc_ratio map display)
         catchment formula: catchment_units × vpu × peak_hour_mobilization (0.57)
 
-      normal_demand_vph — normal peak-hour demand (Standard 5, non-evacuation)
+      normal_demand_vph — normal peak-hour demand (for display reference)
         catchment formula: catchment_units × vpu × aadt_peak_hour_factor  (0.10)
 
-    The difference is only in Priority 2 (catchment segments): the 0.57 mobilization
-    factor is evacuation-specific; 0.10 is the standard HCM peak-hour conversion,
-    consistent with how AADT-based demand is computed (Priority 1).
-
     Priority 1 (AADT) and Priority 3 (road-class fallback) produce identical values
-    for both columns — AADT already reflects real observed traffic under normal conditions.
+    for baseline_demand_vph and normal_demand_vph — AADT already reflects real observed
+    traffic under normal conditions.  catchment_demand_vph is reconstructed as
+    baseline_demand_vph / mob so that multiplying by mob at test time recovers the
+    AADT-equivalent demand.
 
     Also sets demand_source and aadt_estimated columns.
     """
@@ -210,22 +214,24 @@ def _apply_baseline_demand(gdf: gpd.GeoDataFrame, config: dict) -> gpd.GeoDataFr
 
     has_catchment = "catchment_units" in gdf.columns
 
-    demands        = []   # evacuation demand  → baseline_demand_vph
-    normal_demands = []   # normal peak-hour   → normal_demand_vph
-    sources        = []
-    estimated      = []
+    catchment_demands = []   # raw demand (no mob) → catchment_demand_vph
+    demands           = []   # evacuation demand    → baseline_demand_vph
+    normal_demands    = []   # normal peak-hour     → normal_demand_vph
+    sources           = []
+    estimated         = []
 
     for _, row in gdf.iterrows():
         # Priority 1: Measured AADT — normal traffic; same for both demand columns
         if aadt_col and pd.notna(row.get(aadt_col)):
             d = float(row[aadt_col]) * peak_factor
+            catchment_demands.append(d / mob if mob > 0 else d)  # reconstruct raw
             demands.append(d)
             normal_demands.append(d)
             sources.append("aadt")
             estimated.append(False)
 
         # Priority 2: Catchment-based (evacuation routes with census data)
-        # baseline uses 0.57 evacuation mobilization; normal uses 0.10 peak-hour factor
+        # catchment_demand_vph is raw (no mob); baseline uses 0.57; normal uses 0.10
         elif (
             method == "catchment"
             and row.get("is_evacuation_route", False)
@@ -234,23 +240,26 @@ def _apply_baseline_demand(gdf: gpd.GeoDataFrame, config: dict) -> gpd.GeoDataFr
             and row["catchment_units"] > 0
         ):
             cu = float(row["catchment_units"])
-            demands.append(cu * vpu * mob)                # evac: ×0.57
-            normal_demands.append(cu * vpu * peak_factor) # normal: ×0.10
+            catchment_demands.append(cu * vpu)                    # raw: no mob
+            demands.append(cu * vpu * mob)                        # evac: ×0.57
+            normal_demands.append(cu * vpu * peak_factor)         # normal: ×0.10
             sources.append("catchment_based")
             estimated.append(True)
 
         # Priority 3: Road-class flat rate — same for both demand columns
         else:
             d = _estimate_demand_from_road_class(row["road_type"], row["capacity_vph"])
+            catchment_demands.append(d / mob if mob > 0 else d)  # reconstruct raw
             demands.append(d)
             normal_demands.append(d)
             sources.append("road_class_estimated")
             estimated.append(True)
 
-    gdf["baseline_demand_vph"] = demands
-    gdf["normal_demand_vph"]   = normal_demands
-    gdf["demand_source"]       = sources
-    gdf["aadt_estimated"]      = estimated
+    gdf["catchment_demand_vph"] = catchment_demands
+    gdf["baseline_demand_vph"]  = demands
+    gdf["normal_demand_vph"]    = normal_demands
+    gdf["demand_source"]        = sources
+    gdf["aadt_estimated"]       = estimated
     return gdf
 
 

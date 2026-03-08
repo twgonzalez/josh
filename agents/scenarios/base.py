@@ -229,35 +229,23 @@ class EvacuationScenario(ABC):
             "mobilization_note":          mob_note,
         }
 
-    def _get_surge_multiplier(self, project: Project) -> float:
+    def _get_mob_factor(self, project: Project) -> float:
         """
-        Return the mobilization-ratio multiplier for Standard 4.
+        Return the mobilization factor for Standard 4/5 ratio test.
 
-        Computed as fhsz_mobilization_factor / peak_hour_mobilization when the
-        project is in FHSZ Zone 2/3; otherwise 1.0 (no adjustment).
-
-        Default implementation: always 1.0.
-        WildlandScenario overrides this when project.in_fire_zone is True.
+        Default: peak_hour_mobilization from config (0.57 — staggered peak-hour departure).
+        WildlandScenario overrides this: returns fhsz_mobilization_factor (1.0) when the
+        project is in FHSZ Zone 2/3 (mandatory simultaneous evacuation).
+        LocalDensityScenario overrides this: returns aadt_peak_hour_factor (0.10).
         """
-        return 1.0
-
-    def _get_demand_column(self) -> str:
-        """
-        Return the roads_gdf column to use as baseline demand in ratio_test().
-
-        Default: 'baseline_demand_vph' — evacuation-scenario demand (Standard 4).
-        LocalDensityScenario overrides this to 'normal_demand_vph' — normal
-        peak-hour demand appropriate for Standard 5 (non-evacuation conditions).
-        """
-        return "baseline_demand_vph"
+        return float(self.config.get("peak_hour_mobilization", 0.57))
 
     def ratio_test(
         self,
         route_ids: list,
         project_vph: float,
         roads_gdf: gpd.GeoDataFrame,
-        surge_multiplier: float = 1.0,
-        demand_column: str = "baseline_demand_vph",
+        mob_factor: float = 0.57,
     ) -> tuple[bool, list, dict]:
         """
         Step 5: Does the project's demand cause any serving route to exceed the v/c threshold?
@@ -266,9 +254,10 @@ class EvacuationScenario(ABC):
         threshold crossing:
             effective_baseline_vc < threshold  AND  proposed_vc >= threshold
 
-        When surge_multiplier > 1.0 (FHSZ projects in cities that have adopted a surge factor),
-        baseline demand is scaled before the test to model simultaneous mandatory evacuation
-        demand rather than staggered peak-hour departure.
+        effective_baseline = catchment_demand_vph × mob_factor
+          - Non-FHSZ wildland (mob=0.57): staggered peak-hour departure
+          - FHSZ wildland (mob=1.00):     mandatory simultaneous evacuation
+          - Local density (mob=0.10):     normal peak-hour conditions (Standard 5)
 
         Routes already failing at the effective baseline are recorded in the audit for
         transparency but do NOT trigger DISCRETIONARY. This is consistent with standard CEQA
@@ -299,17 +288,16 @@ class EvacuationScenario(ABC):
         project_caused  = []   # effective baseline < threshold AND proposed >= threshold — flagged
 
         for _, row in serving.iterrows():
-            capacity        = float(row.get("capacity_vph", 0.0))
-            # Read demand from the scenario-specified column (evac or normal)
-            scenario_demand = float(row.get(demand_column, 0.0))
-            # Always read both for display in the brief
-            evac_demand     = float(row.get("baseline_demand_vph", 0.0))
-            normal_demand   = float(row.get("normal_demand_vph", scenario_demand))
+            capacity         = float(row.get("capacity_vph", 0.0))
+            # Raw per-unit demand (no mob baked in); mob_factor applied here at test time
+            catchment_demand = float(row.get("catchment_demand_vph", 0.0))
+            # Keep for audit trail / brief display
+            evac_demand      = float(row.get("baseline_demand_vph", 0.0))
+            normal_demand    = float(row.get("normal_demand_vph", evac_demand))
 
-            # Apply FHSZ mobilization ratio: scales evac baseline to model simultaneous
-            # mandatory evacuation.  For non-FHSZ or Standard 5, surge_multiplier = 1.0
-            # and this has no effect.
-            effective_baseline = scenario_demand * surge_multiplier
+            # Apply mob_factor: converts raw catchment demand to scenario-specific demand
+            # Non-FHSZ ×0.57, FHSZ ×1.00, Standard 5 ×0.10
+            effective_baseline = catchment_demand * mob_factor
             effective_vc       = effective_baseline / capacity if capacity > 0 else 0.0
 
             proposed_demand = effective_baseline + vehicles_per_route
@@ -329,10 +317,11 @@ class EvacuationScenario(ABC):
                 "osmid":                     osmid_str,
                 "name":                      row.get("name", ""),
                 "capacity_vph":              round(capacity, 0),
-                # All three demand columns for brief display
-                "normal_demand_vph":         round(normal_demand, 1),
+                "catchment_demand_vph":      round(catchment_demand, 1),
+                "mob_factor":                mob_factor,
+                # Kept for audit trail reference
                 "evac_demand_vph":           round(evac_demand, 1),
-                "surge_multiplier":          surge_multiplier,
+                "normal_demand_vph":         round(normal_demand, 1),
                 "effective_baseline_demand": round(effective_baseline, 1),
                 "effective_baseline_vc":     round(effective_vc, 4),
                 "baseline_exceeds":          baseline_exceeds,
@@ -348,7 +337,7 @@ class EvacuationScenario(ABC):
 
         detail = {
             "vc_threshold":                vc_threshold,
-            "surge_multiplier":            surge_multiplier,
+            "mob_factor":                  mob_factor,
             "project_vehicles_peak_hour":  round(project_vph, 1),
             "vehicles_per_route":          round(vehicles_per_route, 1),
             "serving_routes_evaluated":    len(serving),
@@ -423,11 +412,9 @@ class EvacuationScenario(ABC):
         steps["step4_demand"] = step4
 
         # ── Step 5: Capacity Ratio Test ────────────────────────────────
-        surge        = self._get_surge_multiplier(project)
-        demand_col   = self._get_demand_column()
+        mob_factor = self._get_mob_factor(project)
         triggered, flagged_ids, step5 = self.ratio_test(
-            route_ids, project_vph, roads_gdf,
-            surge_multiplier=surge, demand_column=demand_col,
+            route_ids, project_vph, roads_gdf, mob_factor=mob_factor,
         )
         steps["step5_ratio_test"] = step5
 
