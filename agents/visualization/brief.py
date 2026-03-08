@@ -421,6 +421,9 @@ def _build_header(city_name: str, case_num: str, eval_date: str, project) -> str
       <div style="font-size:20px; font-weight:800; color:#fff; line-height:1.2;">
         {proj_line}
       </div>
+      <div style="font-size:15px; font-weight:700; color:#c8dff0; margin-top:6px; letter-spacing:0.3px;">
+        {units} dwelling unit{"s" if units != 1 else ""}
+      </div>
     </div>
   </div>
 </header>"""
@@ -494,13 +497,13 @@ def _build_standards_analysis(tier: str, wildland: dict, local5: dict, config: d
     s1_chip_cls = "chip-scope" if s1_result else "chip-na"
     s1_detail = f"""<div class="detail-block">
       {du} dwelling units proposed &nbsp;&ge;&nbsp; {unit_threshold} unit threshold
-      (basis: ITE de minimis — {unit_threshold} units &times; 2.5 vpu &times; 0.57 mob =
+      (basis: ITE de minimis — {unit_threshold} units &times; 2.5 vpu &times; 57% peak-hour departure =
       {round(unit_threshold * 2.5 * 0.57, 1)} peak-hour trips, exceeding the ITE Trip Generation
       Handbook de minimis of 10–15 trips; statutory anchor: SB 330, Gov. Code §65905.5)
     </div>""" if s1_result else f"""<div class="detail-block">
       {du} dwelling units proposed &nbsp;&lt;&nbsp; {unit_threshold} unit threshold —
       project is below the ITE de minimis for measurable evacuation impact
-      ({unit_threshold} &times; 2.5 &times; 0.57 = {round(unit_threshold * 2.5 * 0.57, 1)} vph).
+      ({unit_threshold} &times; 2.5 &times; 57% = {round(unit_threshold * 2.5 * 0.57, 1)} vph).
       Standards 2–5 are not evaluated.
     </div>"""
 
@@ -570,22 +573,24 @@ def _build_standards_analysis(tier: str, wildland: dict, local5: dict, config: d
         s3_badge_color = "#c0392b"
         s3_detail = f"""<div class="detail-block" style="border-left-color:#c0392b;">
           <strong>Project site:</strong> {fz_desc} (source: CAL FIRE OSFM)<br>
-          <strong>Project demand:</strong> 100% mobilization factor applied — wildfire forces
-          mandatory simultaneous evacuation; fire conditions may restrict egress to a single
-          direction. Baseline road demand unchanged (57% mobilization).
+          <strong>Fire hazard zone:</strong> Project is within a mapped fire hazard severity zone.
+          The analysis assumes all residents depart simultaneously — wildfire conditions require
+          immediate, coordinated evacuation and may restrict egress to a single direction.
+          Existing road demand is modeled at normal staggered departure rates.
         </div>"""
     else:
         s3_chip = "NOT IN FHSZ"
         s3_chip_cls = "chip-na"
         s3_badge_color = "#6c757d"
         s3_detail = f"""<div class="detail-block">
-          Project site is not within a designated FHSZ zone — standard {mob_factor_val:.0%}
-          mobilization applies to both project demand and baseline road demand.
+          Project site is not within a designated fire hazard severity zone — residents are
+          assumed to depart at staggered times consistent with normal peak-hour traffic (57%
+          of households in any given hour).
         </div>"""
 
     rows.append(_std_row("3", s3_badge_color,
         "FHSZ Modifier",
-        "GIS point-in-polygon — when flagged, project vehicles use 100% mobilization in Standard 4",
+        "GIS point-in-polygon — when flagged, project vehicles are modeled at simultaneous departure",
         s3_chip, s3_chip_cls, s3_detail))
 
     # --- Standard 4: Capacity ratio ---
@@ -618,21 +623,20 @@ def _build_standards_analysis(tier: str, wildland: dict, local5: dict, config: d
         display_rows = caused_rows + near_rows
         n_omitted    = len(deduped_details) - len(display_rows)
 
-        # Baseline always uses 0.57 mob (ratio_test mob_factor); FHSZ elevates project demand only
+        # Baseline always uses 0.57 departure rate; FHSZ elevates project demand only
         row_mob = s5.get("mob_factor", 0.57)
-        evac_col_header = f"Baseline v/c (mob={row_mob:.2f})"
-        evac_col_note   = "staggered departure"
-        # Check if FHSZ mob was applied to project demand (step4 field)
+        evac_col_header = "Current load (v/c)"
+        # Check if FHSZ departure rate was applied to project demand (step4 field)
         s4_demand   = w_steps.get("step4_demand", {})
         fhsz_applied = s4_demand.get("fhsz_mob_applied", False)
         fhsz_note_row = (
             " &nbsp;|&nbsp; <span style='color:#c0392b;font-weight:600'>"
-            "FHSZ: project vehicles use 100% mob (mandatory simultaneous evacuation)</span>"
+            "FHSZ: project vehicles modeled at 100% simultaneous departure</span>"
             if fhsz_applied else ""
         )
         flagged_table = (
             f"<br><div style='font-size:11px;color:#6c757d;margin-bottom:4px'>"
-            f"Baseline v/c uses {row_mob:.2f} mobilization ({evac_col_note}){fhsz_note_row}</div>"
+            f"Existing road load assumes 57% staggered departure (normal peak-hour){fhsz_note_row}</div>"
             "<table class='route-table'><thead><tr>"
             "<th>Route Name</th>"
             f"<th>{evac_col_header}</th>"
@@ -682,7 +686,7 @@ def _build_standards_analysis(tier: str, wildland: dict, local5: dict, config: d
 
     rows.append(_std_row("4", "#c0392b" if s4_triggered else ("#6c757d" if not s1_result else "#27ae60"),
         "Capacity Ratio Test (Marginal Causation)",
-        f"baseline_vc < {vc_threshold} AND proposed_vc ≥ {vc_threshold} — project must cause the LOS E/F crossing",
+        f"Does this project push any route above the v/c {vc_threshold} gridlock threshold?",
         s4_chip, s4_chip_cls, s4_detail))
 
     # --- Standard 5: Local density ---
@@ -799,7 +803,9 @@ def _std_row(num: str, badge_color: str, title: str, subtitle: str,
 def _build_determination_box(tier: str, determination: dict,
                               wildland: dict, local5: dict) -> str:
     tc = _TIER_CSS_COLOR.get(tier, "#555")
-    reason = determination.get("reason", "")
+    reason = (determination.get("reason", "")
+              .replace("100% mobilization", "100% simultaneous departure")
+              .replace("mobilization", "departure rate"))
 
     # Collect legal basis from all triggered scenarios
     bases = []
@@ -981,21 +987,21 @@ def _build_methodology(audit: dict, config: dict, city_config: dict) -> str:
     else:
         _warning_text = {
             "comparable_city":
-                "Mobilization factor transferred from a comparable city. "
+                "Peak-hour departure rate transferred from a comparable city. "
                 "A local empirical study is recommended before impact fee adoption.",
             "state_guidance":
-                "Mobilization factor derived from OPR/CAL OES state guidance range. "
+                "Peak-hour departure rate derived from OPR/CAL OES state guidance range. "
                 "A local empirical study is recommended before impact fee adoption.",
             "conservative_default":
-                "No city-specific mobilization study is on file. "
+                "No city-specific departure rate study is on file. "
                 "A conservative default has been applied intentionally. "
                 "Commission a local AB 747 PeMS study before adopting impact fees. "
                 "See docs/city_onboarding.md for options.",
-        }.get(mob_source_type, "Mobilization factor source requires documentation.")
+        }.get(mob_source_type, "Peak-hour departure rate source requires documentation.")
         mob_warning = f"""<div style="margin-top:12px; padding:10px 14px;
             background:#fff8e1; border-left:4px solid #f59e0b; border-radius:0 6px 6px 0;
             font-size:11px; color:#78350f;">
-          <strong>⚠ Mobilization Factor Assumption:</strong> {_warning_text}
+          <strong>⚠ Departure Rate Assumption:</strong> {_warning_text}
         </div>"""
         mob_source_td = mob_label + (f" — {mob_citation}" if mob_citation else "")
 
@@ -1019,11 +1025,11 @@ def _build_methodology(audit: dict, config: dict, city_config: dict) -> str:
       <tr><td>V/C threshold (LOS E/F boundary)</td><td><strong>{vc_t:.2f}</strong></td>
           <td>HCM 2022 — exact LOS E/F boundary</td></tr>
       <tr><td>Unit threshold (project scale gate)</td><td><strong>{ut}</strong></td>
-          <td>ITE de minimis ({ut} &times; 2.5 &times; 0.57 = {round(ut * 2.5 * 0.57, 1)} vph);
+          <td>ITE de minimis ({ut} &times; 2.5 &times; 57% = {round(ut * 2.5 * 0.57, 1)} vph);
               SB 330, Gov. Code §65905.5</td></tr>
       <tr><td>Vehicles per dwelling unit</td><td><strong>{vpu}</strong></td>
           <td>U.S. Census ACS</td></tr>
-      <tr><td>Peak-hour mobilization factor</td><td><strong>{mob}</strong></td>
+      <tr><td>Peak-hour departure rate</td><td><strong>{mob:.0%}</strong></td>
           <td>{mob_source_td}</td></tr>
       {mob_note_html}
       <tr><td>Evacuation route radius</td><td><strong>0.5 mi</strong></td>
