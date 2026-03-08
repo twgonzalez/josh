@@ -570,21 +570,22 @@ def _build_standards_analysis(tier: str, wildland: dict, local5: dict, config: d
         s3_badge_color = "#c0392b"
         s3_detail = f"""<div class="detail-block" style="border-left-color:#c0392b;">
           <strong>Project site:</strong> {fz_desc} (source: CAL FIRE OSFM)<br>
-          <strong>Mobilization factor:</strong> raised from 57% → 100% for Standard 4 calculation
-          (mandatory simultaneous evacuation)
+          <strong>Project demand:</strong> 100% mobilization factor applied — wildfire forces
+          mandatory simultaneous evacuation; fire conditions may restrict egress to a single
+          direction. Baseline road demand unchanged (57% mobilization).
         </div>"""
     else:
         s3_chip = "NOT IN FHSZ"
         s3_chip_cls = "chip-na"
         s3_badge_color = "#6c757d"
         s3_detail = f"""<div class="detail-block">
-          Project site is not within a designated FHSZ zone — mobilization factor {mob_factor_val:.0%}
-          applies (staggered peak-hour departure; Standard 4 uses baseline demand without adjustment).
+          Project site is not within a designated FHSZ zone — standard {mob_factor_val:.0%}
+          mobilization applies to both project demand and baseline road demand.
         </div>"""
 
     rows.append(_std_row("3", s3_badge_color,
         "FHSZ Modifier",
-        "GIS point-in-polygon — when flagged, raises mobilization factor to 100% in Standard 4",
+        "GIS point-in-polygon — when flagged, project vehicles use 100% mobilization in Standard 4",
         s3_chip, s3_chip_cls, s3_detail))
 
     # --- Standard 4: Capacity ratio ---
@@ -617,17 +618,21 @@ def _build_standards_analysis(tier: str, wildland: dict, local5: dict, config: d
         display_rows = caused_rows + near_rows
         n_omitted    = len(deduped_details) - len(display_rows)
 
-        # Determine mob factor from top-level step5 dict (set for whole ratio_test call)
+        # Baseline always uses 0.57 mob (ratio_test mob_factor); FHSZ elevates project demand only
         row_mob = s5.get("mob_factor", 0.57)
-        if row_mob >= 1.0:
-            evac_col_header = "Evac v/c (mob=1.00)"
-            evac_col_note   = "FHSZ mandatory 100% evacuation"
-        else:
-            evac_col_header = f"Evac v/c (mob={row_mob:.2f})"
-            evac_col_note   = "staggered peak-hour departure"
+        evac_col_header = f"Baseline v/c (mob={row_mob:.2f})"
+        evac_col_note   = "staggered departure"
+        # Check if FHSZ mob was applied to project demand (step4 field)
+        s4_demand   = w_steps.get("step4_demand", {})
+        fhsz_applied = s4_demand.get("fhsz_mob_applied", False)
+        fhsz_note_row = (
+            " &nbsp;|&nbsp; <span style='color:#c0392b;font-weight:600'>"
+            "FHSZ: project vehicles use 100% mob (mandatory simultaneous evacuation)</span>"
+            if fhsz_applied else ""
+        )
         flagged_table = (
             f"<br><div style='font-size:11px;color:#6c757d;margin-bottom:4px'>"
-            f"Baseline v/c uses mobilization factor {row_mob:.2f} ({evac_col_note})</div>"
+            f"Baseline v/c uses {row_mob:.2f} mobilization ({evac_col_note}){fhsz_note_row}</div>"
             "<table class='route-table'><thead><tr>"
             "<th>Route Name</th>"
             f"<th>{evac_col_header}</th>"

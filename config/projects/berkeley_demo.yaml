@@ -70,7 +70,7 @@ projects:
     expected_tier: "CONDITIONAL MINISTERIAL"
 
   # -----------------------------------------------------------
-  # 3 — Hills gateway: in FHSZ Zone 3, arterials have headroom → CONDITIONAL
+  # 3 — Hills gateway: in FHSZ Zone 3 → project vehicles use 100% mob → DISCRETIONARY
   # -----------------------------------------------------------
   - name: "Hills Gateway"
     address: "Claremont Ave & Tunnel Rd"
@@ -78,16 +78,17 @@ projects:
     lon: -122.2494
     units: 80
     description: >
-      80-unit project near the Berkeley Hills in FHSZ Zone 3.  Fire zone is
-      recorded as a severity modifier in the audit trail (not a tier gate).
-      Serving evacuation routes within 0.5 miles have catchment-based demand
-      below the v/c 0.95 threshold, so Standard 4 is NOT triggered →
-      CONDITIONAL MINISTERIAL with fire zone conditions.
-    expected_tier: "CONDITIONAL MINISTERIAL"
+      80-unit project near the Berkeley Hills in FHSZ Zone 3. Standard 3 flags
+      the FHSZ site: project vehicles use 100% mobilization factor (mandatory
+      simultaneous evacuation). This elevates project demand from 114 vph (×0.57)
+      to 200 vph (×1.00), which is enough to push multiple serving routes over
+      the v/c 0.95 threshold → DISCRETIONARY. Baseline road demand stays at 0.57
+      so the marginal causation test can fire.
+    expected_tier: "DISCRETIONARY"
 
   # -----------------------------------------------------------
   # 4 — Small hills infill IN FHSZ: size gate overrides fire zone → MINISTERIAL
-  #     Same location as Project 3 (Hills Gateway, 80 units → CONDITIONAL).
+  #     Same location as Project 3 (Hills Gateway, 80 units → DISCRETIONARY).
   #     Paired comparison proves FHSZ location alone cannot trigger discretionary.
   # -----------------------------------------------------------
   - name: "Hills FHSZ Small Infill"
@@ -97,7 +98,7 @@ projects:
     units: 10
     description: >
       10-unit project in the Berkeley Hills FHSZ Zone 3 area — same location
-      as Hills Gateway (Project 3, 80 units → CONDITIONAL MINISTERIAL).
+      as Hills Gateway (Project 3, 80 units → DISCRETIONARY).
       Despite the fire zone, Standard 1 (size gate) is NOT triggered: 10 < 15.
       The wildland scenario short-circuits at Step 2 and returns MINISTERIAL.
       FHSZ designation is a severity modifier, not an independent trigger.
@@ -118,8 +119,10 @@ projects:
       (narrow two-lane, cap 1,125 vph) carries evacuation demand at v/c 0.94
       at baseline; 107 peak-hour project vehicles push it to 1.03, crossing
       the 0.95 LOS E/F threshold.  Standard 4 triggered → DISCRETIONARY.
-      Contrast with Hills Gateway (Project 3, same hills, in FHSZ, CONDITIONAL):
-      fire zone elevates conditions but capacity impact alone drives the tier.
+      Contrast with Hills Gateway (Project 3, same hills, in FHSZ, DISCRETIONARY):
+      both projects trigger DISCRETIONARY, but via different mechanisms — Hills
+      Gateway via elevated FHSZ project demand (100% mob), Claremont via road
+      bottleneck alone (57% mob).
     expected_tier: "DISCRETIONARY"
 
   # -----------------------------------------------------------
