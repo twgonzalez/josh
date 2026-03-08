@@ -195,20 +195,27 @@ def _build_demo_project_popup(
     reason_short = (project.determination_reason or "").split(".")[0] + "."
 
     # ── §1 Scope icons (Stds 1–3) ─────────────────────────────────────────
-    # Std 1: city has FHSZ — always true when wildland analysis ran
-    s1_icon, s1_clr = "✓", "#1a56db"
-    # Std 2: size gate
-    s2_icon = "✓" if met_size else "✗"
-    s2_clr  = "#1a56db" if met_size else "#adb5bd"
-    s2_text = f"{project.dwelling_units} of {unit_threshold} units"
-    # Std 3: serving routes (gated on size threshold)
+    # Std 1: project size gate
+    s1_icon = "✓" if met_size else "✗"
+    s1_clr  = "#1a56db" if met_size else "#adb5bd"
+    s1_text = f"{project.dwelling_units} of {unit_threshold} units"
+    # Std 2: serving evacuation routes (gated on size threshold)
+    if not met_size:
+        s2_icon, s2_clr, s2_text = "—", "#adb5bd", "not evaluated"
+    elif n_srv > 0:
+        s2_icon, s2_clr = "✓", "#1a56db"
+        s2_text = f"{n_srv} routes · {radius_mi} mi"
+    else:
+        s2_icon, s2_clr, s2_text = "✗", "#adb5bd", "no routes found"
+    # Std 3: FHSZ modifier (activates surge in Std 4 when flagged)
+    in_fhsz = project.in_fire_zone
     if not met_size:
         s3_icon, s3_clr, s3_text = "—", "#adb5bd", "not evaluated"
-    elif n_srv > 0:
-        s3_icon, s3_clr = "✓", "#1a56db"
-        s3_text = f"{n_srv} routes · {radius_mi} mi"
+    elif in_fhsz:
+        s3_icon, s3_clr = "✓", "#c0392b"
+        s3_text = f"{in_zone} — surge active"
     else:
-        s3_icon, s3_clr, s3_text = "✗", "#adb5bd", "no routes found"
+        s3_icon, s3_clr, s3_text = "—", "#adb5bd", "Not in FHSZ"
 
     _SL = (
         "font-size:9px;font-weight:700;letter-spacing:1.2px;"
@@ -270,7 +277,7 @@ def _build_demo_project_popup(
         )
 
     scope_html = (
-        _scope_row(s1_icon, s1_clr, "FHSZ city")
+        _scope_row(s1_icon, s1_clr, s1_text)
         + _scope_row(s2_icon, s2_clr, s2_text)
         + _scope_row(s3_icon, s3_clr, s3_text)
     )
@@ -279,7 +286,7 @@ def _build_demo_project_popup(
         f'<div style="margin-bottom:7px;">'
         f'<div style="display:flex;justify-content:space-between;align-items:center;">'
         f'<span style="font-size:11px;color:#343a40;font-weight:600;">'
-        f'Std 4 &middot; Wildland Evac</span>'
+        f'Std 4 &middot; Evac Capacity</span>'
         + _cap_chip(*s4)
         + f'</div>'
         + (_route_line(worst_wildland_route) if project.exceeds_capacity_threshold else "")
@@ -290,7 +297,7 @@ def _build_demo_project_popup(
         f'<div>'
         f'<div style="display:flex;justify-content:space-between;align-items:center;">'
         f'<span style="font-size:11px;color:#343a40;font-weight:600;">'
-        f'Std 5 &middot; Local Density</span>'
+        f'Std 5 &middot; Local Capacity</span>'
         + _cap_chip(*s5)
         + f'</div>'
         + (_route_line(worst_local_route) if ld_triggered else "")

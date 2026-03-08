@@ -3,18 +3,25 @@ Scenario A: Wildland Evacuation Capacity (Standards 1–4)
 
 Legal basis: AB 747 (California Government Code §65302.15) and HCM 2022.
 
-This scenario evaluates whether a proposed project adds vehicles to citywide
-evacuation routes that serve FHSZ Zone 2 or 3 areas, and whether those routes
-operate at or above LOS E/F (v/c ≥ 0.95) under the maximum evacuation demand scenario.
+This scenario evaluates whether a proposed project adds vehicles to evacuation routes
+and whether those routes operate at or above LOS E/F (v/c ≥ 0.95) under the maximum
+evacuation demand scenario.
+
+Standard numbering (new order):
+  Standard 1 — Project Size:        units >= threshold (scale gate)
+  Standard 2 — Evac Routes Served:  network buffer identifies serving routes
+  Standard 3 — FHSZ Modifier:       GIS point-in-polygon; when flagged, activates
+                                     city-configured surge multiplier for Standard 4
+  Standard 4 — Evac Capacity Test:  marginal causation v/c ratio test
+                                     (baseline × surge_multiplier + project_vph vs capacity)
 
 Three-tier output:
-  DISCRETIONARY          — size threshold met AND capacity exceeded on any serving route
-  CONDITIONAL MINISTERIAL — city has FHSZ zones AND size threshold met (capacity OK)
-  MINISTERIAL            — city has no FHSZ zones OR below size threshold
+  DISCRETIONARY           — size threshold met AND Standard 4 capacity exceeded
+  CONDITIONAL MINISTERIAL — size threshold met AND capacity OK (any city, with or without FHSZ)
+  MINISTERIAL             — below size threshold
 
-Fire zone severity modifier: whether the project site itself is in FHSZ Zone 2/3 is
-recorded in the audit trail and affects required mitigation conditions, but does NOT
-gate the DISCRETIONARY determination. Capacity impact alone triggers DISCRETIONARY.
+Framework applies universally — citywide FHSZ gate removed. Standard 3 is an informational
+modifier that activates the surge multiplier; it does not gate the determination.
 """
 import logging
 
@@ -35,8 +42,10 @@ _LEGAL_BASIS = (
 
 class WildlandScenario(EvacuationScenario):
     """
-    Evaluates citywide wildland evacuation capacity impact (Standards 1–4).
+    Evaluates wildland evacuation capacity impact (Standards 1–4).
 
+    Standard 1 (size) gates the analysis. Standard 3 (FHSZ modifier) activates
+    the surge multiplier for Standard 4 when the project is within FHSZ Zone 2/3.
     Scenario parameters are read from config["determination_tiers"]["discretionary"].
     """
 
@@ -75,19 +84,21 @@ class WildlandScenario(EvacuationScenario):
 
     def check_applicability(self, project: Project, context: dict) -> tuple[bool, dict]:
         """
-        Standard 1 (Citywide Applicability): Does the city contain FHSZ Zone 2 or 3?
+        Standard 3 (FHSZ Modifier): Is the project site within FHSZ Zone 2 or 3?
 
-        Also evaluates the Fire Zone Severity Modifier: is the project site itself in
-        FHSZ Zone 2/3? This is recorded as context in the audit trail — it does NOT
-        gate the DISCRETIONARY determination (capacity impact alone does that), but it
-        affects the required mitigation conditions.
+        This scenario is always applicable — the citywide FHSZ gate has been removed.
+        Evacuation capacity matters for all natural disasters, not only wildfire. The
+        point-in-polygon test records the FHSZ modifier for the project site:
 
-        Method: Non-empty GeoDataFrame check + point-in-polygon test.
+          Standard 3 flagged (in FHSZ):     city-configured surge multiplier activates
+                                             for Standard 4 ratio test.
+          Standard 3 not flagged (no FHSZ): surge_multiplier = 1.0 (no effect on Std 4).
+
+        Method: GIS point-in-polygon test. Always returns True (applicable).
         Discretion: Zero.
         """
         fhsz_gdf = context.get("fhsz_gdf", gpd.GeoDataFrame())
 
-        citywide_result, citywide_detail = check_citywide_fhsz(fhsz_gdf)
         fire_zone_result, fire_zone_detail = check_fire_zone(
             (project.location_lat, project.location_lon), fhsz_gdf
         )
@@ -96,15 +107,21 @@ class WildlandScenario(EvacuationScenario):
         project.in_fire_zone    = fire_zone_result
         project.fire_zone_level = fire_zone_detail.get("zone_level", 0)
 
-        return citywide_result, {
-            "result":                   citywide_result,
-            "method":                   "Citywide: non-empty FHSZ GeoDataFrame check; Site: point-in-polygon",
-            "citywide_fhsz":            citywide_detail,
+        # Surge multiplier activated by Standard 3 flag; used in Standard 4 ratio test
+        surge = float(self.config.get("fhsz_surge_multiplier", 1.0)) if fire_zone_result else 1.0
+
+        return True, {
+            "result":                      True,
+            "method":                      "Always applicable; site FHSZ check via GIS point-in-polygon",
+            "std3_fhsz_modifier":          fire_zone_result,
+            "std3_zone_level":             fire_zone_detail.get("zone_description", "Not in FHSZ"),
+            "std3_surge_multiplier_active": surge,
             "fire_zone_severity_modifier": fire_zone_detail,
             "note": (
-                "City contains FHSZ zones — three-tier wildland framework applies citywide."
-                if citywide_result else
-                "City has no FHSZ zones — wildland scenario not applicable; project is MINISTERIAL."
+                f"Standard 3 flagged: project in FHSZ Zone {project.fire_zone_level} — "
+                f"surge multiplier {surge}× will be applied in Standard 4."
+                if fire_zone_result else
+                "Standard 3: project not in FHSZ — surge multiplier not applied (1.0×)."
             ),
         }
 
@@ -119,7 +136,7 @@ class WildlandScenario(EvacuationScenario):
         context: dict,
     ) -> tuple[list, dict]:
         """
-        Standard 3: Which evacuation routes serve this project?
+        Standard 2 (Evac Routes Served): Which evacuation routes serve this project?
 
         Method: Buffer project location by evacuation_route_radius_miles, intersect
         with road segments flagged is_evacuation_route == True.
@@ -172,22 +189,39 @@ class WildlandScenario(EvacuationScenario):
         return serving_ids, detail
 
     # ------------------------------------------------------------------
+    # FHSZ surge multiplier — applied when project is in fire zone
+    # ------------------------------------------------------------------
+
+    def _get_surge_multiplier(self, project: Project) -> float:
+        """
+        Return the city-adopted FHSZ evacuation surge multiplier.
+
+        Only applied when the project site is within FHSZ Zone 2 or 3.
+        Value is read from config (merged parameters.yaml + city overrides).
+        Default 1.0 if city has not adopted a multiplier.
+        """
+        if not project.in_fire_zone:
+            return 1.0
+        return float(self.config.get("fhsz_surge_multiplier", 1.0))
+
+    # ------------------------------------------------------------------
     # Override reason builders to include fire zone context
     # ------------------------------------------------------------------
 
     def _reason_discretionary(self, project: Project, step5: dict) -> str:
         n_flagged = len(step5.get("flagged_route_ids", []))
+        surge = float(self.config.get("fhsz_surge_multiplier", 1.0))
         fire_note = (
-            f"Project is in FHSZ Zone {project.fire_zone_level} "
-            "(fire zone is a severity modifier — affects required mitigation conditions). "
+            f"Standard 3 flagged: project is in FHSZ Zone {project.fire_zone_level} — "
+            f"surge multiplier {surge}× applied in Standard 4. "
             if project.in_fire_zone else
-            "Project is not within a designated FHSZ zone "
-            "(capacity impact alone triggers DISCRETIONARY — fire zone is not a gate). "
+            "Standard 3: project is not within a designated FHSZ zone — "
+            "surge multiplier not applied; capacity impact alone triggers DISCRETIONARY. "
         )
         return (
-            f"Project meets the {self.unit_threshold}-unit size threshold and "
+            f"Project meets the {self.unit_threshold}-unit size threshold (Standard 1) and "
             f"{n_flagged} serving evacuation route(s) exceed the v/c threshold of "
-            f"{self.vc_threshold:.2f} under the citywide evacuation demand scenario. "
+            f"{self.vc_threshold:.2f} under the Standard 4 evacuation capacity test. "
             f"{fire_note}"
             f"Discretionary review required. Legal basis: {self.legal_basis}."
         )
@@ -201,13 +235,21 @@ class WildlandScenario(EvacuationScenario):
         )
         route_note = (
             f"has {n_routes} serving evacuation route segment(s) within "
-            f"{self.config.get('evacuation_route_radius_miles', 0.5)} miles"
+            f"{self.config.get('evacuation_route_radius_miles', 0.5)} miles (Standard 2)"
             if n_routes > 0 else
-            "has no serving routes within the search radius but adds vehicles to the citywide network"
+            "has no serving routes within the search radius but adds vehicles to the evacuation network"
+        )
+        surge = float(self.config.get("fhsz_surge_multiplier", 1.0))
+        fhsz_note = (
+            f"Standard 3 flagged: FHSZ Zone {project.fire_zone_level} — "
+            f"surge multiplier {surge}× applied in Standard 4 evaluation. "
+            if project.in_fire_zone else
+            "Standard 3: not in FHSZ — surge multiplier not applied. "
         )
         return (
-            f"City contains FHSZ zones. Project meets the {self.unit_threshold}-unit "
-            f"size threshold and {route_note}. "
+            f"Project meets the {self.unit_threshold}-unit size threshold (Standard 1) and "
+            f"{route_note}. "
+            f"{fhsz_note}"
             f"V/C threshold ({self.vc_threshold:.2f}) not exceeded (Standard 4 not triggered). "
             f"Ministerial approval eligible with mandatory evacuation conditions. "
             f"Legal basis: {cond_legal}."
@@ -218,40 +260,15 @@ class WildlandScenario(EvacuationScenario):
 # Helper functions (module-level — reusable and independently testable)
 # ---------------------------------------------------------------------------
 
-def check_citywide_fhsz(fhsz_gdf: gpd.GeoDataFrame) -> tuple[bool, dict]:
-    """
-    Standard 1 (Citywide Applicability): Does this city have any FHSZ Zone 2 or 3?
-
-    Method: Non-empty GeoDataFrame check.
-    Discretion: Zero — presence/absence of data.
-    """
-    has_fhsz   = not fhsz_gdf.empty
-    zone_count = len(fhsz_gdf) if has_fhsz else 0
-
-    return has_fhsz, {
-        "result":              has_fhsz,
-        "fhsz_polygon_count":  zone_count,
-        "method":              "Non-empty check on city-intersected FHSZ GeoDataFrame",
-        "data_source":         "CAL FIRE FHSZ (OSFM ArcGIS REST API)",
-        "triggers_standard":   has_fhsz,
-        "note": (
-            "City contains FHSZ zones — three-tier framework applies citywide."
-            if has_fhsz else
-            "City has no FHSZ zones — framework not applicable; all projects are MINISTERIAL."
-        ),
-    }
-
-
 def check_fire_zone(
     location: tuple[float, float],
     fhsz_gdf: gpd.GeoDataFrame,
 ) -> tuple[bool, dict]:
     """
-    Fire Zone Severity Modifier: Is the project site in FHSZ Zone 2 or 3?
+    Standard 3 (FHSZ Modifier): Is the project site in FHSZ Zone 2 or 3?
 
-    Role: Severity modifier recorded in the audit trail. Does NOT gate the
-    DISCRETIONARY determination (capacity impact alone does that).
-    When True, it affects required mitigation conditions.
+    When True, activates the city-configured surge multiplier for Standard 4.
+    Does NOT gate the DISCRETIONARY determination — capacity impact (Standard 4) does.
 
     Method: GIS point-in-polygon test.
     Discretion: Zero — binary spatial result.

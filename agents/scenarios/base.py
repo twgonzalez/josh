@@ -229,25 +229,38 @@ class EvacuationScenario(ABC):
             "mobilization_note":          mob_note,
         }
 
+    def _get_surge_multiplier(self, project: Project) -> float:
+        """
+        Return the FHSZ evacuation surge multiplier for this project.
+
+        Default implementation: always 1.0 (no adjustment).
+        WildlandScenario overrides this to apply the city-configured multiplier
+        when the project site is within FHSZ Zone 2 or 3.
+        """
+        return 1.0
+
     def ratio_test(
         self,
         route_ids: list,
         project_vph: float,
         roads_gdf: gpd.GeoDataFrame,
+        surge_multiplier: float = 1.0,
     ) -> tuple[bool, list, dict]:
         """
         Step 5: Does the project's demand cause any serving route to exceed the v/c threshold?
 
         Marginal causation test — a route is flagged only when the project itself causes the
         threshold crossing:
-            baseline_vc < threshold  AND  proposed_vc >= threshold
+            effective_baseline_vc < threshold  AND  proposed_vc >= threshold
 
-        Routes already failing at baseline are recorded in the audit for transparency but do NOT
-        trigger DISCRETIONARY — the project did not cause that failure. This is consistent with
-        standard CEQA significance methodology and prevents the standard from functioning as a
-        categorical prohibition on infill near pre-existing congestion.
+        When surge_multiplier > 1.0 (FHSZ projects in cities that have adopted a surge factor),
+        baseline demand is scaled before the test to model simultaneous mandatory evacuation
+        demand rather than staggered peak-hour departure.
 
-        Project vehicles are distributed equally across all serving routes.
+        Routes already failing at the effective baseline are recorded in the audit for
+        transparency but do NOT trigger DISCRETIONARY. This is consistent with standard CEQA
+        significance methodology and prevents the standard from functioning as a categorical
+        prohibition on infill near pre-existing congestion.
 
         Returns:
             (triggered: bool, flagged_ids: list, detail: dict)
@@ -269,18 +282,23 @@ class EvacuationScenario(ABC):
         ].copy()
 
         route_results   = []
-        already_failing = []   # baseline >= threshold — recorded but NOT a trigger
-        project_caused  = []   # baseline < threshold AND proposed >= threshold — flagged
+        already_failing = []   # effective baseline >= threshold — recorded but NOT a trigger
+        project_caused  = []   # effective baseline < threshold AND proposed >= threshold — flagged
 
         for _, row in serving.iterrows():
-            baseline_vc     = float(row.get("vc_ratio", 0.0))
             capacity        = float(row.get("capacity_vph", 0.0))
             baseline_demand = float(row.get("baseline_demand_vph", 0.0))
 
-            proposed_demand = baseline_demand + vehicles_per_route
+            # Apply surge multiplier: scales baseline demand to model simultaneous evacuation.
+            # For non-FHSZ projects (or cities without an adopted multiplier), surge = 1.0
+            # and this has no effect — formula collapses to the standard marginal causation test.
+            effective_baseline = baseline_demand * surge_multiplier
+            effective_vc       = effective_baseline / capacity if capacity > 0 else 0.0
+
+            proposed_demand = effective_baseline + vehicles_per_route
             proposed_vc     = proposed_demand / capacity if capacity > 0 else 0.0
 
-            baseline_exceeds          = baseline_vc >= vc_threshold
+            baseline_exceeds          = effective_vc >= vc_threshold
             proposed_exceeds          = proposed_vc >= vc_threshold
             project_causes_exceedance = (not baseline_exceeds) and proposed_exceeds
 
@@ -295,7 +313,9 @@ class EvacuationScenario(ABC):
                 "name":                      row.get("name", ""),
                 "capacity_vph":              round(capacity, 0),
                 "baseline_demand_vph":       round(baseline_demand, 1),
-                "baseline_vc":               round(baseline_vc, 4),
+                "surge_multiplier":          surge_multiplier,
+                "effective_baseline_demand": round(effective_baseline, 1),
+                "effective_baseline_vc":     round(effective_vc, 4),
                 "baseline_exceeds":          baseline_exceeds,
                 "vehicles_added":            round(vehicles_per_route, 1),
                 "proposed_demand_vph":       round(proposed_demand, 1),
@@ -309,6 +329,7 @@ class EvacuationScenario(ABC):
 
         detail = {
             "vc_threshold":                vc_threshold,
+            "surge_multiplier":            surge_multiplier,
             "project_vehicles_peak_hour":  round(project_vph, 1),
             "vehicles_per_route":          round(vehicles_per_route, 1),
             "serving_routes_evaluated":    len(serving),
@@ -317,7 +338,7 @@ class EvacuationScenario(ABC):
             "flagged_route_ids":           flagged_ids,
             "result":                      any_flagged,
             "triggers_standard":           any_flagged,
-            "method":                      "Marginal causation: baseline_vc < threshold AND proposed_vc >= threshold",
+            "method":                      "Marginal causation: effective_baseline_vc < threshold AND proposed_vc >= threshold",
             "route_details":               route_results,
         }
         return any_flagged, flagged_ids, detail
@@ -383,7 +404,8 @@ class EvacuationScenario(ABC):
         steps["step4_demand"] = step4
 
         # ── Step 5: Capacity Ratio Test ────────────────────────────────
-        triggered, flagged_ids, step5 = self.ratio_test(route_ids, project_vph, roads_gdf)
+        surge = self._get_surge_multiplier(project)
+        triggered, flagged_ids, step5 = self.ratio_test(route_ids, project_vph, roads_gdf, surge_multiplier=surge)
         steps["step5_ratio_test"] = step5
 
         # ── Determination ──────────────────────────────────────────────

@@ -1,5 +1,5 @@
 """
-Scenario B: Local Evacuation Density (Standard 5 — SB 79 / Transit-Adjacent)
+Scenario B: Local Capacity Test (Standard 5)
 
 Legal basis:
   - California Government Code §65302(g) — General Plan Safety Element (evacuation routes)
@@ -9,22 +9,18 @@ Legal basis:
     provided the standard: (a) is quantitative, (b) is uniformly applied, and
     (c) was adopted before the project application was submitted.
 
-This scenario answers a different question from the wildland scenario:
-  "Can this building's occupants and immediate neighbors evacuate through the
-   LOCAL street network in a structure-fire or neighborhood emergency?"
+Standard 5 asks: "Will adding this project's vehicles to local streets (using existing
+baseline demand) push any local street above v/c 0.95 — creating gridlock under normal
+conditions?" No evacuation surge modifier is applied (FHSZ status is irrelevant to this test).
 
-The wildland scenario evaluates citywide evacuation routes serving FHSZ areas.
-The local density scenario evaluates collector and arterial roads within 0.25 miles
-of the project — the streets that provide immediate egress regardless of FHSZ status.
+The wildland scenario (Standards 1–4) evaluates citywide evacuation routes.
+Standard 5 evaluates collector and arterial roads within 0.25 miles of the project —
+the streets that provide immediate egress regardless of FHSZ status.
 
-STATUS: Active (enabled: true in parameters.yaml). Applied citywide — no transit proximity gate.
-Standard 5 reuses baseline_demand_vph already on roads_gdf from the Phase 2b KLD buffer
-model (no separate demand calculation needed). Fallback tier is MINISTERIAL (not CONDITIONAL
-MINISTERIAL) because Standard 5 has no FHSZ-citywide applicability gate — this is intentional.
-
-Phase 3 feature: GTFS transit proximity gating (require_transit_proximity: false → true once
-GTFS data is configured). When true, Standard 5 will only apply to projects within 0.5 miles
-of a qualifying SB 79 transit station.
+STATUS: Active (enabled: true in parameters.yaml). Applied citywide.
+Reuses baseline_demand_vph already on roads_gdf (no separate demand calculation needed).
+Fallback tier is MINISTERIAL (not CONDITIONAL MINISTERIAL) — intentional, as Standard 5
+is a supplemental test that only contributes to DISCRETIONARY when triggered.
 """
 import logging
 
@@ -45,16 +41,16 @@ _LEGAL_BASIS = (
 
 class LocalDensityScenario(EvacuationScenario):
     """
-    Evaluates local street network egress capacity for structure-fire scenarios (Standard 5).
+    Standard 5: Local Capacity Test.
 
-    Activated only when config["local_density"]["enabled"] == true.
-    Returns NOT_APPLICABLE when disabled (default) — no effect on determination.
+    Evaluates whether project vehicles push any local street above v/c 0.95 under
+    normal (non-evacuation) conditions. Activated when config["local_density"]["enabled"].
 
     When active:
       - Serving routes = collector/arterial roads within local_density.radius_miles
-      - Demand = project vehicles distributed across local egress routes
-      - Baseline demand already in roads_gdf from Phase 2b KLD buffer model
-      - Ratio test identical to WildlandScenario (shared base class implementation)
+      - Demand = project vehicles added to existing baseline_demand_vph
+      - No FHSZ surge multiplier (Standard 5 is FHSZ-agnostic)
+      - Ratio test uses shared marginal causation test from base class
     """
 
     @property
@@ -89,13 +85,12 @@ class LocalDensityScenario(EvacuationScenario):
 
     def check_applicability(self, project: Project, context: dict) -> tuple[bool, dict]:
         """
-        Standard 5 applicability: Is the local density scenario enabled?
+        Standard 5 applicability: Is the local capacity scenario enabled?
 
-        When enabled, applies to all projects citywide (structure fires can occur
-        anywhere, not just in FHSZ zones). Transit proximity gating (require_transit_proximity)
-        is a Phase 3 feature requiring GTFS data integration.
+        Applies citywide to all projects above the size threshold. No transit proximity
+        gate — local gridlock can occur anywhere, not only near transit.
 
-        Discretion: Zero — boolean config flag + optional geographic buffer.
+        Discretion: Zero — boolean config flag.
         """
         ld_cfg  = self.config.get("local_density", {})
         enabled = ld_cfg.get("enabled", False)
@@ -105,27 +100,16 @@ class LocalDensityScenario(EvacuationScenario):
                 "result": False,
                 "method": "Config flag check: local_density.enabled",
                 "note":   (
-                    "Standard 5 (Local Evacuation Density) is disabled in parameters.yaml "
+                    "Standard 5 (Local Capacity Test) is disabled in parameters.yaml "
                     "(local_density.enabled: false). Set to true to activate citywide. "
-                    "GTFS transit gating is optional (Phase 3). See legal.md §Scenario B."
+                    "See legal.md §Standard 5."
                 ),
             }
 
-        # When enabled: apply citywide (transit proximity gating = Phase 3)
-        require_transit = ld_cfg.get("require_transit_proximity", False)
-        if require_transit:
-            # Phase 3: GTFS proximity check goes here
-            logger.warning(
-                "Standard 5 require_transit_proximity=true but GTFS integration is not yet "
-                "implemented. Applying Standard 5 citywide as a conservative fallback."
-            )
-
         return True, {
-            "result":              True,
-            "method":              "Config flag enabled; citywide application (no transit gate)",
-            "require_transit":     require_transit,
-            "transit_gate_status": "Phase 3 (GTFS integration pending)",
-            "note":                "Standard 5 applies to all projects in this city.",
+            "result": True,
+            "method": "Config flag enabled; applies citywide",
+            "note":   "Standard 5 applies to all projects above the size threshold.",
         }
 
     # ------------------------------------------------------------------
@@ -139,7 +123,7 @@ class LocalDensityScenario(EvacuationScenario):
         context: dict,
     ) -> tuple[list, dict]:
         """
-        Standard 5: Which local egress roads serve this project?
+        Standard 5 (Local Capacity Test): Which local streets serve this project?
 
         Method: Buffer project by local_density.radius_miles; intersect with
         collector and arterial road segments (road_type in multilane/two_lane).

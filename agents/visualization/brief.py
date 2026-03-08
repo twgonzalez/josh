@@ -479,62 +479,38 @@ def _build_standards_analysis(tier: str, wildland: dict, local5: dict, config: d
 
     rows = []
 
-    # --- Standard 1: FHSZ citywide ---
-    s1 = w_steps.get("step1_applicability", {})
-    citywide = s1.get("citywide_fhsz", {})
-    s1_result = citywide.get("result", False)
-    s1_poly   = citywide.get("fhsz_polygon_count", 0)
-    fz_mod    = s1.get("fire_zone_severity_modifier", {})
-    fz_result = fz_mod.get("result", False)
-    fz_desc   = fz_mod.get("zone_description", "Not in FHSZ")
-    fz_level  = fz_mod.get("zone_level", 0)
-
-    s1_chip = "APPLICABLE" if s1_result else "NOT MET"
-    s1_chip_cls = "chip-scope" if s1_result else "chip-fail"
-    s1_detail = f"""<div class="detail-block">
-      <strong>Citywide FHSZ zones:</strong> {s1_poly} polygon{"s" if s1_poly != 1 else ""} on record
-      &nbsp;(source: CAL FIRE OSFM ArcGIS REST API)<br>
-      <strong>Project site fire zone:</strong> {fz_desc}
-      {"— severity modifier applies (affects required conditions, not tier gate)" if fz_level >= 2 else "— no site-level fire zone severity modifier"}
-    </div>"""
-
-    rows.append(_std_row("1", "#1a56db" if s1_result else "#6c757d",
-        "FHSZ Citywide Fire Zones",
-        "Government Code §65302.15 — city must have adopted FHSZ data to apply AB 747",
-        s1_chip, s1_chip_cls, s1_detail if s1_result else ""))
-
-    # --- Standard 2: Scale ---
+    # --- Standard 1: Project Size ---
     s2 = w_steps.get("step2_scale", {})
-    s2_result = s2.get("result", False)
+    s1_result = s2.get("result", False)
     du        = s2.get("dwelling_units", 0)
-    s2_chip   = "IN SCOPE" if s2_result else "BELOW THRESHOLD"
-    s2_chip_cls = "chip-scope" if s2_result else "chip-na"
-    s2_detail = f"""<div class="detail-block">
+    s1_chip     = "IN SCOPE" if s1_result else "BELOW THRESHOLD"
+    s1_chip_cls = "chip-scope" if s1_result else "chip-na"
+    s1_detail = f"""<div class="detail-block">
       {du} dwelling units proposed &nbsp;&ge;&nbsp; {unit_threshold} unit threshold
       (basis: ITE de minimis — {unit_threshold} units &times; 2.5 vpu &times; 0.57 mob =
       {round(unit_threshold * 2.5 * 0.57, 1)} peak-hour trips, exceeding the ITE Trip Generation
       Handbook de minimis of 10–15 trips; statutory anchor: SB 330, Gov. Code §65905.5)
-    </div>""" if s2_result else f"""<div class="detail-block">
+    </div>""" if s1_result else f"""<div class="detail-block">
       {du} dwelling units proposed &nbsp;&lt;&nbsp; {unit_threshold} unit threshold —
       project is below the ITE de minimis for measurable evacuation impact
       ({unit_threshold} &times; 2.5 &times; 0.57 = {round(unit_threshold * 2.5 * 0.57, 1)} vph).
-      Standards 3 and 4 are not evaluated.
+      Standards 2–5 are not evaluated.
     </div>"""
 
-    rows.append(_std_row("2", "#1a56db" if s2_result else "#6c757d",
-        "Project Scale ≥ Threshold",
+    rows.append(_std_row("1", "#1a56db" if s1_result else "#6c757d",
+        "Project Size ≥ Threshold",
         f"Minimum {unit_threshold} dwelling units — integer comparison, no discretion",
-        s2_chip, s2_chip_cls, s2_detail))
+        s1_chip, s1_chip_cls, s1_detail))
 
-    # --- Standard 3: Serving routes ---
+    # --- Standard 2: Serving evacuation routes ---
     s3 = w_steps.get("step3_routes", {})
-    s3_result = s3.get("triggers_standard", False)
+    s2_result = s3.get("triggers_standard", False)
     n_routes  = s3.get("serving_route_count", 0)
     radius    = s3.get("radius_miles", 0.5)
     s3_routes = s3.get("serving_routes", [])
 
-    s3_chip = "ROUTES FOUND" if s3_result else ("NOT EVALUATED" if not s2_result else "NO ROUTES")
-    s3_chip_cls = "chip-scope" if s3_result else "chip-na"
+    s2_chip     = "ROUTES FOUND" if s2_result else ("NOT EVALUATED" if not s1_result else "NO ROUTES")
+    s2_chip_cls = "chip-scope" if s2_result else "chip-na"
 
     route_rows_html = ""
     if s3_routes:
@@ -557,15 +533,51 @@ def _build_standards_analysis(tier: str, wildland: dict, local5: dict, config: d
             route_rows_html += f"<tr><td colspan='5' style='color:#868e96'>… and {len(s3_routes)-10} more</td></tr>"
         route_rows_html += "</tbody></table>"
 
-    s3_detail = f"""<div class="detail-block">
+    s2_detail = f"""<div class="detail-block">
       {n_routes} evacuation route segment{"s" if n_routes != 1 else ""} identified
       within {radius} miles (network buffer + OSM is_evacuation_route flag)
       {route_rows_html}
-    </div>""" if s2_result else ""
+    </div>""" if s1_result else ""
 
-    rows.append(_std_row("3", "#1a56db" if s3_result else "#6c757d",
+    rows.append(_std_row("2", "#1a56db" if s2_result else "#6c757d",
         "Serving Evacuation Routes Within Radius",
         f"Network buffer {radius} mi — GIS intersection with identified evacuation routes",
+        s2_chip, s2_chip_cls, s2_detail))
+
+    # --- Standard 3: FHSZ Modifier ---
+    s1_applicability = w_steps.get("step1_applicability", {})
+    fz_mod    = s1_applicability.get("fire_zone_severity_modifier", {})
+    fz_result = s1_applicability.get("std3_fhsz_modifier", fz_mod.get("result", False))
+    fz_desc   = s1_applicability.get("std3_zone_level", fz_mod.get("zone_description", "Not in FHSZ"))
+    fz_level  = fz_mod.get("zone_level", 0)
+    surge_val = s1_applicability.get("std3_surge_multiplier_active", 1.0)
+
+    if not s1_result:
+        s3_chip = "NOT EVALUATED"
+        s3_chip_cls = "chip-na"
+        s3_badge_color = "#adb5bd"
+        s3_detail = ""
+    elif fz_result:
+        s3_chip = "FLAGGED"
+        s3_chip_cls = "chip-triggered"
+        s3_badge_color = "#c0392b"
+        s3_detail = f"""<div class="detail-block" style="border-left-color:#c0392b;">
+          <strong>Project site:</strong> {fz_desc} (source: CAL FIRE OSFM)<br>
+          <strong>Surge multiplier:</strong> {surge_val}&times; applied to baseline demand in Standard 4
+          — models simultaneous mandatory evacuation vs. staggered peak-hour departure
+        </div>"""
+    else:
+        s3_chip = "NOT IN FHSZ"
+        s3_chip_cls = "chip-na"
+        s3_badge_color = "#6c757d"
+        s3_detail = f"""<div class="detail-block">
+          Project site is not within a designated FHSZ zone — surge multiplier not applied
+          (Standard 4 uses baseline demand without adjustment).
+        </div>"""
+
+    rows.append(_std_row("3", s3_badge_color,
+        "FHSZ Modifier",
+        "GIS point-in-polygon — when flagged, activates surge multiplier in Standard 4",
         s3_chip, s3_chip_cls, s3_detail))
 
     # --- Standard 4: Capacity ratio ---
@@ -576,11 +588,11 @@ def _build_standards_analysis(tier: str, wildland: dict, local5: dict, config: d
     proj_vph     = s5.get("vehicles_per_route", 0)
     route_details = s5.get("route_details", [])
 
-    s4_chip = "TRIGGERED" if s4_triggered else ("NOT EVALUATED" if not s2_result else "WITHIN CAPACITY")
-    s4_chip_cls = "chip-triggered" if s4_triggered else ("chip-na" if not s2_result else "chip-pass")
+    s4_chip = "TRIGGERED" if s4_triggered else ("NOT EVALUATED" if not s1_result else "WITHIN CAPACITY")
+    s4_chip_cls = "chip-triggered" if s4_triggered else ("chip-na" if not s1_result else "chip-pass")
 
     flagged_table = ""
-    if route_details and s2_result:
+    if route_details and s1_result:
         # Deduplicate by osmid — OSM road names map to multiple geometry segments
         seen_osmids: set = set()
         deduped_details = []
@@ -603,7 +615,7 @@ def _build_standards_analysis(tier: str, wildland: dict, local5: dict, config: d
             "<th>Proposed v/c</th><th>Status</th></tr></thead><tbody>"
         for r in display_rows:
             nm   = r.get("name") or r.get("osmid", "—")
-            bvc  = r.get("baseline_vc", 0)
+            bvc  = r.get("effective_baseline_vc", r.get("baseline_vc", 0))
             pvc  = r.get("proposed_vc", 0)
             adds = r.get("vehicles_added", 0)
             causes = r.get("project_causes_exceedance", False)
@@ -639,9 +651,9 @@ def _build_standards_analysis(tier: str, wildland: dict, local5: dict, config: d
       {len(flagged_ids)} route{"s" if len(flagged_ids) != 1 else ""} caused to exceed threshold
       {already_note}
       {flagged_table}
-    </div>""" if s2_result else ""
+    </div>""" if s1_result else ""
 
-    rows.append(_std_row("4", "#c0392b" if s4_triggered else ("#6c757d" if not s2_result else "#27ae60"),
+    rows.append(_std_row("4", "#c0392b" if s4_triggered else ("#6c757d" if not s1_result else "#27ae60"),
         "Capacity Ratio Test (Marginal Causation)",
         f"baseline_vc < {vc_threshold} AND proposed_vc ≥ {vc_threshold} — project must cause the LOS E/F crossing",
         s4_chip, s4_chip_cls, s4_detail))
@@ -656,7 +668,7 @@ def _build_standards_analysis(tier: str, wildland: dict, local5: dict, config: d
     l5_details   = l5_s5.get("route_details", [])
     l5_proj_vph  = l5_s5.get("vehicles_per_route", 0)
 
-    if not s2_result:
+    if not s1_result:
         # Below scale threshold — Standard 5 not evaluated
         s5_chip = "NOT EVALUATED"
         s5_chip_cls = "chip-na"
@@ -694,7 +706,7 @@ def _build_standards_analysis(tier: str, wildland: dict, local5: dict, config: d
             for r in l5_display:
                 nm   = r.get("name") or r.get("osmid", "—")
                 rt   = r.get("road_type", "—")
-                bvc  = r.get("baseline_vc", 0)
+                bvc  = r.get("effective_baseline_vc", r.get("baseline_vc", 0))
                 pvc  = r.get("proposed_vc", 0)
                 adds = r.get("vehicles_added", 0)
                 causes = r.get("project_causes_exceedance", False)
@@ -728,7 +740,7 @@ def _build_standards_analysis(tier: str, wildland: dict, local5: dict, config: d
         </div>"""
 
     rows.append(_std_row("5", s5_badge_color,
-        "Local Evacuation Density (Standard 5)",
+        "Local Capacity Test (Standard 5)",
         "General Plan §65302(g) · SB 79 — local collector/arterial capacity within 0.25 mi",
         s5_chip, s5_chip_cls, s5_detail))
 
@@ -779,7 +791,7 @@ def _build_determination_box(tier: str, determination: dict,
     for sc_name, sc_tier in sc_tiers.items():
         label = {
             "wildland_ab747":    "Wildland Scenario (Standards 1–4)",
-            "local_density_sb79":"Local Density Scenario (Standard 5)",
+            "local_density_sb79":"Local Capacity Scenario (Standard 5)",
         }.get(sc_name, sc_name)
         color = _TIER_CSS_COLOR.get(sc_tier.upper(), "#555")
         sc_rows += f"<div style='font-size:11px;margin-bottom:3px;'>{label}: <strong style='color:{color}'>{sc_tier}</strong></div>"
@@ -986,7 +998,7 @@ def _build_methodology(audit: dict, config: dict, city_config: dict) -> str:
           <td>{mob_source_td}</td></tr>
       {mob_note_html}
       <tr><td>Evacuation route radius</td><td><strong>0.5 mi</strong></td>
-          <td>Standard 3 — network buffer methodology</td></tr>
+          <td>Standard 2 — network buffer methodology</td></tr>
       <tr><td>Impact method</td><td><strong>Worst-case per route</strong></td>
           <td>Full project_vph tested against each route independently</td></tr>
     </tbody>

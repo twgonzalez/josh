@@ -24,20 +24,20 @@ class Project:
     apn: str = ""  # Assessor Parcel Number
     applicant: str = ""
 
-    # Standard 1 results (fire zone)
+    # Standard 3 results (FHSZ modifier)
     in_fire_zone: bool = False
     fire_zone_level: int = 0    # 0=none, 1=Zone1, 2=Zone2, 3=Zone3
     fire_zone_source_date: str = ""
 
-    # Standard 2 results (size threshold)
+    # Standard 1 results (size threshold)
     meets_size_threshold: bool = False
     size_threshold_used: int = 50
 
-    # Standard 3 results (serving routes)
+    # Standard 2 results (serving evacuation routes)
     serving_route_ids: list = field(default_factory=list)
     search_radius_miles: float = 0.5
 
-    # Standard 4 results (capacity threshold)
+    # Standard 4 results (evac capacity test)
     project_vehicles_peak_hour: float = 0.0
     exceeds_capacity_threshold: bool = False
     flagged_route_ids: list = field(default_factory=list)

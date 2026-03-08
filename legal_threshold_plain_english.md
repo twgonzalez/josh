@@ -117,7 +117,7 @@ That reproducibility is what makes the determination legally defensible if chall
 | Size threshold (default) | 15 units | ITE de minimis (21.4 vph); SB 330 statutory anchor |
 | Evacuation mobilization rate | 0.57 | KLD Engineering Berkeley AB 747 Study (March 2024) |
 | Vehicles per unit | 2.5 | U.S. Census ACS |
-| Serving route radius | 0.5 miles | Standard 3 |
+| Serving route radius | 0.5 miles | Standard 2 |
 | v/c threshold for breakdown | 0.95 | HCM 2022, LOS E/F boundary |
 
 ---

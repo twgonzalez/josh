@@ -13,6 +13,18 @@
 # an arbitrary mid-LOS-E value, and harder for HCD to challenge as a categorical prohibition.
 vc_threshold: 0.95
 
+# FHSZ Evacuation Surge Multiplier
+# Applied to baseline demand on serving routes when the project site is within FHSZ Zone 2 or 3.
+# Models simultaneous mass evacuation demand (wildfire) vs. staggered peak-hour departure.
+# Default 1.0 = no adjustment (Standard 4 uses peak-hour mobilization only).
+# Legal basis: CAL FIRE / Cal OES evacuation planning guidance distinguishes peak-hour
+# staggered departure (mobilization factor 0.40–0.75) from simultaneous mandatory evacuation.
+# City-specific studies (e.g., KLD Engineering) may support values of 1.25–2.0 for
+# compressed departure windows observed in Northern California wildfire evacuations.
+# Override in config/cities/{city}.yaml under overrides: to activate for a specific city.
+# Requires adoption ordinance and supporting study before use in project determinations.
+fhsz_surge_multiplier: 1.0
+
 # Minimum dwelling units triggering Standards review
 # Basis: 15 units × 2.5 vph/unit × 0.57 mobilization = 21.4 peak-hour trips,
 # exceeding the ITE Trip Generation Handbook de minimis of 10–15 peak-hour trips
@@ -24,7 +36,7 @@ vc_threshold: 0.95
 unit_threshold: 15
 
 # Evacuation route search radius from project location (miles)
-# Basis: Standard 3, defined in objective standards ordinance
+# Basis: Standard 2, defined in objective standards ordinance
 evacuation_route_radius_miles: 0.5
 
 # ============================================================
@@ -251,7 +263,8 @@ determination_tiers:
     legal_basis: "AB 747 (Gov. Code §65302.15) and HCM 2022 v/c capacity threshold — project causes a serving evacuation route to cross the LOS E/F boundary (v/c = 0.95) from below"
 
   conditional_ministerial:
-    # Triggers: city has FHSZ zones + size >= threshold + serving evacuation routes exist
+    # Triggers: size >= threshold (Standard 1) + capacity not exceeded (Standard 4)
+    # Universal — applies to all cities regardless of FHSZ presence.
     # Ministerial approval eligible with mandatory evacuation conditions to be defined by city.
     # Legal basis: General Plan Safety Element consistency + AB 1600 nexus
     #   (project adds vehicles to shared evacuation network regardless of location)
@@ -259,44 +272,34 @@ determination_tiers:
     legal_basis: "General Plan Safety Element consistency and AB 1600 nexus (project adds vehicles to shared evacuation network regardless of project location)"
 
   ministerial:
-    # Default when neither DISCRETIONARY nor CONDITIONAL conditions are met:
-    #   - project below size threshold, OR
-    #   - no serving evacuation routes identified, OR
-    #   - city has no FHSZ zones (framework not applicable)
+    # Default when Standard 1 (size) is not met OR no serving evacuation routes identified.
     legal_basis: "Project below applicable significance threshold; ministerial approval eligible without evacuation conditions"
 
 # ============================================================
-# Standard 5: Local Evacuation Density (SB 79 / Transit-Adjacent)
+# Standard 5: Local Capacity Test
 # Legal basis: Government Code §65302(g) — General Plan Safety Element;
 #              California Fire Code 503 — fire apparatus access;
 #              SB 79 (2025) — objective health and safety standard carve-out.
 #
-# STATUS: Disabled by default. Requires GTFS transit data for activation.
-# Enable by setting enabled: true once transit data is configured.
-# See legal.md §Scenario B for activation requirements.
+# Asks: "Will adding this project's vehicles to local streets push any local
+# collector/arterial above v/c 0.95 under normal (non-evacuation) conditions?"
+# No FHSZ surge modifier — Standard 5 is FHSZ-agnostic.
+# Applies citywide when enabled: true.
 # ============================================================
 
 local_density:
-  # Master switch — set true to activate Standard 5 evaluation
+  # Master switch — set true to activate Standard 5 evaluation citywide
   enabled: true
 
   # Minimum dwelling units to trigger Standard 5 analysis
   unit_threshold: 15
 
-  # Volume-to-capacity threshold (same as wildland scenario for consistency — exact HCM LOS E/F boundary)
+  # Volume-to-capacity threshold (same as wildland scenario — exact HCM LOS E/F boundary)
   vc_threshold: 0.95
 
   # Buffer radius around project to collect local egress roads
   # Source: KLD Engineering quarter-mile methodology
   radius_miles: 0.25
-
-  # Gate Standard 5 on transit proximity (SB 79 by-right projects)
-  # Set true when GTFS data is available (Phase 3 feature)
-  require_transit_proximity: false
-
-  # Transit station buffer for SB 79 applicability gate
-  # Source: SB 79 — 0.5 mile (2,640 feet) from qualifying transit station
-  transit_buffer_feet: 2640
 
   # Road types counted as local egress routes (freeways excluded)
   local_egress_road_types:

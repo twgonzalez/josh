@@ -22,8 +22,16 @@ analysis_crs: "EPSG:26910"  # UTM Zone 10N for distance calculations (meters)
 # Any key listed here replaces the corresponding value from parameters.yaml for
 # this city only.  unit_threshold and vc_threshold are propagated automatically
 # to all nested scenario configs.  See docs/city_onboarding.md §2d for guidance.
-overrides: {}
-# Example overrides:
+overrides:
+  # FHSZ Surge Multiplier — Berkeley-specific
+  # Applied to baseline demand when the project site is in FHSZ Zone 2 or 3.
+  # Basis: KLD Engineering TR-1381 (Berkeley, March 2024) documents compressed departure
+  # windows during the 1991 Oakland–Berkeley Hills Fire. Simultaneous mandatory evacuation
+  # produces roughly 1.5× the staggered peak-hour demand used in normal traffic analysis.
+  # Source: KLD TR-1381 Figure 14 — observed departure rate during mandatory evacuation order.
+  # Requires Berkeley City Council adoption ordinance before use in project determinations.
+  fhsz_surge_multiplier: 1.5
+# Example additional overrides:
 #   unit_threshold: 10   # lower than default (15) when city road network is more constrained;
 #                        # must be justified with ITE trip-generation or local study
 #   vc_threshold: 0.85   # more conservative than HCM LOS E/F (0.95) if city council adopts it;

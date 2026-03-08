@@ -292,6 +292,10 @@ def create_demo_map(
                 "proposed_vc": float(worst_ld.get("proposed_vc", 0)),
             }
 
+        # Store worst routes in proj_ld_data for sidebar detail card
+        proj_ld_data[-1]["worst_wildland"] = worst_wildland_route
+        proj_ld_data[-1]["worst_local"]    = worst_local_route
+
         # ── Wildland project FeatureGroup ────────────────────────────────
         proj_group = folium.FeatureGroup(
             name=f"{project.project_name or f'Project {i+1}'} — {tier}",
@@ -569,6 +573,8 @@ def _build_demo_panel_html(
             ld_triggered=ld.get("triggered", False),
             ld_n_serving=ld.get("n_serving", 0),
             ld_n_flagged=ld.get("n_flagged", 0),
+            worst_wildland_route=ld.get("worst_wildland"),
+            worst_local_route=ld.get("worst_local"),
         )
 
     return f"""
@@ -703,6 +709,8 @@ def _build_project_detail_div(
     ld_triggered: bool = False,
     ld_n_serving: int = 0,
     ld_n_flagged: int = 0,
+    worst_wildland_route: "dict | None" = None,
+    worst_local_route: "dict | None" = None,
 ) -> str:
     """Pre-rendered hidden card for one project. JS toggles display:block/none."""
     tier         = project.determination or "UNKNOWN"
@@ -711,74 +719,9 @@ def _build_project_detail_div(
     border_color = {"DISCRETIONARY": "#e8b4b0", "CONDITIONAL MINISTERIAL": "#f5d49a", "MINISTERIAL": "#a8d5b8"}.get(tier, "#dee2e6")
     route_color  = _TIER_ROUTE_COLOR.get(tier, "#7f7f7f")
 
-    n_srv  = len(project.serving_route_ids or [])
-    n_flg  = len(project.flagged_route_ids or [])
-    in_fz  = project.in_fire_zone
-    fz_str = f"Zone {project.fire_zone_level}" if in_fz else "Not in FHSZ"
+    in_fz    = project.in_fire_zone
+    fz_str   = f"Zone {project.fire_zone_level}" if in_fz else "Not in FHSZ"
     fz_color = "#c0392b" if in_fz else "#27ae60"
-
-    def std_row(label, triggered, detail=""):
-        chip_bg    = "#fde8e8" if triggered else "#e8f5e9"
-        chip_color = "#c0392b" if triggered else "#27ae60"
-        chip_text  = "YES" if triggered else "NO"
-        return (
-            f'<div style="display:flex; justify-content:space-between; '
-            f'align-items:center; padding:4px 0; border-bottom:1px solid #f8f9fa;">'
-            f'<div>'
-            f'<span style="color:#444; font-size:11px;">{label}</span>'
-            + (f'<span style="color:#adb5bd; font-size:10px;"> — {detail}</span>' if detail else '')
-            + f'</div>'
-            f'<span style="padding:2px 8px; border-radius:9px; font-size:10px; '
-            f'font-weight:700; background:{chip_bg}; color:{chip_color}; '
-            f'flex-shrink:0; margin-left:8px;">{chip_text}</span>'
-            f'</div>'
-        )
-
-    standards_html = (
-        std_row("Std 1 · Citywide FHSZ",
-                project.in_fire_zone or n_srv > 0,
-                "city has FHSZ zones")
-        + std_row("Std 2 · Size threshold",
-                  project.meets_size_threshold,
-                  f"{project.dwelling_units} of {unit_threshold} units")
-        + std_row("Std 3 · Serving routes",
-                  n_srv > 0,
-                  f"{n_srv} segment(s) within {project.search_radius_miles} mi")
-        + std_row("Std 4 · Capacity exceeded",
-                  project.exceeds_capacity_threshold,
-                  f"v/c ≥ {vc_threshold:.2f} on {n_flg} route(s)")
-    )
-
-    # Standard 5 section
-    if ld_tier != "NOT_APPLICABLE":
-        ld_det_color = _TIER_CSS_COLOR.get(ld_tier, "#555")
-        ld_bg_color  = _TIER_BG_COLOR.get(ld_tier, "#f8f9fa")
-        ld_color     = "#c0392b" if ld_triggered else "#0d9488"
-        std5_html = (
-            f'<div style="padding:8px 13px 6px; border-top:1px solid #f1f3f5;">'
-            f'<div style="font-size:10px; color:#adb5bd; text-transform:uppercase; '
-            f'letter-spacing:0.5px; margin-bottom:5px;">Std 5 — Local Density</div>'
-            f'<div style="display:flex; align-items:center; gap:8px; margin-bottom:4px;">'
-            f'<span style="padding:2px 8px; border-radius:9px; font-size:10px; font-weight:700; '
-            f'background:{ld_bg_color}; color:{ld_det_color};">{ld_tier}</span>'
-            f'</div>'
-            f'<div style="font-size:11px; color:#555;">'
-            f'<span>{ld_n_serving} local egress routes</span>'
-            f' &nbsp;·&nbsp; '
-            f'<span style="color:{ld_color};">{ld_n_flagged} flagged</span>'
-            f'</div>'
-            f'</div>'
-        )
-    else:
-        std5_html = (
-            '<div style="padding:6px 13px; border-top:1px solid #f1f3f5;">'
-            '<div style="font-size:10px; color:#adb5bd;">Std 5 · Local Density: N/A</div>'
-            '</div>'
-        )
-
-    reason = project.determination_reason or ""
-    sentences = [s.strip() for s in reason.split(".") if s.strip()]
-    reason_short = ". ".join(sentences[:2]) + ("." if sentences else "")
 
     display = "block" if idx == 0 else "none"
 
@@ -823,46 +766,11 @@ def _build_project_detail_div(
     </div>
   </div>
 
-  <!-- Standards checklist (Std 1–4) -->
-  <div style="padding:10px 13px 4px;">
-    <div style="font-size:10px; color:#adb5bd; text-transform:uppercase;
-                letter-spacing:0.5px; margin-bottom:6px;">Standards</div>
-    {standards_html}
-  </div>
-
-  <!-- Standard 5 section -->
-  {std5_html}
-
-  <!-- Wildland route impact -->
-  <div style="padding:8px 13px; border-top:1px solid #f1f3f5;">
-    <div style="font-size:10px; color:#adb5bd; text-transform:uppercase;
-                letter-spacing:0.5px; margin-bottom:5px;">Route Impact (Wildland)</div>
-    <div style="display:flex; gap:16px; font-size:11px; color:#555;">
-      <div>{n_srv} serving segments</div>
-      <div style="color:{'#c0392b' if n_flg > 0 else '#27ae60'};">
-        {n_flg} at v/c ≥ {vc_threshold:.2f}
-      </div>
-    </div>
-    <div style="font-size:10px; color:#adb5bd; margin-top:3px;">
-      Click any route on the map for baseline → proposed v/c detail
-    </div>
-  </div>
-
-  <!-- Determination reason -->
-  <div style="padding:8px 13px 8px; border-top:1px solid #f1f3f5;">
-    <div style="font-size:10px; color:#adb5bd; text-transform:uppercase;
-                letter-spacing:0.5px; margin-bottom:5px;">Basis</div>
-    <div style="font-size:10px; color:#555; line-height:1.55;
-                font-style:italic;">
-      {reason_short[:240]}
-    </div>
-  </div>
-
   <!-- Brief link -->
-  <div style="padding:8px 13px 12px; border-top:1px solid #f1f3f5;">
+  <div style="padding:10px 13px 13px;">
     <a href="{_brief_filename(project.location_lat, project.location_lon, project.dwelling_units)}"
        target="_blank"
-       style="display:block; text-align:center; padding:7px 10px;
+       style="display:block; text-align:center; padding:8px 10px;
               background:#f0f4f8; border:1px solid #ccd6e0; border-radius:6px;
               font-size:11px; font-weight:600; color:#1c4a6e; text-decoration:none;
               letter-spacing:0.2px;">

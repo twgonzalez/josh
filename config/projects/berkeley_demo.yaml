@@ -48,7 +48,7 @@ projects:
     units: 10
     description: >
       10-unit project at Ashby BART — below the 15-unit size threshold.
-      Standard 2 is not triggered, so the project qualifies for ministerial
+      Standard 1 (size gate) is not triggered, so the project qualifies for ministerial
       approval regardless of evacuation route congestion.
     expected_tier: "MINISTERIAL"
 
@@ -98,7 +98,7 @@ projects:
     description: >
       10-unit project in the Berkeley Hills FHSZ Zone 3 area — same location
       as Hills Gateway (Project 3, 80 units → CONDITIONAL MINISTERIAL).
-      Despite the fire zone, Standard 2 (size gate) is NOT triggered: 10 < 15.
+      Despite the fire zone, Standard 1 (size gate) is NOT triggered: 10 < 15.
       The wildland scenario short-circuits at Step 2 and returns MINISTERIAL.
       FHSZ designation is a severity modifier, not an independent trigger.
     expected_tier: "MINISTERIAL"

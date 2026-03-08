@@ -168,26 +168,25 @@ Fire zone location is recorded as a **severity modifier** (it affects required c
 
 ### Parameters
 
-| Step | Parameter | Value | Source |
-|------|-----------|-------|--------|
-| Step 1 | City has FHSZ zones | Non-empty polygon count in city boundary | CAL FIRE FHSZ (OSFM ArcGIS REST API) |
-| Step 1 | Project in FHSZ | GIS point-in-polygon | CAL FIRE FHSZ, HAZ_CLASS ≥ 2 (severity modifier only) |
-| Step 2 | Unit threshold | 15 dwelling units | ITE de minimis (15 units × 2.5 × 0.57 = 21.4 peak-hour trips); SB 330 (Gov. Code §65905.5) statutory scale anchor |
-| Step 3 | Route type | `is_evacuation_route == True` | Network analysis: all city block group centroids → city exits |
-| Step 3 | Search radius | 0.5 miles | City-adopted objective standard |
-| Step 5 | V/C threshold | 0.95 | HCM 2022 exact LOS E/F boundary |
+| Step | Standard | Parameter | Value | Source |
+|------|----------|-----------|-------|--------|
+| Step 2 | Standard 1 | Unit threshold | 15 dwelling units | ITE de minimis (15 units × 2.5 × 0.57 = 21.4 peak-hour trips); SB 330 (Gov. Code §65905.5) statutory scale anchor |
+| Step 3 | Standard 2 | Route type | `is_evacuation_route == True` | Network analysis: all city block group centroids → city exits |
+| Step 3 | Standard 2 | Search radius | 0.5 miles | City-adopted objective standard |
+| Step 1 | Standard 3 | Project in FHSZ | GIS point-in-polygon | CAL FIRE FHSZ, HAZ_CLASS ≥ 2 — activates surge multiplier in Standard 4 |
+| Step 5 | Standard 4 | V/C threshold | 0.95 | HCM 2022 exact LOS E/F boundary |
 
 ### Three-Tier Output
 
 | Tier | When | Legal Basis |
 |------|------|-------------|
-| **DISCRETIONARY** | Scale met AND project causes a route to cross v/c 0.95 | AB 747 + HCM 2022 |
-| **CONDITIONAL MINISTERIAL** | City has FHSZ AND scale met, but no capacity exceedance | General Plan Safety Element + AB 1600 nexus |
-| **MINISTERIAL** | City has no FHSZ zones, OR project is below scale threshold | Project below significance threshold |
+| **DISCRETIONARY** | Scale met (Std 1) AND project causes a route to cross v/c 0.95 (Std 4) | AB 747 + HCM 2022 |
+| **CONDITIONAL MINISTERIAL** | Scale met (Std 1) but no capacity exceedance — applies universally | General Plan Safety Element + AB 1600 nexus |
+| **MINISTERIAL** | Project is below scale threshold (Std 1 not met) | Project below significance threshold |
 
 ---
 
-## 5. Scenario B — Local Evacuation Density (Standard 5 — SB 79)
+## 5. Scenario B — Local Capacity Test (Standard 5 — SB 79)
 
 **Status:** Active (`local_density.enabled: true` in `config/parameters.yaml`)
 

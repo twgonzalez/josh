@@ -251,7 +251,7 @@ universities:
 
 ---
 
-### 2d. Unit Threshold (Standard 2 Scale Gate)
+### 2d. Unit Threshold (Standard 1 Scale Gate)
 
 **What it is:** The minimum number of dwelling units at which a project triggers
 evacuation capacity analysis. Projects below this threshold receive **MINISTERIAL**

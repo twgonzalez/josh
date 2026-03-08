@@ -346,7 +346,7 @@ def generate_audit_trail(
                 lines.append(f"    {r.get('name') or r['osmid']}:{flag}")
                 lines.append(
                     f"      Baseline: {r['baseline_demand_vph']:.1f} vph, "
-                    f"v/c={r['baseline_vc']:.4f} {'[EXCEEDS]' if r['baseline_exceeds'] else '[OK]'}"
+                    f"v/c={r.get('effective_baseline_vc', r.get('baseline_vc', 0)):.4f} {'[EXCEEDS]' if r['baseline_exceeds'] else '[OK]'}"
                 )
                 lines.append(
                     f"      Proposed: {r['proposed_demand_vph']:.1f} vph (+{r['vehicles_added']:.1f}), "

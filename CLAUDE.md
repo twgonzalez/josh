@@ -89,7 +89,7 @@ output/{city}/          # Results (git-ignored)
 | `vehicles_per_unit` | 2.5 | U.S. Census ACS |
 | `peak_hour_mobilization` | 0.57 | Berkeley mobilization study |
 | `aadt_peak_hour_factor` | 0.10 | Standard peak-hour conversion |
-| Evacuation route radius | 0.5 miles | per Standard 3 |
+| Evacuation route radius | 0.5 miles | per Standard 2 |
 
 ## HCM 2022 Capacity Table
 
@@ -116,16 +116,17 @@ output/{city}/          # Results (git-ignored)
 
 ## Objective Standards (Agent 3)
 
-All four standards are algorithmic — zero discretion allowed. Do NOT add any "professional judgment" or "reasonable estimate" language to the standards engine.
+All five standards are algorithmic — zero discretion allowed. Do NOT add any "professional judgment" or "reasonable estimate" language to the standards engine.
 
-1. **Standard 1**: GIS point-in-polygon test against FHSZ Zone 2 or 3
-2. **Standard 2**: `units >= 15` (integer comparison)
-3. **Standard 3**: Network analysis to find evacuation routes within 0.5 miles
-4. **Standard 4**: `baseline_vc < 0.95` AND `proposed_vc >= 0.95` for any serving route — marginal causation test; project must itself cause the threshold crossing (0.95 = exact HCM LOS E/F boundary)
+1. **Standard 1**: `units >= 15` (integer comparison — universal size gate)
+2. **Standard 2**: Network analysis to find evacuation routes within 0.5 miles
+3. **Standard 3**: GIS point-in-polygon test against FHSZ Zone 2 or 3; when flagged, activates surge multiplier in Standard 4
+4. **Standard 4**: `baseline_vc < 0.95` AND `proposed_vc >= 0.95` for any serving route — marginal causation test; project must itself cause the threshold crossing (0.95 = exact HCM LOS E/F boundary); std3 surge multiplier applied to baseline when in FHSZ
+5. **Standard 5**: Local capacity test — v/c on collector/arterial roads within 0.25 mi under normal conditions
 
 **Final determination:**
 ```
-IF std1 AND std2 AND std4 → DISCRETIONARY REVIEW REQUIRED
+IF std1 AND std4 → DISCRETIONARY REVIEW REQUIRED  (std3 activates surge modifier in std4)
 OTHERWISE → MINISTERIAL APPROVAL ELIGIBLE
 ```
 
