@@ -258,6 +258,7 @@ def _build_screen_css(tier: str) -> str:
 .chip-fail    {{ background: #fdf2f2; color: #c0392b; }}
 .chip-triggered {{ background: #fff3cd; color: #856404; }}
 .chip-na      {{ background: #f1f3f5; color: #868e96; }}
+.chip-scope   {{ background: #e7f1ff; color: #1a56db; }}
 .detail-block {{
   margin-top: 12px;
   padding: 12px 14px;
@@ -488,8 +489,8 @@ def _build_standards_analysis(tier: str, wildland: dict, local5: dict, config: d
     fz_desc   = fz_mod.get("zone_description", "Not in FHSZ")
     fz_level  = fz_mod.get("zone_level", 0)
 
-    s1_chip = "PASS" if s1_result else "NOT MET"
-    s1_chip_cls = "chip-pass" if s1_result else "chip-fail"
+    s1_chip = "APPLICABLE" if s1_result else "NOT MET"
+    s1_chip_cls = "chip-scope" if s1_result else "chip-fail"
     s1_detail = f"""<div class="detail-block">
       <strong>Citywide FHSZ zones:</strong> {s1_poly} polygon{"s" if s1_poly != 1 else ""} on record
       &nbsp;(source: CAL FIRE OSFM ArcGIS REST API)<br>
@@ -497,7 +498,7 @@ def _build_standards_analysis(tier: str, wildland: dict, local5: dict, config: d
       {"— severity modifier applies (affects required conditions, not tier gate)" if fz_level >= 2 else "— no site-level fire zone severity modifier"}
     </div>"""
 
-    rows.append(_std_row("1", "#27ae60" if s1_result else "#6c757d",
+    rows.append(_std_row("1", "#1a56db" if s1_result else "#6c757d",
         "FHSZ Citywide Fire Zones",
         "Government Code §65302.15 — city must have adopted FHSZ data to apply AB 747",
         s1_chip, s1_chip_cls, s1_detail if s1_result else ""))
@@ -506,8 +507,8 @@ def _build_standards_analysis(tier: str, wildland: dict, local5: dict, config: d
     s2 = w_steps.get("step2_scale", {})
     s2_result = s2.get("result", False)
     du        = s2.get("dwelling_units", 0)
-    s2_chip   = "PASS" if s2_result else "BELOW THRESHOLD"
-    s2_chip_cls = "chip-pass" if s2_result else "chip-na"
+    s2_chip   = "IN SCOPE" if s2_result else "BELOW THRESHOLD"
+    s2_chip_cls = "chip-scope" if s2_result else "chip-na"
     s2_detail = f"""<div class="detail-block">
       {du} dwelling units proposed &nbsp;&ge;&nbsp; {unit_threshold} unit threshold
       (basis: ITE de minimis — {unit_threshold} units &times; 2.5 vpu &times; 0.57 mob =
@@ -520,7 +521,7 @@ def _build_standards_analysis(tier: str, wildland: dict, local5: dict, config: d
       Standards 3 and 4 are not evaluated.
     </div>"""
 
-    rows.append(_std_row("2", "#27ae60" if s2_result else "#6c757d",
+    rows.append(_std_row("2", "#1a56db" if s2_result else "#6c757d",
         "Project Scale ≥ Threshold",
         f"Minimum {unit_threshold} dwelling units — integer comparison, no discretion",
         s2_chip, s2_chip_cls, s2_detail))
@@ -532,8 +533,8 @@ def _build_standards_analysis(tier: str, wildland: dict, local5: dict, config: d
     radius    = s3.get("radius_miles", 0.5)
     s3_routes = s3.get("serving_routes", [])
 
-    s3_chip = "PASS" if s3_result else ("NOT EVALUATED" if not s2_result else "NO ROUTES")
-    s3_chip_cls = "chip-pass" if s3_result else "chip-na"
+    s3_chip = "ROUTES FOUND" if s3_result else ("NOT EVALUATED" if not s2_result else "NO ROUTES")
+    s3_chip_cls = "chip-scope" if s3_result else "chip-na"
 
     route_rows_html = ""
     if s3_routes:
@@ -562,7 +563,7 @@ def _build_standards_analysis(tier: str, wildland: dict, local5: dict, config: d
       {route_rows_html}
     </div>""" if s2_result else ""
 
-    rows.append(_std_row("3", "#27ae60" if s3_result else "#6c757d",
+    rows.append(_std_row("3", "#1a56db" if s3_result else "#6c757d",
         "Serving Evacuation Routes Within Radius",
         f"Network buffer {radius} mi — GIS intersection with identified evacuation routes",
         s3_chip, s3_chip_cls, s3_detail))
@@ -575,7 +576,7 @@ def _build_standards_analysis(tier: str, wildland: dict, local5: dict, config: d
     proj_vph     = s5.get("vehicles_per_route", 0)
     route_details = s5.get("route_details", [])
 
-    s4_chip = "TRIGGERED" if s4_triggered else ("NOT EVALUATED" if not s2_result else "PASS")
+    s4_chip = "TRIGGERED" if s4_triggered else ("NOT EVALUATED" if not s2_result else "WITHIN CAPACITY")
     s4_chip_cls = "chip-triggered" if s4_triggered else ("chip-na" if not s2_result else "chip-pass")
 
     flagged_table = ""
@@ -655,13 +656,19 @@ def _build_standards_analysis(tier: str, wildland: dict, local5: dict, config: d
     l5_details   = l5_s5.get("route_details", [])
     l5_proj_vph  = l5_s5.get("vehicles_per_route", 0)
 
-    if not l5_applicable:
+    if not s2_result:
+        # Below scale threshold — Standard 5 not evaluated
+        s5_chip = "NOT EVALUATED"
+        s5_chip_cls = "chip-na"
+        s5_badge_color = "#adb5bd"
+        s5_detail = ""
+    elif not l5_applicable:
         s5_chip = "N/A"
         s5_chip_cls = "chip-na"
         s5_badge_color = "#adb5bd"
         s5_detail = ""
     else:
-        s5_chip = "TRIGGERED" if l5_triggered else "PASS"
+        s5_chip = "TRIGGERED" if l5_triggered else "WITHIN CAPACITY"
         s5_chip_cls = "chip-triggered" if l5_triggered else "chip-pass"
         s5_badge_color = "#c0392b" if l5_triggered else "#27ae60"
 
