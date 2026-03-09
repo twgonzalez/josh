@@ -438,13 +438,15 @@ def create_demo_map(
                 ).add_to(proj_group)
 
         # ── Controlling bottleneck ⚠ icon (static — always visible when project selected) ──
-        # Yellow warning triangle at the midpoint of the worst-ΔT bottleneck segment.
-        # Shown/hidden with the project FeatureGroup — no JS interaction required.
+        # SVG warning triangle (yellow fill, black stroke) at the midpoint of the
+        # worst-ΔT bottleneck segment. Shown/hidden with the FeatureGroup automatically.
+        # Bug fix: roads osmid column stores list values as strings like "[123, 456]",
+        # so use str.contains() instead of _osmid_matches() for reliable lookup.
         if (tier != "MINISTERIAL"
                 and ctrl_osmid
                 and "osmid" in roads_wgs84.columns):
-            ctrl_mask = roads_wgs84["osmid"].apply(
-                lambda o, s=ctrl_osmid: _osmid_matches(o, {s})
+            ctrl_mask = roads_wgs84["osmid"].astype(str).str.contains(
+                ctrl_osmid, regex=False
             )
             ctrl_rows = roads_wgs84[ctrl_mask]
             if not ctrl_rows.empty:
@@ -455,15 +457,23 @@ def create_demo_map(
                     except Exception:
                         mid = ctrl_geom.centroid
                     icon_html = (
-                        '<div style="font-size:16px; line-height:1;'
-                        ' color:#FFD700; text-shadow:0 0 4px rgba(0,0,0,0.7);">⚠</div>'
+                        '<div style="width:22px;height:20px;">'
+                        '<svg viewBox="0 0 22 20" width="22" height="20"'
+                        ' xmlns="http://www.w3.org/2000/svg">'
+                        '<polygon points="11,2 21,19 1,19"'
+                        ' fill="#FFD700" stroke="black" stroke-width="1.5"'
+                        ' stroke-linejoin="round"/>'
+                        '<text x="11" y="16" text-anchor="middle"'
+                        ' font-size="11" font-family="sans-serif"'
+                        ' font-weight="bold" fill="black">!</text>'
+                        '</svg></div>'
                     )
                     folium.Marker(
                         location=[mid.y, mid.x],
                         icon=folium.DivIcon(
                             html=icon_html,
-                            icon_size=(20, 20),
-                            icon_anchor=(10, 10),
+                            icon_size=(22, 20),
+                            icon_anchor=(11, 10),
                         ),
                         tooltip="Controlling bottleneck segment",
                     ).add_to(proj_group)
