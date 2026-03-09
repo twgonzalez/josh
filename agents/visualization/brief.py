@@ -76,6 +76,7 @@ def _render_brief(project, audit: dict, config: dict, city_config: dict) -> str:
         _build_header(city_name, case_num, eval_date, project),
         "<main>",
         _build_summary_stats(tier_upper, wildland, local5),
+        _build_controlling_finding(tier_upper, wildland, project, config),
         _build_standards_analysis(tier_upper, wildland, local5, config),
         _build_determination_box(tier_upper, determination, wildland, local5),
         _build_conditions(tier_upper, wildland, local5),
@@ -475,6 +476,83 @@ def _build_summary_stats(tier: str, wildland: dict, local5: dict) -> str:
 
 
 # ---------------------------------------------------------------------------
+# Controlling finding callout
+# ---------------------------------------------------------------------------
+
+def _build_controlling_finding(tier: str, wildland: dict, project, config: dict) -> str:
+    """One-sentence callout box — the single fact that drives the determination."""
+    tc  = _TIER_CSS_COLOR.get(tier, "#555")
+    bg  = _TIER_BG_COLOR.get(tier, "#f8f9fa")
+    bdr = _TIER_BORDER_COLOR.get(tier, "#dee2e6")
+
+    s5           = wildland.get("steps", {}).get("step5_delta_t", {})
+    s2           = wildland.get("steps", {}).get("step2_scale", {})
+    path_results = s5.get("path_results", [])
+    threshold    = s5.get("threshold_minutes", 6.0)
+    safe_window  = s5.get("safe_egress_window_minutes", 120.0)
+    max_share    = s5.get("max_project_share", 0.05)
+    hazard_zone  = s5.get("hazard_zone", "non_fhsz")
+    ut           = config.get("unit_threshold", 15)
+
+    _zone_labels = {
+        "vhfhsz": "Very High FHSZ", "high_fhsz": "High FHSZ",
+        "moderate_fhsz": "Moderate FHSZ", "non_fhsz": "Non-FHSZ",
+    }
+    hz_label = _zone_labels.get(hazard_zone, hazard_zone)
+
+    if tier == "MINISTERIAL":
+        units = s2.get("dwelling_units", project.dwelling_units)
+        text  = (
+            f"<strong>Size threshold not met.</strong> "
+            f"The project ({units} units) is below the {ut}-unit threshold. "
+            f"Standards 2–4 are not evaluated. Approval is ministerial."
+        )
+    elif tier == "DISCRETIONARY":
+        flagged = [r for r in path_results if r.get("flagged")]
+        if flagged:
+            worst  = max(flagged, key=lambda r: r.get("delta_t_minutes", 0))
+            nm     = worst.get("bottleneck_name") or worst.get("bottleneck_osmid", "bottleneck segment")
+            dt     = worst.get("delta_t_minutes", 0)
+            thr    = worst.get("threshold_minutes", threshold)
+            ratio  = dt / max(thr, 0.001)
+            excess = dt - thr
+            text   = (
+                f"<strong>Controlling finding:</strong> {nm} adds <strong>{dt:.2f} min</strong> "
+                f"of marginal evacuation clearance time — <strong>{ratio:.1f}&times;</strong> the "
+                f"{thr:.2f}-min threshold ({safe_window:.0f} min &times; {max_share*100:.0f}%, "
+                f"{hz_label}, NIST TN 2135). Exceeds threshold by <strong>{excess:.2f} min</strong>."
+            )
+        else:
+            text = "<strong>ΔT threshold exceeded</strong> on one or more serving evacuation paths."
+    else:  # CONDITIONAL MINISTERIAL
+        if path_results:
+            worst     = max(path_results, key=lambda r: r.get("delta_t_minutes", 0))
+            nm        = worst.get("bottleneck_name") or worst.get("bottleneck_osmid", "bottleneck segment")
+            dt        = worst.get("delta_t_minutes", 0)
+            thr       = worst.get("threshold_minutes", threshold)
+            remaining = thr - dt
+            pct_used  = (dt / max(thr, 0.001)) * 100
+            text      = (
+                f"<strong>All serving paths are within the ΔT threshold.</strong> "
+                f"Most constrained path: {nm} at {dt:.2f} min "
+                f"({pct_used:.0f}% of the {thr:.2f}-min limit, <strong>{remaining:.2f} min remaining</strong>)."
+            )
+        else:
+            text = "<strong>All serving paths are within the ΔT threshold.</strong>"
+
+    return (
+        f'<div style="border-left:4px solid {tc}; background:{bg}; '
+        f'border-radius:0 6px 6px 0; padding:12px 16px; margin:16px 0 0; '
+        f'font-size:13px; color:#212529; line-height:1.6;">'
+        f'<span style="font-size:10px; font-weight:700; letter-spacing:1.2px; '
+        f'text-transform:uppercase; color:{tc}; display:block; margin-bottom:5px;">'
+        f'Controlling Finding</span>'
+        f'{text}'
+        f'</div>'
+    )
+
+
+# ---------------------------------------------------------------------------
 # Standards analysis
 # ---------------------------------------------------------------------------
 
@@ -616,6 +694,8 @@ def _build_standards_analysis(tier: str, wildland: dict, local5: dict, config: d
     hazard_zone  = s5.get("hazard_zone", "non_fhsz")
     mob_rate     = s5.get("mobilization_rate", 0.25)
     max_threshold = s5.get("threshold_minutes", 6.0)
+    safe_window   = s5.get("safe_egress_window_minutes", 120.0)
+    max_share     = s5.get("max_project_share", 0.05)
 
     s4_chip = "TRIGGERED" if s4_triggered else ("NOT EVALUATED" if not s1_result else "WITHIN THRESHOLD")
     s4_chip_cls = "chip-triggered" if s4_triggered else ("chip-na" if not s1_result else "chip-pass")
@@ -649,6 +729,7 @@ def _build_standards_analysis(tier: str, wildland: dict, local5: dict, config: d
             "<th>Eff. Cap (vph)</th>"
             "<th>ΔT (min)</th>"
             "<th>Threshold</th>"
+            "<th>Margin</th>"
             "<th>Status</th></tr></thead><tbody>"
         )
         for r in display_paths:
@@ -658,38 +739,61 @@ def _build_standards_analysis(tier: str, wildland: dict, local5: dict, config: d
             dt      = r.get("delta_t_minutes", 0)
             thr     = r.get("threshold_minutes", max_threshold)
             flg     = r.get("flagged", False)
-            dt_color = "#c0392b" if flg else "#212529"
+            margin  = dt - thr
+            dt_color     = "#c0392b" if flg else "#212529"
+            margin_color = "#c0392b" if flg else "#27ae60"
+            margin_str   = f"+{margin:.2f}" if flg else f"−{abs(margin):.2f}"
             if flg:
-                status = "<span style='color:#c0392b;font-weight:700'>⚠ EXCEEDS THRESHOLD</span>"
+                status = "<span style='color:#c0392b;font-weight:700'>⚠ EXCEEDS</span>"
             else:
-                status = "<span style='color:#27ae60'>within threshold</span>"
+                status = "<span style='color:#27ae60'>✓ within</span>"
             flagged_table += (
                 f"<tr><td style='font-size:10px;color:#868e96'>{pid}</td>"
                 f"<td>{bname}</td>"
                 f"<td>{eff_cap:,.0f}</td>"
-                f"<td style='font-weight:600;color:{dt_color}'>{dt:.1f}</td>"
-                f"<td>{thr:.0f}</td>"
+                f"<td style='font-weight:600;color:{dt_color}'>{dt:.2f}</td>"
+                f"<td>{thr:.2f}</td>"
+                f"<td style='font-weight:600;color:{margin_color}'>{margin_str}</td>"
                 f"<td>{status}</td></tr>"
             )
         if n_omitted > 0:
             flagged_table += (
-                f"<tr><td colspan='6' style='color:#868e96;font-style:italic'>"
+                f"<tr><td colspan='7' style='color:#868e96;font-style:italic'>"
                 f"{n_omitted} additional paths within threshold — omitted for brevity. "
                 f"See full audit trail.</td></tr>"
             )
         flagged_table += "</tbody></table>"
 
+    _zone_labels_4 = {
+        "vhfhsz": "Very High FHSZ", "high_fhsz": "High FHSZ",
+        "moderate_fhsz": "Moderate FHSZ", "non_fhsz": "Non-FHSZ",
+    }
+    hz_label_4 = _zone_labels_4.get(hazard_zone, hazard_zone)
+
+    derivation_block = (
+        f"<div style='font-size:11px; background:#f0f4f8; border:1px solid #ccd6e0; "
+        f"border-radius:4px; padding:8px 12px; margin-bottom:8px; line-height:1.8;'>"
+        f"<strong>Threshold derivation:</strong><br>"
+        f"Safe egress window:&nbsp; <strong>{safe_window:.0f} min</strong>"
+        f"&nbsp; ({hz_label_4}, NIST TN 2135<sup style='font-size:9px'>¹</sup>)<br>"
+        f"Maximum project share:&nbsp; <strong>{max_share*100:.0f}%</strong>"
+        f"&nbsp; (standard engineering significance threshold)<br>"
+        f"Threshold:&nbsp; <strong>{safe_window:.0f} &times; {max_share:.2f}"
+        f" = {max_threshold:.2f} min</strong>"
+        f"</div>"
+    ) if s1_result else ""
+
     s4_detail = f"""<div class="detail-block" style="border-left-color:{'#c0392b' if s4_triggered else '#dee2e6'};">
-      <strong>ΔT Standard</strong> (threshold: {max_threshold} min for hazard zone {hazard_zone}):<br>
+      {derivation_block}
       Project vehicles: {proj_vph:.0f} vph &nbsp;&middot;&nbsp;
-      {n_flagged} path{"s" if n_flagged != 1 else ""} exceed threshold
-      (max ΔT: {max_dt:.1f} min)
+      {n_flagged} path{"s" if n_flagged != 1 else ""} exceed{"s" if n_flagged == 1 else ""} threshold
+      (max ΔT: {max_dt:.2f} min vs. {max_threshold:.2f}-min limit)
       {flagged_table}
     </div>""" if s1_result else ""
 
     rows.append(_std_row("4", "#c0392b" if s4_triggered else ("#6c757d" if not s1_result else "#27ae60"),
         "ΔT Evacuation Clearance Test",
-        f"Does this project add >{max_threshold} min of marginal clearance time on any serving path?",
+        f"Does this project add &gt;{max_threshold:.2f} min of marginal clearance time on any serving path?",
         s4_chip, s4_chip_cls, s4_detail))
 
     # --- Standard 5: SB 79 Transit Proximity (v3.0 — informational only) ---
@@ -886,9 +990,9 @@ def _conditions_discretionary(wildland: dict, local5: dict) -> str:
     return f"""<p style="margin:0 0 10px;">
       This project <strong>requires discretionary review</strong> under AB 747
       (Gov. Code §65302.15). The objective standards analysis has determined that this project
-      would add more than {threshold} minutes of marginal evacuation clearance time (ΔT)
+      would add more than {threshold:.2f} minutes of marginal evacuation clearance time (ΔT)
       on one or more serving evacuation paths in hazard zone <code>{hazard_zone}</code>
-      (maximum ΔT: {max_dt:.1f} min).
+      (maximum ΔT: {max_dt:.2f} min vs. {threshold:.2f}-min threshold).
     </p>
     {path_note}
     <ol>
@@ -906,7 +1010,7 @@ def _conditions_discretionary(wildland: dict, local5: dict) -> str:
       review of evacuation access, egress widths, and compliance with Fire Code §503.</li>
       <li><strong>Mitigation Measures or Project Redesign:</strong> Applicant must demonstrate
       — through the clearance time analysis — either (a) that mitigation measures reduce ΔT
-      below {threshold} minutes on all serving paths, or (b) that the project scope
+      below {threshold:.2f} minutes on all serving paths, or (b) that the project scope
       (units, stories, or both) is reduced to fall within the ΔT threshold, to qualify for
       ministerial review.</li>
       <li>Approval is not ministerial until Standard 4 ΔT impact is mitigated or the project

@@ -72,8 +72,8 @@ def _build_route_delta_t_popup(
         status_icon  = "⚠"
         status_text  = (
             f"ΔT threshold exceeded — "
-            f"{delta_t_result['delta_t_minutes']:.1f} min "
-            f"&gt; {delta_t_result['threshold_minutes']:.0f} min limit"
+            f"{delta_t_result['delta_t_minutes']:.2f} min "
+            f"&gt; {delta_t_result['threshold_minutes']:.2f} min limit"
         )
     elif delta_t_result:
         ratio = (delta_t_result["delta_t_minutes"] /
@@ -86,8 +86,8 @@ def _build_route_delta_t_popup(
             status_icon  = "✓"
         status_text = (
             f"ΔT within threshold — "
-            f"{delta_t_result['delta_t_minutes']:.1f} min "
-            f"of {delta_t_result['threshold_minutes']:.0f} min limit"
+            f"{delta_t_result['delta_t_minutes']:.2f} min "
+            f"of {delta_t_result['threshold_minutes']:.2f} min limit"
         )
     else:
         status_color = "#868e96"
@@ -121,18 +121,28 @@ def _build_route_delta_t_popup(
     )
 
     if delta_t_result:
-        dt   = delta_t_result["delta_t_minutes"]
-        thr  = delta_t_result["threshold_minutes"]
-        pveh = delta_t_result.get("project_vehicles", 0)
-        egr  = delta_t_result.get("egress_minutes", 0)
-        mob  = delta_t_result.get("mobilization_rate", 0.25)
-        hz   = delta_t_result.get("hazard_zone", "non_fhsz")
+        dt       = delta_t_result["delta_t_minutes"]
+        thr      = delta_t_result["threshold_minutes"]
+        pveh     = delta_t_result.get("project_vehicles", 0)
+        egr      = delta_t_result.get("egress_minutes", 0)
+        mob      = delta_t_result.get("mobilization_rate", 0.25)
+        hz       = delta_t_result.get("hazard_zone", "non_fhsz")
+        safe_win = delta_t_result.get("safe_egress_window_minutes", 120.0)
+        max_shr  = delta_t_result.get("max_project_share", 0.05)
+        margin   = dt - thr
+        margin_color = "#c0392b" if margin > 0 else "#27ae60"
+        margin_str   = f"+{margin:.2f} min over" if margin > 0 else f"−{abs(margin):.2f} min remaining"
         delta_t_rows = (
             f'<div style="font-weight:700; font-size:11px; color:#444; margin-bottom:2px;">'
-            f'ΔT = {dt:.1f} min &nbsp;'
-            f'<span style="font-weight:400; color:#868e96;">(threshold {thr:.0f} min)</span>'
+            f'ΔT = {dt:.2f} min &nbsp;'
+            f'<span style="font-weight:400; color:#868e96;">(limit {thr:.2f} min)</span>'
+            f'&nbsp;<span style="font-weight:600; color:{margin_color}; font-size:10px;">'
+            f'{margin_str}</span>'
             f'</div>'
             f'{_delta_t_bar_html(dt, thr)}'
+            f'<div style="font-size:9px; color:#868e96; margin:-6px 0 8px;">'
+            f'Limit: {thr:.2f} min = {safe_win:.0f} min safe egress &times; {max_shr*100:.0f}% '
+            f'project share <span style="font-size:8px;">(NIST TN 2135)</span></div>'
             '<table style="width:100%; border-collapse:collapse; font-size:10px; '
             'color:#666; margin-bottom:8px;">'
             f'<tr><td style="padding:1px 0;">Mob rate ({hz})</td>'
@@ -140,7 +150,7 @@ def _build_route_delta_t_popup(
             f'<tr><td style="padding:1px 0;">Project vehicles</td>'
             f'<td style="text-align:right;">{pveh:.1f} vph</td></tr>'
             f'<tr><td style="padding:1px 0;">Vehicle ΔT</td>'
-            f'<td style="text-align:right;">{(pveh / max(eff_cap, 1)) * 60:.1f} min</td></tr>'
+            f'<td style="text-align:right;">{(pveh / max(eff_cap, 1)) * 60:.2f} min</td></tr>'
             + (
                 f'<tr><td style="padding:1px 0;">Egress penalty</td>'
                 f'<td style="text-align:right;">+{egr:.1f} min</td></tr>'
@@ -167,7 +177,8 @@ def _build_route_delta_t_popup(
         + f'<div style="border-top:1px solid #dee2e6; padding-top:6px; '
         f'font-size:10px; color:#868e96;">'
         f'ΔT = (project vehicles ÷ effective capacity) × 60 + egress penalty<br>'
-        f'Source: HCM 2022 + Zhao et al. 2022 + NFPA 101'
+        f'Sources: HCM 2022 (capacity) · Zhao et al. 2022 (mob rates) · '
+        f'NFPA 101 (egress) · NIST TN 2135 (safe egress window)'
         f'</div>'
         '</div>'
     )
@@ -356,17 +367,19 @@ def _build_demo_project_popup(
         """Show ΔT result for the worst-case evacuation path."""
         if not route:
             return ""
-        nm  = route.get("name", "Bottleneck segment")
-        nm  = nm[:25] + "…" if len(nm) > 25 else nm
-        dt  = route.get("delta_t_minutes", 0.0)
-        thr = route.get("threshold_minutes", 10.0)
+        nm      = route.get("name", "Bottleneck segment")
+        nm      = nm[:25] + "…" if len(nm) > 25 else nm
+        dt      = route.get("delta_t_minutes", 0.0)
+        thr     = route.get("threshold_minutes", 10.0)
         flagged = route.get("flagged", False)
-        clr = "#856404" if flagged else "#27ae60"
-        icon = "⚠" if flagged else "✓"
+        margin  = dt - thr
+        clr     = "#856404" if flagged else "#27ae60"
+        icon    = "⚠" if flagged else "✓"
+        margin_str = f"+{margin:.2f} over" if flagged else f"−{abs(margin):.2f} left"
         return (
             f'<div style="font-size:10px;color:{clr};padding-left:6px;'
             f'margin-top:2px;font-style:italic;">'
-            f'{icon} {nm}: ΔT {dt:.1f} min (limit {thr:.0f} min)</div>'
+            f'{icon} {nm}: ΔT {dt:.2f} min (limit {thr:.2f} min · {margin_str})</div>'
         )
 
     scope_html = (

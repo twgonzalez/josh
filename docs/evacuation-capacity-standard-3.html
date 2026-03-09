@@ -1,0 +1,496 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>How the Evacuation Capacity Standard Works</title>
+<link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:ital,wght@0,300;0,400;0,600;1,300;1,400&family=Source+Sans+3:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Source Sans 3', sans-serif;
+    background: #f0ede8;
+    color: #222;
+    font-size: 15px;
+    line-height: 1.7;
+  }
+
+  .page {
+    max-width: 780px;
+    margin: 40px auto;
+    background: white;
+    box-shadow: 0 2px 24px rgba(0,0,0,0.10);
+  }
+
+  /* HEADER */
+  .header {
+    background: #1a2744;
+    padding: 44px 56px 40px;
+  }
+
+  .header-label {
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: #c4922a;
+    margin-bottom: 16px;
+  }
+
+  .header h1 {
+    font-family: 'Source Serif 4', serif;
+    font-weight: 300;
+    font-size: 36px;
+    color: white;
+    line-height: 1.2;
+    margin-bottom: 16px;
+  }
+
+  .header p {
+    font-size: 14px;
+    color: rgba(255,255,255,0.65);
+    max-width: 560px;
+    line-height: 1.65;
+  }
+
+  /* BODY */
+  .content {
+    padding: 48px 56px 56px;
+  }
+
+  /* SECTION */
+  .section {
+    margin-bottom: 44px;
+  }
+
+  .section-eyebrow {
+    font-size: 10.5px;
+    font-weight: 600;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: #c4922a;
+    margin-bottom: 6px;
+  }
+
+  h2 {
+    font-family: 'Source Serif 4', serif;
+    font-weight: 400;
+    font-size: 22px;
+    color: #1a2744;
+    margin-bottom: 14px;
+    line-height: 1.3;
+  }
+
+  p {
+    margin-bottom: 12px;
+    color: #333;
+  }
+
+  p:last-child { margin-bottom: 0; }
+
+  /* STEP */
+  .step {
+    margin-bottom: 36px;
+    padding-bottom: 36px;
+    border-bottom: 1px solid #e8e4dc;
+  }
+
+  .step:last-child {
+    border-bottom: none;
+    margin-bottom: 0;
+    padding-bottom: 0;
+  }
+
+  .step-label {
+    display: flex;
+    align-items: baseline;
+    gap: 10px;
+    margin-bottom: 10px;
+  }
+
+  .step-num {
+    font-size: 11px;
+    font-weight: 600;
+    color: #c4922a;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    white-space: nowrap;
+  }
+
+  .step h3 {
+    font-family: 'Source Serif 4', serif;
+    font-weight: 400;
+    font-size: 19px;
+    color: #1a2744;
+  }
+
+  /* CALCULATION */
+  .calc {
+    background: #f7f4ef;
+    border-left: 3px solid #c4922a;
+    padding: 16px 20px;
+    margin: 16px 0;
+    font-size: 13.5px;
+    line-height: 2;
+    color: #333;
+  }
+
+  .calc .result {
+    font-weight: 600;
+    color: #1a2744;
+    padding-top: 8px;
+    margin-top: 4px;
+    border-top: 1px solid #ddd;
+  }
+
+  .calc .source {
+    font-size: 11.5px;
+    color: #999;
+    margin-top: 6px;
+    line-height: 1.5;
+    font-style: italic;
+  }
+
+  /* TABLE */
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13.5px;
+    margin: 16px 0;
+  }
+
+  thead th {
+    background: #1a2744;
+    color: white;
+    font-weight: 600;
+    font-size: 11px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    padding: 11px 16px;
+    text-align: left;
+  }
+
+  tbody td {
+    padding: 11px 16px;
+    border-bottom: 1px solid #eee;
+    vertical-align: top;
+    line-height: 1.5;
+  }
+
+  tbody tr:last-child td { border-bottom: none; }
+  tbody tr:nth-child(even) td { background: #faf8f5; }
+
+  td.threshold {
+    font-weight: 600;
+    color: #1a2744;
+    white-space: nowrap;
+  }
+
+  /* PULLQUOTE */
+  .pullquote {
+    border-left: 3px solid #c4922a;
+    padding: 14px 22px;
+    margin: 20px 0;
+    background: #faf8f4;
+  }
+
+  .pullquote p {
+    font-family: 'Source Serif 4', serif;
+    font-style: italic;
+    font-size: 16px;
+    color: #1a2744;
+    line-height: 1.6;
+  }
+
+  /* DIVIDER */
+  hr {
+    border: none;
+    border-top: 1px solid #e8e4dc;
+    margin: 44px 0;
+  }
+
+  /* PRINT */
+  @media print {
+    body { background: white; font-size: 12.5px; }
+    .page { max-width: 100%; margin: 0; box-shadow: none; }
+    .header { padding: 28px 48px 24px; }
+    .content { padding: 32px 48px 40px; }
+    .footer { padding: 12px 48px; }
+    hr { margin: 32px 0; }
+    .section { margin-bottom: 32px; }
+    .step { margin-bottom: 26px; padding-bottom: 26px; }
+
+    /* Never split these across pages */
+    .calc { break-inside: avoid; page-break-inside: avoid; }
+    .pullquote { break-inside: avoid; page-break-inside: avoid; }
+    table { break-inside: avoid; page-break-inside: avoid; }
+    h2, h3, .section-eyebrow { break-after: avoid; page-break-after: avoid; }
+    .step-label { break-after: avoid; page-break-after: avoid; }
+    .footer { break-inside: avoid; page-break-inside: avoid; }
+
+    /* Page breaks only at the two natural division points:
+       (1) after the 4-step section — before Zone Thresholds (start of page 2 decisions)
+       (2) after Source Docs + Safety/Traffic — before Paradise (narrative close on page 3) */
+    hr.break-page { break-after: page; page-break-after: always; }
+  }
+
+  /* FOOTER */
+  .footer {
+    background: #1a2744;
+    padding: 16px 56px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .footer span {
+    font-size: 11.5px;
+    color: rgba(255,255,255,0.45);
+    letter-spacing: 0.06em;
+  }
+
+  .footer a {
+    font-size: 11.5px;
+    color: #c4922a;
+    text-decoration: none;
+    letter-spacing: 0.06em;
+  }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <div class="header">
+    <div class="header-label">California Stewardship Alliance — Prepared for Judicial Review</div>
+    <h1>How the Evacuation Capacity Standard Works</h1>
+    <p>A plain-language explanation of the methodology — every input is public, every calculation is arithmetic, and any engineer can reproduce the result independently.</p>
+  </div>
+
+  <div class="content">
+
+    <div class="section">
+      <div class="section-eyebrow">The Question the Standard Answers</div>
+      <h2>One question. One number. In minutes.</h2>
+      <p>When a developer proposes new homes in an area prone to wildfires, earthquakes, or floods, the city must answer a single question:</p>
+      <div class="pullquote">
+        <p>If an emergency occurs and everyone has to leave, how much longer does it take because this project exists?</p>
+      </div>
+      <p>The answer is a number, measured in minutes. The city calls it <strong>ΔT</strong> — the project's time contribution to evacuation. There are four steps to calculate it. Each step uses only public data or published national standards. No step involves anyone's opinion.</p>
+    </div>
+
+    <hr>
+
+    <div class="section">
+      <div class="section-eyebrow">The Four-Step Calculation</div>
+      <h2>How the number is calculated</h2>
+
+      <div class="step">
+        <div class="step-label">
+          <span class="step-num">Step 1</span>
+          <h3>Count the Cars</h3>
+        </div>
+        <p>Every home has cars. The U.S. Census tells us how many — on average, about 2.5 vehicles per household in California. Not everyone drives out in an evacuation. Researchers at UC Berkeley tracked 44.2 million cell phone records during actual California wildfires — the 2019 Kincade Fire, the 2017 Tubbs Fire, and others — and measured what fraction of households actually drove out.</p>
+        <p>In the highest-hazard fire zones, about <strong>75% of households evacuate by car</strong>. In areas farther from the fire, about <strong>25%</strong> do. So for a proposed project of 45 homes in a high-hazard fire zone:</p>
+        <div class="calc">
+          45 homes × 2.5 vehicles × 75% evacuation rate = <strong>84 vehicles</strong>
+          <div class="source">Source: Zhao et al. (2022), Transportation Research Part C; U.S. Census ACS Table B25044</div>
+        </div>
+        <p>That is how many cars this project puts on the road during an evacuation.</p>
+      </div>
+
+      <div class="step">
+        <div class="step-label">
+          <span class="step-num">Step 2</span>
+          <h3>Find the Weakest Link in the Road</h3>
+        </div>
+        <p>Every car leaving the project must pass through the road network to reach safety. Roads have a fixed capacity — a physical limit published in the <strong>Highway Capacity Manual</strong>, the national standard used by every state transportation department since 1950.</p>
+        <p>But if the road runs through the same fire zone causing the evacuation, it won't work at full capacity. Smoke reduces visibility. Fire trucks drive in the opposite direction. Downed trees or power lines may block a lane. The HCM publishes adjustment factors for exactly these conditions — applied to the roads that Cal Fire has designated as being in severe fire zones.</p>
+        <div class="calc">
+          Normal capacity (two-lane road at 30 mph): 1,350 vehicles/hr<br>
+          Fire conditions adjustment (Very High zone): × 35%<br>
+          <div class="result">Effective capacity: 472 vehicles/hr</div>
+          <div class="source">Source: HCM 7th Ed. (2022) Exhibits 10-15 &amp; 10-17; Cal Fire FHSZ maps under Gov. Code §51175</div>
+        </div>
+        <p>The system examines every road between the project and safety. The road with the lowest effective capacity is the bottleneck. The entire evacuation can only move as fast as the slowest segment.</p>
+      </div>
+
+      <div class="step">
+        <div class="step-label">
+          <span class="step-num">Step 3</span>
+          <h3>Account for Building Design</h3>
+        </div>
+        <p>A family in a single-story house walks out the front door and gets in their car in under a minute. A family on the sixth floor must walk down six flights of stairs — elevators are shut down in emergencies — navigate through a corridor, enter a parking garage, and wait in a line of cars to exit.</p>
+        <p>The <strong>NFPA 101 Life Safety Code</strong> provides standard methods for calculating how long it takes to empty a building based on its height, number of stairwells, and exit configuration. For buildings above four stories, the system adds a time penalty of approximately <strong>1.5 minutes per story</strong>, up to a maximum of 12 minutes. For our 45-home, three-story project: no penalty.</p>
+      </div>
+
+      <div class="step">
+        <div class="step-label">
+          <span class="step-num">Step 4</span>
+          <h3>Divide to Get Minutes</h3>
+        </div>
+        <p>Divide the project's vehicles by the bottleneck capacity. Convert to minutes. Add any building egress penalty.</p>
+        <div class="calc">
+          84 vehicles ÷ 472 vehicles/hr = 0.178 hrs<br>
+          0.178 hrs × 60 = 10.7 minutes<br>
+          Building egress penalty: 0 minutes (low-rise)<br>
+          <div class="result">ΔT = 10.7 minutes</div>
+        </div>
+        <p><strong>This project adds 10.7 minutes</strong> to the time it takes everyone on that road to reach safety.</p>
+      </div>
+    </div>
+
+    <hr class="break-page">
+
+    <div class="section">
+      <div class="section-eyebrow">How the Decision Is Made</div>
+      <h2>Zone thresholds and rationale</h2>
+      <p>The city sets a threshold for each type of hazard zone. In the most dangerous fire zones — where the time between ignition and fire arrival can be as short as 30 to 45 minutes — the threshold is tighter. If the project's ΔT exceeds the threshold, additional review is required.</p>
+
+      <table>
+        <thead>
+          <tr>
+            <th>Zone</th>
+            <th>Threshold</th>
+            <th>Rationale</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Very High Fire Hazard</td>
+            <td class="threshold">3 minutes</td>
+            <td>Fire arrives fast — every minute counts</td>
+          </tr>
+          <tr>
+            <td>High Fire Hazard</td>
+            <td class="threshold">5 minutes</td>
+            <td>Somewhat more time, still dangerous</td>
+          </tr>
+          <tr>
+            <td>Moderate Fire Hazard</td>
+            <td class="threshold">8 minutes</td>
+            <td>More buffer, but still a real hazard</td>
+          </tr>
+          <tr>
+            <td>No fire designation</td>
+            <td class="threshold">10 minutes</td>
+            <td>General emergency — earthquake, flood, hazmat</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <p>Our canyon road project adds 10.7 minutes in a Very High zone with a 3-minute threshold — it exceeds the threshold by 7.7 minutes, and additional review is required. A different project of 15 homes on a four-lane road outside any fire zone adds 0.3 minutes against a 10-minute threshold. Approved.</p>
+    </div>
+
+    <hr>
+
+    <div class="section">
+      <div class="section-eyebrow">What the Developer Can Do</div>
+      <h2>The standard identifies constraints — and enables solutions</h2>
+      <p>The standard does not say "no." It says: your design creates a measurable evacuation delay, and here is what you can change to fix it. The developer controls four levers.</p>
+      <p><strong>Build fewer units.</strong> Fewer homes means fewer cars. Our 45-unit project could be reduced to about 12 units to bring the time contribution below 3 minutes on that canyon road.</p>
+      <p><strong>Provide a second way out.</strong> If the project connects to a second road reaching a different exit, vehicles split between two routes instead of funneling through one bottleneck. The binding constraint changes.</p>
+      <p><strong>Widen the bottleneck.</strong> The developer can fund improvements to the constraining road segment — adding a lane, widening shoulders, removing obstructions — which increases capacity and reduces the time calculation.</p>
+      <p><strong>Redesign the building.</strong> For tall buildings where the egress penalty is the problem, the developer can add stairwells or provide multiple garage exits. NFPA 101 provides the math. The developer's architect controls the result.</p>
+      <p>The standard identifies a specific, measurable constraint and tells the developer exactly what number they need to hit. It enables solutions. It does not impose a blanket prohibition.</p>
+    </div>
+
+    <hr class="break-page">
+
+    <div class="section">
+      <div class="section-eyebrow">Source Documentation</div>
+      <h2>Where every number comes from</h2>
+      <p>No number in this system is invented by the city. Every input traces to a published source that any engineer can look up and verify.</p>
+
+      <table>
+        <thead>
+          <tr>
+            <th style="width:38%">Input</th>
+            <th style="width:37%">Source</th>
+            <th style="width:25%">Publisher</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Road capacity (vehicles/hr/lane)</td>
+            <td>Highway Capacity Manual, 7th Ed. (2022)</td>
+            <td>Transportation Research Board, National Academies</td>
+          </tr>
+          <tr>
+            <td>Capacity reduction from smoke &amp; blockage</td>
+            <td>HCM Exhibits 10-15 and 10-17</td>
+            <td>Same</td>
+          </tr>
+          <tr>
+            <td>Fire Hazard Severity Zone designations</td>
+            <td>FHSZ maps under Gov. Code §51175</td>
+            <td>Cal Fire (State of California)</td>
+          </tr>
+          <tr>
+            <td>Vehicles per household</td>
+            <td>ACS Tables B25001 and B25044</td>
+            <td>U.S. Census Bureau</td>
+          </tr>
+          <tr>
+            <td>Fraction of households evacuating by car</td>
+            <td>GPS analysis of 44.2M cell phone records, Kincade Fire (peer-reviewed)</td>
+            <td>Zhao et al. (2022), Transportation Research Part C</td>
+          </tr>
+          <tr>
+            <td>Cross-validation of evacuation rates</td>
+            <td>Survey of 589 evacuees, three California wildfires (2017–2019)</td>
+            <td>Wong, Broader &amp; Shaheen (2020), UC ITS</td>
+          </tr>
+          <tr>
+            <td>Building egress time</td>
+            <td>NFPA 101 (Life Safety Code); International Building Code</td>
+            <td>NFPA; International Code Council</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <hr>
+
+    <div class="section">
+      <div class="section-eyebrow">Why This Is a Safety Question, Not a Traffic Question</div>
+      <h2>The distinction the California Legislature recognized</h2>
+      <p>Traffic studies ask: will this project make the evening commute worse? That is a quality-of-life question about convenience and delay.</p>
+      <p>This standard asks a different question: if there is a wildfire, earthquake, or flood, <strong>can people get out alive?</strong> The answer depends on time. The fire is moving. The question is not whether the road is pleasant to drive on. The question is whether everyone can pass through the bottleneck before the hazard arrives.</p>
+      <p>The California Legislature recognized this distinction when it passed <strong>AB 747</strong> in 2019. That law requires cities to analyze evacuation route capacity in their Safety Element — not the Circulation Element, which deals with traffic — because evacuation is a life safety question.</p>
+    </div>
+
+    <hr class="break-page">
+
+    <div class="section">
+      <div class="section-eyebrow">A Real-World Example</div>
+      <h2>Camp Fire, Paradise, California — November 8, 2018</h2>
+      <p>Within two hours of ignition, the fire reached the town of Paradise — a community of 26,000 people served by a handful of two-lane roads through forested terrain. The roads could not handle the demand. Over 20,000 people attempted to leave at the same time. Traffic stopped. People abandoned their cars and ran. The fire burned over gridlocked vehicles on the evacuation routes. <strong>Eighty-five people died.</strong> It was the deadliest wildfire in California's history.</p>
+      <p>After the fire, researchers documented that the roads out of Paradise could evacuate only about a quarter of the population within two hours. The town had known this — in 2015, it converted one main road to one-way outbound during emergencies to double capacity. It was not enough.</p>
+      <div class="pullquote">
+        <p>The question this standard answers is the same question Paradise faced: can the roads handle the people? The additional minutes of delay are not an abstraction. They are the difference between the 400th car getting through the bottleneck and not getting through.</p>
+      </div>
+    </div>
+
+    <hr>
+
+    <div class="section">
+      <div class="section-eyebrow">Summary</div>
+      <h2>Four steps. One comparison. Every input is public.</h2>
+      <p><strong>Count the cars</strong> the project creates — Census data multiplied by empirical evacuation rates from California wildfires.</p>
+      <p><strong>Find the bottleneck</strong> — the weakest road on the way out, adjusted for fire conditions using the state's own hazard maps and the national capacity manual.</p>
+      <p><strong>Add building egress time</strong> for tall buildings where residents cannot reach their cars quickly, per national fire code.</p>
+      <p><strong>Divide to get minutes.</strong> Compare to the threshold for the hazard zone. The developer can see the result before filing an application, and can change their design to meet the standard.</p>
+      <p>The question for the court is not whether the city chose the right number. The question is whether the city applied a published, objective, verifiable methodology to protect the people who would live in these homes from being trapped in the next fire. The answer is documented in the record, reproducible by any engineer, and grounded in the observed reality of California wildfire evacuations.</p>
+    </div>
+
+  </div>
+
+  <div class="footer">
+    <span>California Stewardship Alliance · Five-Pillar Strategy</span>
+    <a href="#">californiastewardship.org/fire-safety</a>
+  </div>
+
+</div>
+</body>
+</html>

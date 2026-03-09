@@ -41,6 +41,12 @@ from .popups import _build_route_delta_t_popup, _build_demo_project_popup, _buil
 
 logger = logging.getLogger(__name__)
 
+_TIER_ACTION_LABELS = {
+    "DISCRETIONARY":           "Planning Commission review required — public hearing",
+    "CONDITIONAL MINISTERIAL": "Staff approval with conditions — no public hearing",
+    "MINISTERIAL":             "Over-the-counter permit — no discretionary review",
+}
+
 
 # ---------------------------------------------------------------------------
 # Evacuation capacity heatmap layer
@@ -412,8 +418,8 @@ def create_demo_map(
                 if is_flagged and dt_result:
                     tip = (
                         f"⚠ ΔT exceeded — {name_str} "
-                        f"| {dt_result['delta_t_minutes']:.1f} min "
-                        f"> {dt_result['threshold_minutes']:.0f} min"
+                        f"| {dt_result['delta_t_minutes']:.2f} min "
+                        f"> {dt_result['threshold_minutes']:.2f} min"
                     )
                 elif is_flagged:
                     tip = f"⚠ ΔT exceeded — {name_str} | bottleneck segment"
@@ -748,8 +754,8 @@ def _build_project_detail_div(
 ) -> str:
     """Pre-rendered hidden card for one project. JS toggles display:block/none.
 
-    Quick info strip (v3.0): Units | Max ΔT | Threshold
-    Shows the ΔT formula result and its threshold as the primary metrics.
+    v3.1: ΔT gauge replaces three-column strip; what-if analysis collapsible;
+    data-* attributes enable client-side recalculation.
     """
     tier         = project.determination or "UNKNOWN"
     det_color    = _TIER_CSS_COLOR.get(tier, "#555")
@@ -760,32 +766,14 @@ def _build_project_detail_div(
         "MINISTERIAL":             "#a8d5b8",
     }.get(tier, "#dee2e6")
 
-    display = "block" if idx == 0 else "none"
+    display      = "block" if idx == 0 else "none"
+    action_label = _TIER_ACTION_LABELS.get(tier, "")
 
-    # ── ΔT summary from per-path results ─────────────────────────────────
-    dt_results  = project.delta_t_results or []
-    size_met    = project.meets_size_threshold
+    # ── Config values ────────────────────────────────────────────────────
+    max_share_v_cfg = config.get("max_project_share", 0.05)
+    safe_egress_cfg = config.get("safe_egress_window", {})
 
-    if dt_results and size_met:
-        max_dt    = max(r.get("delta_t_minutes", 0) for r in dt_results)
-        threshold = next((r.get("threshold_minutes") for r in dt_results), 10.0)
-        n_flagged = sum(1 for r in dt_results if r.get("flagged"))
-        exceeded  = n_flagged > 0
-
-        dt_color  = "#c0392b" if exceeded else "#27ae60"
-        dt_label  = f"{max_dt:.1f} min"
-        if exceeded:
-            dt_label += " ⚠"
-
-        thr_label = f"{threshold:.0f} min"
-        thr_color = "#555"
-    else:
-        dt_color  = "#adb5bd"
-        dt_label  = "—"
-        thr_label = "—"
-        thr_color = "#adb5bd"
-
-    # ── Hazard zone / mob rate (from FHSZ check or delta_t_results) ──────
+    # ── Hazard zone / mob rate ────────────────────────────────────────────
     hazard_zone = getattr(project, "hazard_zone", "non_fhsz") or "non_fhsz"
     mob_rates   = config.get("mobilization_rates", {})
     mob_rate    = mob_rates.get(hazard_zone, 0.25)
@@ -799,6 +787,70 @@ def _build_project_detail_div(
     }
     hz_label = _zone_labels.get(hazard_zone, hazard_zone)
 
+    # Config-derived fallback threshold
+    safe_window_cfg_val = float(safe_egress_cfg.get(hazard_zone, 120.0))
+    threshold_cfg_val   = safe_window_cfg_val * max_share_v_cfg
+
+    # ── ΔT summary from per-path results ─────────────────────────────────
+    dt_results = project.delta_t_results or []
+    size_met   = project.meets_size_threshold
+
+    if dt_results and size_met:
+        max_dt      = max(r.get("delta_t_minutes", 0) for r in dt_results)
+        best_result = max(dt_results, key=lambda r: r.get("delta_t_minutes", 0))
+        threshold   = best_result.get("threshold_minutes", threshold_cfg_val)
+        safe_window = best_result.get("safe_egress_window_minutes", safe_window_cfg_val)
+        max_share_v = best_result.get("max_project_share", max_share_v_cfg)
+        exceeded    = any(r.get("flagged") for r in dt_results)
+
+        dt_color        = "#c0392b" if exceeded else "#27ae60"
+        indicator_color = dt_color
+        if threshold > 0:
+            gauge_pct    = min((max_dt / (2 * threshold)) * 100.0, 105.0)
+            gauge_numtxt = f"{max_dt:.2f} min / {threshold:.2f} min limit"
+        else:
+            gauge_pct    = 0.0
+            gauge_numtxt = "—"
+    else:
+        threshold       = threshold_cfg_val
+        safe_window     = safe_window_cfg_val
+        max_share_v     = max_share_v_cfg
+        dt_color        = "#adb5bd"
+        indicator_color = "#adb5bd"
+        gauge_pct       = 0.0
+        gauge_numtxt    = "—"
+
+    # ── Controlling finding line ──────────────────────────────────────────
+    if not size_met:
+        finding_text = (
+            f"{project.dwelling_units} units — below {unit_threshold}-unit threshold"
+        )
+    elif dt_results and worst_wildland_route:
+        nm     = (worst_wildland_route.get("name") or "bottleneck segment")[:38]
+        dt_wc  = worst_wildland_route.get("delta_t_minutes", 0)
+        thr_wc = worst_wildland_route.get("threshold_minutes", threshold)
+        if worst_wildland_route.get("flagged"):
+            ratio        = dt_wc / max(thr_wc, 0.001)
+            finding_text = f"{nm}: ΔT {dt_wc:.2f} min — {ratio:.1f}× the {thr_wc:.2f}-min limit"
+        else:
+            rem          = thr_wc - dt_wc
+            pct          = (dt_wc / max(thr_wc, 0.001)) * 100
+            finding_text = f"All paths within limit · {nm}: {dt_wc:.2f} min ({pct:.0f}% used, {rem:.2f} left)"
+    else:
+        finding_text = ""
+
+    finding_html = (
+        f'<div style="font-size:10px; color:#555; padding:5px 13px 5px; '
+        f'border-bottom:1px solid #f1f3f5; background:#fafbfc; '
+        f'line-height:1.35; font-style:italic;">{finding_text}</div>'
+    ) if finding_text else ""
+
+    # Egress label for formula strip
+    egress_str = (
+        f" + {project.egress_minutes:.1f} min egress (NFPA 101)"
+        if project.egress_minutes > 0 else ""
+    )
+
     return f"""
 <div class="proj-detail-card" style="display:{display}; padding:0;">
 
@@ -809,43 +861,84 @@ def _build_project_detail_div(
                 letter-spacing:-0.3px;">
       {tier}
     </div>
-    <div style="font-size:11px; color:#444; margin-top:1px; font-weight:500;">
+    <div style="font-size:10px; color:{det_color}; margin-top:3px;
+                font-weight:600; opacity:0.85; font-style:italic;">
+      {action_label}
+    </div>
+    <div style="font-size:11px; color:#444; margin-top:4px; font-weight:500;">
       {project.project_name or 'Proposed Project'}
     </div>
     {f'<div style="font-size:10px; color:#666; margin-top:1px;">{project.address}</div>' if project.address else ''}
   </div>
 
-  <!-- Quick info strip: Units | Max ΔT | Threshold -->
-  <div style="display:flex; gap:0; border-bottom:1px solid #f1f3f5;">
-    <div style="flex:1; padding:8px 13px; border-right:1px solid #f1f3f5;">
+  <!-- Controlling finding -->
+  {finding_html}
+
+  <!-- ΔT Gauge strip: Units | Gauge bar -->
+  <div style="display:flex; gap:0; border-bottom:1px solid #f1f3f5; align-items:stretch;">
+
+    <!-- Left: Units -->
+    <div style="width:72px; flex-shrink:0; padding:11px 0 11px 13px;
+                border-right:1px solid #f1f3f5;">
       <div style="font-size:10px; color:#adb5bd; text-transform:uppercase;
-                  letter-spacing:0.4px;">Units</div>
+                  letter-spacing:0.4px; margin-bottom:2px;">Units</div>
       <div style="font-size:16px; font-weight:700; color:#212529;">
         {project.dwelling_units}
       </div>
     </div>
-    <div style="flex:1; padding:8px 13px; border-right:1px solid #f1f3f5;">
-      <div style="font-size:10px; color:#adb5bd; text-transform:uppercase;
-                  letter-spacing:0.4px;">Max &Delta;T</div>
-      <div style="font-size:15px; font-weight:700; color:{dt_color}; margin-top:1px;">
-        {dt_label}
+
+    <!-- Right: Gauge -->
+    <div style="flex:1; padding:11px 14px 11px 12px; min-width:0;">
+
+      <!-- Header row -->
+      <div style="display:flex; justify-content:space-between; margin-bottom:4px;">
+        <div style="font-size:10px; color:#adb5bd; text-transform:uppercase; letter-spacing:0.4px;">
+          <span title="Marginal evacuation clearance time">&Delta;T</span>
+        </div>
+        <div style="font-size:9px; color:#adb5bd; text-align:right; line-height:1.3;">
+          Limit
+          <div style="font-size:8px; color:#c8cbd0;">
+            {safe_window:.0f} min &times; {max_share_v*100:.0f}%
+          </div>
+        </div>
       </div>
-    </div>
-    <div style="flex:1; padding:8px 13px;">
-      <div style="font-size:10px; color:#adb5bd; text-transform:uppercase;
-                  letter-spacing:0.4px;">Limit</div>
-      <div style="font-size:15px; font-weight:700; color:{thr_color}; margin-top:1px;">
-        {thr_label}
+
+      <!-- Bar -->
+      <div style="position:relative; height:12px; border-radius:6px;
+                  overflow:visible; margin-top:2px; margin-bottom:5px;">
+        <div style="position:absolute; left:0; top:0; width:100%; height:100%;
+                    background:#d4edda; border-radius:6px;"></div>
+        <div style="position:absolute; left:50%; top:0; right:0; height:100%;
+                    background:#f8d7da; border-radius:0 6px 6px 0;"></div>
+        <!-- Threshold tick at 50% -->
+        <div style="position:absolute; left:50%; top:-2px; width:2px; height:16px;
+                    background:#6c757d; z-index:4; transform:translateX(-50%);"></div>
+        <!-- Indicator dot -->
+        <div style="position:absolute; left:{gauge_pct:.1f}%; top:50%;
+                    transform:translate(-50%,-50%); width:12px; height:12px;
+                    border-radius:50%; background:{indicator_color};
+                    border:2px solid white; box-shadow:0 1px 4px rgba(0,0,0,0.35);
+                    z-index:5;">
+        </div>
+      </div>
+
+      <!-- Numeric text -->
+      <div style="font-size:9px; color:{dt_color}; font-weight:600;">
+        {gauge_numtxt}
       </div>
     </div>
   </div>
 
-  <!-- Mob rate + hazard zone context strip -->
+  <!-- Formula strip -->
   <div style="padding:6px 13px 5px; border-bottom:1px solid #f1f3f5;
-              font-size:10px; color:#868e96; display:flex; gap:14px;">
-    <span><strong style="color:#555;">{project.dwelling_units} units</strong>
-          &times; 2.5 vpu &times; {mob_pct} mob = {project.project_vehicles_peak_hour:.0f} vph</span>
-    <span style="margin-left:auto; flex-shrink:0; color:#868e96;">{hz_label}</span>
+              font-size:10px; color:#868e96; display:flex; gap:14px; align-items:center;">
+    <span>
+      <strong style="color:#555;">{project.dwelling_units} units</strong>
+      &times; 2.5 veh/unit
+      &times; <span title="Evacuation rate — Zhao et al. 2022 GPS data (44M records, Kincade Fire)">{mob_pct} evac. rate</span>
+      = {project.project_vehicles_peak_hour:.0f} vph{egress_str}
+    </span>
+    <span style="margin-left:auto; flex-shrink:0;">{hz_label}</span>
   </div>
 
   <!-- Brief link -->
@@ -943,7 +1036,8 @@ def _build_demo_legend_html(
               letter-spacing:0.5px; margin-bottom:6px;">Serving Routes (flagged)</div>
   {route_tier_items}
   <div style="font-size:10px; color:#adb5bd; margin-top:2px; margin-bottom:10px;">
-    Bold = bottleneck segment where &Delta;T &gt; threshold
+    Bold = bottleneck segment where &Delta;T &gt; threshold<br>
+    Limit = safe egress window (NIST) &times; 5% project share
   </div>
 
   <!-- Evacuation Capacity Heatmap — effective_capacity_vph -->

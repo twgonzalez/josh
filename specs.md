@@ -1,3 +1,6 @@
+> **ARCHIVED — v2.0 (v/c ratio framework).** This document is superseded by
+> [`docs/JOSH_v3_Specification.md`](docs/JOSH_v3_Specification.md) (v3.1 ΔT standard, current).
+
 # Fire Evacuation Capacity Analysis System — Specification
 
 **Version:** 2.0 (revised to align with KLD Engineering AB 747 methodology)
