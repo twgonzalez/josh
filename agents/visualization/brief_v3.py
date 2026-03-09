@@ -1,21 +1,24 @@
 """
 Determination Brief Generator v3 — JOSH / California Stewardship Alliance
 
-Cleaned and corrected version of brief.py (v1):
-  - Standards reordered: 1 → 3 → 2+4 (merged) → 5
-    Standard 3 (FHSZ zone) shown before route table so the degradation
-    factor is visible before the effective capacity numbers that depend on it.
-  - Standards 2 and 4 merged: single route+ΔT table with CONTROLLING badge
-    on the worst-case path; Standard 4 verdict embedded in the same block.
-  - Standard 5 compressed to chip-only row (informational, never affects tier).
-  - Legacy errors removed:
-      · 0.57 ITE peak-hour factor (wrong basis for v3.2)
-      · "mobilization rates differ by hazard zone" (wrong under v3.2 — constant)
-      · "Zhao et al. 2022" source citation (superseded by NFPA 101)
-      · "JOSH v3.1" version references (now v3.2)
-      · Baseline v/c and LOS columns from route table (informational only)
-  - Methodology section replaced by Legal Authority section (numbered citation
-    table + attestation paragraph + formula block).
+Reframed from legacy "5 Standards" structure to reflect v3.2 ΔT architecture:
+  - "Standards Analysis" replaced by "Analysis" with four named sections:
+      1. Applicability Threshold   — size gate (formerly Standard 1)
+      2. Site Parameters           — FHSZ zone lookup + derived inputs
+                                     (formerly Standard 3; not a determination
+                                      step — sets degradation factor + ΔT threshold)
+      3. Evacuation Clearance Analysis — route identification + ΔT test
+                                     (formerly Standards 2+4 merged)
+      4. SB 79 Disclosure          — informational strip only, no badge number
+                                     (formerly Standard 5)
+  - "Standards 1–4" language removed from determination box; replaced with
+    "Wildland Evacuation Analysis"
+  - Cleaned v1 errors (unchanged from v3 init):
+      · 0.57 ITE peak-hour factor removed
+      · "mobilization rates differ by hazard zone" removed (v3.2 constant)
+      · "Zhao et al. 2022" citation removed
+      · Baseline v/c and LOS columns removed from route table
+  - Methodology section replaced by Legal Authority section
 
 Output: output/{city}/brief_v3_{lat}_{lon}_{units}u.html
 """
@@ -544,7 +547,7 @@ def _build_controlling_finding(tier: str, wildland: dict, project, config: dict)
         text  = (
             f"<strong>Size threshold not met.</strong> "
             f"The project ({units} units) is below the {ut}-unit threshold. "
-            f"Standards 2–4 are not evaluated. Approval is ministerial."
+            f"Evacuation clearance analysis is not required. Approval is ministerial."
         )
     elif tier == "DISCRETIONARY":
         flagged = [r for r in path_results if r.get("flagged")]
@@ -592,7 +595,7 @@ def _build_controlling_finding(tier: str, wildland: dict, project, config: dict)
 
 
 # ---------------------------------------------------------------------------
-# Standards analysis v3 — reordered: 1 → 3 → 2+4 → 5
+# Analysis sections v3 — Applicability → Site Parameters → Clearance Test → SB79
 # ---------------------------------------------------------------------------
 
 def _build_standards_analysis_v3(tier: str, wildland: dict, local5: dict, config: dict) -> str:
@@ -606,7 +609,7 @@ def _build_standards_analysis_v3(tier: str, wildland: dict, local5: dict, config
     rows = []
 
     # -----------------------------------------------------------------------
-    # Standard 1: Project Size (fixed — removed 0.57 factor and zone-mob note)
+    # Applicability Threshold (formerly Standard 1)
     # -----------------------------------------------------------------------
     s2      = w_steps.get("step2_scale", {})
     s1_result   = s2.get("result", False)
@@ -624,17 +627,17 @@ def _build_standards_analysis_v3(tier: str, wildland: dict, local5: dict, config
         s1_detail = f"""<div class="detail-block">
           {du} dwelling units proposed &nbsp;&lt;&nbsp; {unit_threshold}-unit threshold —
           project is below the ITE de minimis for measurable evacuation impact.
-          Standards 2–5 are not evaluated.
+          Evacuation clearance analysis is not required.
         </div>"""
 
-    rows.append(_std_row("1", "#1a56db" if s1_result else "#6c757d",
-        "Project Size ≥ Threshold",
+    rows.append(_analysis_row("A", "#1a56db" if s1_result else "#6c757d",
+        "Applicability Threshold",
         f"Minimum {unit_threshold} dwelling units — integer comparison, no discretion",
         s1_chip, s1_chip_cls, s1_detail))
 
     # -----------------------------------------------------------------------
-    # Standard 3: FHSZ Hazard Zone — moved before route table so degradation
-    # factor is visible before the effective capacity numbers that depend on it
+    # Site Parameters (formerly Standard 3) — FHSZ lookup sets inputs to
+    # clearance analysis; not a determination step in itself
     # -----------------------------------------------------------------------
     s1_applicability = w_steps.get("step1_applicability", {})
     fz_result   = s1_applicability.get("std3_fhsz_flagged", False)
@@ -655,43 +658,43 @@ def _build_standards_analysis_v3(tier: str, wildland: dict, local5: dict, config
     hz_label = _zone_labels.get(hazard_zone, hazard_zone)
 
     if not s1_result:
-        s3_chip = "NOT EVALUATED"
+        s3_chip = "PENDING"
         s3_chip_cls = "chip-na"
         s3_badge_color = "#adb5bd"
         s3_detail = ""
     elif fz_result:
-        s3_chip = "FLAGGED"
+        s3_chip = hz_label.upper()
         s3_chip_cls = "chip-triggered"
         s3_badge_color = "#c0392b"
         s3_detail = f"""<div class="detail-block" style="border-left-color:#c0392b;">
           <strong>Project site:</strong> {fz_desc} (source: CAL FIRE OSFM)<br>
-          <strong>Hazard zone:</strong> <code>{hazard_zone}</code> ({hz_label})<br>
-          <strong>Road capacity degradation:</strong> {deg_factor:.2f}&times;
-          (HCM Exhibit 10-15/10-17 composite + NIST Camp Fire validation) —
-          effective capacity = HCM raw &times; {deg_factor:.2f}<br>
-          <strong>Mobilization rate:</strong> {mob_rate:.2f}
-          (NFPA 101 design basis — constant; ~10% zero-vehicle HH adjustment per Census ACS B25044).
-          FHSZ does <em>not</em> affect mobilization; it affects road capacity only.
+          <strong>Hazard zone:</strong> <code>{hazard_zone}</code> —
+          road capacity reduced to {deg_factor:.2f}&times; HCM base
+          (HCM Exhibit 10-15/10-17 composite + NIST Camp Fire validation).<br>
+          <strong>ΔT threshold:</strong> reduced proportionally (shorter safe egress window
+          applies; see Clearance Analysis below).<br>
+          <strong>Mobilization rate:</strong> {mob_rate:.2f} (NFPA 101 constant — unaffected by
+          FHSZ zone; ~10% zero-vehicle HH per Census ACS B25044).
         </div>"""
     else:
-        s3_chip = "NOT IN FHSZ"
+        s3_chip = "NON-FHSZ"
         s3_chip_cls = "chip-na"
         s3_badge_color = "#6c757d"
         s3_detail = f"""<div class="detail-block">
-          Project site is not within a designated fire hazard severity zone —
-          <strong>hazard_zone:</strong> <code>non_fhsz</code>. No road capacity degradation applied
-          (degradation factor = 1.00&times;).<br>
-          <strong>Mobilization rate:</strong> {mob_rate:.2f}
-          (NFPA 101 design basis — constant).
+          Project site is not within a designated fire hazard severity zone
+          (<code>non_fhsz</code>). No road capacity degradation applied
+          (factor = 1.00&times;). Standard 120-min safe egress window applies.<br>
+          <strong>Mobilization rate:</strong> {mob_rate:.2f} (NFPA 101 constant).
         </div>"""
 
-    rows.append(_std_row("3", s3_badge_color,
-        "FHSZ Hazard Zone",
-        "GIS point-in-polygon — sets hazard_zone for road capacity degradation and ΔT threshold",
+    rows.append(_analysis_row("B", s3_badge_color,
+        "Site Parameters",
+        "CAL FIRE FHSZ classification — sets road capacity degradation factor and ΔT threshold for clearance analysis",
         s3_chip, s3_chip_cls, s3_detail))
 
     # -----------------------------------------------------------------------
-    # Standards 2+4: Evacuation Routes & ΔT Test (merged)
+    # Evacuation Clearance Analysis (formerly Standards 2+4 merged)
+    # This is the operative determination step.
     # -----------------------------------------------------------------------
     s3_routes_step = w_steps.get("step3_routes", {})
     s2_result = s3_routes_step.get("triggers_standard", False)
@@ -708,13 +711,13 @@ def _build_standards_analysis_v3(tier: str, wildland: dict, local5: dict, config
     safe_window   = s5.get("safe_egress_window_minutes", 120.0)
     max_share_v   = s5.get("max_project_share", 0.05)
 
-    # Combined chip: show ΔT verdict (not just route existence)
+    # Chip reflects ΔT verdict
     if not s1_result:
-        s24_chip = "NOT EVALUATED"
+        s24_chip = "NOT REQUIRED"
         s24_chip_cls = "chip-na"
         s24_badge_color = "#adb5bd"
     elif s4_triggered:
-        s24_chip = "TRIGGERED"
+        s24_chip = "EXCEEDS THRESHOLD"
         s24_chip_cls = "chip-fail"
         s24_badge_color = "#c0392b"
     elif s2_result:
@@ -834,37 +837,29 @@ def _build_standards_analysis_v3(tier: str, wildland: dict, local5: dict, config
       {merged_table_html}
     </div>""" if s1_result else ""
 
-    rows.append(_std_row_wide("2+4", s24_badge_color,
-        "Evacuation Routes &amp; ΔT Clearance Test",
-        f"Per-path analysis: bottleneck effective capacity &rarr; marginal clearance time vs. threshold",
+    rows.append(_analysis_row_wide("C", s24_badge_color,
+        "Evacuation Clearance Analysis",
+        "Route identification (0.5 mi radius) + per-path ΔT test — this is the operative determination step",
         s24_chip, s24_chip_cls, s24_detail))
 
     # -----------------------------------------------------------------------
-    # Standard 5: SB 79 Transit Proximity — compressed to chip-only row
+    # SB 79 Disclosure — informational strip, no badge letter
     # -----------------------------------------------------------------------
-    if not s1_result:
-        s5_chip = "NOT EVALUATED"
-        s5_chip_cls = "chip-na"
-        s5_badge_color = "#adb5bd"
-    else:
-        s5_chip = "INFORMATIONAL"
-        s5_chip_cls = "chip-na"
-        s5_badge_color = "#adb5bd"
-
-    rows.append(_std_row("5", s5_badge_color,
+    sb79_chip = "INFORMATIONAL" if s1_result else "NOT REQUIRED"
+    rows.append(_disclosure_row(
         "SB 79 Transit Proximity",
-        "SB 79 transit stop within 0.5 mi — informational flag only, does not affect this determination",
-        s5_chip, s5_chip_cls, ""))
+        "Transit stop within 0.5 mi — does not affect this determination",
+        sb79_chip))
 
-    return f"""<h2 class="section-label">Standards Analysis</h2>
+    return f"""<h2 class="section-label">Analysis</h2>
 {"".join(rows)}"""
 
 
-def _std_row(num: str, badge_color: str, title: str, subtitle: str,
-             chip_text: str, chip_cls: str, detail_html: str) -> str:
+def _analysis_row(letter: str, badge_color: str, title: str, subtitle: str,
+                  chip_text: str, chip_cls: str, detail_html: str) -> str:
     return f"""<div class="standard-row">
   <div class="standard-row-header">
-    <span class="criteria-badge" style="background:{badge_color};">{num}</span>
+    <span class="criteria-badge" style="background:{badge_color};">{letter}</span>
     <div style="flex:1;">
       <div class="standard-title">{title}</div>
       <div class="standard-sub">{subtitle}</div>
@@ -875,12 +870,12 @@ def _std_row(num: str, badge_color: str, title: str, subtitle: str,
 </div>"""
 
 
-def _std_row_wide(num: str, badge_color: str, title: str, subtitle: str,
-                  chip_text: str, chip_cls: str, detail_html: str) -> str:
-    """Like _std_row but uses a wider badge for merged standard numbers like '2+4'."""
+def _analysis_row_wide(letter: str, badge_color: str, title: str, subtitle: str,
+                       chip_text: str, chip_cls: str, detail_html: str) -> str:
+    """Like _analysis_row but uses a wider badge (letter C is fine, kept for layout consistency)."""
     return f"""<div class="standard-row">
   <div class="standard-row-header">
-    <span class="criteria-badge-wide" style="background:{badge_color};">{num}</span>
+    <span class="criteria-badge" style="background:{badge_color};">{letter}</span>
     <div style="flex:1;">
       <div class="standard-title">{title}</div>
       <div class="standard-sub">{subtitle}</div>
@@ -888,6 +883,19 @@ def _std_row_wide(num: str, badge_color: str, title: str, subtitle: str,
     <span class="result-chip {chip_cls}">{chip_text}</span>
   </div>
   {detail_html}
+</div>"""
+
+
+def _disclosure_row(title: str, subtitle: str, chip_text: str) -> str:
+    """Informational disclosure strip — no badge letter, always gray."""
+    return f"""<div class="standard-row" style="border-left:3px solid #dee2e6; background:#fafafa;">
+  <div class="standard-row-header">
+    <div style="flex:1;">
+      <div class="standard-title" style="color:#6c757d;">{title}</div>
+      <div class="standard-sub">{subtitle}</div>
+    </div>
+    <span class="result-chip chip-na">{chip_text}</span>
+  </div>
 </div>"""
 
 
@@ -916,7 +924,7 @@ def _build_determination_box(tier: str, determination: dict,
     sc_rows = ""
     for sc_name, sc_tier in sc_tiers.items():
         label = {
-            "wildland_ab747":    "Wildland Scenario (Standards 1–4)",
+            "wildland_ab747":    "Wildland Evacuation Analysis",
             "sb79_transit":      "SB 79 Transit Proximity (Informational)",
         }.get(sc_name, sc_name)
         color = _TIER_CSS_COLOR.get(sc_tier.upper(), "#555")
@@ -1050,7 +1058,7 @@ def _conditions_discretionary_v3(wildland: dict, local5: dict) -> str:
       below {threshold:.2f} minutes on all serving paths, or (b) that the project scope
       (units, stories, or both) is reduced to fall within the ΔT threshold, to qualify for
       ministerial review.</li>
-      <li>Approval is not ministerial until Standard 4 ΔT impact is mitigated or the project
+      <li>Approval is not ministerial until the ΔT exceedance is mitigated or the project
       is redesigned to fall within the ΔT threshold on all serving evacuation paths.</li>
     </ol>"""
 

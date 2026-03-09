@@ -130,11 +130,11 @@ class WildlandScenario(EvacuationScenario):
             "std3_mobilization_rate":    project.mobilization_rate,
             "fire_zone_severity_modifier": fire_zone_detail,
             "note": (
-                f"Standard 3: project in FHSZ Zone {project.fire_zone_level} "
-                f"({project.hazard_zone}). FHSZ affects road capacity degradation only. "
+                f"FHSZ Zone {project.fire_zone_level} ({project.hazard_zone}) — "
+                f"road capacity degradation applied; mobilization unaffected. "
                 f"Mobilization rate {project.mobilization_rate:.2f} (NFPA 101 design basis, constant)."
                 if fire_zone_result else
-                f"Standard 3: project not in FHSZ — hazard_zone=non_fhsz. "
+                f"Not in FHSZ (hazard_zone=non_fhsz) — no road degradation. "
                 f"Mobilization rate {project.mobilization_rate:.2f} (NFPA 101 design basis, constant)."
             ),
         }
@@ -259,12 +259,12 @@ class WildlandScenario(EvacuationScenario):
         mob       = step5.get("mobilization_rate", 0.90)
         n_paths   = sum(1 for r in step5.get("path_results", []) if r.get("flagged"))
         fire_note = (
-            f"Standard 3: FHSZ Zone {project.fire_zone_level} ({hz}) — road degradation applied. "
+            f"FHSZ Zone {project.fire_zone_level} ({hz}) — road capacity degradation applied. "
             if project.in_fire_zone else
-            f"Standard 3: not in FHSZ (hazard_zone={hz}) — no road degradation. "
+            f"Not in FHSZ (hazard_zone={hz}) — no road degradation. "
         )
         return (
-            f"Project meets the {self.unit_threshold}-unit size threshold (Standard 1) and "
+            f"Project meets the {self.unit_threshold}-unit applicability threshold and "
             f"{n_paths} serving path(s) exceed the ΔT threshold of {threshold:.2f} min "
             f"(max ΔT: {max_dt:.1f} min). "
             f"{fire_note}"
@@ -279,12 +279,12 @@ class WildlandScenario(EvacuationScenario):
         hz        = step5.get("hazard_zone", "non_fhsz")
         mob       = step5.get("mobilization_rate", 0.90)
         fire_note = (
-            f"Standard 3: FHSZ Zone {project.fire_zone_level} ({hz}) — road degradation applied. "
+            f"FHSZ Zone {project.fire_zone_level} ({hz}) — road capacity degradation applied. "
             if project.in_fire_zone else
-            f"Standard 3: not in FHSZ (hazard_zone={hz}) — no road degradation. "
+            f"Not in FHSZ (hazard_zone={hz}) — no road degradation. "
         )
         return (
-            f"Project meets the {self.unit_threshold}-unit size threshold and "
+            f"Project meets the {self.unit_threshold}-unit applicability threshold and "
             f"has {n_paths} serving path(s). "
             f"Max ΔT {max_dt:.1f} min within threshold ({threshold:.2f} min). "
             f"{fire_note}"
