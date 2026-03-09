@@ -159,8 +159,11 @@ def analyze(city: str, state: str, refresh: bool):
 @click.option("--name", default="", help="Project name (optional)")
 @click.option("--address", default="", help="Project address (optional)")
 @click.option("--apn", default="", help="Assessor Parcel Number (optional)")
+@click.option("--brief-version", default="1", type=click.Choice(["1", "2", "3", "all"]),
+              show_default=True,
+              help="Brief version: 1 (current), 2 (audience-first), 3 (clean+legal), or all")
 def evaluate(city: str, lat: float, lon: float, units: int, stories: int,
-             name: str, address: str, apn: str):
+             name: str, address: str, apn: str, brief_version: str):
     """
     Evaluate a proposed project -- produce ministerial/discretionary determination.
 
@@ -244,16 +247,41 @@ def evaluate(city: str, lat: float, lon: float, units: int, stories: int,
     audit_path = output_dir / det_filename
     generate_audit_trail(project, audit, audit_path)
 
-    # Save determination brief (HTML)
+    # Save determination brief(s)
     from agents.visualization.brief import create_determination_brief
-    brief_filename = f"brief_{lat_str}_{lon_str}_{units}u.html"
-    brief_path = output_dir / brief_filename
-    create_determination_brief(project, audit, config, city_config, brief_path)
+    from agents.visualization.brief_v2 import create_determination_brief_v2
+    from agents.visualization.brief_v3 import create_determination_brief_v3
+
+    brief_filename    = f"brief_{lat_str}_{lon_str}_{units}u.html"
+    brief_v2_filename = f"brief_v2_{lat_str}_{lon_str}_{units}u.html"
+    brief_v3_filename = f"brief_v3_{lat_str}_{lon_str}_{units}u.html"
+    brief_path    = output_dir / brief_filename
+    brief_v2_path = output_dir / brief_v2_filename
+    brief_v3_path = output_dir / brief_v3_filename
+
+    if brief_version in ("1", "all"):
+        create_determination_brief(project, audit, config, city_config, brief_path)
+    if brief_version in ("2", "all"):
+        create_determination_brief_v2(project, audit, config, city_config, brief_v2_path)
+    if brief_version in ("3", "all"):
+        create_determination_brief_v3(project, audit, config, city_config, brief_v3_path)
 
     _print_determination(project, audit)
     console.print(f"\n  Full audit trail: [cyan]{audit_path}[/cyan]")
-    console.print(f"  Determination brief: [cyan]{brief_path}[/cyan]")
-    console.print(f"  Open with: [dim]open {brief_path}[/dim]")
+    if brief_version in ("1", "all"):
+        console.print(f"  Brief v1 (current):        [cyan]{brief_path}[/cyan]")
+    if brief_version in ("2", "all"):
+        console.print(f"  Brief v2 (audience-first): [cyan]{brief_v2_path}[/cyan]")
+    if brief_version in ("3", "all"):
+        console.print(f"  Brief v3 (clean+legal):    [cyan]{brief_v3_path}[/cyan]")
+    if brief_version == "all":
+        console.print(f"  Compare: [dim]open {brief_path} && open {brief_v2_path} && open {brief_v3_path}[/dim]")
+    elif brief_version == "1":
+        console.print(f"  Open with: [dim]open {brief_path}[/dim]")
+    elif brief_version == "2":
+        console.print(f"  Open with: [dim]open {brief_v2_path}[/dim]")
+    else:
+        console.print(f"  Open with: [dim]open {brief_v3_path}[/dim]")
 
 
 
