@@ -148,6 +148,7 @@ def create_demo_map(
     output_path: Path,
     demo_title: str = "Fire Evacuation Impact Analysis",
     audits: list[dict] | None = None,
+    evacuation_paths: list | None = None,
 ) -> Path:
     """
     Generate a multi-project comparison map — v3.0 ΔT Standard.
@@ -160,6 +161,7 @@ def create_demo_map(
       5. Evacuation Capacity heatmap — all evac routes colored by effective_capacity_vph
       6. Per-project FeatureGroup (serving routes + marker + search radius)
          — only ONE visible at a time, controlled by panel dropdown
+         — includes controlling evacuation path corridor (dashed) from buffer to bottleneck
 
     Pass `audits` (list returned by evaluate_project()) to include SB 79 transit
     flag in per-project detail cards.
@@ -258,6 +260,15 @@ def create_demo_map(
     # Per-project Standard 5 data (populated from audits if available)
     proj_ld_data: list[dict] = []
 
+    # Lookup: path_id → path_osmids (for controlling corridor visualization)
+    # Keyed by path_id so each project gets the exact EvacuationPath that was
+    # selected as its controlling path — not just any path sharing the same bottleneck.
+    path_id_to_osmids: dict[str, list[str]] = {
+        str(getattr(_ep, "path_id", "")): list(getattr(_ep, "path_osmids", []))
+        for _ep in (evacuation_paths or [])
+        if getattr(_ep, "path_osmids", [])
+    }
+
     for i, project in enumerate(projects):
         tier         = project.determination or "UNKNOWN"
         marker_color = _TIER_MARKER_COLOR.get(tier, "gray")
@@ -290,7 +301,8 @@ def create_demo_map(
         # Use project.delta_t_results (set by Agent 3 WildlandScenario).
         # Show the flagged path with highest ΔT, or the highest ΔT path overall.
         worst_wildland_route: "dict | None" = None
-        ctrl_osmid: str = ""   # controlling bottleneck osmid for hover highlight
+        ctrl_osmid: str = ""    # controlling bottleneck osmid for ⚠ icon lookup
+        ctrl_path_id: str = ""  # controlling path_id for corridor lookup
         if project.delta_t_results:
             flagged_dts = [r for r in project.delta_t_results if r.get("flagged")]
             best_dt     = (
@@ -298,7 +310,8 @@ def create_demo_map(
                 if flagged_dts else
                 max(project.delta_t_results, key=lambda r: r.get("delta_t_minutes", 0))
             )
-            ctrl_osmid = str(best_dt.get("bottleneck_osmid", ""))
+            ctrl_osmid    = str(best_dt.get("bottleneck_osmid", ""))
+            ctrl_path_id  = str(best_dt.get("path_id", ""))
             worst_wildland_route = {
                 "name":              str(best_dt.get("bottleneck_name", "") or "Bottleneck segment"),
                 "delta_t_minutes":   best_dt.get("delta_t_minutes",  0.0),
@@ -372,6 +385,30 @@ def create_demo_map(
                     style_function=lambda _, c=iz_color, w=iz_weight: {
                         "color": c, "weight": w, "opacity": 0.55,
                     },
+                ).add_to(proj_group)
+
+        # ── Controlling evacuation path corridor (dashed) ────────────────────
+        # Draws the full route of the controlling EvacuationPath from the project
+        # area to the bottleneck (and beyond to the city exit). Explains why the
+        # bottleneck ⚠ icon may appear outside the search radius circle.
+        # Renders below serving routes — segments inside the buffer get the solid
+        # serving route overlay on top; segments outside show only the dashed line.
+        if tier != "MINISTERIAL" and ctrl_path_id and ctrl_path_id in path_id_to_osmids:
+            ctrl_path_set = set(path_id_to_osmids[ctrl_path_id])
+            path_mask = roads_wgs84["osmid"].apply(
+                lambda o: _osmid_matches(o, ctrl_path_set)
+            )
+            bn_label = (worst_wildland_route or {}).get("name", "bottleneck") or "bottleneck"
+            corridor_tip = f"Evacuation corridor → {bn_label} (controlling bottleneck)"
+            for _, row in roads_wgs84[path_mask].iterrows():
+                if row.geometry is None or row.geometry.is_empty:
+                    continue
+                folium.GeoJson(
+                    mapping(row.geometry),
+                    style_function=lambda _, c=route_color: {
+                        "color": c, "weight": 2, "opacity": 0.45, "dashArray": "5 6",
+                    },
+                    tooltip=corridor_tip,
                 ).add_to(proj_group)
 
         # Serving routes (wildland — one GeoJson per segment for popup support)
@@ -489,7 +526,7 @@ def create_demo_map(
                     ld_tier=ld_tier,
                     ld_triggered=ld_triggered,
                 ),
-                max_width=320,
+                max_width=360,
             ),
             tooltip=f"{project.project_name} · {tier}",
             icon=folium.Icon(color=marker_color, icon="home", prefix="fa"),

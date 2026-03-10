@@ -286,6 +286,7 @@ def _load_evacuation_paths(paths_file: Path) -> list:
                     bottleneck_effective_capacity_vph=float(d.get("bottleneck_effective_capacity_vph", 0)),
                     catchment_units=float(d.get("catchment_units", 0)),
                     baseline_demand_vph=float(d.get("baseline_demand_vph", 0)),
+                    path_osmids=d.get("path_osmids", []),
                 ))
             except Exception:
                 continue
@@ -629,6 +630,7 @@ def demo(city: str, state: str, projects_file: str, output_name: str):
         output_path=map_path,
         demo_title=demo_title,
         audits=audits,
+        evacuation_paths=evacuation_paths,
     )
     console.print(f"  Map saved: [cyan]{map_path}[/cyan]")
     console.print(f"  Open with: [dim]open {map_path}[/dim]")

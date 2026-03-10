@@ -198,14 +198,17 @@ class WildlandScenario(EvacuationScenario):
         project.serving_route_ids   = list(nearby_osmids)
         project.search_radius_miles = radius
 
-        # Filter EvacuationPaths from context by proximity of bottleneck/exit
+        # Filter EvacuationPaths from context by proximity of bottleneck only.
+        # Exit proximity is intentionally excluded: a path's city-boundary exit can be
+        # coincidentally near the project even when the path originates from a distant
+        # block group traveling in the wrong direction (e.g., flatland block group whose
+        # path exits at a hills boundary near a hills project). The bottleneck is the
+        # capacity constraint the project's traffic must pass through; it must be in the
+        # project's road shed for the path to be meaningfully "serving" the project.
         all_evac_paths: list = context.get("evacuation_paths", [])
         serving_paths: list[EvacuationPath] = [
             p for p in all_evac_paths
-            if (
-                str(getattr(p, "bottleneck_osmid", "")) in nearby_osmids
-                or str(getattr(p, "exit_segment_osmid", "")) in nearby_osmids
-            )
+            if str(getattr(p, "bottleneck_osmid", "")) in nearby_osmids
         ]
 
         fallback_used = False

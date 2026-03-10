@@ -3,27 +3,69 @@ HTML popup and marker popup builders for the demo map.
 
 v3.0 ΔT Standard: all route popups show effective_capacity_vph and ΔT clearance
 time rather than v/c ratios. v/c and LOS remain informational footnotes only.
+
+Popup A/B/C structure (mirrors brief_v3 determination letter):
+  A — Applicability Threshold (15-unit size gate)
+  B — Site Parameters (FHSZ zone, degradation, threshold)
+  C — Evacuation Clearance Analysis (routes + ΔT test — operative step)
+  SB 79 — informational only, no tier impact (footnote)
 """
 from models.project import Project
 from .themes import _TIER_CSS_COLOR, _TIER_BG_COLOR
 
 
 # ---------------------------------------------------------------------------
+# Popup action labels — mirrors determination brief language
+# ---------------------------------------------------------------------------
+
+_POPUP_ACTION_LABELS = {
+    "DISCRETIONARY":           "Planning Commission review required",
+    "CONDITIONAL MINISTERIAL": "Ministerial approval — all capacity standards met",
+    "MINISTERIAL":             "Over-the-counter — below size threshold",
+}
+
+_HAZARD_ZONE_SAFE_WINDOW = {
+    "vhfhsz":        45,
+    "high_fhsz":     90,
+    "moderate_fhsz": 120,
+    "non_fhsz":      120,
+}
+
+_HAZARD_ZONE_DEG = {
+    "vhfhsz":        0.35,
+    "high_fhsz":     0.50,
+    "moderate_fhsz": 0.75,
+    "non_fhsz":      1.00,
+}
+
+_HAZARD_ZONE_FULL_LABEL = {
+    "vhfhsz":        "Zone 3 — Very High FHSZ",
+    "high_fhsz":     "Zone 2 — High FHSZ",
+    "moderate_fhsz": "Zone 1 — Moderate FHSZ",
+    "non_fhsz":      "Non-FHSZ",
+}
+
+
+# ---------------------------------------------------------------------------
 # ΔT bar widget — v3.0
 # ---------------------------------------------------------------------------
 
-def _delta_t_bar_html(delta_t: float, threshold: float) -> str:
+def _delta_t_bar_html(delta_t: float, threshold: float, height_px: int = 10) -> str:
     """
     HTML progress bar showing ΔT position relative to its threshold.
 
-    Bar fills left-to-right: full bar = at threshold. Overflow = red cap at 100%.
-    A vertical tick marks the threshold at 100% width.
+    The threshold tick is pinned at THRESHOLD_LINE_PCT (60%) of bar width,
+    matching the mini-bar scale. Bars exceeding the threshold extend past
+    the tick; bars within it stop short.
     Color: green (< 50%), yellow (50–75%), orange (75–100%), red (> 100%).
     """
     if threshold <= 0:
         threshold = 10.0
+
+    THRESHOLD_LINE_PCT = 60  # matches _multi_path_bars_html scale
+
     ratio = delta_t / threshold
-    pct = min(ratio * 100, 100)
+    pct   = min(ratio * THRESHOLD_LINE_PCT, 100)
 
     if ratio >= 1.0:
         bar_color = "#dc3545"   # red — exceeded
@@ -34,15 +76,131 @@ def _delta_t_bar_html(delta_t: float, threshold: float) -> str:
     else:
         bar_color = "#28a745"   # green — comfortable
 
+    tick_h = height_px + 6
+
     return (
         f'<div style="position:relative; background:#e9ecef; border-radius:4px; '
-        f'height:10px; overflow:visible; margin:4px 0 10px;">'
-        f'<div style="position:absolute; right:0; top:-3px; '
-        f'width:2px; height:16px; background:#6c757d; z-index:2;"></div>'
+        f'height:{height_px}px; overflow:visible; margin:4px 0 10px;">'
+        f'<div style="position:absolute; left:{THRESHOLD_LINE_PCT}%; top:-3px; '
+        f'width:2px; height:{tick_h}px; background:#6c757d; z-index:2;"></div>'
         f'<div style="width:{pct:.1f}%; background:{bar_color}; height:100%; '
         f'border-radius:4px; position:relative; z-index:1;"></div>'
         f'</div>'
     )
+
+
+# ---------------------------------------------------------------------------
+# Multi-path mini bar chart — popup C section
+# ---------------------------------------------------------------------------
+
+def _multi_path_bars_html(
+    dt_results: list,
+    threshold: float,
+    show_max: int = 6,
+) -> str:
+    """
+    Mini per-path bar chart for the project popup.
+
+    One row per unique bottleneck name (deduped, highest ΔT wins).
+    Sorted ΔT descending. Up to show_max rows; remainder noted in footer.
+
+    The threshold reference line is pinned at THRESHOLD_LINE_PCT of the bar
+    width. Bars that exceed the threshold visibly extend past the line;
+    bars within it stop short. A legend below labels the tick value.
+
+    Returns empty string if dt_results is empty or threshold <= 0.
+    """
+    if not dt_results or threshold <= 0:
+        return ""
+
+    # Threshold line sits at this percentage of bar width.
+    # Bars fill: min(dt / threshold × THRESHOLD_LINE_PCT, 100)%.
+    # A bar at exactly the threshold reaches the tick; beyond it, goes right.
+    THRESHOLD_LINE_PCT = 60
+
+    # Deduplicate by bottleneck name — keep highest ΔT per name
+    seen: dict[str, dict] = {}
+    for r in dt_results:
+        name = str(r.get("bottleneck_name", "") or r.get("bottleneck_osmid", ""))
+        if not name:
+            continue
+        if name not in seen or r.get("delta_t_minutes", 0) > seen[name].get("delta_t_minutes", 0):
+            seen[name] = r
+
+    if not seen:
+        return ""
+
+    sorted_rows = sorted(seen.values(), key=lambda r: r.get("delta_t_minutes", 0), reverse=True)
+    n_total   = len(sorted_rows)
+    n_flagged = sum(1 for r in sorted_rows if r.get("flagged"))
+
+    hdr_clr = "#c0392b" if n_flagged > 0 else "#27ae60"
+    if n_flagged > 0:
+        hdr_txt = (
+            f"{n_flagged} of {n_total} path{'s' if n_total != 1 else ''} "
+            f"exceed threshold"
+        )
+    else:
+        hdr_txt = f"All {n_total} path{'s' if n_total != 1 else ''} within limit"
+
+    html = (
+        f'<div style="margin-top:6px; padding-top:6px; border-top:1px solid #f1f3f5;">'
+        f'<div style="font-size:9px; font-weight:700; color:{hdr_clr}; margin-bottom:4px;">'
+        f'{hdr_txt}</div>'
+    )
+
+    shown = sorted_rows[:show_max]
+    extra = sorted_rows[show_max:]
+
+    for r in shown:
+        name    = str(r.get("bottleneck_name", "") or r.get("bottleneck_osmid", ""))
+        dt      = r.get("delta_t_minutes", 0)
+        flagged = r.get("flagged", False)
+        nm_str  = (name[:22] + "…") if len(name) > 22 else name
+        bar_pct = min((dt / threshold) * THRESHOLD_LINE_PCT, 100)
+        bar_clr = "#c0392b" if flagged else "#27ae60"
+        icon    = "⚠" if flagged else "✓"
+        html += (
+            f'<div style="display:flex; align-items:center; gap:5px; margin-bottom:3px;">'
+            f'<div style="font-size:9px; color:#555; width:80px; flex-shrink:0; overflow:hidden; '
+            f'text-overflow:ellipsis; white-space:nowrap;">{nm_str}</div>'
+            # bar container — overflow:visible so the threshold tick can extend above/below
+            f'<div style="flex:1; position:relative; height:6px; background:#e9ecef; '
+            f'border-radius:3px; overflow:visible;">'
+            f'<div style="width:{bar_pct:.0f}%; height:100%; background:{bar_clr}; '
+            f'border-radius:3px; position:relative; z-index:1;"></div>'
+            # threshold reference tick
+            f'<div style="position:absolute; left:{THRESHOLD_LINE_PCT}%; top:-4px; '
+            f'width:2px; height:14px; background:#888; border-radius:1px; z-index:2;"></div>'
+            f'</div>'
+            f'<div style="font-size:9px; color:{bar_clr}; font-weight:600; width:44px; '
+            f'flex-shrink:0; text-align:right;">{dt:.1f}&nbsp;{icon}</div>'
+            f'</div>'
+        )
+
+    if extra:
+        extra_flagged = sum(1 for r in extra if r.get("flagged"))
+        extra_within  = len(extra) - extra_flagged
+        if extra_flagged == 0:
+            extra_txt = f"+ {len(extra)} more — all within limit"
+        else:
+            extra_txt = f"+ {len(extra)} more ({extra_flagged} exceed, {extra_within} within)"
+        html += (
+            f'<div style="font-size:8px; color:#adb5bd; margin-top:2px;">{extra_txt}</div>'
+        )
+
+    # Legend: label the threshold tick
+    html += (
+        f'<div style="display:flex; align-items:center; gap:3px; margin-top:4px; '
+        f'padding-left:85px;">'
+        f'<div style="width:2px; height:9px; background:#888; border-radius:1px; '
+        f'flex-shrink:0;"></div>'
+        f'<span style="font-size:8px; color:#999;">{threshold:.1f} min limit</span>'
+        f'</div>'
+    )
+
+    html += "</div>"
+    return html
 
 
 # ---------------------------------------------------------------------------
@@ -125,7 +283,7 @@ def _build_route_delta_t_popup(
         thr      = delta_t_result["threshold_minutes"]
         pveh     = delta_t_result.get("project_vehicles", 0)
         egr      = delta_t_result.get("egress_minutes", 0)
-        mob      = delta_t_result.get("mobilization_rate", 0.25)
+        mob      = delta_t_result.get("mobilization_rate", 0.90)
         hz       = delta_t_result.get("hazard_zone", "non_fhsz")
         safe_win = delta_t_result.get("safe_egress_window_minutes", 120.0)
         max_shr  = delta_t_result.get("max_project_share", 0.05)
@@ -145,7 +303,7 @@ def _build_route_delta_t_popup(
             f'project share <span style="font-size:8px;">(NIST TN 2135)</span></div>'
             '<table style="width:100%; border-collapse:collapse; font-size:10px; '
             'color:#666; margin-bottom:8px;">'
-            f'<tr><td style="padding:1px 0;">Mob rate ({hz})</td>'
+            f'<tr><td style="padding:1px 0;">Mob rate (NFPA 101 constant)</td>'
             f'<td style="text-align:right;">{mob:.0%}</td></tr>'
             f'<tr><td style="padding:1px 0;">Project vehicles</td>'
             f'<td style="text-align:right;">{pveh:.1f} vph</td></tr>'
@@ -177,8 +335,8 @@ def _build_route_delta_t_popup(
         + f'<div style="border-top:1px solid #dee2e6; padding-top:6px; '
         f'font-size:10px; color:#868e96;">'
         f'ΔT = (project vehicles ÷ effective capacity) × 60 + egress penalty<br>'
-        f'Sources: HCM 2022 (capacity) · Zhao et al. 2022 (mob rates) · '
-        f'NFPA 101 (egress) · NIST TN 2135 (safe egress window)'
+        f'Sources: HCM 2022 (capacity) · NFPA 101 (mob rate) · '
+        f'NFPA 101/IBC (egress) · NIST TN 2135 (safe egress window)'
         f'</div>'
         '</div>'
     )
@@ -261,7 +419,7 @@ def _build_heatmap_route_popup(
 
 
 # ---------------------------------------------------------------------------
-# Demo map project marker popup
+# Demo map project marker popup — A/B/C structure (mirrors brief_v3)
 # ---------------------------------------------------------------------------
 
 def _build_demo_project_popup(
@@ -276,169 +434,201 @@ def _build_demo_project_popup(
 ) -> str:
     """Popup shown when clicking a project marker on the demo map.
 
-    Two-section layout (UI/UX best practice for hierarchical info):
-      §1 — Analysis Scope (Stds 1–3): prerequisite conditions — compact, neutral
-      §2 — Capacity Tests (Stds 4–5): decision drivers — prominent, full color
-
-    worst_wildland_route: dict with keys
-        name, delta_t_minutes, threshold_minutes, flagged — shown inline.
-    worst_local_route: unused in v3.0 (SB 79 has no route details); pass None.
+    Mirrors the determination brief (brief_v3) A/B/C criteria structure:
+      Hero    — verdict + plain-English action label (city planner first)
+      Finding — controlling finding (plain-English outcome, mirrors brief)
+      C       — Evacuation Clearance Analysis (ΔT gauge + multi-path bars)
+      A + B   — compact screening strip (size gate + site parameters)
+      SB 79   — footnote (informational only, no tier impact)
     """
     det       = project.determination or "UNKNOWN"
     det_color = _TIER_CSS_COLOR.get(det, "#555")
     bg_color  = _TIER_BG_COLOR.get(det, "#fafafa")
 
-    n_srv     = len(project.serving_route_ids or [])
-    met_size  = project.meets_size_threshold
-    radius_mi = project.search_radius_miles
-    in_zone   = f"Zone {project.fire_zone_level}" if project.in_fire_zone else "Not in FHSZ"
-    reason_short = (project.determination_reason or "").split(".")[0] + "."
+    action_label = _POPUP_ACTION_LABELS.get(det, "")
+    met_size     = project.meets_size_threshold
+    hazard_zone  = project.hazard_zone or "non_fhsz"
 
-    # ── §1 Scope icons (Stds 1–3) ─────────────────────────────────────────
-    # Std 1: project size gate
-    s1_icon = "✓" if met_size else "✗"
-    s1_clr  = "#1a56db" if met_size else "#adb5bd"
-    s1_text = f"{project.dwelling_units} of {unit_threshold} units"
-    # Std 2: serving evacuation routes (gated on size threshold)
-    if not met_size:
-        s2_icon, s2_clr, s2_text = "—", "#adb5bd", "not evaluated"
-    elif n_srv > 0:
-        s2_icon, s2_clr = "✓", "#1a56db"
-        s2_text = f"{n_srv} routes · {radius_mi} mi"
+    # Zone label for hero subtitle
+    if project.in_fire_zone:
+        zone_label = _HAZARD_ZONE_FULL_LABEL.get(hazard_zone, hazard_zone)
     else:
-        s2_icon, s2_clr, s2_text = "✗", "#adb5bd", "no routes found"
-    # Std 3: FHSZ modifier (activates surge in Std 4 when flagged)
-    in_fhsz = project.in_fire_zone
+        zone_label = "Non-FHSZ"
+
+    # ── ΔT summary ────────────────────────────────────────────────────────
+    dt_results = project.delta_t_results or []
+    max_dt     = 0.0
+    threshold  = 0.0
+    if dt_results:
+        max_dt    = max(r.get("delta_t_minutes", 0) for r in dt_results)
+        threshold = dt_results[0].get("threshold_minutes", 0.0)
+    if threshold <= 0:
+        safe_win  = _HAZARD_ZONE_SAFE_WINDOW.get(hazard_zone, 120)
+        threshold = safe_win * 0.05
+
+    # ── Controlling Finding ───────────────────────────────────────────────
     if not met_size:
-        s3_icon, s3_clr, s3_text = "—", "#adb5bd", "not evaluated"
-    elif in_fhsz:
-        s3_icon, s3_clr = "✓", "#c0392b"
-        s3_text = f"{in_zone} — surge active"
-    else:
-        s3_icon, s3_clr, s3_text = "—", "#adb5bd", "Not in FHSZ"
-
-    _SL = (
-        "font-size:9px;font-weight:700;letter-spacing:1.2px;"
-        "text-transform:uppercase;color:#adb5bd;margin-bottom:5px;"
-    )
-
-    def _scope_row(icon, clr, text):
-        return (
-            f'<div style="display:flex;align-items:baseline;gap:6px;'
-            f'font-size:10px;color:#555;margin-bottom:2px;">'
-            f'<span style="color:{clr};font-weight:700;min-width:10px;'
-            f'flex-shrink:0;">{icon}</span>'
-            f'<span>{text}</span></div>'
+        finding_html = (
+            f'<div style="border-left:3px solid {det_color}; background:#fafbfc; '
+            f'padding:7px 12px; margin:0;">'
+            f'<div style="font-size:9px; font-weight:700; letter-spacing:1.1px; '
+            f'text-transform:uppercase; color:{det_color}; margin-bottom:3px;">'
+            f'Controlling Finding</div>'
+            f'<div style="font-size:11px; color:#333; line-height:1.45;">'
+            f'{project.dwelling_units} units — below {unit_threshold}-unit threshold. '
+            f'No capacity analysis required.'
+            f'</div></div>'
         )
+    elif worst_wildland_route:
+        dt_wc  = worst_wildland_route.get("delta_t_minutes", 0.0)
+        thr_wc = worst_wildland_route.get("threshold_minutes", threshold)
+        nm_wc  = str(worst_wildland_route.get("name", "bottleneck segment") or "")[:38]
+        if worst_wildland_route.get("flagged"):
+            ratio    = dt_wc / max(thr_wc, 0.001)
+            margin   = dt_wc - thr_wc
+            body_str = (
+                f"{nm_wc} adds <strong>{dt_wc:.1f} min</strong> — "
+                f"{ratio:.1f}&times; the {thr_wc:.2f}-min limit "
+                f"(exceeds by {margin:.1f} min)"
+            )
+        else:
+            pct      = (dt_wc / max(thr_wc, 0.001)) * 100
+            body_str = (
+                f"All paths within limit — worst case: {nm_wc} at {dt_wc:.1f} min "
+                f"({pct:.0f}% of {thr_wc:.2f}-min limit)"
+            )
+        finding_html = (
+            f'<div style="border-left:3px solid {det_color}; background:#fafbfc; '
+            f'padding:7px 12px; margin:0;">'
+            f'<div style="font-size:9px; font-weight:700; letter-spacing:1.1px; '
+            f'text-transform:uppercase; color:{det_color}; margin-bottom:3px;">'
+            f'Controlling Finding</div>'
+            f'<div style="font-size:11px; color:#333; line-height:1.45;">'
+            f'{body_str}</div></div>'
+        )
+    else:
+        finding_html = ""
 
-    # ── §2 Capacity chips (Stds 4–5) ──────────────────────────────────────
-    _TRIGGERED  = ("⚠ TRIGGERED",            "#fff3cd", "#856404")
-    _WITHIN_THR = ("✓ ΔT WITHIN THRESHOLD",  "#e8f5e9", "#27ae60")
-    _NOT_EVAL   = ("— NOT EVALUATED",         "#f1f3f5", "#868e96")
-    _NA         = ("N/A",                     "#f1f3f5", "#868e96")
-
-    # Std 4: ΔT clearance time test
+    # ── Criterion C: status chip ──────────────────────────────────────────
     if not met_size:
-        s4 = _NOT_EVAL
+        c_chip_label, c_chip_bg, c_chip_fg = "— NOT EVALUATED", "#f1f3f5", "#868e96"
     elif project.capacity_exceeded:
-        s4 = _TRIGGERED
+        c_chip_label, c_chip_bg, c_chip_fg = "⚠ EXCEEDS THRESHOLD", "#fff3cd", "#856404"
     else:
-        s4 = _WITHIN_THR
+        c_chip_label, c_chip_bg, c_chip_fg = "✓ WITHIN THRESHOLD", "#e8f5e9", "#27ae60"
 
-    # Std 5: SB 79 transit proximity — informational flag, never triggers
-    ld_applicable = ld_tier not in ("NOT_APPLICABLE", "")
-    if not met_size:
-        s5 = _NOT_EVAL
-    elif not ld_applicable:
-        s5 = _NA
-    elif ld_triggered:
-        s5 = _TRIGGERED
+    # ── Criterion C: content (ΔT gauge + multi-path bars or placeholder) ──
+    if met_size and dt_results:
+        max_dt_clr  = det_color if project.capacity_exceeded else "#27ae60"
+        worst_name  = str((worst_wildland_route or {}).get("name", "") or "")[:32]
+        worst_dt_v  = (worst_wildland_route or {}).get("delta_t_minutes", max_dt)
+        worst_line  = (
+            f'<div style="font-size:10px; color:#555; margin-bottom:4px;">'
+            f'Worst path: <strong>{worst_name}</strong> — {worst_dt_v:.1f} min'
+            f'</div>'
+        ) if worst_name else ""
+
+        c_content = (
+            f'<div style="font-size:13px; font-weight:700; color:{max_dt_clr}; '
+            f'margin-bottom:2px;">{max_dt:.1f} min &nbsp;'
+            f'<span style="font-size:10px; font-weight:400; color:#868e96;">'
+            f'/ {threshold:.2f} min limit</span></div>'
+            + _delta_t_bar_html(max_dt, threshold, height_px=14)
+            + worst_line
+            + _multi_path_bars_html(dt_results, threshold)
+        )
     else:
-        s5 = _NA   # SB 79 is always N/A for tier — informational only
-
-    def _cap_chip(label, bg, fg):
-        return (
-            f'<span style="padding:2px 8px;border-radius:9px;font-size:10px;'
-            f'font-weight:700;background:{bg};color:{fg};'
-            f'white-space:nowrap;flex-shrink:0;">{label}</span>'
+        c_content = (
+            '<div style="font-size:10px; color:#adb5bd; font-style:italic; '
+            'padding:6px 0;">— Not evaluated — size threshold not met</div>'
         )
 
-    def _route_line(route):
-        """Show ΔT result for the worst-case evacuation path."""
-        if not route:
-            return ""
-        nm      = route.get("name", "Bottleneck segment")
-        nm      = nm[:25] + "…" if len(nm) > 25 else nm
-        dt      = route.get("delta_t_minutes", 0.0)
-        thr     = route.get("threshold_minutes", 10.0)
-        flagged = route.get("flagged", False)
-        margin  = dt - thr
-        clr     = "#856404" if flagged else "#27ae60"
-        icon    = "⚠" if flagged else "✓"
-        margin_str = f"+{margin:.2f} over" if flagged else f"−{abs(margin):.2f} left"
+    # ── Criterion A: applicability ────────────────────────────────────────
+    if met_size:
+        a_badge_bg = "#1a56db"
+        a_scope    = "IN SCOPE"
+        a_text     = f"{project.dwelling_units} &ge; {unit_threshold} units &nbsp;&middot;&nbsp; {a_scope}"
+    else:
+        a_badge_bg = "#868e96"
+        a_scope    = "OUT OF SCOPE"
+        a_text     = f"{project.dwelling_units} &lt; {unit_threshold} units &nbsp;&middot;&nbsp; {a_scope}"
+
+    # ── Criterion B: site parameters ──────────────────────────────────────
+    hz_full    = _HAZARD_ZONE_FULL_LABEL.get(hazard_zone, hazard_zone)
+    deg_factor = _HAZARD_ZONE_DEG.get(hazard_zone, 1.0)
+    deg_str    = f"{deg_factor:.2f}&times; capacity" if deg_factor < 1.0 else "no road degradation"
+    b_badge_bg = "#c0392b" if project.in_fire_zone else "#6c757d"
+
+    if met_size and threshold > 0:
+        b_text = f"{hz_full} &nbsp;&middot;&nbsp; {deg_str} &nbsp;&middot;&nbsp; {threshold:.2f} min limit"
+    else:
+        b_text = f"{hz_full} &nbsp;&middot;&nbsp; {deg_str}"
+
+    def _criterion_badge(letter: str, bg: str) -> str:
         return (
-            f'<div style="font-size:10px;color:{clr};padding-left:6px;'
-            f'margin-top:2px;font-style:italic;">'
-            f'{icon} {nm}: ΔT {dt:.2f} min (limit {thr:.2f} min · {margin_str})</div>'
+            f'<span style="display:inline-flex; align-items:center; justify-content:center; '
+            f'width:16px; height:16px; border-radius:3px; font-size:9px; font-weight:800; '
+            f'color:#fff; background:{bg}; flex-shrink:0; margin-right:5px;">{letter}</span>'
         )
 
-    scope_html = (
-        _scope_row(s1_icon, s1_clr, s1_text)
-        + _scope_row(s2_icon, s2_clr, s2_text)
-        + _scope_row(s3_icon, s3_clr, s3_text)
+    def _ab_row(badge_html: str, text: str) -> str:
+        return (
+            f'<div style="display:flex; align-items:flex-start; gap:4px; '
+            f'font-size:10px; color:#6c757d; margin-bottom:3px; line-height:1.4;">'
+            + badge_html
+            + f'<span>{text}</span></div>'
+        )
+
+    # ── Assemble final HTML ────────────────────────────────────────────────
+    hero = (
+        f'<div style="background:{bg_color}; margin:-14px -16px 0; '
+        f'padding:10px 14px; border-radius:8px 8px 0 0; '
+        f'border-bottom:1px solid #dee2e6;">'
+        f'<div style="font-size:16px; font-weight:800; color:{det_color};">{det}</div>'
+        f'<div style="font-size:11px; font-style:italic; color:{det_color}; '
+        f'opacity:0.85; margin-top:1px;">{action_label}</div>'
+        f'<div style="font-size:10px; color:#555; margin-top:3px;">'
+        f'{project.project_name or "Project"} &nbsp;&middot;&nbsp; '
+        f'{project.dwelling_units} units &nbsp;&middot;&nbsp; {zone_label}'
+        f'</div></div>'
     )
 
-    s4_html = (
-        f'<div style="margin-bottom:7px;">'
-        f'<div style="display:flex;justify-content:space-between;align-items:center;">'
-        f'<span style="font-size:11px;color:#343a40;font-weight:600;">'
-        f'Std 4 &middot; ΔT Clearance</span>'
-        + _cap_chip(*s4)
-        + f'</div>'
-        + (_route_line(worst_wildland_route) if worst_wildland_route else "")
-        + f'</div>'
+    section_c = (
+        f'<div style="padding:8px 14px 6px;">'
+        f'<div style="display:flex; justify-content:space-between; align-items:center; '
+        f'margin-bottom:6px;">'
+        f'<span style="font-size:10px; font-weight:700; color:#343a40;">'
+        + _criterion_badge("C", "#c0392b")
+        + f'Evacuation Clearance Analysis</span>'
+        + f'<span style="padding:2px 8px; border-radius:9px; font-size:9px; font-weight:700; '
+        f'background:{c_chip_bg}; color:{c_chip_fg}; white-space:nowrap;">'
+        f'{c_chip_label}</span></div>'
+        + c_content
+        + '</div>'
     )
 
-    s5_html = (
-        f'<div>'
-        f'<div style="display:flex;justify-content:space-between;align-items:center;">'
-        f'<span style="font-size:11px;color:#343a40;font-weight:600;">'
-        f'Std 5 &middot; SB 79 Transit</span>'
-        + _cap_chip(*s5)
-        + f'</div>'
-        + f'</div>'
+    section_ab = (
+        f'<div style="background:#f8f9fa; padding:6px 14px 5px; '
+        f'border-top:1px solid #e9ecef;">'
+        + _ab_row(_criterion_badge("A", a_badge_bg), a_text)
+        + _ab_row(_criterion_badge("B", b_badge_bg), b_text)
+        + '</div>'
+    )
+
+    footnote = (
+        f'<div style="font-size:9px; color:#adb5bd; padding:4px 14px 6px; '
+        f'border-top:1px solid #f1f3f5;">'
+        f'SB 79 transit proximity: N/A &nbsp;&mdash;&nbsp; informational only'
+        f'</div>'
     )
 
     return (
-        '<div style="font-family:system-ui,-apple-system,sans-serif;'
-        'font-size:12px;min-width:280px;max-width:310px;line-height:1.5;">'
-
-        # Header: determination + project name + units/zone
-        f'<div style="background:{bg_color};margin:-14px -16px 0;'
-        f'padding:10px 14px;border-radius:8px 8px 0 0;border-bottom:1px solid #dee2e6;">'
-        f'<div style="font-size:15px;font-weight:700;color:{det_color};">{det}</div>'
-        f'<div style="font-size:11px;color:#444;margin-top:1px;">'
-        f'{project.project_name or "Project"}</div>'
-        f'<div style="font-size:10px;color:#6c757d;margin-top:2px;">'
-        f'{project.dwelling_units} units &nbsp;&middot;&nbsp; {in_zone}</div>'
-        f'</div>'
-
-        # §1 Analysis Scope — subdued gray background, compact rows
-        f'<div style="background:#f8f9fa;padding:7px 14px 5px;border-bottom:1px solid #e9ecef;">'
-        f'<div style="{_SL}">Analysis Scope &nbsp;&middot;&nbsp; Stds 1–3</div>'
-        + scope_html
+        '<div style="font-family:system-ui,-apple-system,sans-serif; '
+        'font-size:12px; min-width:300px; max-width:360px; line-height:1.5;">'
+        + hero
+        + finding_html
+        + section_c
+        + section_ab
+        + footnote
         + '</div>'
-
-        # §2 Capacity Tests — white background, prominent chips + route detail
-        f'<div style="padding:8px 14px 6px;">'
-        f'<div style="{_SL}">Capacity Tests &nbsp;&middot;&nbsp; Stds 4–5</div>'
-        + s4_html
-        + s5_html
-        + '</div>'
-
-        # Footer: short determination reason
-        f'<div style="font-size:10px;color:#868e96;border-top:1px solid #f1f3f5;'
-        f'padding:5px 14px 8px;font-style:italic;line-height:1.4;">'
-        f'{reason_short[:160]}</div>'
-        '</div>'
     )

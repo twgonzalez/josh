@@ -52,6 +52,13 @@ uv run python main.py demo --city "Berkeley"
 The `output/` directory is git-ignored. Share `output/{city}/demo_map.html` directly with
 stakeholders. Do NOT leave a stale demo map — always regenerate before sharing.
 
+**Brief / popup labeling convention (user-facing):** Criteria are labeled **A** (Applicability
+Threshold — size gate), **B** (Site Parameters — FHSZ zone + degradation + threshold), and
+**C** (Evacuation Clearance Analysis — routes + ΔT test) in `brief_v3.py` and the demo map
+popup. SB 79 transit proximity is a separate informational scenario (no badge, footnote only).
+The underlying algorithm is Standards 1–5 / 5-step; A/B/C is the presentation layer used
+in all user-facing outputs (determination letter, popup, briefs).
+
 ## Directory Structure
 
 ```

@@ -1,5 +1,5 @@
 """EvacuationPath data model — per-path bottleneck tracking for ΔT computation."""
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 
 
 @dataclass
@@ -32,6 +32,9 @@ class EvacuationPath:
     catchment_units: float = 0.0    # housing units whose path passes through bottleneck
     baseline_demand_vph: float = 0.0  # catchment_units × vpu × 0.57 (informational)
 
+    # Full path segment sequence — used for map visualization of the evacuation corridor
+    path_osmids: list = field(default_factory=list)  # ordered osmids from origin to exit
+
     def to_dict(self) -> dict:
         """Serialize to dict for JSON storage and audit trail."""
         return {
@@ -47,4 +50,5 @@ class EvacuationPath:
             "bottleneck_effective_capacity_vph": round(self.bottleneck_effective_capacity_vph, 0),
             "catchment_units":                round(self.catchment_units, 0),
             "baseline_demand_vph":            round(self.baseline_demand_vph, 1),
+            "path_osmids":                    self.path_osmids,
         }

@@ -626,6 +626,7 @@ def _identify_evacuation_routes(
                 bottleneck_hcm_capacity_vph=hcm_cap,
                 bottleneck_hazard_degradation=deg,
                 bottleneck_effective_capacity_vph=eff_cap,
+                path_osmids=path_osmids,
             )
             evacuation_paths.append(evac_path)
             paths_found += 1
