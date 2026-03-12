@@ -55,10 +55,10 @@ class Tier(str, Enum):
     Determination tier. Uses str mixin so Tier.DISCRETIONARY == "DISCRETIONARY".
 
     Rank order (most to least restrictive):
-      DISCRETIONARY (3) > CONDITIONAL_MINISTERIAL (2) > MINISTERIAL (1) > NOT_APPLICABLE (0)
+      DISCRETIONARY (3) > MINISTERIAL_WITH_STANDARD_CONDITIONS (2) > MINISTERIAL (1) > NOT_APPLICABLE (0)
     """
     DISCRETIONARY          = "DISCRETIONARY"
-    CONDITIONAL_MINISTERIAL = "CONDITIONAL MINISTERIAL"
+    CONDITIONAL_MINISTERIAL = "MINISTERIAL WITH STANDARD CONDITIONS"
     MINISTERIAL            = "MINISTERIAL"
     NOT_APPLICABLE         = "NOT_APPLICABLE"
 
@@ -268,10 +268,15 @@ class EvacuationScenario(ABC):
 
             results.append({
                 "path_id":                       path_id,
+                "origin_block_group":            getattr(path, "origin_block_group", ""),
+                "path_segment_count":            len(getattr(path, "path_osmids", [])),
                 "bottleneck_osmid":              bn_osmid,
                 "bottleneck_name":               bn_name,
                 "bottleneck_fhsz_zone":          bn_fhsz,
                 "bottleneck_road_type":          getattr(path, "bottleneck_road_type", ""),
+                "bottleneck_lane_count":         getattr(path, "bottleneck_lane_count", 0),
+                "bottleneck_speed_limit":        getattr(path, "bottleneck_speed_limit", 0),
+                "bottleneck_haz_class":          getattr(path, "bottleneck_haz_class", 0),
                 "bottleneck_hcm_capacity_vph":   round(bn_hcm, 0),
                 "bottleneck_hazard_degradation": bn_deg,
                 "bottleneck_effective_capacity_vph": round(eff_cap, 0),

@@ -370,15 +370,15 @@ def _print_determination(project, audit: dict):
     """Print the final determination result prominently."""
     det = project.determination
     _TIER_COLOR = {
-        "DISCRETIONARY":           "red",
-        "CONDITIONAL MINISTERIAL": "yellow",
-        "MINISTERIAL":             "green",
+        "DISCRETIONARY":                     "red",
+        "MINISTERIAL WITH STANDARD CONDITIONS": "yellow",
+        "MINISTERIAL":                       "green",
     }
     _TIER_COLOR_DIM = {
-        "DISCRETIONARY":           "red",
-        "CONDITIONAL MINISTERIAL": "yellow",
-        "MINISTERIAL":             "green",
-        "NOT_APPLICABLE":          "dim",
+        "DISCRETIONARY":                     "red",
+        "MINISTERIAL WITH STANDARD CONDITIONS": "yellow",
+        "MINISTERIAL":                       "green",
+        "NOT_APPLICABLE":                    "dim",
     }
     color = _TIER_COLOR.get(det, "white")
 
@@ -550,9 +550,9 @@ def demo(city: str, state: str, projects_file: str, output_name: str):
     evaluated: list[Project] = []
     audits: list[dict] = []
     _TIER_RICH = {
-        "DISCRETIONARY":           "bold red",
-        "CONDITIONAL MINISTERIAL": "bold yellow",
-        "MINISTERIAL":             "bold green",
+        "DISCRETIONARY":                     "bold red",
+        "MINISTERIAL WITH STANDARD CONDITIONS": "bold yellow",
+        "MINISTERIAL":                       "bold green",
     }
 
     for i, pdef in enumerate(project_defs, 1):
@@ -661,9 +661,9 @@ def _print_demo_summary(projects: list, config: dict):
     table.add_column("Determination")
 
     _TIER_COLOR = {
-        "DISCRETIONARY":           "red",
-        "CONDITIONAL MINISTERIAL": "yellow",
-        "MINISTERIAL":             "green",
+        "DISCRETIONARY":                     "red",
+        "MINISTERIAL WITH STANDARD CONDITIONS": "yellow",
+        "MINISTERIAL":                       "green",
     }
 
     for p in projects:

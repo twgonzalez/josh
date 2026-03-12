@@ -50,7 +50,7 @@ class Project:
     sb79_transit_flag: bool = False
 
     # Final determination
-    determination: str = ""         # "MINISTERIAL" | "CONDITIONAL MINISTERIAL" | "DISCRETIONARY"
+    determination: str = ""         # "MINISTERIAL" | "MINISTERIAL WITH STANDARD CONDITIONS" | "DISCRETIONARY"
     determination_reason: str = ""
 
     def vehicle_generation(self, vehicles_per_unit: float, mobilization: float) -> float:

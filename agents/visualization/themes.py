@@ -36,25 +36,25 @@ FHSZ_LABELS = {
 
 _TIER_MARKER_COLOR = {
     "DISCRETIONARY":           "red",
-    "CONDITIONAL MINISTERIAL": "orange",
+    "MINISTERIAL WITH STANDARD CONDITIONS": "orange",
     "MINISTERIAL":             "green",
 }
 
 _TIER_CSS_COLOR = {
     "DISCRETIONARY":           "#c0392b",
-    "CONDITIONAL MINISTERIAL": "#d67c00",
+    "MINISTERIAL WITH STANDARD CONDITIONS": "#d67c00",
     "MINISTERIAL":             "#27ae60",
 }
 
 _TIER_BG_COLOR = {
     "DISCRETIONARY":           "#fdf2f2",
-    "CONDITIONAL MINISTERIAL": "#fffbf0",
+    "MINISTERIAL WITH STANDARD CONDITIONS": "#fffbf0",
     "MINISTERIAL":             "#f0faf4",
 }
 
 _TIER_BORDER_COLOR = {
     "DISCRETIONARY":           "#e8b4b0",
-    "CONDITIONAL MINISTERIAL": "#f5d49a",
+    "MINISTERIAL WITH STANDARD CONDITIONS": "#f5d49a",
     "MINISTERIAL":             "#a8d5b8",
 }
 
@@ -72,7 +72,7 @@ _SERVING_ROUTE_NEUTRAL_OPACITY = 0.35
 # Flagged route colors keyed by tier — prominently shown; project causes exceedance.
 _TIER_ROUTE_COLOR_FLAGGED = {
     "DISCRETIONARY":           "#c0392b",
-    "CONDITIONAL MINISTERIAL": "#e07000",
+    "MINISTERIAL WITH STANDARD CONDITIONS": "#e07000",
     "MINISTERIAL":             "#1a7a1a",
 }
 _FLAGGED_ROUTE_WEIGHT  = 7
@@ -81,7 +81,7 @@ _FLAGGED_ROUTE_OPACITY = 0.80
 # Legacy: tier-keyed serving color still used for search-radius circle color.
 _TIER_ROUTE_COLOR = {
     "DISCRETIONARY":           "#c0392b",
-    "CONDITIONAL MINISTERIAL": "#e07000",
+    "MINISTERIAL WITH STANDARD CONDITIONS": "#e07000",
     "MINISTERIAL":             "#2ca02c",
 }
 

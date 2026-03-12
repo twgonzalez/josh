@@ -43,7 +43,7 @@ logger = logging.getLogger(__name__)
 
 _TIER_ACTION_LABELS = {
     "DISCRETIONARY":           "Planning Commission review required — public hearing",
-    "CONDITIONAL MINISTERIAL": "Staff approval with conditions — no public hearing",
+    "MINISTERIAL WITH STANDARD CONDITIONS": "Staff approval — standard conditions apply automatically; no public hearing",
     "MINISTERIAL":             "Over-the-counter permit — no discretionary review",
 }
 
@@ -116,10 +116,14 @@ def _build_capacity_heatmap_layer(
         vc_base    = float(row.get("vc_ratio", 0) or 0)
         los        = str(row.get("los", "?") or "?")
         zone_label = _zone_labels.get(fhsz_zone, fhsz_zone)
+        road_type  = str(row.get("road_type", "") or "")
+        lane_count = int(row.get("lane_count", 0) or 0)
+        speed_limit = int(row.get("speed_limit", 0) or 0)
 
         tooltip_text = f"{name_str} | {eff_cap:.0f} vph eff cap | {zone_label}"
         popup_html   = _build_heatmap_route_popup(
             name_str, eff_cap, hcm_cap, fhsz_zone, hazard_deg, vc_base, los,
+            road_type=road_type, lane_count=lane_count, speed_limit=speed_limit,
         )
 
         folium.GeoJson(
@@ -438,6 +442,9 @@ def create_demo_map(
                 eff_cap    = float(row.get("effective_capacity_vph", hcm_cap) or hcm_cap)
                 fhsz_zone  = str(row.get("fhsz_zone", "non_fhsz") or "non_fhsz")
                 hazard_deg = float(row.get("hazard_degradation", 1.0) or 1.0)
+                road_type_s  = str(row.get("road_type", "") or "")
+                lane_count_s = int(row.get("lane_count", 0) or 0)
+                speed_lim_s  = int(row.get("speed_limit", 0) or 0)
 
                 # Look up ΔT result for this bottleneck segment (if any)
                 osmid_strs = (
@@ -452,6 +459,7 @@ def create_demo_map(
                 popup_html = _build_route_delta_t_popup(
                     name_str, eff_cap, hcm_cap, fhsz_zone, hazard_deg,
                     dt_result, is_flagged,
+                    road_type=road_type_s, lane_count=lane_count_s, speed_limit=speed_lim_s,
                 )
 
                 if is_flagged and dt_result:
@@ -671,7 +679,7 @@ def _build_demo_panel_html(
 
     tier_abbr_map = {
         "DISCRETIONARY":           "DISC",
-        "CONDITIONAL MINISTERIAL": "COND",
+        "MINISTERIAL WITH STANDARD CONDITIONS": "STD",
         "MINISTERIAL":             "MIN",
     }
 
@@ -842,7 +850,7 @@ def _build_project_detail_div(
     bg_color     = _TIER_BG_COLOR.get(tier, "#fafafa")
     border_color = {
         "DISCRETIONARY":           "#e8b4b0",
-        "CONDITIONAL MINISTERIAL": "#f5d49a",
+        "MINISTERIAL WITH STANDARD CONDITIONS": "#f5d49a",
         "MINISTERIAL":             "#a8d5b8",
     }.get(tier, "#dee2e6")
 
@@ -1046,50 +1054,30 @@ def _build_demo_legend_html(
     heatmap_js_name: str = "",
 ) -> str:
     """
-    Legend for the demo map — v3.0 ΔT Standard.
+    Minimal legend for the demo map — v3.2 ΔT Standard.
 
-    Evacuation Capacity heatmap section now describes effective_capacity_vph
-    (low = red bottleneck, high = gray safe), replacing v/c bucket labels.
+    Shows only:
+      1. Project determination tier dot-key (3 items)
+      2. Evacuation capacity pill toggle + gradient bar
+      3. Footer
+    All technical details (vph buckets, FHSZ zones, footnotes) are accessible
+    via marker popups and are omitted here per city attorney / planner UX.
     """
-    route_tier_items = (
-        '<div style="display:flex; align-items:center; gap:7px; margin-bottom:4px;">'
-        f'<span style="display:inline-block; width:28px; height:5px; '
-        f'background:{_TIER_ROUTE_COLOR["DISCRETIONARY"]}; border-radius:2px; flex-shrink:0;"></span>'
-        '<span style="color:#444;">Discretionary (DISC)</span></div>'
+    tier_items = (
+        '<div style="display:flex; align-items:center; gap:8px; margin-bottom:5px;">'
+        f'<span style="display:inline-block; width:11px; height:11px; border-radius:50%; '
+        f'background:{_TIER_CSS_COLOR["DISCRETIONARY"]}; flex-shrink:0;"></span>'
+        '<span style="color:#343a40;">Discretionary</span></div>'
 
-        '<div style="display:flex; align-items:center; gap:7px; margin-bottom:4px;">'
-        f'<span style="display:inline-block; width:28px; height:5px; '
-        f'background:{_TIER_ROUTE_COLOR["CONDITIONAL MINISTERIAL"]}; border-radius:2px; flex-shrink:0;"></span>'
-        '<span style="color:#444;">Cond. Ministerial (COND)</span></div>'
+        '<div style="display:flex; align-items:center; gap:8px; margin-bottom:5px;">'
+        f'<span style="display:inline-block; width:11px; height:11px; border-radius:50%; '
+        f'background:{_TIER_CSS_COLOR["MINISTERIAL WITH STANDARD CONDITIONS"]}; flex-shrink:0;"></span>'
+        '<span style="color:#343a40;">Ministerial w/ Standard Conditions</span></div>'
 
-        '<div style="display:flex; align-items:center; gap:7px; margin-bottom:4px;">'
-        f'<span style="display:inline-block; width:28px; height:5px; '
-        f'background:{_TIER_ROUTE_COLOR["MINISTERIAL"]}; border-radius:2px; flex-shrink:0;"></span>'
-        '<span style="color:#444;">Ministerial (MIN)</span></div>'
-    )
-
-    # Effective capacity heatmap items — from _EFFECTIVE_CAPACITY_RAMP
-    eff_cap_labels = [
-        "< 350 vph — severe constraint",
-        "350–700 vph — low capacity",
-        "700–1,200 vph — moderate",
-        "> 1,200 vph — ample headroom",
-    ]
-    eff_cap_items = "".join(
-        f'<div style="display:flex; align-items:center; gap:7px; margin-bottom:4px;">'
-        f'<span style="display:inline-block; width:28px; height:5px; '
-        f'background:{color}; border-radius:2px; flex-shrink:0; opacity:{opacity + 0.05:.2f};"></span>'
-        f'<span style="color:#555;">{label}</span></div>'
-        for (_, color, opacity), label in zip(_EFFECTIVE_CAPACITY_RAMP, eff_cap_labels)
-    )
-
-    fhsz_items = "".join(
-        f'<div style="display:flex; align-items:center; gap:7px; margin-bottom:4px;">'
-        f'<span style="display:inline-block; width:13px; height:13px; '
-        f'background:{FHSZ_COLORS[k]}; opacity:0.65; border-radius:2px; '
-        f'border:1px solid rgba(0,0,0,0.1); flex-shrink:0;"></span>'
-        f'<span style="color:#444;">{FHSZ_LABELS[k]}</span></div>'
-        for k in sorted(FHSZ_COLORS)
+        '<div style="display:flex; align-items:center; gap:8px; margin-bottom:2px;">'
+        f'<span style="display:inline-block; width:11px; height:11px; border-radius:50%; '
+        f'background:{_TIER_CSS_COLOR["MINISTERIAL"]}; flex-shrink:0;"></span>'
+        '<span style="color:#343a40;">Ministerial</span></div>'
     )
 
     return f"""
@@ -1097,7 +1085,7 @@ def _build_demo_legend_html(
     position: fixed;
     bottom: 26px; right: 10px;
     z-index: 9999;
-    width: 210px;
+    width: 195px;
     background: white;
     border: 1px solid #dee2e6;
     border-radius: 10px;
@@ -1107,55 +1095,36 @@ def _build_demo_legend_html(
     box-shadow: 0 4px 16px rgba(0,0,0,0.11);
     line-height: 1.4;
 ">
-  <div style="font-weight:700; font-size:12px; color:#212529; margin-bottom:10px;
-              border-bottom:1px solid #f1f3f5; padding-bottom:7px;">Legend</div>
-
-  <!-- Serving Route Tiers -->
-  <div style="font-weight:600; font-size:10px; color:#868e96; text-transform:uppercase;
-              letter-spacing:0.5px; margin-bottom:6px;">Serving Routes (flagged)</div>
-  {route_tier_items}
-  <div style="font-size:10px; color:#adb5bd; margin-top:2px; margin-bottom:10px;">
-    Bold = bottleneck segment where &Delta;T &gt; threshold<br>
-    Limit = safe egress window (NIST) &times; 5% project share
-  </div>
-
-  <!-- Evacuation Capacity Heatmap — effective_capacity_vph -->
-  <div style="font-weight:600; font-size:10px; color:#868e96; text-transform:uppercase;
-              letter-spacing:0.5px; margin-bottom:6px;">Evac. Capacity (eff. vph)</div>
-  {eff_cap_items}
-  <div style="font-size:10px; color:#adb5bd; margin-top:2px; margin-bottom:10px;">
-    HCM capacity &times; hazard degradation factor
-  </div>
-
-  <!-- FHSZ Fire Hazard Zones -->
-  <div style="font-weight:600; font-size:10px; color:#868e96; text-transform:uppercase;
-              letter-spacing:0.5px; margin-bottom:6px;">Fire Hazard Zones</div>
-  {fhsz_items}
-
-  <!-- Base Layer toggle -->
-  <div style="margin-top:12px; border-top:1px solid #dee2e6; padding-top:10px;">
-    <div style="font-size:11px; font-weight:600; color:#495057; margin-bottom:6px;
-                text-transform:uppercase; letter-spacing:0.05em;">
-      Base Layer
+  <!-- Evacuation capacity toggle + gradient -->
+  <div>
+    <div style="display:flex; align-items:center; gap:9px; margin-bottom:7px;">
+      <!-- Pill toggle -->
+      <input type="checkbox" id="heatmapToggle" checked style="display:none;">
+      <div id="heatmapPill"
+           onclick="var cb=document.getElementById('heatmapToggle'); cb.checked=!cb.checked; toggleHeatmap(cb.checked);"
+           style="width:34px; height:18px; border-radius:9px; background:#27ae60;
+                  position:relative; cursor:pointer; flex-shrink:0;
+                  transition:background 0.2s;">
+        <div id="heatmapKnob"
+             style="position:absolute; width:13px; height:13px; background:white;
+                    border-radius:50%; top:2.5px; left:18px;
+                    transition:left 0.2s; box-shadow:0 1px 3px rgba(0,0,0,0.25);"></div>
+      </div>
+      <span style="font-size:11px; color:#495057; font-weight:500;">Evac. Layer</span>
     </div>
-    <label style="display:flex; align-items:center; gap:8px; cursor:pointer; font-size:12px;">
-      <input type="checkbox" id="heatmapToggle" checked
-             onchange="toggleHeatmap(this.checked)">
-      Evacuation Capacity
-    </label>
-    <!-- Gradient: red (severe) → orange → yellow → gray (ample) — matches _EFFECTIVE_CAPACITY_RAMP -->
-    <div style="margin-top:6px; height:8px; border-radius:4px;
+    <!-- Gradient: red (severe) → orange → yellow → gray (ample) -->
+    <div style="height:7px; border-radius:4px;
                 background: linear-gradient(to right, #dc3545, #fd7e14, #ffc107, #adb5bd);
                 opacity:0.85;">
     </div>
     <div style="display:flex; justify-content:space-between; font-size:10px;
-                color:#868e96; margin-top:2px;">
-      <span>Severe</span><span>Low</span><span>Mod</span><span>Ample</span>
+                color:#868e96; margin-top:3px;">
+      <span>Severe</span><span>Ample</span>
     </div>
   </div>
 
   <div style="margin-top:10px; border-top:1px solid #f1f3f5; padding-top:8px;
-              font-size:9px; color:#adb5bd;">JOSH v3.1 &middot; California Stewardship Alliance</div>
+              font-size:9px; color:#adb5bd;">CSF v3.2 &middot; California Stewardship Alliance</div>
 </div>
 
 <script>
@@ -1164,6 +1133,11 @@ def _build_demo_legend_html(
   var HEATMAP_NAME  = '{heatmap_js_name}';
 
   window.toggleHeatmap = function (visible) {{
+    var pill = document.getElementById('heatmapPill');
+    var knob = document.getElementById('heatmapKnob');
+    if (pill) pill.style.background  = visible ? '#27ae60' : '#adb5bd';
+    if (knob) knob.style.left        = visible ? '18px'   : '2px';
+
     var mapObj = window[MAP_NAME];
     var layer  = window[HEATMAP_NAME];
     if (!mapObj || !layer) return;

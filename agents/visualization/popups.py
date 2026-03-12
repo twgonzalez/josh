@@ -20,7 +20,7 @@ from .themes import _TIER_CSS_COLOR, _TIER_BG_COLOR
 
 _POPUP_ACTION_LABELS = {
     "DISCRETIONARY":           "Planning Commission review required",
-    "CONDITIONAL MINISTERIAL": "Ministerial approval — all capacity standards met",
+    "MINISTERIAL WITH STANDARD CONDITIONS": "Ministerial approval — standard conditions apply automatically",
     "MINISTERIAL":             "Over-the-counter — below size threshold",
 }
 
@@ -207,6 +207,13 @@ def _multi_path_bars_html(
 # Route ΔT popup — v3.0 (serving route segments on per-project layer)
 # ---------------------------------------------------------------------------
 
+_ROAD_TYPE_LABELS = {
+    "freeway":   "Freeway",
+    "multilane": "Multi-lane highway",
+    "two_lane":  "Two-lane highway",
+}
+
+
 def _build_route_delta_t_popup(
     name_str: str,
     eff_cap: float,
@@ -215,6 +222,9 @@ def _build_route_delta_t_popup(
     hazard_degradation: float,
     delta_t_result: "dict | None",
     is_flagged: bool,
+    road_type: str = "",
+    lane_count: int = 0,
+    speed_limit: int = 0,
 ) -> str:
     """
     Popup shown when clicking a serving route segment on the per-project layer.
@@ -262,10 +272,22 @@ def _build_route_delta_t_popup(
     zone_label = _zone_labels.get(str(fhsz_zone or "non_fhsz"), str(fhsz_zone))
     deg_pct    = f"{hazard_degradation * 100:.0f}%"
 
+    # Road classification row — enables HCM table lookup verification
+    rt_label   = _ROAD_TYPE_LABELS.get(road_type, road_type)
+    rt_parts   = [rt_label] if rt_label else []
+    if speed_limit: rt_parts.append(f"{speed_limit} mph")
+    if lane_count:  rt_parts.append(f"{lane_count} lanes")
+    rt_str = " · ".join(rt_parts)
+    road_class_row = (
+        f'<tr><td style="padding:2px 0;color:#868e96;">Road classification</td>'
+        f'<td style="text-align:right;color:#868e96;">{rt_str}</td></tr>'
+    ) if rt_str else ""
+
     capacity_rows = (
         '<table style="width:100%; border-collapse:collapse; font-size:11px; '
         'color:#555; margin-bottom:10px;">'
-        f'<tr><td style="padding:2px 0;">HCM raw capacity</td>'
+        + road_class_row
+        + f'<tr><td style="padding:2px 0;">HCM raw capacity</td>'
         f'<td style="text-align:right; font-weight:600;">{hcm_cap:.0f} vph</td></tr>'
         f'<tr><td style="padding:2px 0;">Hazard zone</td>'
         f'<td style="text-align:right; font-weight:600; color:#555;">{zone_label}</td></tr>'
@@ -354,6 +376,9 @@ def _build_heatmap_route_popup(
     hazard_degradation: float,
     vc_base: float,
     los: str,
+    road_type: str = "",
+    lane_count: int = 0,
+    speed_limit: int = 0,
 ) -> str:
     """
     Popup shown when clicking an evacuation route segment on the heatmap base
@@ -388,6 +413,17 @@ def _build_heatmap_route_popup(
         status_icon  = "✓"
         status_text  = f"Ample capacity — {eff_cap:.0f} vph effective"
 
+    # Road classification row — enables HCM table lookup verification
+    rt_label_h  = _ROAD_TYPE_LABELS.get(road_type, road_type)
+    rt_parts_h  = [rt_label_h] if rt_label_h else []
+    if speed_limit: rt_parts_h.append(f"{speed_limit} mph")
+    if lane_count:  rt_parts_h.append(f"{lane_count} lanes")
+    rt_str_h = " · ".join(rt_parts_h)
+    road_class_row_h = (
+        f'<tr><td style="padding:2px 0;color:#868e96;">Road classification</td>'
+        f'<td style="text-align:right;color:#868e96;">{rt_str_h}</td></tr>'
+    ) if rt_str_h else ""
+
     return (
         '<div style="font-family:system-ui,-apple-system,BlinkMacSystemFont,'
         '\'Segoe UI\',sans-serif; font-size:12px; min-width:280px; max-width:340px; '
@@ -398,7 +434,8 @@ def _build_heatmap_route_popup(
         f'margin-bottom:10px;">{status_icon} {status_text}</div>'
         '<table style="width:100%; border-collapse:collapse; font-size:11px; '
         'color:#555; margin-bottom:8px;">'
-        f'<tr><td style="padding:2px 0;">HCM raw capacity</td>'
+        + road_class_row_h
+        + f'<tr><td style="padding:2px 0;">HCM raw capacity</td>'
         f'<td style="text-align:right; font-weight:600;">{hcm_cap:.0f} vph</td></tr>'
         f'<tr><td style="padding:2px 0;">Hazard zone</td>'
         f'<td style="text-align:right; font-weight:600;">{zone_label}</td></tr>'

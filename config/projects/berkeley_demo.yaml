@@ -11,7 +11,7 @@
 #   DISCRETIONARY           — size >= 15 AND ΔT > threshold on any serving route
 #                             (threshold = safe_egress_window[zone] × max_project_share)
 #                             (no baseline precondition — routes already failing are tested equally)
-#   CONDITIONAL MINISTERIAL — size >= 15 AND ΔT within threshold on all serving routes
+#   MINISTERIAL WITH STANDARD CONDITIONS — size >= 15 AND ΔT within threshold on all serving routes
 #   MINISTERIAL             — size < 15
 #
 # v3.2 thresholds (safe_egress_window × 5%):
@@ -114,7 +114,7 @@ projects:
     expected_tier: "MINISTERIAL"
 
   # -----------------------------------------------------------
-  # 5 — Claremont Hills: NOT in FHSZ, hillside road, SMALL project → CONDITIONAL
+  # 5 — Claremont Hills: NOT in FHSZ, hillside road, SMALL project → MINISTERIAL WITH STANDARD CONDITIONS
   #     25 units × 2.5 × 0.90 = 56.25 vehicles.
   #     56.25 / ~904 vph bottleneck × 60 ≈ 3.7 min — below 6.0-min non-FHSZ threshold.
   #     Shows that smaller projects on constrained roads still pass.
@@ -130,10 +130,10 @@ projects:
       (NFPA 101 design basis, constant) → 56.25 project vehicles. No road capacity
       degradation (non-FHSZ). Ridge Road bottleneck (~904 vph) → ΔT ≈ 3.7 min.
       Non-FHSZ threshold: 120 min × 5% = 6.0 min. ΔT within threshold.
-      CONDITIONAL MINISTERIAL: size threshold met, evacuation conditions required.
+      MINISTERIAL WITH STANDARD CONDITIONS: size threshold met, pre-adopted conditions apply automatically.
       Compare with Project 2 (75 units, downtown) which exceeds threshold despite
       lower road hazard — project scale is the differentiating factor here.
-    expected_tier: "CONDITIONAL MINISTERIAL"
+    expected_tier: "MINISTERIAL WITH STANDARD CONDITIONS"
 
   # -----------------------------------------------------------
   # 6 — Cedar Street: multi-story egress penalty triggers ΔT → DISCRETIONARY

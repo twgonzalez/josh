@@ -28,6 +28,11 @@ class EvacuationPath:
     bottleneck_hazard_degradation: float  # degradation factor applied at bottleneck
     bottleneck_effective_capacity_vph: float  # hcm_capacity × hazard_degradation
 
+    # HCM audit fields — enable reviewer to verify HCM table lookup independently
+    bottleneck_lane_count:  int = 0  # lanes at bottleneck (input to HCM capacity formula)
+    bottleneck_speed_limit: int = 0  # posted speed mph at bottleneck (selects two-lane HCM row)
+    bottleneck_haz_class:   int = 0  # raw CAL FIRE HAZ_CLASS integer (0=none,1=mod,2=high,3=vhfhsz)
+
     # Catchment demand at bottleneck (informational)
     catchment_units: float = 0.0    # housing units whose path passes through bottleneck
     baseline_demand_vph: float = 0.0  # catchment_units × vpu × 0.57 (informational)
@@ -45,6 +50,9 @@ class EvacuationPath:
             "bottleneck_name":                self.bottleneck_name,
             "bottleneck_fhsz_zone":           self.bottleneck_fhsz_zone,
             "bottleneck_road_type":           self.bottleneck_road_type,
+            "bottleneck_lane_count":          self.bottleneck_lane_count,
+            "bottleneck_speed_limit":         self.bottleneck_speed_limit,
+            "bottleneck_haz_class":           self.bottleneck_haz_class,
             "bottleneck_hcm_capacity_vph":    round(self.bottleneck_hcm_capacity_vph, 0),
             "bottleneck_hazard_degradation":  self.bottleneck_hazard_degradation,
             "bottleneck_effective_capacity_vph": round(self.bottleneck_effective_capacity_vph, 0),

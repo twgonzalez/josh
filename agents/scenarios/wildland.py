@@ -18,7 +18,7 @@ Key v3.2 changes from v3.1:
   - Mobilization rate is now constant 0.90 (NFPA 101 design basis)
   - FHSZ zone now affects ONE thing only: road capacity (hazard_degradation factor)
   - Removed tiered mob rates (Zhao et al. 2022) — behavioral observation ≠ design standard
-  - Berkeley regression test: 75-unit non-FHSZ hills → DISCRETIONARY (was CONDITIONAL under v3.1)
+  - Berkeley regression test: 75-unit non-FHSZ hills → DISCRETIONARY (was MINISTERIAL WITH STANDARD CONDITIONS under v3.1)
 
 Key v3.0 changes from v2.0:
   - No baseline precondition: routes already at LOS F are tested equally
@@ -28,7 +28,7 @@ Key v3.0 changes from v2.0:
 
 Three-tier output:
   DISCRETIONARY           — size threshold met AND ΔT > threshold (safe_egress_window × max_project_share) on any serving path
-  CONDITIONAL MINISTERIAL — size threshold met AND ΔT within threshold on all paths
+  MINISTERIAL WITH STANDARD CONDITIONS — size threshold met AND ΔT within threshold on all paths
   MINISTERIAL             — below size threshold
 """
 import logging
@@ -292,7 +292,7 @@ class WildlandScenario(EvacuationScenario):
             f"Max ΔT {max_dt:.1f} min within threshold ({threshold:.2f} min). "
             f"{fire_note}"
             f"Mobilization: {mob:.2f} (NFPA 101 design basis, constant). "
-            f"Ministerial approval eligible with mandatory evacuation conditions. "
+            f"Ministerial approval with standard conditions applied automatically. "
             f"Legal basis: {self.legal_basis}."
         )
 

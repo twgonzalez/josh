@@ -1,4 +1,10 @@
+
+
+
+
 # How the Evacuation Capacity Standard Works
+
+California Stewardship Alliance - March 2026
 
 **Prepared for judicial review — plain language explanation of the methodology**
 

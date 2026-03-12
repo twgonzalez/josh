@@ -492,39 +492,53 @@ def _identify_evacuation_routes(
 
     # Build osmid → effective_capacity lookup for bottleneck computation
     # Map str(osmid) → effective_capacity_vph from the GDF
-    osmid_to_eff_cap = {}
-    osmid_to_fhsz    = {}
-    osmid_to_rtype   = {}
-    osmid_to_hcm     = {}
-    osmid_to_deg     = {}
-    osmid_to_name    = {}
+    # HCM audit fields: lanes, speed, haz_class let reviewers verify HCM table lookup.
+    _ZONE_TO_HAZ_CLASS = {"vhfhsz": 3, "high_fhsz": 2, "moderate_fhsz": 1, "non_fhsz": 0}
+    osmid_to_eff_cap  = {}
+    osmid_to_fhsz     = {}
+    osmid_to_rtype    = {}
+    osmid_to_hcm      = {}
+    osmid_to_deg      = {}
+    osmid_to_name     = {}
+    osmid_to_lanes    = {}   # lane_count at segment (HCM audit)
+    osmid_to_speed    = {}   # speed_limit at segment (HCM two-lane row selection)
+    osmid_to_haz_class = {}  # raw CAL FIRE HAZ_CLASS integer (FHSZ audit)
     for _, row in roads_gdf.iterrows():
-        oid = row.get("osmid")
-        eff = float(row.get("effective_capacity_vph", row.get("capacity_vph", 1000.0)))
-        fz  = str(row.get("fhsz_zone", "non_fhsz"))
-        rt  = str(row.get("road_type", "two_lane"))
-        hcm = float(row.get("capacity_vph", 0.0))
-        dg  = float(row.get("hazard_degradation", 1.0))
-        nm  = str(row.get("name", ""))
+        oid  = row.get("osmid")
+        eff  = float(row.get("effective_capacity_vph", row.get("capacity_vph", 1000.0)))
+        fz   = str(row.get("fhsz_zone", "non_fhsz"))
+        rt   = str(row.get("road_type", "two_lane"))
+        hcm  = float(row.get("capacity_vph", 0.0))
+        dg   = float(row.get("hazard_degradation", 1.0))
+        nm   = str(row.get("name", ""))
+        lc   = int(row.get("lane_count", 0) or 0)
+        sp   = int(row.get("speed_limit", 0) or 0)
+        hc   = _ZONE_TO_HAZ_CLASS.get(fz, 0)
         if oid is None:
             continue
         if isinstance(oid, list):
             for o in oid:
                 key = str(o)
-                osmid_to_eff_cap[key] = max(osmid_to_eff_cap.get(key, 0), eff)
-                osmid_to_fhsz[key]    = fz
-                osmid_to_rtype[key]   = rt
-                osmid_to_hcm[key]     = hcm
-                osmid_to_deg[key]     = dg
-                osmid_to_name[key]    = nm
+                osmid_to_eff_cap[key]   = max(osmid_to_eff_cap.get(key, 0), eff)
+                osmid_to_fhsz[key]      = fz
+                osmid_to_rtype[key]     = rt
+                osmid_to_hcm[key]       = hcm
+                osmid_to_deg[key]       = dg
+                osmid_to_name[key]      = nm
+                osmid_to_lanes[key]     = lc
+                osmid_to_speed[key]     = sp
+                osmid_to_haz_class[key] = hc
         else:
             key = str(oid)
-            osmid_to_eff_cap[key] = max(osmid_to_eff_cap.get(key, 0), eff)
-            osmid_to_fhsz[key]    = fz
-            osmid_to_rtype[key]   = rt
-            osmid_to_hcm[key]     = hcm
-            osmid_to_deg[key]     = dg
-            osmid_to_name[key]    = nm
+            osmid_to_eff_cap[key]   = max(osmid_to_eff_cap.get(key, 0), eff)
+            osmid_to_fhsz[key]      = fz
+            osmid_to_rtype[key]     = rt
+            osmid_to_hcm[key]       = hcm
+            osmid_to_deg[key]       = dg
+            osmid_to_name[key]      = nm
+            osmid_to_lanes[key]     = lc
+            osmid_to_speed[key]     = sp
+            osmid_to_haz_class[key] = hc
 
     origins, weights = _resolve_origins(
         block_groups_gdf, fhsz_proj, analysis_crs, max_origins, config
@@ -606,12 +620,15 @@ def _identify_evacuation_routes(
                 key=lambda o: osmid_to_eff_cap.get(o, 9999),
                 default=path_osmids[0],
             )
-            eff_cap = osmid_to_eff_cap.get(bottleneck_osmid, 0.0)
-            hcm_cap = osmid_to_hcm.get(bottleneck_osmid, eff_cap)
-            deg     = osmid_to_deg.get(bottleneck_osmid, 1.0)
-            fz      = osmid_to_fhsz.get(bottleneck_osmid, "non_fhsz")
-            rt      = osmid_to_rtype.get(bottleneck_osmid, "two_lane")
-            nm      = osmid_to_name.get(bottleneck_osmid, "")
+            eff_cap  = osmid_to_eff_cap.get(bottleneck_osmid, 0.0)
+            hcm_cap  = osmid_to_hcm.get(bottleneck_osmid, eff_cap)
+            deg      = osmid_to_deg.get(bottleneck_osmid, 1.0)
+            fz       = osmid_to_fhsz.get(bottleneck_osmid, "non_fhsz")
+            rt       = osmid_to_rtype.get(bottleneck_osmid, "two_lane")
+            nm       = osmid_to_name.get(bottleneck_osmid, "")
+            lc       = osmid_to_lanes.get(bottleneck_osmid, 0)
+            sp       = osmid_to_speed.get(bottleneck_osmid, 0)
+            hc       = osmid_to_haz_class.get(bottleneck_osmid, 0)
 
             path_id = f"{geoid or i}_{exit_osmid or path_nodes[-1]}"
 
@@ -626,6 +643,9 @@ def _identify_evacuation_routes(
                 bottleneck_hcm_capacity_vph=hcm_cap,
                 bottleneck_hazard_degradation=deg,
                 bottleneck_effective_capacity_vph=eff_cap,
+                bottleneck_lane_count=lc,
+                bottleneck_speed_limit=sp,
+                bottleneck_haz_class=hc,
                 path_osmids=path_osmids,
             )
             evacuation_paths.append(evac_path)

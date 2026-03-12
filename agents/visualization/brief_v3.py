@@ -486,7 +486,7 @@ def _build_header(city_name: str, case_num: str, eval_date: str, project) -> str
 def _build_summary_stats(tier: str, wildland: dict, local5: dict) -> str:
     tier_label = {
         "DISCRETIONARY":           "DISCRETIONARY<br>REVIEW REQUIRED",
-        "CONDITIONAL MINISTERIAL": "CONDITIONAL<br>MINISTERIAL",
+        "MINISTERIAL WITH STANDARD CONDITIONS": "MINISTERIAL W/<br>STANDARD CONDITIONS",
         "MINISTERIAL":             "MINISTERIAL<br>APPROVAL ELIGIBLE",
     }.get(tier, tier)
 
@@ -498,7 +498,7 @@ def _build_summary_stats(tier: str, wildland: dict, local5: dict) -> str:
   </div>
 </div>"""
 
-    # DISCRETIONARY or CONDITIONAL MINISTERIAL — show ΔT metrics
+    # DISCRETIONARY or MINISTERIAL WITH STANDARD CONDITIONS — show ΔT metrics
     s5        = wildland.get("steps", {}).get("step5_delta_t", {})
     max_dt    = s5.get("max_delta_t_minutes", 0.0)
     threshold = s5.get("threshold_minutes", 6.0)
@@ -571,7 +571,7 @@ def _build_controlling_finding(tier: str, wildland: dict, project, config: dict)
             )
         else:
             text = "<strong>ΔT threshold exceeded</strong> on one or more serving evacuation paths."
-    else:  # CONDITIONAL MINISTERIAL
+    else:  # MINISTERIAL WITH STANDARD CONDITIONS
         if path_results:
             worst     = max(path_results, key=lambda r: r.get("delta_t_minutes", 0))
             nm        = worst.get("bottleneck_name") or worst.get("bottleneck_osmid", "bottleneck segment")
@@ -619,14 +619,27 @@ def _build_standards_analysis_v3(tier: str, wildland: dict, local5: dict, config
     s2      = w_steps.get("step2_scale", {})
     s1_result   = s2.get("result", False)
     du          = s2.get("dwelling_units", 0)
-    s1_chip     = "IN SCOPE" if s1_result else "BELOW THRESHOLD"
-    s1_chip_cls = "chip-scope" if s1_result else "chip-na"
+    if not s1_result:
+        s1_chip     = "BELOW THRESHOLD"
+        s1_chip_cls = "chip-na"
+    elif tier == "MINISTERIAL WITH STANDARD CONDITIONS":
+        s1_chip     = "IN SCOPE — CONDITIONS APPLY"
+        s1_chip_cls = "chip-scope"
+    else:
+        s1_chip     = "IN SCOPE"
+        s1_chip_cls = "chip-scope"
 
     if s1_result:
+        cond_note = (
+            " Since this project meets the applicability threshold, the evacuation clearance"
+            " analysis (Criteria B and C) applies. If all criteria are met, pre-adopted"
+            " standard conditions apply automatically — see <em>Required Next Steps</em>."
+            if tier == "MINISTERIAL WITH STANDARD CONDITIONS" else ""
+        )
         s1_detail = f"""<div class="detail-block">
           {du} dwelling units proposed &nbsp;&ge;&nbsp; {unit_threshold}-unit threshold.
           Project size threshold: {unit_threshold} dwelling units
-          (ITE Trip Generation de minimis; SB 330, Gov. Code &sect;65913.4).
+          (ITE Trip Generation de minimis; SB 330, Gov. Code &sect;65913.4).{cond_note}
         </div>"""
     else:
         s1_detail = f"""<div class="detail-block">
@@ -673,8 +686,8 @@ def _build_standards_analysis_v3(tier: str, wildland: dict, local5: dict, config
         s3_badge_color = "#c0392b"
         s3_detail = f"""<div class="detail-block" style="border-left-color:#c0392b;">
           <strong>Project site:</strong> {fz_desc} (source: CAL FIRE OSFM)<br>
-          <strong>Hazard zone:</strong> <code>{hazard_zone}</code> —
-          road capacity reduced to {deg_factor:.2f}&times; HCM base
+          <strong>CAL FIRE HAZ_CLASS:</strong> {fz_level} —
+          <code>{hazard_zone}</code>; road capacity reduced to {deg_factor:.2f}&times; HCM base
           (HCM Exhibit 10-15/10-17 composite + NIST Camp Fire validation).<br>
           <strong>ΔT threshold:</strong> reduced proportionally (shorter safe egress window
           applies; see Clearance Analysis below).<br>
@@ -687,8 +700,9 @@ def _build_standards_analysis_v3(tier: str, wildland: dict, local5: dict, config
         s3_badge_color = "#6c757d"
         s3_detail = f"""<div class="detail-block">
           Project site is not within a designated fire hazard severity zone
-          (<code>non_fhsz</code>). No road capacity degradation applied
-          (factor = 1.00&times;). Standard 120-min safe egress window applies.<br>
+          (<strong>CAL FIRE HAZ_CLASS: 0</strong>, <code>non_fhsz</code>).
+          No road capacity degradation applied (factor = 1.00&times;).
+          Standard 120-min safe egress window applies.<br>
           <strong>Mobilization rate:</strong> {mob_rate:.2f} (NFPA 101 constant).
         </div>"""
 
@@ -768,6 +782,8 @@ def _build_standards_analysis_v3(tier: str, wildland: dict, local5: dict, config
             display_paths = flagged_paths + near_paths
             n_omitted = len(path_results) - len(display_paths)
 
+            _rt_abbr = {"freeway": "Fwy", "multilane": "Multi-lane", "two_lane": "Two-lane"}
+
             table_rows = ""
             for r in display_paths:
                 pid     = r.get("path_id", "—")
@@ -778,6 +794,29 @@ def _build_standards_analysis_v3(tier: str, wildland: dict, local5: dict, config
                 flg     = r.get("flagged", False)
                 margin  = dt - thr
                 is_controlling = (pid == controlling_pid)
+
+                # HCM classification fields for bottleneck subtitle
+                b_rt    = r.get("bottleneck_road_type", "")
+                b_spd   = r.get("bottleneck_speed_limit", 0)
+                b_lns   = r.get("bottleneck_lane_count", 0)
+                b_hcm   = r.get("bottleneck_hcm_capacity_vph", 0)
+                b_deg   = r.get("bottleneck_hazard_degradation", 1.0)
+                rt_parts = [_rt_abbr.get(b_rt, b_rt)] if b_rt else []
+                if b_spd: rt_parts.append(f"{b_spd}\u202fmph")
+                if b_lns: rt_parts.append(f"{b_lns}\u202fln")
+                hcm_str = (
+                    f"HCM\u202f{b_hcm:,.0f}\u202f\u00d7\u202f{b_deg:.2f}\u202f=\u202f{eff_cap:,.0f}\u202fvph"
+                    if b_hcm else ""
+                )
+                subtitle_parts = [" \u00b7 ".join(rt_parts)]
+                if hcm_str:
+                    subtitle_parts.append(hcm_str)
+                bn_subtitle = "  \u2192  ".join(p for p in subtitle_parts if p)
+                bname_cell = (
+                    f"{bname}"
+                    f"<br><span style='font-size:9px;color:#868e96;font-weight:normal'>"
+                    f"{bn_subtitle}</span>"
+                ) if bn_subtitle else bname
 
                 dt_color     = "#c0392b" if flg else "#212529"
                 margin_color = "#c0392b" if flg else "#27ae60"
@@ -796,7 +835,7 @@ def _build_standards_analysis_v3(tier: str, wildland: dict, local5: dict, config
                 table_rows += (
                     f"<tr class='{row_class}'>"
                     f"<td style='font-size:10px;color:#868e96'>{pid}</td>"
-                    f"<td>{bname}</td>"
+                    f"<td>{bname_cell}</td>"
                     f"<td style='font-size:10px'>{hz_label}</td>"
                     f"<td style='font-weight:600'>{eff_cap:,.0f}</td>"
                     f"<td style='font-weight:700;color:{dt_color}'>{dt:.2f}</td>"
@@ -958,7 +997,7 @@ def _build_conditions_v3(tier: str, wildland: dict, local5: dict) -> str:
 
     if tier == "MINISTERIAL":
         body = _conditions_ministerial()
-    elif tier == "CONDITIONAL MINISTERIAL":
+    elif tier == "MINISTERIAL WITH STANDARD CONDITIONS":
         body = _conditions_conditional(fz_level)
     else:
         body = _conditions_discretionary_v3(wildland, local5)
@@ -982,30 +1021,32 @@ def _conditions_ministerial() -> str:
 
 
 def _conditions_conditional(fz_level: int) -> str:
-    fire_condition = ""
+    fhsz_conditions = ""
     if fz_level >= 2:
-        fire_condition = """<li><strong>[Fire Zone — Severity Modifier]</strong>
-        Project site is within a Very High or High FHSZ zone. Submit a Wildfire Evacuation Access
-        and Egress Plan to the Fire Marshal prior to permit issuance, demonstrating that project
-        design does not impede evacuation access for existing residents.</li>"""
+        fhsz_conditions = """
+      <li><strong>Defensible space compliance — PRC §4291.</strong>
+        The project site is located within a Very High or High Fire Hazard Severity Zone.
+        Prior to permit issuance, the applicant shall submit documentation to the Fire Marshal
+        confirming that all structures will maintain the 100-foot defensible space clearance
+        zones required under Public Resources Code §4291.</li>
+      <li><strong>WUI building standards compliance — CBC Chapter 7A / SFM Chapter 12-7A.</strong>
+        All new structures shall comply with wildland-urban interface fire area construction
+        requirements applicable to the project's FHSZ classification, including ignition-resistant
+        building materials, ember-resistant vents, and deck/eave construction standards.</li>"""
 
-    return f"""<p style="margin:0 0 10px;">
-      This project <strong>qualifies for ministerial approval</strong> subject to the following
-      conditions. These conditions are objective and do not require discretionary review or a
-      public hearing. Once conditions are satisfied, approval is ministerial (Gov. Code §65589.4).
+    return f"""<p style="margin:0 0 12px;">
+      This project is <strong>approved ministerially</strong>. The following pre-adopted, objective
+      conditions apply automatically by operation of law and local ordinance. No discretionary review
+      or public hearing is required. (Gov. Code §65589.4)
     </p>
-    <ol>
-      {fire_condition}
-      <li>Submit a <strong>Fire Evacuation Access Plan</strong> to the Fire Marshal prior to permit
-      issuance, confirming that no serving evacuation route is narrowed or obstructed by project
-      construction or operation.</li>
-      <li>Project shall not reduce the paved width, lane count, or sight distance of any evacuation
-      route segment within 0.5 miles of the project site.</li>
-      <li>A <strong>Transportation Demand Management (TDM) Plan</strong> is required per the General
-      Plan Mobility Element. TDM measures shall target a minimum 10% reduction in project peak-hour
-      vehicle trips.</li>
-      <li>Record a covenant on title confirming ongoing compliance with evacuation access conditions
-      (Fire Code §503).</li>
+    <ol>{fhsz_conditions}
+      <li><strong>Evacuation infrastructure impact fee — AB 1600 (Gov. Code §66000 et seq.).</strong>
+        If the city has adopted an evacuation infrastructure impact fee schedule pursuant to the
+        Mitigation Fee Act (AB 1600), the applicable fee is due at building permit issuance.</li>
+      <li><strong>Emergency vehicle access — local fire code (IFC §503).</strong>
+        The project shall maintain minimum fire apparatus access road width, vertical clearance,
+        and turning radii as required by the adopted local fire code throughout construction
+        and operation.</li>
     </ol>"""
 
 
@@ -1100,16 +1141,29 @@ def _build_legal_authority(project, audit: dict, config: dict) -> str:
     deg_factor    = haz_deg.get(hazard_zone, 1.00)
 
     # Controlling path bottleneck capacity
-    path_results  = s5.get("path_results", [])
-    eff_cap_ctrl  = 0
+    path_results   = s5.get("path_results", [])
+    eff_cap_ctrl   = 0
     ctrl_road_name = "—"
+    ctrl_road_type = ""
+    ctrl_speed     = 0
+    ctrl_lanes     = 0
+    hcm_raw_ctrl   = 0
     if path_results:
         worst = max(path_results, key=lambda r: r.get("delta_t_minutes", 0))
-        eff_cap_ctrl  = worst.get("bottleneck_effective_capacity_vph", 0)
+        eff_cap_ctrl   = worst.get("bottleneck_effective_capacity_vph", 0)
         ctrl_road_name = worst.get("bottleneck_name") or worst.get("bottleneck_osmid", "—")
+        # Use stored HCM inputs — no back-derivation needed
+        hcm_raw_ctrl   = int(worst.get("bottleneck_hcm_capacity_vph", 0))
+        ctrl_road_type = worst.get("bottleneck_road_type", "")
+        ctrl_speed     = worst.get("bottleneck_speed_limit", 0)
+        ctrl_lanes     = worst.get("bottleneck_lane_count", 0)
 
-    # HCM raw capacity = eff_cap / deg_factor (approximate)
-    hcm_raw_ctrl  = int(eff_cap_ctrl / deg_factor) if deg_factor > 0 and eff_cap_ctrl > 0 else 0
+    _rt_labels_la = {"freeway": "Freeway", "multilane": "Multi-lane", "two_lane": "Two-lane"}
+    ctrl_rt_label = _rt_labels_la.get(ctrl_road_type, ctrl_road_type)
+    ctrl_hcm_detail_parts = [ctrl_rt_label] if ctrl_rt_label else []
+    if ctrl_speed: ctrl_hcm_detail_parts.append(f"{ctrl_speed} mph")
+    if ctrl_lanes: ctrl_hcm_detail_parts.append(f"{ctrl_lanes} lanes")
+    ctrl_hcm_detail = ", ".join(ctrl_hcm_detail_parts)
 
     egr_thr = egress_cfg.get("threshold_stories", 4)
     egr_mps = egress_cfg.get("minutes_per_story", 1.5)
@@ -1190,8 +1244,9 @@ def _build_legal_authority(project, audit: dict, config: dict) -> str:
         <td>{badge(5)}</td>
         <td><strong>HCM 2022</strong> Exhibit 12-7 (TRB 7th Ed.)</td>
         <td>TRB 2022</td>
-        <td>Road HCM base capacity (controlling: {ctrl_road_name})</td>
-        <td><strong>~{hcm_raw_ctrl:,} vph</strong></td>
+        <td>Road HCM base capacity (controlling: {ctrl_road_name}
+          {f"<br><span style='font-size:10px;color:#6c757d'>{ctrl_hcm_detail}</span>" if ctrl_hcm_detail else ""})</td>
+        <td><strong>{hcm_raw_ctrl:,} vph</strong></td>
       </tr>
       <tr>
         <td>{badge(6)}</td>

@@ -14,7 +14,7 @@ Architecture (v3.1):
        Threshold derived at runtime: safe_egress_window[zone] × max_project_share
 
   The orchestrator runs all scenarios, then applies "most restrictive wins":
-    DISCRETIONARY (3) > CONDITIONAL MINISTERIAL (2) > MINISTERIAL (1)
+    DISCRETIONARY (3) > MINISTERIAL WITH STANDARD CONDITIONS (2) > MINISTERIAL (1)
 
   Sb79TransitScenario always returns NOT_APPLICABLE — informational flag only.
 
@@ -50,6 +50,29 @@ from agents.scenarios.wildland import WildlandScenario
 from agents.scenarios.sb79_transit import Sb79TransitScenario
 
 logger = logging.getLogger(__name__)
+
+
+# ---------------------------------------------------------------------------
+# ASCII normalizer — text audit files must be plain ASCII for max portability
+# ---------------------------------------------------------------------------
+
+_UNICODE_TO_ASCII = [
+    # Order matters: replace multi-char sequences first
+    ("ΔT",   "dT"),       # Greek delta + T (most common pair in audit)
+    ("Δ",    "d"),        # any remaining standalone delta
+    ("—",    " - "),      # U+2014 em dash  (step headers, legal text)
+    ("×",    "x"),        # U+00D7 multiplication sign (formulas)
+    ("→",    "->"),       # U+2192 rightwards arrow (scale gate, HCM derivation)
+    ("§",    "Sec."),     # U+00A7 section sign (legal citations)
+]
+
+
+def _ascii_safe(text: str) -> str:
+    """Replace all non-ASCII Unicode characters with plain ASCII equivalents."""
+    for uni, asc in _UNICODE_TO_ASCII:
+        text = text.replace(uni, asc)
+    # Belt-and-suspenders: encode to ASCII, replacing anything left with '?'
+    return text.encode("ascii", errors="replace").decode("ascii")
 
 
 # ---------------------------------------------------------------------------
@@ -131,7 +154,7 @@ def evaluate_project(
             "tier":           final_tier.value,
             "scenario_tiers": {r.scenario_name: r.tier.value for r in results},
             "logic":          "Most restrictive tier across all applicable scenarios wins.",
-            "tier_rank":      "DISCRETIONARY(3) > CONDITIONAL MINISTERIAL(2) > MINISTERIAL(1) > NOT_APPLICABLE(0)",
+            "tier_rank":      "DISCRETIONARY(3) > MINISTERIAL WITH STANDARD CONDITIONS(2) > MINISTERIAL(1) > NOT_APPLICABLE(0)",
             "reason":         project.determination_reason,
         },
     }
@@ -210,7 +233,7 @@ def generate_audit_trail(
     det = project.determination
     det_label = {
         "DISCRETIONARY":           "DISCRETIONARY REVIEW REQUIRED",
-        "CONDITIONAL MINISTERIAL": "CONDITIONAL MINISTERIAL APPROVAL",
+        "MINISTERIAL WITH STANDARD CONDITIONS": "MINISTERIAL WITH STANDARD CONDITIONS",
         "MINISTERIAL":             "MINISTERIAL APPROVAL ELIGIBLE",
     }.get(det, det)
 
@@ -273,9 +296,11 @@ def generate_audit_trail(
             lines.append(f"  Note: {s1['note']}")
         if "fire_zone_severity_modifier" in s1:
             fz = s1["fire_zone_severity_modifier"]
+            zone_level = fz.get("zone_level", 0)
             lines.append(
                 f"  Standard 3 (FHSZ): {fz.get('zone_description', 'Not in FHSZ')} "
-                f"(hazard_zone={fz.get('hazard_zone', 'non_fhsz')}) "
+                f"[HAZ_CLASS={zone_level}]  "
+                f"hazard_zone={fz.get('hazard_zone', 'non_fhsz')}  "
                 f"({'IN FIRE ZONE' if fz.get('result') else 'not in FHSZ'})"
             )
             lines.append(
@@ -372,14 +397,20 @@ def generate_audit_trail(
                 f"  Max ΔT: {s5.get('max_delta_t_minutes', 0):.2f} min",
                 f"  Triggered: {'YES — DISCRETIONARY' if s5.get('triggered') else 'NO'}",
                 "",
-                "  Per-Path Results (deduplicated by bottleneck name):",
+                "  Per-Path Results (all evaluated paths — no deduplication):",
             ]
-            _bn_seen: set = set()
+            # Show every path evaluated — no deduplication by name (each path is a
+            # distinct routing result; suppressing duplicates could hide a flagged path).
+            _road_type_labels = {
+                "freeway":   "Freeway",
+                "multilane": "Multi-lane highway",
+                "two_lane":  "Two-lane highway",
+            }
             for r in s5.get("path_results", []):
-                bn_name = r.get("bottleneck_name") or r.get("bottleneck_osmid", "Unknown")
-                if bn_name in _bn_seen:
-                    continue
-                _bn_seen.add(bn_name)
+                bn_name  = r.get("bottleneck_name") or r.get("bottleneck_osmid", "Unknown")
+                path_id  = r.get("path_id", "")
+                origin   = r.get("origin_block_group", "")
+                n_segs   = r.get("path_segment_count", "")
                 flag = (
                     " *** ΔT EXCEEDS THRESHOLD — DISCRETIONARY ***"
                     if r.get("flagged") else " [within threshold]"
@@ -391,15 +422,38 @@ def generate_audit_trail(
                     f"{r_thresh:.2f} min ({r_safe_win} min × {r_share * 100:.0f}%)"
                     if r_safe_win else f"{r_thresh} min"
                 )
-                lines.append(
-                    f"    Bottleneck: {bn_name}{flag}"
+                # Path context line (Gap 2)
+                ctx_parts = [f"Path {path_id}"]
+                if origin:
+                    ctx_parts.append(f"origin BG: {origin}")
+                if n_segs:
+                    ctx_parts.append(f"{n_segs} segments")
+                lines.append("    " + "  |  ".join(ctx_parts))
+                # Bottleneck + flag
+                lines.append(f"    Bottleneck: {bn_name}{flag}")
+                # HCM classification inputs (Gap 1) — enables table lookup verification
+                rt_label = _road_type_labels.get(
+                    r.get("bottleneck_road_type", ""), r.get("bottleneck_road_type", "")
                 )
+                sp = r.get("bottleneck_speed_limit", 0)
+                lc = r.get("bottleneck_lane_count", 0)
+                haz_class = r.get("bottleneck_haz_class", "")
+                road_info = f"      Road: {rt_label}"
+                if sp:
+                    road_info += f"  |  Speed: {sp} mph"
+                if lc:
+                    road_info += f"  |  Lanes: {lc}"
+                if haz_class != "":
+                    road_info += f"  |  HAZ_CLASS: {haz_class} ({r.get('bottleneck_fhsz_zone', 'non_fhsz')})"
+                lines.append(road_info)
+                # HCM capacity derivation
                 lines.append(
                     f"      HCM cap: {r.get('bottleneck_hcm_capacity_vph', 0):.0f} vph  "
                     f"x degradation {r.get('bottleneck_hazard_degradation', 1.0):.2f} "
                     f"({r.get('bottleneck_fhsz_zone', 'non_fhsz')})  "
                     f"= eff cap {r.get('bottleneck_effective_capacity_vph', 0):.0f} vph"
                 )
+                # ΔT formula
                 lines.append(
                     f"      ΔT = ({r.get('project_vehicles', 0):.1f} vph / "
                     f"{r.get('bottleneck_effective_capacity_vph', 0):.0f} vph) x 60 "
@@ -407,6 +461,7 @@ def generate_audit_trail(
                     f"= {r.get('delta_t_minutes', 0):.2f} min  "
                     f"(threshold: {r_thresh_str})"
                 )
+                lines.append("")
 
         lines += [
             "",
@@ -431,12 +486,14 @@ def generate_audit_trail(
             "  NOTE: Fire zone location (Standard 3) affects mobilization rate and ΔT threshold;\n"
             "  it does not independently gate the determination."
         ),
-        "CONDITIONAL MINISTERIAL": (
-            "CONDITIONAL MINISTERIAL APPROVAL\n\n"
-            "  The project meets the dwelling unit size threshold and serves evacuation routes.\n"
-            "  No serving path's ΔT exceeds the applicable threshold for the project's\n"
-            "  hazard zone. Ministerial approval eligible with mandatory evacuation-related\n"
-            "  conditions defined by the city pursuant to its General Plan Safety Element."
+        "MINISTERIAL WITH STANDARD CONDITIONS": (
+            "MINISTERIAL WITH STANDARD CONDITIONS\n\n"
+            "  The project meets the dwelling unit size threshold and all serving paths' ΔT\n"
+            "  are within the applicable threshold for the project's hazard zone.\n"
+            "  Approved ministerially. The following pre-adopted, objective conditions apply\n"
+            "  automatically: PRC §4291 defensible space (if FHSZ); AB 1600 evacuation\n"
+            "  infrastructure impact fee (if fee schedule adopted); emergency vehicle access\n"
+            "  per local fire code; WUI building standards compliance (if FHSZ)."
         ),
         "MINISTERIAL": (
             "MINISTERIAL APPROVAL ELIGIBLE\n\n"
@@ -498,7 +555,7 @@ def generate_audit_trail(
         "=" * 70,
     ]
 
-    text = "\n".join(lines)
+    text = _ascii_safe("\n".join(lines))
     output_path.parent.mkdir(parents=True, exist_ok=True)
     output_path.write_text(text)
     logger.info(f"Audit trail written to: {output_path}")
