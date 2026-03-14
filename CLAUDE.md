@@ -202,3 +202,33 @@ Phase 3 (later): Agent 5 (Flask what-if web app) + Agent 7 (Word/PDF reports).
    - Single access point: flag for large projects (city-adopted N)
    This should be a new scenario subclass (`agents/scenarios/site_access.py`) using OSM
    `width` tags and road geometry as inputs.
+
+## IP & Copyright Protocol
+
+### Copyright Header Requirement
+
+Every new .py and .html file created in this repo must begin with the
+standard copyright header:
+
+```
+# Copyright (C) 2026 Thomas Gonzalez
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# This file is part of JOSH (Jurisdictional Objective Standards for Housing).
+# See LICENSE for full terms. See CONTRIBUTING.md for contributor license terms.
+```
+
+Do not create any new source file without this header. If you modify an
+existing file that lacks the header, add it.
+
+### Dual Licensing
+
+JOSH is dual licensed. The public license is AGPL-3.0-or-later. Thomas
+Gonzalez retains the right to issue commercial licenses to third parties.
+Do not add any code, dependency, or library that would compromise his ability
+to do so (e.g., GPL-only dependencies with no commercial exception).
+
+### CLA
+
+All contributors must agree to the CLA in CONTRIBUTING.md before their
+contributions can be merged. Do not merge PRs from contributors who have
+not explicitly accepted the CLA terms via their PR submission.

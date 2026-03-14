@@ -12,13 +12,24 @@ We welcome contributions including bug reports, feature suggestions, documentati
 
 ## Contributor License Agreement
 
-By submitting a pull request or otherwise contributing code, documentation, or other materials to this repository, you agree to the following terms:
-
-> You grant Tom Buckley a perpetual, worldwide, irrevocable, non-exclusive, royalty-free license to use, reproduce, modify, distribute, sublicense, and relicense your contribution under any license — including future commercial licenses — at his sole discretion. You represent that you have the legal right to grant this license and that your contribution is your original work.
-
-This license grant does not affect your own rights to use your contributions for any purpose.
-
-The project is currently released to the public under the GNU Affero General Public License v3.0 or later (AGPL-3.0-or-later). Contributing does not change the open source availability of the project for community use.
+> **Contributor License Agreement**
+> By submitting a pull request, issue, or any other contribution to this
+> repository, you ("Contributor") agree to the following terms:
+>
+> 1. **Copyright retained by Contributor.** You retain ownership of your
+>    contributions.
+> 2. **License grant to copyright holder.** You grant Thomas Gonzalez a
+>    perpetual, worldwide, irrevocable, non-exclusive, royalty-free license
+>    to use, reproduce, modify, distribute, sublicense, and relicense your
+>    contribution under any license — including proprietary or commercial
+>    licenses — at his sole discretion, without additional consent or
+>    compensation.
+> 3. **Original work.** You represent that your contribution is your original
+>    work and that you have the legal right to grant this license.
+> 4. **Acceptance.** Submitting a contribution to this repository constitutes
+>    acceptance of these terms.
+>
+> This CLA does not affect the project's public availability under AGPL-3.0-or-later.
 
 ## Code of Conduct
 
