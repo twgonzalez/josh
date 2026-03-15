@@ -46,7 +46,7 @@ from models.evacuation_path import EvacuationPath
 
 logger = logging.getLogger(__name__)
 
-# Zone label → canonical hazard_zone key (matches mobilization_rates keys)
+# Zone label → canonical hazard_zone key (matches hazard_degradation keys in parameters.yaml)
 _HAZ_CLASS_TO_ZONE = {
     3: "vhfhsz",
     2: "high_fhsz",
@@ -279,15 +279,13 @@ def _apply_baseline_demand(gdf: gpd.GeoDataFrame, config: dict) -> gpd.GeoDataFr
       baseline_demand_vph  — evac demand for display (×0.57)
       normal_demand_vph    — normal peak-hour (×0.10)
 
-    Note: mob factor from mobilization_rates['high_fhsz'] (0.57) used for baseline display.
-    The ΔT engine uses zone-specific mob from mobilization_rates at test time.
+    Note: v3.2 uses a constant mobilization rate (0.90, NFPA 101 design basis) for
+    both baseline display and the ΔT engine. FHSZ zone affects road capacity only.
     """
     method      = config.get("evacuation_demand", {}).get("method", "catchment")
     peak_factor = config.get("aadt_peak_hour_factor", 0.10)
     vpu         = config.get("vehicles_per_unit", 2.5)
-    # Use high_fhsz rate (0.57) as the display baseline — matches KLD study
-    mob_rates   = config.get("mobilization_rates", {})
-    mob         = mob_rates.get("high_fhsz", config.get("peak_hour_mobilization", 0.57))
+    mob         = config.get("mobilization_rate", 0.90)  # v3.2: NFPA 101, constant
     aadt_col    = "aadt" if "aadt" in gdf.columns else None
     has_catchment = "catchment_units" in gdf.columns
 

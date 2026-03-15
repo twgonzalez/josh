@@ -19,7 +19,7 @@ crs: "EPSG:4326"   # WGS84 for storage
 analysis_crs: "EPSG:26910"  # UTM Zone 10N for distance calculations (meters)
 
 # City-specific parameter overrides (leave empty to use parameters.yaml defaults).
-# Mobilization rates are now tiered by FHSZ zone — see parameters.yaml mobilization_rates.
+# v3.2: Mobilization is constant 0.90 (NFPA 101 design basis) — not tiered by zone.
 # Override vehicles_per_unit here if city ACS B25044 data differs from 2.5 default.
 overrides: {}
 # Example overrides:
@@ -71,4 +71,4 @@ notes: >
   Berkeley Hills in FHSZ Zones 2-3. First city analyzed for MVP validation.
   Compare v/c ratios against published Berkeley Fire Evacuation Capacity Study.
   Target accuracy: within 10% of published values for primary evacuation routes.
-  v3.0: Mobilization rates are now tiered by FHSZ zone per Zhao et al. (2022).
+  v3.2: Mobilization is constant 0.90 (NFPA 101). FHSZ affects road capacity only.
