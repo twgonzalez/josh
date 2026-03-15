@@ -1,7 +1,7 @@
 [project]
 name = "csf-fire"
 version = "0.1.0"
-description = "Fire Evacuation Capacity Analysis System — legally defensible AI agent system for California cities"
+description = "Fire Evacuation Capacity Analysis System — open-source Python pipeline for objective housing determinations in California cities"
 requires-python = ">=3.11"
 dependencies = [
     "geopandas>=0.14",

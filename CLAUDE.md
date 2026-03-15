@@ -2,7 +2,7 @@
 
 ## Project Purpose
 
-AI agent system that analyzes fire evacuation route capacity for California cities to:
+Open-source Python pipeline that analyzes fire evacuation route capacity for California cities to:
 1. Establish **objective development standards** (ministerial vs. discretionary review)
 2. Generate **impact fee nexus studies** (AB 1600 compliant)
 3. Enable **what-if analysis** for proposed developments
