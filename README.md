@@ -33,10 +33,11 @@ The home page covers the methodology, legal framework, adoption pathway, and doc
 
 ## Legal Framework
 
-| Statute | Role in JOSH |
-|---------|-------------|
+| Statute / Standard | Role in JOSH |
+|--------------------|-------------|
 | AB 747 (Gov. Code §65302.15) | Requires citywide evacuation route analysis |
-| SB 330 | Anchors the 15-unit applicability threshold |
+| ITE de minimis (trip generation) | Source of the 15-unit size threshold — projects below this generate negligible marginal traffic impact |
+| SB 330 (Housing Crisis Act) | Requires development standards to be objective and non-discretionary — the reason a fixed numerical threshold must be used rather than case-by-case judgment |
 | AB 1600 | Impact fee nexus study framework (Phase 2) |
 | SB 79 | Transit proximity flag (informational, no tier impact) |
 | NFPA 101 / IBC | Building egress penalty for structures ≥ 4 stories |
