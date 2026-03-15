@@ -52,32 +52,39 @@
     .header-inner {
       max-width: 1100px;
       margin: 0 auto;
-      padding: 28px 32px 24px;
+      padding: 24px 32px 20px;
       display: flex;
-      align-items: flex-end;
-      justify-content: space-between;
-      gap: 24px;
+      flex-direction: column;
+      gap: 12px;
     }
     .header-brand h1 {
-      font-size: 26px;
+      font-size: clamp(18px, 2.4vw, 28px);
       font-weight: 800;
       letter-spacing: 0.06em;
       font-family: var(--serif);
+      white-space: nowrap;
     }
     .header-brand h1 span {
       color: var(--red);
       font-style: italic;
     }
+    .header-bottom {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      flex-wrap: wrap;
+    }
     .header-brand .tagline {
       font-size: 13px;
       color: #8ea8cc;
-      margin-top: 5px;
       letter-spacing: 0.03em;
     }
     .header-nav {
       display: flex;
       gap: 20px;
       flex-shrink: 0;
+      flex-wrap: wrap;
     }
     .header-nav a {
       color: #8ea8cc;
@@ -758,7 +765,11 @@
       .calc-result { text-align: left; }
       footer .footer-inner { grid-template-columns: 1fr; }
       footer .footer-citations { text-align: left; white-space: normal; }
-      .header-inner { flex-direction: column; align-items: flex-start; }
+      .header-inner { padding: 20px 20px 16px; }
+      .header-brand h1 { white-space: normal; }
+      .header-bottom { flex-direction: column; gap: 10px; }
+      .header-nav { gap: 10px 14px; max-width: calc(100vw - 40px); overflow-x: auto; flex-wrap: nowrap; -webkit-overflow-scrolling: touch; scrollbar-width: none; }
+      .header-nav::-webkit-scrollbar { display: none; }
     }
   </style>
 </head>
@@ -769,21 +780,23 @@
   <div class="header-inner">
     <div class="header-brand">
       <h1><span>JOSH</span> &mdash; Jurisdictional Objective Standards for Housing</h1>
+    </div>
+    <div class="header-bottom">
       <p class="tagline">
         California Stewardship Fund &nbsp;&bull;&nbsp;
         AB 747 / Gov. Code &sect;65302.15 &nbsp;&bull;&nbsp;
         v3.2 &Delta;T Standard &nbsp;&bull;&nbsp;
         March 2026
       </p>
+      <nav class="header-nav">
+        <a href="#principle">The Principle</a>
+        <a href="#methodology">Methodology</a>
+        <a href="#adoption">Adoption</a>
+        <a href="#documents">Documents</a>
+        <a href="#software">Open Source</a>
+        <a href="berkeley/demo_map.html">Live Demo &rarr;</a>
+      </nav>
     </div>
-    <nav class="header-nav">
-      <a href="#principle">The Principle</a>
-      <a href="#methodology">Methodology</a>
-      <a href="#adoption">Adoption</a>
-      <a href="#documents">Documents</a>
-      <a href="#software">Open Source</a>
-      <a href="berkeley/demo_map.html">Live Demo &rarr;</a>
-    </nav>
   </div>
 </header>
 
