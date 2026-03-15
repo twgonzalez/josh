@@ -23,9 +23,11 @@ All standards are objective and algorithmic. No discretion. No professional judg
 
 ## Live Demo
 
-> **[View the Berkeley interactive demo →](https://twgonzalez.github.io/josh/berkeley/demo_map.html)**
+> **[Project home page →](https://twgonzalez.github.io/josh/)**
+>
+> **[Berkeley interactive demo →](https://twgonzalez.github.io/josh/berkeley/demo_map.html)**
 
-The demo map evaluates six representative Berkeley projects across different FHSZ zones, unit counts, and building heights. Each project popup shows the full A/B/C criteria breakdown and per-route ΔT values.
+The home page covers the methodology, legal framework, adoption pathway, and document library. The demo map evaluates six representative Berkeley projects across different FHSZ zones, unit counts, and building heights — each popup shows the full A/B/C criteria breakdown and per-route ΔT values.
 
 ---
 
@@ -125,10 +127,7 @@ JOSH will download all required data automatically. The only required fields in 
 
 ## License
 
-JOSH is dual licensed:
-
-- **Public license:** [AGPL-3.0-or-later](LICENSE) — free for open-source use
-- **Commercial license:** Available from Thomas Gonzalez for proprietary deployments
+JOSH is licensed under [AGPL-3.0-or-later](LICENSE).
 
 All contributors must agree to the [Contributor License Agreement](CONTRIBUTING.md) before their contributions can be merged.
 
@@ -138,4 +137,4 @@ All contributors must agree to the [Contributor License Agreement](CONTRIBUTING.
 
 See [CONTRIBUTING.md](CONTRIBUTING.md). Bug reports, city configs, and methodology improvements are especially welcome.
 
-> Copyright (C) 2026 Thomas Gonzalez. JOSH is part of the California Smart Future initiative.
+> Copyright (C) 2026 Thomas Gonzalez.
