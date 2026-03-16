@@ -99,10 +99,25 @@ def _add_zoom_weight_scaler(m: "folium.Map", ref_zoom: int) -> None:
         so the pulse pattern stays proportional to the line thickness.
         Without this, the dash stays at e.g. 10 px while the line grows to
         30 px, producing a thick scalloped band instead of clear pulses.
+
+    Smoothness optimisations:
+      - zoomanim fires with the TARGET zoom at animation START, so weights are
+        already correct when the CSS transition completes — no post-zoom snap.
+      - zoomend kept as fallback for programmatic/keyboard zooms.
+      - Path cache built once at init; invalidated on layeradd/layerremove so
+        layer-control toggles are reflected without re-traversing the tree on
+        every zoom.
+      - All setStyle calls are batched inside requestAnimationFrame so the
+        browser paints all weight changes in a single frame rather than
+        triggering N individual reflows.
     """
     map_var = m.get_name()
     js = f"""<script>
 (function () {{
+  // ── Path cache ────────────────────────────────────────────────────────────
+  // Built once; invalidated whenever layers are added/removed (layer control).
+  var _pathCache = null;
+
   function eachPath(layer, cb) {{
     if (layer && layer._layers) {{
       Object.values(layer._layers).forEach(function (sub) {{ eachPath(sub, cb); }});
@@ -113,13 +128,25 @@ def _add_zoom_weight_scaler(m: "folium.Map", ref_zoom: int) -> None:
     }}
   }}
 
+  function buildCache(map) {{
+    _pathCache = [];
+    map.eachLayer(function (layer) {{
+      eachPath(layer, function (p) {{ _pathCache.push(p); }});
+    }});
+    return _pathCache;
+  }}
+
   function isAntPath(path) {{
     return path.options && path.options.pulseColor !== undefined;
   }}
 
+  // ── Scale applicator ──────────────────────────────────────────────────────
+  // Uses requestAnimationFrame so all setStyle calls land in one browser paint.
   function applyScale(map, scale) {{
-    map.eachLayer(function (layer) {{
-      eachPath(layer, function (path) {{
+    var paths = _pathCache || buildCache(map);
+    requestAnimationFrame(function () {{
+      for (var i = 0; i < paths.length; i++) {{
+        var path = paths[i];
         if (path._baseWeight === undefined) {{
           path._baseWeight = (path.options && path.options.weight) || 1;
         }}
@@ -141,7 +168,7 @@ def _add_zoom_weight_scaler(m: "folium.Map", ref_zoom: int) -> None:
           var w = Math.max(0.3, Math.min(path._baseWeight * scale, 30));
           path.setStyle({{ weight: w }});
         }}
-      }});
+      }}
     }});
   }}
 
@@ -154,12 +181,19 @@ def _add_zoom_weight_scaler(m: "folium.Map", ref_zoom: int) -> None:
     var map = window['{map_var}'];
     if (!map) {{ setTimeout(init, 50); return; }}
 
-    var _scaleTimer = null;
+    // Invalidate path cache when the layer tree changes.
+    map.on('layeradd layerremove', function () {{ _pathCache = null; }});
+
+    // zoomanim fires with e.zoom = TARGET zoom at the START of the animation.
+    // Updating weights here means they are correct when the transition ends —
+    // eliminating the post-zoom snap that causes visual jerkiness.
+    map.on('zoomanim', function (e) {{
+      applyScale(map, getScale(e.zoom));
+    }});
+
+    // zoomend catches programmatic zooms and any case zoomanim doesn't fire.
     map.on('zoomend', function () {{
-      clearTimeout(_scaleTimer);
-      _scaleTimer = setTimeout(function () {{
-        applyScale(map, getScale(map.getZoom()));
-      }}, 80);
+      applyScale(map, getScale(map.getZoom()));
     }});
 
     applyScale(map, getScale(map.getZoom()));
