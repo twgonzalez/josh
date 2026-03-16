@@ -252,6 +252,10 @@ width_speed_inference:
 
 evacuation:
   serving_route_radius_miles: 0.5   # Standard 2 search radius
+  max_path_length_ratio: 2.0        # v3.4: only include exit paths within 2× the nearest-exit distance
+                                    # Rational evacuees take the shortest route to safety; paths more
+                                    # than 2× optimal represent routes that would never be chosen when
+                                    # shorter alternatives exist (legally defensible route-choice bound)
 
 # ============================================================
 # LOS (Level of Service) Thresholds — INFORMATIONAL ONLY

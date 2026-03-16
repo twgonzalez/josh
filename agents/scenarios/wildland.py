@@ -328,9 +328,23 @@ class WildlandScenario(EvacuationScenario):
             except Exception as e:
                 logger.warning(f"  Could not load exit_nodes.json ({e})")
 
+        # Maximum path length ratio (read from config, default 2.0).
+        # Only paths within this multiple of the nearest-exit distance are included.
+        # Rational evacuees take the shortest route to safety — paths more than 2×
+        # optimal represent routes that would never be chosen when shorter alternatives
+        # exist.  This is the legally defensible route-choice bound (config key:
+        # evacuation.max_path_length_ratio).
+        max_path_ratio = float(
+            evac_cfg.get("max_path_length_ratio", 2.0)
+        )
+
         if G is not None and nearest_node is not None and exit_nodes:
             G_undir_full = G.to_undirected()
-            seen_bottlenecks: dict[str, float] = {}  # osmid → shortest path length so far
+
+            # ── Pass 1: compute all paths, record length ──────────────────
+            # Collect raw candidates before length-filtering or dedup.
+            # Each candidate: (path_length, exit_node_id, path_osmids, exit_osmid)
+            candidates: list[tuple] = []
 
             for exit_node in exit_nodes:
                 exit_node_id = int(exit_node)
@@ -362,46 +376,65 @@ class WildlandScenario(EvacuationScenario):
                     if v == exit_node_id or u == exit_node_id:
                         exit_osmid = path_osmids_local[-1] if path_osmids_local else ""
 
-                if not path_osmids_local:
-                    continue
+                if path_osmids_local and path_length > 0:
+                    candidates.append(
+                        (path_length, exit_node_id, path_osmids_local, exit_osmid)
+                    )
 
-                bottleneck_osmid = min(
-                    path_osmids_local,
-                    key=lambda o: osmid_to_eff_cap.get(o, 9999),
-                    default=path_osmids_local[0],
-                )
-                eff_cap = osmid_to_eff_cap.get(bottleneck_osmid, 0.0)
-                if eff_cap <= 0:
-                    continue
+            # ── Pass 2: filter by distance ratio, then dedup by bottleneck ─
+            # Route-choice bound: include exits within max_path_ratio × nearest exit.
+            if candidates:
+                min_path_len = min(c[0] for c in candidates)
+                max_allowed  = min_path_len * max_path_ratio
+                filtered     = [c for c in candidates if c[0] <= max_allowed]
+                excluded     = len(candidates) - len(filtered)
+                if excluded:
+                    logger.info(
+                        f"  Path filter: {excluded} exit(s) excluded "
+                        f"(>{max_path_ratio:.1f}× nearest-exit distance of "
+                        f"{min_path_len:.0f} m); {len(filtered)} remain"
+                    )
 
-                # Dedup: keep only the shortest path to each unique bottleneck
-                prior_len = seen_bottlenecks.get(bottleneck_osmid)
-                if prior_len is not None and path_length >= prior_len:
-                    continue
-                seen_bottlenecks[bottleneck_osmid] = path_length
+                seen_bottlenecks: dict[str, float] = {}  # osmid → shortest path length
+                for path_length, exit_node_id, path_osmids_local, exit_osmid in filtered:
+                    bottleneck_osmid = min(
+                        path_osmids_local,
+                        key=lambda o: osmid_to_eff_cap.get(o, 9999),
+                        default=path_osmids_local[0],
+                    )
+                    eff_cap = osmid_to_eff_cap.get(bottleneck_osmid, 0.0)
+                    if eff_cap <= 0:
+                        continue
 
-                path_id = f"proj_{nearest_node}_{exit_node_id}"
-                evac_path = EvacuationPath(
-                    path_id=path_id,
-                    origin_block_group="project_origin",
-                    exit_segment_osmid=exit_osmid,
-                    bottleneck_osmid=bottleneck_osmid,
-                    bottleneck_name=osmid_to_name.get(bottleneck_osmid, ""),
-                    bottleneck_fhsz_zone=osmid_to_fhsz.get(bottleneck_osmid, "non_fhsz"),
-                    bottleneck_road_type=osmid_to_rtype.get(bottleneck_osmid, "two_lane"),
-                    bottleneck_hcm_capacity_vph=osmid_to_hcm.get(bottleneck_osmid, eff_cap),
-                    bottleneck_hazard_degradation=osmid_to_deg.get(bottleneck_osmid, 1.0),
-                    bottleneck_effective_capacity_vph=eff_cap,
-                    bottleneck_lane_count=osmid_to_lanes.get(bottleneck_osmid, 0),
-                    bottleneck_speed_limit=osmid_to_speed.get(bottleneck_osmid, 0),
-                    bottleneck_haz_class=osmid_to_haz_class.get(bottleneck_osmid, 0),
-                    path_osmids=path_osmids_local,
-                )
-                project_paths.append(evac_path)
+                    # Dedup: keep only the shortest path to each unique bottleneck
+                    prior_len = seen_bottlenecks.get(bottleneck_osmid)
+                    if prior_len is not None and path_length >= prior_len:
+                        continue
+                    seen_bottlenecks[bottleneck_osmid] = path_length
+
+                    path_id = f"proj_{nearest_node}_{exit_node_id}"
+                    evac_path = EvacuationPath(
+                        path_id=path_id,
+                        origin_block_group="project_origin",
+                        exit_segment_osmid=exit_osmid,
+                        bottleneck_osmid=bottleneck_osmid,
+                        bottleneck_name=osmid_to_name.get(bottleneck_osmid, ""),
+                        bottleneck_fhsz_zone=osmid_to_fhsz.get(bottleneck_osmid, "non_fhsz"),
+                        bottleneck_road_type=osmid_to_rtype.get(bottleneck_osmid, "two_lane"),
+                        bottleneck_hcm_capacity_vph=osmid_to_hcm.get(bottleneck_osmid, eff_cap),
+                        bottleneck_hazard_degradation=osmid_to_deg.get(bottleneck_osmid, 1.0),
+                        bottleneck_effective_capacity_vph=eff_cap,
+                        bottleneck_lane_count=osmid_to_lanes.get(bottleneck_osmid, 0),
+                        bottleneck_speed_limit=osmid_to_speed.get(bottleneck_osmid, 0),
+                        bottleneck_haz_class=osmid_to_haz_class.get(bottleneck_osmid, 0),
+                        path_osmids=path_osmids_local,
+                    )
+                    project_paths.append(evac_path)
 
             logger.info(
                 f"  Project-origin Dijkstra: {len(project_paths)} unique-bottleneck paths "
-                f"for {project.project_name} (from {len(exit_nodes)} exit nodes)"
+                f"for {project.project_name} "
+                f"(ratio ≤{max_path_ratio:.1f}× nearest exit, from {len(exit_nodes)} exits)"
             )
 
         if project_paths:
