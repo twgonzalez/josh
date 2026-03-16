@@ -40,6 +40,14 @@ class Project:
     meets_size_threshold: bool = False
     unit_threshold_used: int = 15
 
+    # Optional additional egress points (set by city planner in project YAML).
+    # Each entry: {"lat": float, "lon": float, "label": str, "note": str}
+    # Example: Clark Ave Apartments has a secondary egress-only exit on Clark Ave
+    # in addition to the primary ingress/egress at 599 Union St.
+    # Each additional egress point is run as an independent Dijkstra origin with
+    # full project demand (conservative — no demand splitting assumed).
+    additional_egress_points: list = field(default_factory=list)
+
     # Standard 2 results (serving evacuation routes)
     serving_route_ids: list = field(default_factory=list)        # osmids of near-bottleneck segments
     reachable_network_osmids: list = field(default_factory=list) # all osmids reachable from egress (v3.3 viz)

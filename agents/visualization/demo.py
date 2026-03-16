@@ -728,6 +728,36 @@ def create_demo_map(
             icon=folium.Icon(color=marker_color, icon="home", prefix="fa"),
         ).add_to(proj_group)
 
+        # Additional egress point markers — city-planner-defined secondary exits.
+        # Drawn as small circle markers distinct from the primary home pin.
+        for _aep in getattr(project, "additional_egress_points", []):
+            _aep_lat   = float(_aep.get("lat", 0))
+            _aep_lon   = float(_aep.get("lon", 0))
+            _aep_label = _aep.get("label", "Additional egress")
+            _aep_note  = _aep.get("note", "")
+            _aep_tip   = f"{_aep_label}" + (f" — {_aep_note}" if _aep_note else "")
+            # Outer ring + filled centre — visually paired with primary pin color
+            # but smaller and with an "egress-only" visual language.
+            folium.CircleMarker(
+                location=[_aep_lat, _aep_lon],
+                radius=10,
+                color=marker_color,
+                weight=2,
+                fill=False,
+                opacity=0.85,
+                tooltip=_aep_tip,
+            ).add_to(proj_group)
+            folium.CircleMarker(
+                location=[_aep_lat, _aep_lon],
+                radius=4,
+                color=marker_color,
+                weight=0,
+                fill=True,
+                fill_color=marker_color,
+                fill_opacity=0.90,
+                tooltip=_aep_tip,
+            ).add_to(proj_group)
+
         proj_group.add_to(m)
 
     # ── Fixed panels ───────────────────────────────────────────────────────

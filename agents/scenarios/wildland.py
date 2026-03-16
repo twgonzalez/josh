@@ -376,139 +376,179 @@ class WildlandScenario(EvacuationScenario):
             # travel_time_s drives routing and ratio filter; length_m is for logging.
             # path_wgs84_coords is [[lat, lon], ...] from graph node positions —
             # used directly by the demo map, bypassing osmid-to-geometry lookup.
-            candidates: list[tuple] = []
-
-            for exit_node in exit_nodes:
-                exit_node_id = int(exit_node)
-                if exit_node_id == nearest_node:
-                    continue
+            # ── Build egress origin list: primary + any additional_egress_points ─
+            # Each origin is (graph_node_id, origin_block_group_label).
+            # Additional egress points are defined by the city planner in the
+            # project YAML as additional_egress: [{lat, lon, label, note}, ...].
+            # Each origin runs a full independent Pass 1+2 (Dijkstra to all exits,
+            # ratio filter, bottleneck dedup).  Pass 2 is intentionally scoped per
+            # origin so the min_travel_time ratio bound is relative to THAT egress
+            # point's fastest exit — not polluted by a faster nearby exit on a
+            # different egress.  Bottleneck dedup also resets per origin so that a
+            # fast primary path cannot suppress a slower additional-egress path to
+            # the same bottleneck (they represent physically separate vehicle flows).
+            # Methodology: full project_vehicles applied to every origin (conservative
+            # — demand splitting not assumed; may be refined in a future version).
+            _all_origins: list[tuple[int, str]] = [(nearest_node, "project_origin")]
+            for _aei, _aep in enumerate(
+                getattr(project, "additional_egress_points", []), 1
+            ):
                 try:
-                    path_nodes = nx.shortest_path(
-                        G_undir_full, nearest_node, exit_node_id,
-                        weight="travel_time_s",
-                    )
-                except (nx.NetworkXNoPath, nx.NodeNotFound):
-                    continue
-                if len(path_nodes) < 2:
-                    continue
-
-                # Build WGS84 coordinate chain from node positions.
-                # Node (x, y) are in the projected CRS; _to_wgs84 converts to (lon, lat).
-                #
-                # Freeway truncation: stop at the first motorway/motorway_link edge.
-                # Once evacuees reach the freeway mainline they may go north or south —
-                # we cannot predict direction, so we animate only to the on-ramp entry
-                # point and let the map marker convey "→ freeway."  The full path
-                # (osmids, travel_time, bottleneck) is still computed below for ΔT.
-                _FREEWAY_HW = {"motorway", "motorway_link"}
-                _cutoff = len(path_nodes)          # default: include all nodes
-                for _ei, (_eu, _ev) in enumerate(zip(path_nodes[:-1], path_nodes[1:])):
-                    _eed = G.get_edge_data(_eu, _ev) or G.get_edge_data(_ev, _eu) or {}
-                    for _ekd in (_eed.values() if isinstance(_eed, dict) else [_eed]):
-                        if str(_ekd.get("highway", "")) in _FREEWAY_HW:
-                            _cutoff = _ei + 1      # include node _eu, stop before _ev
-                            break
-                    if _cutoff < len(path_nodes):
-                        break
-
-                path_wgs84_local: list[list[float]] = []
-                for _nid in path_nodes[:_cutoff]:
-                    _nx_x = G.nodes[_nid].get("x", 0)
-                    _nx_y = G.nodes[_nid].get("y", 0)
-                    _lon, _lat = _to_wgs84.transform(_nx_x, _nx_y)
-                    path_wgs84_local.append([_lat, _lon])
-
-                path_osmids_local: list[str] = []
-                path_length       = 0.0   # metres — for logging only
-                path_travel_time  = 0.0   # seconds — drives filter + dedup
-                exit_osmid = ""
-                for u, v in zip(path_nodes[:-1], path_nodes[1:]):
-                    ed = G.get_edge_data(u, v) or G.get_edge_data(v, u)
-                    if ed:
-                        for kd in (ed.values() if isinstance(ed, dict) else [ed]):
-                            oid     = kd.get("osmid")
-                            seg_len = float(kd.get("length", 0) or 0)
-                            hw_str  = str(kd.get("highway", ""))
-                            spd_mph = speed_defaults_mph.get(hw_str, 25)
-                            seg_tt  = seg_len / (spd_mph * _MPH_TO_MPS) if spd_mph > 0 else seg_len
-                            if oid:
-                                oid_str = str(oid[0]) if isinstance(oid, list) else str(oid)
-                                path_osmids_local.append(oid_str)
-                                path_length      += seg_len
-                                path_travel_time += seg_tt
-                                break
-                    if v == exit_node_id or u == exit_node_id:
-                        exit_osmid = path_osmids_local[-1] if path_osmids_local else ""
-
-                if path_osmids_local and path_travel_time > 0:
-                    candidates.append(
-                        (path_travel_time, exit_node_id, path_osmids_local,
-                         exit_osmid, path_length, path_wgs84_local)
-                    )
-
-            # ── Pass 2: filter by travel-time ratio, then dedup by bottleneck
-            # Route-choice bound: include exits reachable within max_path_ratio ×
-            # fastest-exit travel time.  A rational evacuee who can reach safety in
-            # T minutes will never take a route that takes > 2T minutes when a
-            # shorter alternative exists.  Using travel time (not distance) correctly
-            # accounts for road class: a 2-mile freeway is faster than a 1-mile
-            # residential street and should be preferred.
-            if candidates:
-                min_travel_time = min(c[0] for c in candidates)   # seconds
-                max_allowed     = min_travel_time * max_path_ratio
-                filtered        = [c for c in candidates if c[0] <= max_allowed]
-                excluded        = len(candidates) - len(filtered)
-                if excluded:
+                    _aep_pt = gpd.GeoDataFrame(
+                        geometry=[Point(float(_aep["lon"]), float(_aep["lat"]))],
+                        crs="EPSG:4326",
+                    ).to_crs(analysis_crs)
+                    _aep_x    = _aep_pt.geometry.iloc[0].x
+                    _aep_y    = _aep_pt.geometry.iloc[0].y
+                    _aep_node = ox.distance.nearest_nodes(G, _aep_x, _aep_y)
+                    _all_origins.append((_aep_node, f"project_egress_{_aei}"))
                     logger.info(
-                        f"  Path filter: {excluded} exit(s) excluded "
-                        f"(>{max_path_ratio:.1f}× fastest-exit travel time of "
-                        f"{min_travel_time/60:.1f} min); {len(filtered)} remain"
+                        f"  Additional egress {_aei} "
+                        f"({_aep.get('label', 'unlabeled')!r}): "
+                        f"snapped to node {_aep_node}"
+                    )
+                except Exception as _snap_err:
+                    logger.warning(
+                        f"  Additional egress {_aei} snap failed: {_snap_err}"
                     )
 
-                seen_bottlenecks: dict[str, float] = {}  # osmid → fastest travel time (s)
-                for path_travel_time, exit_node_id, path_osmids_local, exit_osmid, path_length, path_wgs84_local in filtered:
-                    bottleneck_osmid = min(
-                        path_osmids_local,
-                        key=lambda o: osmid_to_eff_cap.get(o, 9999),
-                        default=path_osmids_local[0],
-                    )
-                    eff_cap = osmid_to_eff_cap.get(bottleneck_osmid, 0.0)
-                    if eff_cap <= 0:
+            # ── Pass 1+2 — run independently for each egress origin ───────────
+            _FREEWAY_HW = {"motorway", "motorway_link"}
+
+            for _origin_node, _origin_bg in _all_origins:
+                candidates: list[tuple] = []
+
+                for exit_node in exit_nodes:
+                    exit_node_id = int(exit_node)
+                    if exit_node_id == _origin_node:
+                        continue
+                    try:
+                        path_nodes = nx.shortest_path(
+                            G_undir_full, _origin_node, exit_node_id,
+                            weight="travel_time_s",
+                        )
+                    except (nx.NetworkXNoPath, nx.NodeNotFound):
+                        continue
+                    if len(path_nodes) < 2:
                         continue
 
-                    # Dedup: keep only the fastest-travel-time path to each unique bottleneck.
-                    # Travel time (not distance) is the dedup key because Dijkstra now routes
-                    # on time — two paths to the same bottleneck may have different lengths
-                    # but the faster one is the correct evacuation route to preserve.
-                    prior_tt = seen_bottlenecks.get(bottleneck_osmid)
-                    if prior_tt is not None and path_travel_time >= prior_tt:
-                        continue
-                    seen_bottlenecks[bottleneck_osmid] = path_travel_time
+                    # Build WGS84 coordinate chain from node positions.
+                    # Node (x, y) are in the projected CRS; _to_wgs84 converts to (lon, lat).
+                    #
+                    # Freeway truncation: stop at the first motorway/motorway_link edge.
+                    # Once evacuees reach the freeway mainline they may go north or south —
+                    # we cannot predict direction, so we animate only to the on-ramp entry
+                    # point and let the map marker convey "→ freeway."  The full path
+                    # (osmids, travel_time, bottleneck) is still computed below for ΔT.
+                    _cutoff = len(path_nodes)          # default: include all nodes
+                    for _fei, (_feu, _fev) in enumerate(zip(path_nodes[:-1], path_nodes[1:])):
+                        _feed = G.get_edge_data(_feu, _fev) or G.get_edge_data(_fev, _feu) or {}
+                        for _fekd in (_feed.values() if isinstance(_feed, dict) else [_feed]):
+                            if str(_fekd.get("highway", "")) in _FREEWAY_HW:
+                                _cutoff = _fei + 1      # include node _feu, stop before _fev
+                                break
+                        if _cutoff < len(path_nodes):
+                            break
 
-                    path_id = f"proj_{nearest_node}_{exit_node_id}"
-                    evac_path = EvacuationPath(
-                        path_id=path_id,
-                        origin_block_group="project_origin",
-                        exit_segment_osmid=exit_osmid,
-                        bottleneck_osmid=bottleneck_osmid,
-                        bottleneck_name=osmid_to_name.get(bottleneck_osmid, ""),
-                        bottleneck_fhsz_zone=osmid_to_fhsz.get(bottleneck_osmid, "non_fhsz"),
-                        bottleneck_road_type=osmid_to_rtype.get(bottleneck_osmid, "two_lane"),
-                        bottleneck_hcm_capacity_vph=osmid_to_hcm.get(bottleneck_osmid, eff_cap),
-                        bottleneck_hazard_degradation=osmid_to_deg.get(bottleneck_osmid, 1.0),
-                        bottleneck_effective_capacity_vph=eff_cap,
-                        bottleneck_lane_count=osmid_to_lanes.get(bottleneck_osmid, 0),
-                        bottleneck_speed_limit=osmid_to_speed.get(bottleneck_osmid, 0),
-                        bottleneck_haz_class=osmid_to_haz_class.get(bottleneck_osmid, 0),
-                        path_osmids=path_osmids_local,
-                        path_wgs84_coords=path_wgs84_local,
-                    )
-                    project_paths.append(evac_path)
+                    path_wgs84_local: list[list[float]] = []
+                    for _nid in path_nodes[:_cutoff]:
+                        _nx_x = G.nodes[_nid].get("x", 0)
+                        _nx_y = G.nodes[_nid].get("y", 0)
+                        _lon, _lat = _to_wgs84.transform(_nx_x, _nx_y)
+                        path_wgs84_local.append([_lat, _lon])
+
+                    path_osmids_local: list[str] = []
+                    path_length       = 0.0   # metres — for logging only
+                    path_travel_time  = 0.0   # seconds — drives filter + dedup
+                    exit_osmid = ""
+                    for u, v in zip(path_nodes[:-1], path_nodes[1:]):
+                        ed = G.get_edge_data(u, v) or G.get_edge_data(v, u)
+                        if ed:
+                            for kd in (ed.values() if isinstance(ed, dict) else [ed]):
+                                oid     = kd.get("osmid")
+                                seg_len = float(kd.get("length", 0) or 0)
+                                hw_str  = str(kd.get("highway", ""))
+                                spd_mph = speed_defaults_mph.get(hw_str, 25)
+                                seg_tt  = seg_len / (spd_mph * _MPH_TO_MPS) if spd_mph > 0 else seg_len
+                                if oid:
+                                    oid_str = str(oid[0]) if isinstance(oid, list) else str(oid)
+                                    path_osmids_local.append(oid_str)
+                                    path_length      += seg_len
+                                    path_travel_time += seg_tt
+                                    break
+                        if v == exit_node_id or u == exit_node_id:
+                            exit_osmid = path_osmids_local[-1] if path_osmids_local else ""
+
+                    if path_osmids_local and path_travel_time > 0:
+                        candidates.append(
+                            (path_travel_time, exit_node_id, path_osmids_local,
+                             exit_osmid, path_length, path_wgs84_local)
+                        )
+
+                # ── Pass 2: filter by travel-time ratio, then dedup by bottleneck
+                # Route-choice bound: include exits reachable within max_path_ratio ×
+                # fastest-exit travel time.  A rational evacuee who can reach safety in
+                # T minutes will never take a route that takes > 2T minutes when a
+                # shorter alternative exists.  Using travel time (not distance) correctly
+                # accounts for road class: a 2-mile freeway is faster than a 1-mile
+                # residential street and should be preferred.
+                if candidates:
+                    min_travel_time = min(c[0] for c in candidates)   # seconds
+                    max_allowed     = min_travel_time * max_path_ratio
+                    filtered        = [c for c in candidates if c[0] <= max_allowed]
+                    excluded        = len(candidates) - len(filtered)
+                    if excluded:
+                        logger.info(
+                            f"  Path filter ({_origin_bg}): {excluded} exit(s) excluded "
+                            f"(>{max_path_ratio:.1f}× fastest-exit travel time of "
+                            f"{min_travel_time/60:.1f} min); {len(filtered)} remain"
+                        )
+
+                    seen_bottlenecks: dict[str, float] = {}  # osmid → fastest travel time (s)
+                    for path_travel_time, exit_node_id, path_osmids_local, exit_osmid, path_length, path_wgs84_local in filtered:
+                        bottleneck_osmid = min(
+                            path_osmids_local,
+                            key=lambda o: osmid_to_eff_cap.get(o, 9999),
+                            default=path_osmids_local[0],
+                        )
+                        eff_cap = osmid_to_eff_cap.get(bottleneck_osmid, 0.0)
+                        if eff_cap <= 0:
+                            continue
+
+                        # Dedup: keep only the fastest-travel-time path to each unique bottleneck.
+                        # Travel time (not distance) is the dedup key because Dijkstra now routes
+                        # on time — two paths to the same bottleneck may have different lengths
+                        # but the faster one is the correct evacuation route to preserve.
+                        prior_tt = seen_bottlenecks.get(bottleneck_osmid)
+                        if prior_tt is not None and path_travel_time >= prior_tt:
+                            continue
+                        seen_bottlenecks[bottleneck_osmid] = path_travel_time
+
+                        path_id = f"proj_{_origin_node}_{exit_node_id}"
+                        evac_path = EvacuationPath(
+                            path_id=path_id,
+                            origin_block_group=_origin_bg,
+                            exit_segment_osmid=exit_osmid,
+                            bottleneck_osmid=bottleneck_osmid,
+                            bottleneck_name=osmid_to_name.get(bottleneck_osmid, ""),
+                            bottleneck_fhsz_zone=osmid_to_fhsz.get(bottleneck_osmid, "non_fhsz"),
+                            bottleneck_road_type=osmid_to_rtype.get(bottleneck_osmid, "two_lane"),
+                            bottleneck_hcm_capacity_vph=osmid_to_hcm.get(bottleneck_osmid, eff_cap),
+                            bottleneck_hazard_degradation=osmid_to_deg.get(bottleneck_osmid, 1.0),
+                            bottleneck_effective_capacity_vph=eff_cap,
+                            bottleneck_lane_count=osmid_to_lanes.get(bottleneck_osmid, 0),
+                            bottleneck_speed_limit=osmid_to_speed.get(bottleneck_osmid, 0),
+                            bottleneck_haz_class=osmid_to_haz_class.get(bottleneck_osmid, 0),
+                            path_osmids=path_osmids_local,
+                            path_wgs84_coords=path_wgs84_local,
+                        )
+                        project_paths.append(evac_path)
 
             logger.info(
                 f"  Project-origin Dijkstra (travel-time weight): {len(project_paths)} "
                 f"unique-bottleneck paths for {project.project_name} "
-                f"(ratio ≤{max_path_ratio:.1f}× fastest exit, from {len(exit_nodes)} exits)"
+                f"({len(_all_origins)} egress origin(s); "
+                f"ratio ≤{max_path_ratio:.1f}× fastest exit, from {len(exit_nodes)} exits)"
             )
 
         if project_paths:
