@@ -43,6 +43,7 @@ from pathlib import Path
 import geopandas as gpd
 import networkx as nx
 import osmnx as ox
+from pyproj import Transformer
 from shapely.geometry import Point
 
 from models.project import Project
@@ -360,12 +361,21 @@ class WildlandScenario(EvacuationScenario):
                 _len_m   = float(_ed.get("length", 0) or 0)
                 _ed["travel_time_s"] = _len_m / _spd_mps if _spd_mps > 0 else _len_m
 
+            # WGS84 transformer — converts projected node (x,y) → (lon, lat).
+            # Graph CRS stored in G.graph['crs'] (e.g. 'EPSG:26911').
+            # Node coords are used for the exact path coordinate chain stored
+            # in EvacuationPath.path_wgs84_coords for unambiguous map rendering.
+            _graph_crs  = G.graph.get("crs", "EPSG:26911")
+            _to_wgs84   = Transformer.from_crs(_graph_crs, "EPSG:4326", always_xy=True)
+
             # ── Pass 1: compute all paths, record travel time ─────────────
             # Collect raw candidates before time-filtering or dedup.
             # weight="travel_time_s" → Dijkstra finds fastest path, not shortest.
             # Each candidate: (path_travel_time_s, exit_node_id, path_osmids,
-            #                  exit_osmid, path_length_m)
+            #                  exit_osmid, path_length_m, path_wgs84_coords)
             # travel_time_s drives routing and ratio filter; length_m is for logging.
+            # path_wgs84_coords is [[lat, lon], ...] from graph node positions —
+            # used directly by the demo map, bypassing osmid-to-geometry lookup.
             candidates: list[tuple] = []
 
             for exit_node in exit_nodes:
@@ -381,6 +391,15 @@ class WildlandScenario(EvacuationScenario):
                     continue
                 if len(path_nodes) < 2:
                     continue
+
+                # Build WGS84 coordinate chain from node positions.
+                # Node (x, y) are in the projected CRS; _to_wgs84 converts to (lon, lat).
+                path_wgs84_local: list[list[float]] = []
+                for _nid in path_nodes:
+                    _nx_x = G.nodes[_nid].get("x", 0)
+                    _nx_y = G.nodes[_nid].get("y", 0)
+                    _lon, _lat = _to_wgs84.transform(_nx_x, _nx_y)
+                    path_wgs84_local.append([_lat, _lon])
 
                 path_osmids_local: list[str] = []
                 path_length       = 0.0   # metres — for logging only
@@ -407,7 +426,7 @@ class WildlandScenario(EvacuationScenario):
                 if path_osmids_local and path_travel_time > 0:
                     candidates.append(
                         (path_travel_time, exit_node_id, path_osmids_local,
-                         exit_osmid, path_length)
+                         exit_osmid, path_length, path_wgs84_local)
                     )
 
             # ── Pass 2: filter by travel-time ratio, then dedup by bottleneck
@@ -430,7 +449,7 @@ class WildlandScenario(EvacuationScenario):
                     )
 
                 seen_bottlenecks: dict[str, float] = {}  # osmid → fastest travel time (s)
-                for path_travel_time, exit_node_id, path_osmids_local, exit_osmid, path_length in filtered:
+                for path_travel_time, exit_node_id, path_osmids_local, exit_osmid, path_length, path_wgs84_local in filtered:
                     bottleneck_osmid = min(
                         path_osmids_local,
                         key=lambda o: osmid_to_eff_cap.get(o, 9999),
@@ -465,6 +484,7 @@ class WildlandScenario(EvacuationScenario):
                         bottleneck_speed_limit=osmid_to_speed.get(bottleneck_osmid, 0),
                         bottleneck_haz_class=osmid_to_haz_class.get(bottleneck_osmid, 0),
                         path_osmids=path_osmids_local,
+                        path_wgs84_coords=path_wgs84_local,
                     )
                     project_paths.append(evac_path)
 

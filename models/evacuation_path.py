@@ -45,6 +45,12 @@ class EvacuationPath:
     # Full path segment sequence — used for map visualization of the evacuation corridor
     path_osmids: list = field(default_factory=list)  # ordered osmids from origin to exit
 
+    # Exact WGS84 coordinate chain computed at path-build time from graph node positions.
+    # [[lat, lon], ...] ordered project → exit.  Bypasses osmid-ambiguity in rendering:
+    # a single OSM way ID can match many road segments across the city; node coords are
+    # unambiguous.  Used by demo.py AntPath instead of osmid-based geometry lookup.
+    path_wgs84_coords: list = field(default_factory=list)
+
     def to_dict(self) -> dict:
         """Serialize to dict for JSON storage and audit trail."""
         return {
@@ -64,4 +70,5 @@ class EvacuationPath:
             "catchment_units":                round(self.catchment_units, 0),
             "baseline_demand_vph":            round(self.baseline_demand_vph, 1),
             "path_osmids":                    self.path_osmids,
+            "path_wgs84_coords":              self.path_wgs84_coords,
         }

@@ -463,86 +463,70 @@ def create_demo_map(
                 continue
             path_osmid_set = set(path_id_to_osmids[pid])
 
-            # Build ordered coordinate chain for animated flow line.
-            # Walk path_osmids in sequence (project → exit): for each OSM segment,
-            # pick whichever endpoint is closest to the previous segment's exit end
-            # (or the project location for the first segment) to determine which
-            # direction the evacuee travels along that linestring.
-            path_osmids_ordered = path_id_to_osmids.get(pid, [])
+            # Prefer the exact WGS84 coordinate chain stored in delta_t_results
+            # (computed from graph node positions in wildland.py — unambiguous).
+            # Fall back to the osmid-chain approach only for legacy paths that
+            # predate path_wgs84_coords storage.
+            _direct_coords = dt_result.get("path_wgs84_coords", [])
 
-            path_rows = roads_wgs84[
-                roads_wgs84["osmid"].apply(lambda o: _osmid_matches(o, path_osmid_set))
-            ]
-            if path_rows.empty:
-                continue
+            if len(_direct_coords) >= 2:
+                # v3.4+: use exact node coordinates — one AntPath, no gaps,
+                # no osmid-ambiguity (a single way ID can match many road segments).
+                ant_chains: list[list[list[float]]] = [_direct_coords]
+            else:
+                # Legacy fallback: reconstruct from osmid → geometry lookup.
+                path_osmids_ordered = path_id_to_osmids.get(pid, [])
+                path_rows = roads_wgs84[
+                    roads_wgs84["osmid"].apply(lambda o: _osmid_matches(o, path_osmid_set))
+                ]
+                osmid_to_seg_geom: dict[str, object] = {}
+                for _, _row in path_rows.iterrows():
+                    _oid = _row.get("osmid")
+                    if _oid is None or _row.geometry is None:
+                        continue
+                    _strs = ([str(o) for o in _oid] if isinstance(_oid, list)
+                             else [str(_oid)])
+                    for _s in _strs:
+                        if _s not in osmid_to_seg_geom:
+                            osmid_to_seg_geom[_s] = _row.geometry
 
-            # osmid → geometry lookup
-            osmid_to_seg_geom: dict[str, object] = {}
-            for _, _row in path_rows.iterrows():
-                _oid = _row.get("osmid")
-                if _oid is None or _row.geometry is None:
-                    continue
-                _strs = ([str(o) for o in _oid] if isinstance(_oid, list)
-                         else [str(_oid)])
-                for _s in _strs:
-                    if _s not in osmid_to_seg_geom:
-                        osmid_to_seg_geom[_s] = _row.geometry
+                _GAP_DEG      = 0.0005
+                proj_ref      = Point(project.location_lon, project.location_lat)
+                prev_exit_pt  = proj_ref
+                ant_chains    = []
+                current_chain: list[list[float]] = []
 
-            # Chain coordinates in travel order, splitting into connected sub-chains
-            # whenever a segment is missing from roads_wgs84 (boundary roads, roads
-            # outside the loaded GDF, etc.).  A "gap" is defined as a jump of more
-            # than _GAP_DEG degrees (≈ 50 m) between the end of one found segment
-            # and the start of the next.  Each connected sub-chain becomes its own
-            # AntPath so dashes always follow actual road geometry — no straight-line
-            # teleports across missing segments.
-            _GAP_DEG = 0.0005  # ~50 m in WGS84 degrees at these latitudes
-
-            proj_ref      = Point(project.location_lon, project.location_lat)
-            prev_exit_pt  = proj_ref
-            ant_chains:   list[list[list[float]]] = []   # list of coordinate chains
-            current_chain: list[list[float]] = []
-
-            for _oid_str in path_osmids_ordered:
-                _sg = osmid_to_seg_geom.get(_oid_str)
-                if _sg is None or _sg.is_empty:
-                    # Missing segment — flush current chain, start fresh after the gap
-                    if len(current_chain) >= 2:
-                        ant_chains.append(current_chain)
-                    current_chain = []
-                    # Keep prev_exit_pt as-is; next found segment will reconnect
-                    continue
-                _raw = list(_sg.coords)
-                if len(_raw) < 2:
-                    continue
-                _pt_a = Point(_raw[0])
-                _pt_b = Point(_raw[-1])
-                # Determine travel direction for this segment
-                _ordered = _raw if prev_exit_pt.distance(_pt_a) <= prev_exit_pt.distance(_pt_b) \
-                           else list(reversed(_raw))
-                _entry = Point(_ordered[0])
-
-                # Detect a spatial gap between the end of the current chain and the
-                # start of this segment.  If the jump is large, flush and restart.
-                if current_chain:
-                    _last = current_chain[-1]
-                    _jump = math.hypot(_entry.y - _last[0], _entry.x - _last[1])
-                    if _jump > _GAP_DEG:
+                for _oid_str in path_osmids_ordered:
+                    _sg = osmid_to_seg_geom.get(_oid_str)
+                    if _sg is None or _sg.is_empty:
                         if len(current_chain) >= 2:
                             ant_chains.append(current_chain)
                         current_chain = []
-
-                for _i, (_lon, _lat) in enumerate(_ordered):
-                    # Skip exact-duplicate first point
-                    if _i == 0 and current_chain:
+                        continue
+                    _raw = list(_sg.coords)
+                    if len(_raw) < 2:
+                        continue
+                    _pt_a = Point(_raw[0])
+                    _pt_b = Point(_raw[-1])
+                    _ordered = _raw if prev_exit_pt.distance(_pt_a) <= prev_exit_pt.distance(_pt_b) \
+                               else list(reversed(_raw))
+                    _entry = Point(_ordered[0])
+                    if current_chain:
                         _last = current_chain[-1]
-                        if abs(_lat - _last[0]) < 1e-7 and abs(_lon - _last[1]) < 1e-7:
-                            continue
-                    current_chain.append([_lat, _lon])
-                if _ordered:
-                    prev_exit_pt = Point(_ordered[-1])
-
-            if len(current_chain) >= 2:
-                ant_chains.append(current_chain)
+                        if math.hypot(_entry.y - _last[0], _entry.x - _last[1]) > _GAP_DEG:
+                            if len(current_chain) >= 2:
+                                ant_chains.append(current_chain)
+                            current_chain = []
+                    for _i, (_lon, _lat) in enumerate(_ordered):
+                        if _i == 0 and current_chain:
+                            _last = current_chain[-1]
+                            if abs(_lat - _last[0]) < 1e-7 and abs(_lon - _last[1]) < 1e-7:
+                                continue
+                        current_chain.append([_lat, _lon])
+                    if _ordered:
+                        prev_exit_pt = Point(_ordered[-1])
+                if len(current_chain) >= 2:
+                    ant_chains.append(current_chain)
 
             tip = (
                 f"{'⚠ FLAGGED' if flagged else '✓ OK'} — {bn_name} | "
