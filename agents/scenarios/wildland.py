@@ -256,12 +256,19 @@ class WildlandScenario(EvacuationScenario):
         project.reachable_network_osmids = list(reachable_osmids)
         project.search_radius_miles    = radius
 
-        # Filter EvacuationPaths: bottleneck must be within network-reachable set.
-        # Network distance ensures trans-barrier paths (e.g. across I-5) are excluded.
+        # Filter EvacuationPaths: project must be able to ENTER the path upstream of the
+        # bottleneck. A path is relevant only if at least one segment between the path
+        # origin and the bottleneck (inclusive) is within the project's reachable network.
+        # This prevents false positives where the bottleneck is reachable but the project
+        # enters the path DOWNSTREAM of the bottleneck (e.g. Quail Meadows / Ecke Ranch Rd).
         all_evac_paths: list = context.get("evacuation_paths", [])
         serving_paths: list[EvacuationPath] = [
             p for p in all_evac_paths
-            if str(getattr(p, "bottleneck_osmid", "")) in nearby_osmids
+            if _is_upstream_match(
+                getattr(p, "path_osmids", []),
+                str(getattr(p, "bottleneck_osmid", "")),
+                reachable_osmids,
+            )
         ]
 
         fallback_used = False
@@ -357,6 +364,45 @@ class WildlandScenario(EvacuationScenario):
 # ---------------------------------------------------------------------------
 # Helper functions (module-level — reusable and independently testable)
 # ---------------------------------------------------------------------------
+
+def _is_upstream_match(
+    path_osmids: list,
+    bottleneck_osmid: str,
+    reachable_osmids: set[str],
+) -> bool:
+    """
+    Return True if the project can enter this EvacuationPath upstream of its bottleneck.
+
+    A project contributes traffic to a path only if it has road access to some segment
+    BEFORE (or at) the bottleneck.  Testing only the bottleneck osmid is insufficient:
+    a project located downstream of the bottleneck would have no opportunity to load
+    traffic onto the bottleneck segment.
+
+    Args:
+        path_osmids:      Ordered list of OSM way IDs from block-group origin to city exit.
+        bottleneck_osmid: OSM way ID of the weakest-capacity segment on this path.
+        reachable_osmids: All OSM edge IDs reachable from the project within the search
+                          radius (either endpoint reachable — wider than nearby_osmids).
+
+    Returns True when at least one segment in path_osmids[0 : bottleneck_pos + 1] is
+    in reachable_osmids.  Returns False if bottleneck_osmid is not found in path_osmids
+    (defensive: malformed path — exclude rather than include).
+    """
+    if not bottleneck_osmid or not path_osmids:
+        return False
+
+    # Locate the bottleneck in the ordered path
+    bottleneck_pos = next(
+        (i for i, o in enumerate(path_osmids) if str(o) == bottleneck_osmid),
+        None,
+    )
+    if bottleneck_pos is None:
+        return False
+
+    # Any segment from path start up to and including the bottleneck reachable?
+    pre_bottleneck = {str(o) for o in path_osmids[: bottleneck_pos + 1]}
+    return bool(pre_bottleneck & reachable_osmids)
+
 
 def check_fire_zone(
     location: tuple[float, float],
