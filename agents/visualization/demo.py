@@ -486,30 +486,90 @@ def create_demo_map(
                     tooltip=tip,
                 ).add_to(proj_group)
 
-            # Direction arrow: SVG at the geometric midpoint of all path segments
+            # ── Per-segment directional arrows ────────────────────────────────
+            # Walk the ordered path_osmids (project → exit) to determine the
+            # correct travel direction for each segment.  Chaining: each segment's
+            # entry end is whichever endpoint is closest to the previous segment's
+            # exit endpoint.  The project's lat/lon seeds the first segment.
+            # Minimum segment length filter (≥25 m in WGS84°≈m at this scale)
+            # suppresses arrows on short connector stubs.
             try:
-                merged = unary_union(path_geoms)
-                mid_pt = merged.interpolate(0.5, normalized=True)
-                # Estimate direction: compare point at 45% vs 55% of total length
-                p_before = merged.interpolate(0.44, normalized=True)
-                p_after  = merged.interpolate(0.56, normalized=True)
-                dx = p_after.x - p_before.x
-                dy = p_after.y - p_before.y
-                # Convert to bearing (degrees from north, clockwise)
-                bearing = (math.degrees(math.atan2(dx, dy)) + 360) % 360
-                arrow_html = (
-                    f'<div style="transform:rotate({bearing:.0f}deg);'
-                    f'width:16px;height:16px;line-height:16px;text-align:center;'
-                    f'font-size:14px;color:{flow_color};'
-                    f'text-shadow:0 0 3px white,0 0 3px white;">&#x25B2;</div>'
-                )
-                folium.Marker(
-                    location=[mid_pt.y, mid_pt.x],
-                    icon=folium.DivIcon(html=arrow_html, icon_size=(16, 16), icon_anchor=(8, 8)),
-                    tooltip=tip,
-                ).add_to(proj_group)
+                path_osmids_ordered = path_id_to_osmids.get(pid, [])
+
+                # Build osmid → geometry lookup from already-fetched path_rows
+                osmid_to_seg_geom: dict[str, object] = {}
+                for _, _row in path_rows.iterrows():
+                    _oid = _row.get("osmid")
+                    if _oid is None or _row.geometry is None:
+                        continue
+                    _strs = ([str(o) for o in _oid] if isinstance(_oid, list)
+                             else [str(_oid)])
+                    for _s in _strs:
+                        if _s not in osmid_to_seg_geom:
+                            osmid_to_seg_geom[_s] = _row.geometry
+
+                # Project location in WGS84 (seeds direction of first segment)
+                proj_ref = Point(project.location_lon, project.location_lat)
+                prev_exit_pt = proj_ref   # updated as we walk forward
+
+                for _oid_str in path_osmids_ordered:
+                    _sg = osmid_to_seg_geom.get(_oid_str)
+                    if _sg is None or _sg.is_empty:
+                        continue
+                    _coords = list(_sg.coords)
+                    if len(_coords) < 2:
+                        continue
+
+                    _pt_a = Point(_coords[0])
+                    _pt_b = Point(_coords[-1])
+
+                    # Which endpoint is closest to where we came from?
+                    if prev_exit_pt.distance(_pt_a) <= prev_exit_pt.distance(_pt_b):
+                        travel_start, travel_end = _pt_a, _pt_b
+                    else:
+                        travel_start, travel_end = _pt_b, _pt_a
+                    prev_exit_pt = travel_end  # advance chain
+
+                    # Rough segment length in degrees (skip short connectors)
+                    _seg_len_deg = math.hypot(
+                        travel_end.x - travel_start.x,
+                        travel_end.y - travel_start.y,
+                    )
+                    # 0.000225° ≈ 25 m at mid-latitudes — skip sub-25 m stubs
+                    if _seg_len_deg < 0.000225:
+                        continue
+
+                    _mid = _sg.interpolate(0.5, normalized=True)
+                    _dx = travel_end.x - travel_start.x
+                    _dy = travel_end.y - travel_start.y
+                    _bearing = (math.degrees(math.atan2(_dx, _dy)) + 360) % 360
+
+                    # Solid filled arrow, white halo for contrast on any basemap
+                    _arrow_html = (
+                        f'<div style="'
+                        f'transform:rotate({_bearing:.0f}deg);'
+                        f'width:14px;height:14px;'
+                        f'line-height:14px;text-align:center;'
+                        f'font-size:13px;font-weight:bold;'
+                        f'color:{flow_color};'
+                        f'text-shadow:'
+                        f'0 0 2px #fff,0 0 4px #fff,'
+                        f'-1px 0 #fff,1px 0 #fff,'
+                        f'0 -1px #fff,0 1px #fff;'
+                        f'pointer-events:none;">'
+                        f'&#x25B2;</div>'
+                    )
+                    folium.Marker(
+                        location=[_mid.y, _mid.x],
+                        icon=folium.DivIcon(
+                            html=_arrow_html,
+                            icon_size=(14, 14),
+                            icon_anchor=(7, 7),
+                        ),
+                        tooltip=tip,
+                    ).add_to(proj_group)
             except Exception:
-                pass  # direction arrow is best-effort
+                pass  # arrows are best-effort
 
             # Exit point marker (triangle flag at city-boundary exit)
             if exit_oid and exit_oid not in exit_osmids_drawn:
