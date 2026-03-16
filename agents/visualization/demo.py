@@ -641,46 +641,75 @@ def create_demo_map(
                     tooltip=tip,
                 ).add_to(proj_group)
 
-        # ── Controlling bottleneck ⚠ icon (static — always visible when project selected) ──
-        # SVG warning triangle (yellow fill, black stroke) at the midpoint of the
-        # worst-ΔT bottleneck segment. Shown/hidden with the FeatureGroup automatically.
-        # Bug fix: roads osmid column stores list values as strings like "[123, 456]",
-        # so use str.contains() instead of _osmid_matches() for reliable lookup.
-        if (tier != "MINISTERIAL"
-                and ctrl_osmid
-                and "osmid" in roads_wgs84.columns):
-            ctrl_mask = roads_wgs84["osmid"].astype(str).str.contains(
-                ctrl_osmid, regex=False
-            )
-            ctrl_rows = roads_wgs84[ctrl_mask]
-            if not ctrl_rows.empty:
-                ctrl_geom = ctrl_rows.iloc[0].geometry
-                if ctrl_geom is not None and not ctrl_geom.is_empty:
-                    try:
-                        mid = ctrl_geom.interpolate(0.5, normalized=True)
-                    except Exception:
-                        mid = ctrl_geom.centroid
-                    icon_html = (
-                        '<div style="width:22px;height:20px;">'
-                        '<svg viewBox="0 0 22 20" width="22" height="20"'
-                        ' xmlns="http://www.w3.org/2000/svg">'
-                        '<polygon points="11,2 21,19 1,19"'
-                        ' fill="#FFD700" stroke="black" stroke-width="1.5"'
-                        ' stroke-linejoin="round"/>'
-                        '<text x="11" y="16" text-anchor="middle"'
-                        ' font-size="11" font-family="sans-serif"'
-                        ' font-weight="bold" fill="black">!</text>'
-                        '</svg></div>'
-                    )
-                    folium.Marker(
-                        location=[mid.y, mid.x],
-                        icon=folium.DivIcon(
-                            html=icon_html,
-                            icon_size=(22, 20),
-                            icon_anchor=(11, 10),
-                        ),
-                        tooltip="Controlling bottleneck segment",
+        # ── Bottleneck concentric rings — one set per unique flagged bottleneck ──
+        # Three concentric CircleMarkers + filled center dot placed at the midpoint
+        # of each flagged bottleneck road segment.  Fixed pixel radii so the rings
+        # stay the same visual size at any zoom level.  Replaces the single warning
+        # triangle — all constraint surfaces are shown, not just the worst-ΔT path.
+        if tier != "MINISTERIAL" and "osmid" in roads_wgs84.columns:
+            _drawn_bns: set[str] = set()   # deduplicate by bottleneck osmid
+            for _dt_r in (project.delta_t_results or []):
+                if not _dt_r.get("flagged"):
+                    continue
+                _bn_osmid = str(_dt_r.get("bottleneck_osmid", ""))
+                if not _bn_osmid or _bn_osmid in _drawn_bns:
+                    continue
+                _drawn_bns.add(_bn_osmid)
+
+                _dt_min   = float(_dt_r.get("delta_t_minutes", 0))
+                _thresh   = float(_dt_r.get("threshold_minutes", 6.0)) or 6.0
+                _severity = _dt_min / _thresh
+                # Severe (ΔT > 2× threshold) → deep red; otherwise project red/orange
+                if _severity >= 2.0:
+                    _rc = "#7f0000"
+                elif _severity >= 1.0:
+                    _rc = "#b71c1c"
+                else:
+                    _rc = "#e65100"
+
+                # Road midpoint from roads_wgs84 geometry
+                _bn_mask = roads_wgs84["osmid"].astype(str).str.contains(
+                    _bn_osmid, regex=False
+                )
+                _bn_rows = roads_wgs84[_bn_mask]
+                if _bn_rows.empty:
+                    continue
+                _bn_geom = _bn_rows.iloc[0].geometry
+                if _bn_geom is None or _bn_geom.is_empty:
+                    continue
+                try:
+                    _mid = _bn_geom.interpolate(0.5, normalized=True)
+                except Exception:
+                    _mid = _bn_geom.centroid
+
+                _bn_name = str(_dt_r.get("bottleneck_name", "") or "Bottleneck")
+                _bn_tip  = (
+                    f"Bottleneck — {_bn_name} | "
+                    f"ΔT {_dt_min:.1f} min / {_thresh:.1f} min threshold"
+                )
+
+                # Three rings: outer → inner, fading opacity inward → out
+                for _r_px, _op in ((22, 0.25), (14, 0.50), (7, 0.80)):
+                    folium.CircleMarker(
+                        location=[_mid.y, _mid.x],
+                        radius=_r_px,
+                        color=_rc,
+                        weight=1.2,
+                        fill=False,
+                        opacity=_op,
+                        tooltip=_bn_tip,
                     ).add_to(proj_group)
+                # Solid center dot
+                folium.CircleMarker(
+                    location=[_mid.y, _mid.x],
+                    radius=3,
+                    color=_rc,
+                    weight=0,
+                    fill=True,
+                    fill_color=_rc,
+                    fill_opacity=0.90,
+                    tooltip=_bn_tip,
+                ).add_to(proj_group)
 
         # Project marker (wildland group — visible in Scenario A)
         folium.Marker(
