@@ -65,6 +65,7 @@ the CAL FIRE HHZ_ref_FHSZ service (which covers only forested/High+VH areas).
 | County | URL |
 |--------|-----|
 | San Diego | `https://gis-public.sandiegocounty.gov/arcgis/rest/services/hosted/OES_KnowYourHazards_Wildfire_1/FeatureServer/0` |
+| Alameda   | `https://services7.arcgis.com/T3LbxamSmhpjBppB/arcgis/rest/services/Alameda_County_Local_Responsibility_Area_Fire_Hazard_Severity_Zone_/FeatureServer/0` (LRA FHSZ, Feb 24 2025 adoption; fields: FHSZ integer 1/2/3, FHSZ_Descr string) |
 
 Add entries here as you configure additional cities.
 
@@ -89,6 +90,7 @@ The `README.md` (this file) IS committed. Document each city's file here:
 | City       | File                        | Source                        | Date Added  |
 |------------|-----------------------------|-------------------------------|-------------|
 | Encinitas  | `encinitas_fhsz.geojson`    | CAL FIRE FRAP statewide, clipped to city boundary | TBD |
+| Berkeley   | `berkeley_fhsz.geojson`     | Alameda County LRA FHSZ FeatureServer (Feb 24 2025), clipped to city boundary | 2026-03-16 |
 
 ## Cities That Need This
 
@@ -98,3 +100,6 @@ and checking the log for `FHSZ query returned 0 features`.
 
 Known LRA cities that adopted CAL FIRE maps and require local files:
 - **Encinitas, CA** — 2025 adoption; see `encinitas_fhsz.geojson`
+- **Berkeley, CA** — LRA; API returned only 15 fragments (0.03 sq km, 0.1% of city).
+  True coverage is ~15–20% (VHFHSZ upper hills, High transitional, Moderate foothill).
+  `berkeley_fhsz.geojson` needed — see `config/cities/berkeley.yaml` for acquisition steps.

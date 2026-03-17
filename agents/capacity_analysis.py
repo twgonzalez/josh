@@ -291,13 +291,13 @@ def _apply_baseline_demand(gdf: gpd.GeoDataFrame, config: dict) -> gpd.GeoDataFr
       baseline_demand_vph  — evac demand for display (×0.57)
       normal_demand_vph    — normal peak-hour (×0.10)
 
-    Note: v3.2 uses a constant mobilization rate (0.90, NFPA 101 design basis) for
+    Note: v3.4 uses a constant mobilization rate (0.90, NFPA 101 design basis) for
     both baseline display and the ΔT engine. FHSZ zone affects road capacity only.
     """
     method      = config.get("evacuation_demand", {}).get("method", "catchment")
     peak_factor = config.get("aadt_peak_hour_factor", 0.10)
     vpu         = config.get("vehicles_per_unit", 2.5)
-    mob         = config.get("mobilization_rate", 0.90)  # v3.2: NFPA 101, constant
+    mob         = config.get("mobilization_rate", 0.90)  # v3.4: NFPA 101, constant
     aadt_col    = "aadt" if "aadt" in gdf.columns else None
     has_catchment = "catchment_units" in gdf.columns
 

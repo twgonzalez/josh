@@ -862,7 +862,7 @@ def _print_demo_summary(projects: list, config: dict):
     unit_threshold = config.get("unit_threshold", 15)
 
     table = Table(
-        title="Demo Project Summary (v3.2 ΔT Standard)",
+        title="Demo Project Summary (v3.4 ΔT Standard)",
         show_header=True,
         header_style="bold blue",
         show_lines=False,

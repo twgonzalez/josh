@@ -1,4 +1,4 @@
-# JOSH v3.2 — Global Parameters
+# JOSH v3.4 — Global Parameters
 # Fire Evacuation Capacity Analysis System
 # All thresholds trace to published sources. No parameter requires city-level adoption.
 # Override city-specific values in config/cities/{city}.yaml

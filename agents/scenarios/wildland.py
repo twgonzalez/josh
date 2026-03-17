@@ -4,22 +4,22 @@
 # See LICENSE for full terms. See CONTRIBUTING.md for contributor license terms.
 
 """
-Scenario A: Wildland Evacuation Capacity (Standards 1–4) — JOSH v3.2
+Scenario A: Wildland Evacuation Capacity (Standards 1–4) — JOSH v3.4
 
 Legal basis: AB 747 (California Government Code §65302.15), HCM 2022,
 NFPA 101 (Life Safety Code) mobilization design basis.
 
-ΔT Standard (v3.2):
+ΔT Standard (v3.4):
   Standard 1 — Project Size:       units >= threshold (scale gate)
   Standard 2 — Evac Routes Served: network buffer → identifies serving EvacuationPaths
   Standard 3 — FHSZ Modifier:      GIS point-in-polygon; sets hazard_zone string which
                                     controls ROAD capacity degradation and ΔT threshold
-                                    (FHSZ does NOT affect mobilization in v3.2)
+                                    (FHSZ does NOT affect mobilization in v3.4)
   Standard 4 — ΔT Test:            ΔT = (project_vehicles / bottleneck_effective_capacity) × 60 + egress
                                     Project is DISCRETIONARY if ΔT > threshold for hazard_zone
                                     threshold = safe_egress_window(zone) × max_project_share
 
-Key v3.2 changes from v3.1:
+Key v3.4 changes from v3.1:
   - Mobilization rate is now constant 0.90 (NFPA 101 design basis)
   - FHSZ zone now affects ONE thing only: road capacity (hazard_degradation factor)
   - Removed tiered mob rates (Zhao et al. 2022) — behavioral observation ≠ design standard
@@ -78,7 +78,7 @@ class WildlandScenario(EvacuationScenario):
     Standard 3 (FHSZ modifier) sets project.hazard_zone which controls:
       - ΔT threshold (safe_egress_window × max_project_share by hazard zone)
       - capacity degradation factor (applied upstream in Agent 2 to road segments)
-      NOTE (v3.2): FHSZ does NOT affect mobilization. Mobilization is constant 0.90 (NFPA 101).
+      NOTE (v3.4): FHSZ does NOT affect mobilization. Mobilization is constant 0.90 (NFPA 101).
     Standard 4 (ΔT test) uses compute_delta_t() from base class.
     """
 
@@ -111,7 +111,7 @@ class WildlandScenario(EvacuationScenario):
         The GIS point-in-polygon test determines project.hazard_zone, which controls:
           - ΔT threshold via config["safe_egress_window"][hazard_zone] × config["max_project_share"]
           - road capacity degradation (applied upstream in Agent 2)
-          NOTE (v3.2): FHSZ does NOT affect mobilization rate. Mobilization is constant 0.90.
+          NOTE (v3.4): FHSZ does NOT affect mobilization rate. Mobilization is constant 0.90.
 
         Method: GIS point-in-polygon test against CAL FIRE FHSZ zones.
         Discretion: Zero — binary spatial result with deterministic zone mapping.

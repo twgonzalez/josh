@@ -1,6 +1,6 @@
 # JOSH — Technical Brief for Professional Engineer Review
 
-**System:** JOSH Fire Evacuation Capacity Analysis System v3.2
+**System:** JOSH Fire Evacuation Capacity Analysis System v3.4
 **Version:** March 2026
 **Audience:** Licensed professional engineers evaluating methodology veracity
 **Purpose:** Demonstrate that the system's outputs are derived entirely from published national standards and federal data; that the software is an automation layer, not a new methodology
@@ -9,7 +9,7 @@
 
 ## 1. What This System Does
 
-JOSH (v3.2) computes a single number — **ΔT, in minutes** — for each proposed residential development: the additional evacuation clearance time that the project's vehicles would impose on the most constrained serving road segment. That number is compared to a threshold derived from published fire timeline data. If ΔT exceeds the threshold, the project triggers discretionary review; if not, it is ministerial.
+JOSH (v3.4) computes a single number — **ΔT, in minutes** — for each proposed residential development: the additional evacuation clearance time that the project's vehicles would impose on the most constrained serving road segment. That number is compared to a threshold derived from published fire timeline data. If ΔT exceeds the threshold, the project triggers discretionary review; if not, it is ministerial.
 
 No engineering judgment is required at any step. Every input is drawn from a published, authoritative source. Every calculation is arithmetic.
 
@@ -58,7 +58,7 @@ NFPA 101 designs building egress for 100% occupant evacuation. Fire marshals do 
 
 The rate is 0.90 rather than 1.00 to account for approximately 10% of households with zero vehicles, as measured by Census ACS B25044. The 10% zero-vehicle adjustment is a federal data observation, not a policy choice.
 
-**The mobilization rate does not vary by fire hazard zone.** In v3.2, FHSZ affects only road capacity (the denominator). Mobilization is constant because the demand a project generates on a road — the number of vehicles that must pass through the bottleneck — does not change based on which side of a FHSZ boundary the project site falls on.
+**The mobilization rate does not vary by fire hazard zone.** In v3.4, FHSZ affects only road capacity (the denominator). Mobilization is constant because the demand a project generates on a road — the number of vehicles that must pass through the bottleneck — does not change based on which side of a FHSZ boundary the project site falls on.
 
 ---
 

@@ -4,7 +4,7 @@
 # See LICENSE for full terms. See CONTRIBUTING.md for contributor license terms.
 
 """
-Agent 3: Objective Standards Engine — Orchestrator — JOSH v3.2
+Agent 3: Objective Standards Engine — Orchestrator — JOSH v3.4
 
 Runs all applicable evacuation capacity scenarios against a proposed project
 and returns the most restrictive tier determination.
@@ -250,7 +250,7 @@ def generate_audit_trail(
     lines = [
         "=" * 70,
         "FIRE EVACUATION CAPACITY ANALYSIS — PROJECT DETERMINATION",
-        "JOSH v3.2 (ΔT Standard — Constant Mobilization, NFPA 101)",
+        "JOSH v3.4 (ΔT Standard — Constant Mobilization, NFPA 101)",
         "=" * 70,
         f"Date:           {audit['evaluation_date']}",
         f"Project:        {project.project_name or 'Unnamed'}",

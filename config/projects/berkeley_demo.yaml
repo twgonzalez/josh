@@ -1,5 +1,5 @@
 # ============================================================
-# Berkeley AB 747 Demo Projects — JOSH v3.2 (ΔT Standard)
+# Berkeley AB 747 Demo Projects — JOSH v3.4 (ΔT Standard)
 # ============================================================
 # Use with:  uv run python main.py demo --city "Berkeley"
 #
@@ -7,14 +7,14 @@
 # to city planners.  Each project appears as a toggleable layer
 # on the output map so reviewers can compare impacts side-by-side.
 #
-# Tier logic (v3.2 — ΔT Standard, constant mobilization):
+# Tier logic (v3.4 — ΔT Standard, constant mobilization):
 #   DISCRETIONARY           — size >= 15 AND ΔT > threshold on any serving route
 #                             (threshold = safe_egress_window[zone] × max_project_share)
 #                             (no baseline precondition — routes already failing are tested equally)
 #   MINISTERIAL WITH STANDARD CONDITIONS — size >= 15 AND ΔT within threshold on all serving routes
 #   MINISTERIAL             — size < 15
 #
-# v3.2 thresholds (safe_egress_window × 5%):
+# v3.4 thresholds (safe_egress_window × 5%):
 #   vhfhsz:        45 min × 5% = 2.25 min
 #   high_fhsz:     90 min × 5% = 4.50 min
 #   moderate_fhsz: 120 min × 5% = 6.00 min
@@ -36,7 +36,7 @@
 
 city: "Berkeley"
 state: "CA"
-description: "Berkeley AB 747 — Ministerial vs Discretionary Demo (v3.2 ΔT Standard)"
+description: "Berkeley AB 747 — Ministerial vs Discretionary Demo (v3.4 ΔT Standard)"
 
 projects:
 
@@ -58,23 +58,27 @@ projects:
   # -----------------------------------------------------------
   # 2 — Mid-rise downtown: at threshold, bottleneck on local street → DISCRETIONARY
   #     3 stories → no egress penalty (below 4-story NFPA 101 threshold).
-  #     v3.2: non-FHSZ threshold = 120 min × 5% = 6.0 min.
-  #     With 0.90 mob: 75 × 2.5 × 0.90 = 168.75 vehicles.
-  #     Even on downtown streets, evacuation paths bottleneck on local collectors.
+  #     v3.4: non-FHSZ threshold = 120 min × 5% = 6.0 min.
+  #     With 0.90 mob: 85 × 2.5 × 0.90 = 191.25 vehicles.
+  #     Binding bottleneck: Adeline Street (multilane, 25 mph, 1 lane → 1,900 vph effective).
+  #     Tipping point: floor(6.0 × 1900 / 135) = 84 → 85 units flips to DISCRETIONARY.
+  #     ΔT = (191.25 / 1900) × 60 = 6.04 min > 6.00 min threshold.
   # -----------------------------------------------------------
   - name: "Downtown Mid-Rise"
     address: "Shattuck Ave & Center St, Downtown Berkeley"
     lat: 37.8695
     lon: -122.2685
-    units: 75
+    units: 85
     stories: 3
     description: >
-      75-unit, 3-story project on Shattuck Ave. Exceeds the 15-unit threshold.
+      85-unit, 3-story project on Shattuck Ave. Exceeds the 15-unit threshold.
       Non-FHSZ → no road degradation. Mobilization rate 0.90 (NFPA 101 design basis)
-      → 168.75 project vehicles. No egress penalty (3 stories < 4-story threshold).
-      Evacuation paths bottleneck on local collectors serving the hills.
-      v3.2 threshold: 120 min × 5% = 6.0 min. Max ΔT ~9.0 min → DISCRETIONARY.
-      Demonstrates that even downtown, large projects can exceed threshold via road network constraints.
+      → 191.25 project vehicles. No egress penalty (3 stories < 4-story threshold).
+      Binding bottleneck: Adeline Street (multilane, 25 mph, 1 lane → 1,900 vph effective).
+      ΔT = (191.25 / 1900) × 60 = 6.04 min > 6.00 min threshold → DISCRETIONARY.
+      Tipping point: 84 units → ΔT = 5.97 min (within threshold); 85 units → 6.04 min (over).
+      Demonstrates that even in non-FHSZ downtown, large projects can exceed threshold via
+      road network capacity constraints on evacuation route collectors.
     expected_tier: "DISCRETIONARY"
 
   # -----------------------------------------------------------

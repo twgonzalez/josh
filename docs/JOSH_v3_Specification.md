@@ -620,7 +620,7 @@ Determination letters must cite:
 
 ```yaml
 # ═══════════════════════════════════════════════
-# JOSH v3.2 — Global Parameters
+# JOSH v3.4 — Global Parameters
 # ═══════════════════════════════════════════════
 
 # HCM 2022 Capacity (per lane, pc/h)
@@ -870,7 +870,7 @@ The system must produce correct results for these test cases:
 | 75 units, 5-story, non-FHSZ, 2-lane 20 mph (Berkeley hills) | 75×2.5×0.90=168.75 | 1,125 vph | 9.0+7.5=16.5 min | 6.0 min | **DISCRETIONARY** (regression test) |
 | 50 units in zone where all routes already at LOS F | — | bottleneck_capacity_vph | computed | zone threshold | DISCRETIONARY (no baseline precondition) |
 
-**Berkeley 75-unit regression test:** Under v3.1 (mobilization 0.25 for non-FHSZ), this project generated only 47 vehicles → ΔT 2.5 min → CONDITIONAL MINISTERIAL. But 75 units on a 2-lane 20 mph road in the Berkeley hills, at end of single-access corridor, cannot safely evacuate. Under v3.2 (mobilization 0.90), the project generates 168.75 vehicles → ΔT 16.5 min → DISCRETIONARY. This is the correct result.
+**Berkeley 75-unit regression test:** Under v3.1 (mobilization 0.25 for non-FHSZ), this project generated only 47 vehicles → ΔT 2.5 min → CONDITIONAL MINISTERIAL. But 75 units on a 2-lane 20 mph road in the Berkeley hills, at end of single-access corridor, cannot safely evacuate. Under v3.4 (mobilization 0.90), the project generates 168.75 vehicles → ΔT 16.5 min → DISCRETIONARY. This is the correct result.
 
 The last scenario is the v2.0 regression test: ΔT references only the project's vehicles and the road's physical capacity. The baseline state (already at LOS F) is irrelevant. The project is evaluated.
 

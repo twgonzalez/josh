@@ -133,7 +133,7 @@ def main() -> None:
 
 <header>
   <h1>JOSH &mdash; Fire Evacuation Capacity Analysis System</h1>
-  <p>Berkeley, CA &nbsp;&bull;&nbsp; AB 747 / Government Code &sect;65302.15 &nbsp;&bull;&nbsp; v3.2 &Delta;T Standard</p>
+  <p>Berkeley, CA &nbsp;&bull;&nbsp; AB 747 / Government Code &sect;65302.15 &nbsp;&bull;&nbsp; v3.4 &Delta;T Standard</p>
 </header>
 
 <div class="container">

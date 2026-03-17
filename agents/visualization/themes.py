@@ -30,9 +30,9 @@ FHSZ_COLORS = {
 }
 
 FHSZ_LABELS = {
-    1: "Zone 1 — Moderate",
-    2: "Zone 2 — High",
-    3: "Zone 3 — Very High",
+    1: "CAL FIRE FHSZ — Moderate Fire Hazard",
+    2: "CAL FIRE FHSZ — High Fire Hazard",
+    3: "CAL FIRE FHSZ — Very High Fire Hazard (VHFHSZ)",
 }
 
 # ---------------------------------------------------------------------------

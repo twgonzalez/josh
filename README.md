@@ -13,7 +13,7 @@ California AB 747 (Gov. Code §65302.15) requires cities to analyze fire evacuat
 1. **Downloads** CAL FIRE FHSZ zones, the OSM road network, and Census housing data for any California city
 2. **Identifies** evacuation routes and computes per-route bottleneck capacity (HCM 2022)
 3. **Applies** hazard degradation to road capacity based on FHSZ zone (NIST Camp Fire / HCM composite)
-4. **Runs** the ΔT test — marginal evacuation clearance time added by the proposed project (v3.2 standard)
+4. **Runs** the ΔT test — marginal evacuation clearance time added by the proposed project (v3.4 standard)
 5. **Issues** a three-tier determination: `MINISTERIAL`, `CONDITIONAL MINISTERIAL`, or `DISCRETIONARY`
 6. **Generates** a full audit trail for city attorney and planning commission review
 
@@ -45,7 +45,7 @@ The home page covers the methodology, legal framework, adoption pathway, and doc
 
 ---
 
-## Determination Logic (v3.2 ΔT Standard)
+## Determination Logic (v3.4 ΔT Standard)
 
 ```
 Standard 1 — Size gate:       units ≥ 15

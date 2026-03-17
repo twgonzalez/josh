@@ -6,7 +6,7 @@
 """
 Determination Brief Generator v3 — JOSH / California Stewardship Alliance
 
-Reframed from legacy "5 Standards" structure to reflect v3.2 ΔT architecture:
+Reframed from legacy "5 Standards" structure to reflect v3.4 ΔT architecture:
   - "Standards Analysis" replaced by "Analysis" with four named sections:
       1. Applicability Threshold   — size gate (formerly Standard 1)
       2. Site Parameters           — FHSZ zone lookup + derived inputs
@@ -20,7 +20,7 @@ Reframed from legacy "5 Standards" structure to reflect v3.2 ΔT architecture:
     "Wildland Evacuation Analysis"
   - Cleaned v1 errors (unchanged from v3 init):
       · 0.57 ITE peak-hour factor removed
-      · "mobilization rates differ by hazard zone" removed (v3.2 constant)
+      · "mobilization rates differ by hazard zone" removed (v3.4 constant)
       · "Zhao et al. 2022" citation removed
       · Baseline v/c and LOS columns removed from route table
   - Methodology section replaced by Legal Authority section
@@ -1057,7 +1057,7 @@ def _conditions_conditional(fz_level: int) -> str:
 
 
 def _conditions_discretionary_v3(wildland: dict, local5: dict) -> str:
-    """Fixed v3: JOSH v3.2; NFPA 101 design basis mobilization rate."""
+    """Fixed v3: JOSH v3.4; NFPA 101 design basis mobilization rate."""
     s5           = wildland.get("steps", {}).get("step5_delta_t", {})
     path_results = s5.get("path_results", [])
     max_dt       = s5.get("max_delta_t_minutes", 0.0)
@@ -1097,7 +1097,7 @@ def _conditions_discretionary_v3(wildland: dict, local5: dict) -> str:
       (Pub. Resources Code §21100) — evacuation clearance time impact must be analyzed
       as a significant transportation impact.</li>
       <li><strong>Evacuation Clearance Time Analysis:</strong> Applicant shall commission
-      a study conforming to the JOSH v3.2 ΔT methodology (AB 747 / Gov. Code §65302.15),
+      a study conforming to the JOSH v3.4 ΔT methodology (AB 747 / Gov. Code §65302.15),
       analyzing marginal evacuation clearance time on all serving paths within 0.5 miles,
       using NFPA 101 design basis mobilization rate (0.90 constant) and HCM 2022
       hazard-degraded capacity factors.</li>
@@ -1345,5 +1345,5 @@ def _build_footer() -> str:
     return """<div class="brief-footer no-print">
   JOSH &nbsp;&middot;&nbsp; Jurisdictional Objective Standards for Housing
   &nbsp;&middot;&nbsp; California Stewardship Alliance
-  &nbsp;&middot;&nbsp; v3.2 &nbsp;&middot;&nbsp; AB 747 &nbsp;&middot;&nbsp; Gov. Code &sect;65302.15
+  &nbsp;&middot;&nbsp; v3.4 &nbsp;&middot;&nbsp; AB 747 &nbsp;&middot;&nbsp; Gov. Code &sect;65302.15
 </div>"""

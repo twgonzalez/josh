@@ -62,7 +62,7 @@ _TIER_ACTION_LABELS = {
 def _build_capacity_heatmap_layer(
     roads_gdf: gpd.GeoDataFrame,
     config: dict,
-) -> folium.FeatureGroup:
+) -> tuple[folium.FeatureGroup, list[str]]:
     """
     Build a FeatureGroup containing all evacuation route segments colored by
     effective_capacity_vph using the _EFFECTIVE_CAPACITY_RAMP scale.
@@ -70,17 +70,19 @@ def _build_capacity_heatmap_layer(
     v3.0 ΔT Standard: low effective capacity (bottleneck danger) = red/prominent;
     high effective capacity (ample headroom) = gray/subdued.
 
-    Coloring is inverted vs. v2.0 v/c ramp: the map now highlights constrained
-    roads (potential evacuation bottlenecks) rather than congested roads.
+    Returns (FeatureGroup, list_of_geojson_var_names).  The caller must inject
+    popup-binding JS for the returned var names (see _inject_popup_binders).
 
-    Add to the map BEFORE per-project layers so per-project flagged routes
-    render on top.
+    Performance: segments are grouped into ≤4 FeatureCollection GeoJson layers
+    (one per capacity tier) instead of one L.geoJson() per segment.  This
+    reduces the HTML from ~7 MB to ~0.5 MB for the heatmap layer alone.
+    Per-segment popups are preserved via a post-creation JS bindPopup pass.
     """
     fg = folium.FeatureGroup(name="Evacuation Capacity", show=True)
 
     if "is_evacuation_route" not in roads_gdf.columns:
         logger.warning("Heatmap: missing is_evacuation_route column — skipping.")
-        return fg
+        return fg, []
 
     has_eff_cap = "effective_capacity_vph" in roads_gdf.columns
     if not has_eff_cap:
@@ -99,16 +101,18 @@ def _build_capacity_heatmap_layer(
     evac_mask   = roads_gdf["is_evacuation_route"].fillna(False).astype(bool)
     evac_routes = roads_gdf[evac_mask]
 
+    # ── Bucket segments by (color, opacity) — max 4 tiers from _EFFECTIVE_CAPACITY_RAMP
+    # Each bucket becomes ONE L.geoJson() call with a FeatureCollection.
+    # Per-segment tooltip + popup_html stored as feature properties.
+    buckets: dict = defaultdict(list)
+
     for _, row in evac_routes.iterrows():
         if row.geometry is None or row.geometry.is_empty:
             continue
 
-        # Primary metric: effective_capacity_vph (HCM × hazard degradation factor)
-        hcm_cap   = float(row.get("capacity_vph", 1) or 1)
-        if has_eff_cap:
-            eff_cap = float(row.get("effective_capacity_vph", hcm_cap) or hcm_cap)
-        else:
-            eff_cap = hcm_cap
+        hcm_cap = float(row.get("capacity_vph", 1) or 1)
+        eff_cap = float(row.get("effective_capacity_vph", hcm_cap) or hcm_cap) \
+                  if has_eff_cap else hcm_cap
 
         color, opacity = _effective_capacity_heatmap_color(eff_cap)
 
@@ -133,17 +137,76 @@ def _build_capacity_heatmap_layer(
             road_type=road_type, lane_count=lane_count, speed_limit=speed_limit,
         )
 
-        folium.GeoJson(
-            mapping(row.geometry),
+        buckets[(color, opacity)].append({
+            "type": "Feature",
+            "geometry": mapping(row.geometry),
+            "properties": {
+                "tooltip": tooltip_text,
+                "popup_html": popup_html,
+            },
+        })
+
+    gj_names: list[str] = []
+    for (color, opacity), features in sorted(buckets.items()):
+        fc = {"type": "FeatureCollection", "features": features}
+        gj = folium.GeoJson(
+            fc,
             style_function=lambda _, c=color, o=opacity: {
                 "color": c, "weight": 3, "opacity": o,
             },
-            tooltip=tooltip_text,
-            popup=folium.Popup(popup_html, max_width=340),
-        ).add_to(fg)
+            tooltip=folium.GeoJsonTooltip(
+                fields=["tooltip"],
+                labels=False,
+                style=(
+                    "font-family: system-ui, sans-serif; font-size: 11px; "
+                    "padding: 3px 8px; white-space: nowrap;"
+                ),
+            ),
+            smooth_factor=1.5,
+        )
+        gj.add_to(fg)
+        gj_names.append(gj.get_name())
 
     logger.info(f"Heatmap: {evac_mask.sum()} evacuation route segments rendered.")
-    return fg
+    return fg, gj_names
+
+
+# ---------------------------------------------------------------------------
+# Post-creation popup binding
+# ---------------------------------------------------------------------------
+
+def _inject_popup_binders(
+    m: folium.Map,
+    gj_names: list[str],
+    max_width: int = 340,
+) -> None:
+    """
+    Inject a <script> block that binds per-feature popup HTML stored in the
+    'popup_html' GeoJSON property.  Must be called AFTER all layers are added
+    to the map so the generated script tag runs after Folium's _add(data) calls.
+
+    Each name in gj_names is the Leaflet JS variable name returned by
+    folium.GeoJson(...).get_name().  That variable is a global because Folium
+    emits plain (non-strict, non-IIFE) <script> blocks.
+    """
+    if not gj_names:
+        return
+    lines = []
+    for name in gj_names:
+        lines.append(f"""
+(function () {{
+  var gj = window['{name}'];
+  if (!gj || !gj.eachLayer) {{ return; }}
+  gj.eachLayer(function (lyr) {{
+    var props = lyr.feature && lyr.feature.properties;
+    if (props && props.popup_html) {{
+      lyr.bindPopup(props.popup_html, {{ maxWidth: {max_width} }});
+    }}
+  }});
+}})();""")
+    m.get_root().html.add_child(folium.Element(
+        "<script>" + "\n".join(lines) + "\n</script>"
+    ))
 
 
 # ---------------------------------------------------------------------------
@@ -254,19 +317,23 @@ def create_demo_map(
         folium.GeoJson(
             mapping(row.geometry),
             style_function=lambda _: {
-                "fillColor": "none", "color": "#1a6eb5",
-                "weight": 2, "dashArray": "8 5", "fillOpacity": 0,
+                "color": "#1a6eb5",
+                "weight": 2, "dashArray": "8 5",
+                "fill": False,
+                "interactive": False,
             },
-            tooltip="City Boundary",
         ).add_to(m)
 
     # ── Layer 4: Evacuation Capacity Heatmap ──────────────────────────────
-    heatmap_fg = _build_capacity_heatmap_layer(roads_wgs84, config)
+    heatmap_fg, _heatmap_gj_names = _build_capacity_heatmap_layer(roads_wgs84, config)
     heatmap_fg.add_to(m)
     heatmap_js_name = heatmap_fg.get_name()
 
     # ── Per-project FeatureGroups ──────────────────────────────────────────
     proj_js_names: list[str] = []
+    # Accumulate GeoJson var names that need post-creation popup binding.
+    # _inject_popup_binders() is called once at the end (after all layers added).
+    _all_popup_gj_names: list[str] = list(_heatmap_gj_names)
 
     # Per-project Standard 5 data (populated from audits if available)
     proj_ld_data: list[dict] = []
@@ -574,12 +641,16 @@ def create_demo_map(
                         ).add_to(proj_group)
                         exit_osmids_drawn.add(exit_oid)
 
-        # Serving routes (wildland — one GeoJson per segment for popup support)
+        # Serving routes — batched by (color, weight, opacity) into 2 GeoJson
+        # layers per project (flagged + neutral).  Popup HTML stored as feature
+        # property and bound post-creation via _inject_popup_binders().
         if serving_set and "osmid" in roads_wgs84.columns:
             serving_mask   = roads_wgs84["osmid"].apply(
                 lambda o: _osmid_matches(o, serving_set)
             )
             serving_subset = roads_wgs84[serving_mask]
+
+            serving_buckets: dict = defaultdict(list)
 
             for _, row in serving_subset.iterrows():
                 if row.geometry is None or row.geometry.is_empty:
@@ -596,7 +667,6 @@ def create_demo_map(
                 if name_str in ("nan", "None", ""):
                     name_str = "Unnamed"
 
-                # v3.0: effective capacity and hazard zone
                 hcm_cap    = float(row.get("capacity_vph", 1) or 1)
                 eff_cap    = float(row.get("effective_capacity_vph", hcm_cap) or hcm_cap)
                 fhsz_zone  = str(row.get("fhsz_zone", "non_fhsz") or "non_fhsz")
@@ -605,7 +675,6 @@ def create_demo_map(
                 lane_count_s = int(row.get("lane_count", 0) or 0)
                 speed_lim_s  = int(row.get("speed_limit", 0) or 0)
 
-                # Look up ΔT result for this bottleneck segment (if any)
                 osmid_strs = (
                     [str(osmid_val)] if not isinstance(osmid_val, list)
                     else [str(o) for o in osmid_val]
@@ -632,14 +701,37 @@ def create_demo_map(
                 else:
                     tip = f"serving route — {name_str} | {eff_cap:.0f} vph eff cap"
 
-                folium.GeoJson(
-                    mapping(row.geometry),
+                serving_buckets[(seg_color, weight, opacity)].append({
+                    "type": "Feature",
+                    "geometry": mapping(row.geometry),
+                    "properties": {
+                        "tooltip": tip,
+                        "popup_html": popup_html,
+                    },
+                })
+
+            _serving_gj_names: list[str] = []
+            for (seg_color, weight, opacity), features in serving_buckets.items():
+                fc = {"type": "FeatureCollection", "features": features}
+                gj = folium.GeoJson(
+                    fc,
                     style_function=lambda _, c=seg_color, w=weight, o=opacity: {
                         "color": c, "weight": w, "opacity": o,
                     },
-                    popup=folium.Popup(popup_html, max_width=360),
-                    tooltip=tip,
-                ).add_to(proj_group)
+                    tooltip=folium.GeoJsonTooltip(
+                        fields=["tooltip"],
+                        labels=False,
+                        style=(
+                            "font-family: system-ui, sans-serif; font-size: 11px; "
+                            "padding: 3px 8px; white-space: nowrap;"
+                        ),
+                    ),
+                    smooth_factor=1.5,
+                )
+                gj.add_to(proj_group)
+                _serving_gj_names.append(gj.get_name())
+
+            _all_popup_gj_names.extend(_serving_gj_names)
 
         # ── Bottleneck concentric rings — one set per unique flagged bottleneck ──
         # Three concentric CircleMarkers + filled center dot placed at the midpoint
@@ -774,6 +866,9 @@ def create_demo_map(
         _build_demo_legend_html(config, map_js_name=map_js_name, heatmap_js_name=heatmap_js_name)
     ))
     m.get_root().html.add_child(folium.Element(_build_global_styles()))
+    # Bind per-feature popup HTML stored in GeoJSON properties.
+    # Runs after all Folium _add(data) calls have populated the layer trees.
+    _inject_popup_binders(m, _all_popup_gj_names, max_width=340)
     _add_zoom_weight_scaler(m, ref_zoom=13)
 
     output_path.parent.mkdir(parents=True, exist_ok=True)
@@ -926,7 +1021,7 @@ def _build_demo_panel_html(
     return f"""
 <div id="demo-panel" style="
     position: fixed;
-    top: 68px; left: 10px;
+    top: 68px; right: 10px;
     z-index: 9999;
     width: 308px;
     background: white;
@@ -1272,7 +1367,7 @@ def _build_demo_legend_html(
     heatmap_js_name: str = "",
 ) -> str:
     """
-    Minimal legend for the demo map — v3.2 ΔT Standard.
+    Minimal legend for the demo map — v3.4 ΔT Standard.
 
     Shows only:
       1. Project determination tier dot-key (3 items)
@@ -1301,7 +1396,7 @@ def _build_demo_legend_html(
     return f"""
 <div id="map-legend" style="
     position: fixed;
-    bottom: 26px; right: 10px;
+    bottom: 26px; left: 10px;
     z-index: 9999;
     width: 195px;
     background: white;
@@ -1342,7 +1437,7 @@ def _build_demo_legend_html(
   </div>
 
   <div style="margin-top:10px; border-top:1px solid #f1f3f5; padding-top:8px;
-              font-size:9px; color:#adb5bd;">CSF v3.2 &middot; California Stewardship Alliance</div>
+              font-size:9px; color:#adb5bd;">CSF v3.4 &middot; California Stewardship Alliance</div>
 </div>
 
 <script>
