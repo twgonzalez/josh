@@ -853,6 +853,109 @@ def geocode(city: str, state: str, projects_file: str, apply: bool, threshold: f
         )
 
 
+@cli.command()
+@click.option("--city", required=True, help='City name (must match a prior analyze run, e.g. "Berkeley")')
+@click.option("--state", default="CA", show_default=True, help="State abbreviation")
+@click.option(
+    "--output", "output_name",
+    default="ab747_report", show_default=True,
+    help="Output filename stem (no extension)",
+)
+def report(city: str, state: str, output_name: str):
+    """
+    Generate an AB 747 (Gov. Code §65302.15) evacuation capacity report.
+
+    Requires a prior `analyze` run to have populated data/{city}/.
+
+    Outputs:
+      - output/{city}/ab747_report.html
+    """
+    import geopandas as gpd
+    from agents.visualization.ab747_report import create_ab747_report
+
+    config, city_config = load_config(city)
+
+    base_dir = Path(__file__).parent
+    city_slug = city.lower().replace(" ", "_")
+    data_dir   = base_dir / "data" / city_slug
+    output_dir = base_dir / "output" / city_slug
+
+    console.rule(f"[bold cyan]AB 747 Report — {city}[/bold cyan]")
+
+    # Verify required data files exist
+    required = {
+        "roads.gpkg":            data_dir / "roads.gpkg",
+        "fhsz.geojson":          data_dir / "fhsz.geojson",
+        "boundary.geojson":      data_dir / "boundary.geojson",
+        "block_groups.geojson":  data_dir / "block_groups.geojson",
+        "evacuation_paths.json": data_dir / "evacuation_paths.json",
+    }
+    missing = [name for name, path in required.items() if not path.exists()]
+    if missing:
+        console.print(
+            f"[red]ERROR: Missing data files: {missing}\n"
+            f"Run first: uv run python main.py analyze --city \"{city}\"[/red]"
+        )
+        raise SystemExit(1)
+
+    # Load cached data
+    with console.status("Loading cached data..."):
+        roads_gdf        = gpd.read_file(data_dir / "roads.gpkg", layer="roads")
+        fhsz_gdf         = gpd.read_file(data_dir / "fhsz.geojson")
+        block_groups_gdf = gpd.read_file(data_dir / "block_groups.geojson")
+        evacuation_paths = _load_evacuation_paths(data_dir / "evacuation_paths.json")
+
+    # Ensure capacity columns are present; re-run analysis if missing
+    if "effective_capacity_vph" not in roads_gdf.columns:
+        from agents.capacity_analysis import analyze_capacity
+        boundary_gdf = gpd.read_file(data_dir / "boundary.geojson")
+        console.print("  [yellow]Capacity columns not found — re-running capacity analysis...[/yellow]")
+        with console.status("Running capacity analysis..."):
+            roads_gdf, evacuation_paths = analyze_capacity(
+                roads_gdf=roads_gdf,
+                fhsz_gdf=fhsz_gdf,
+                boundary_gdf=boundary_gdf,
+                config=config,
+                city_config=city_config,
+                block_groups_gdf=block_groups_gdf,
+                data_dir=data_dir,
+            )
+
+    # Generate report
+    output_path = output_dir / f"{output_name}.html"
+    with console.status("Generating AB 747 report..."):
+        create_ab747_report(
+            city=city_slug,
+            roads_gdf=roads_gdf,
+            block_groups_gdf=block_groups_gdf,
+            fhsz_gdf=fhsz_gdf,
+            evacuation_paths=evacuation_paths,
+            config=config,
+            city_config=city_config,
+            output_path=output_path,
+        )
+
+    # Print summary metrics to console
+    from agents.analysis import compute_clearance_time, scan_single_access_areas
+    clearance = compute_clearance_time(block_groups_gdf, evacuation_paths, fhsz_gdf, config)
+    sb99 = scan_single_access_areas(evacuation_paths, block_groups_gdf)
+
+    ct = clearance.total_clearance_time_minutes
+    ct_display = f"{ct:.1f} min" if ct != float("inf") else "N/A (no exit data)"
+    safe_window = float(config.get("safe_egress_window", {}).get("vhfhsz", 45))
+    ct_status = (
+        "[red]EXCEEDS VHFHSZ window[/red]"
+        if (ct != float("inf") and ct > safe_window)
+        else "[green]within VHFHSZ window[/green]"
+    )
+
+    console.print(f"\n  [bold]AB 747 Report:[/bold] [cyan]{output_path}[/cyan]")
+    console.print(f"  City-wide clearance time:   [bold]{ct_display}[/bold] ({ct_status})")
+    console.print(f"  Total exit capacity:        {clearance.total_exit_capacity_vph:,.0f} vph")
+    console.print(f"  Single-access block groups: {sb99.single_access_count} of {sb99.total_block_groups}")
+    console.print(f"  Open with: [dim]open {output_path}[/dim]")
+
+
 # ---------------------------------------------------------------------------
 # Rich output helpers
 # ---------------------------------------------------------------------------

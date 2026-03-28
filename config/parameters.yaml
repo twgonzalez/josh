@@ -356,3 +356,32 @@ census:
 # ============================================================
 
 cache_ttl_days: 90
+
+# ============================================================
+# AB 747 Report Parameters
+# Used exclusively by `main.py report --city` and agents/visualization/ab747_report.py
+# Source: Gov. Code §65302.15 (AB 747), SB 99, FHWA Emergency Transportation Operations
+# ============================================================
+
+ab747:
+  # Number of worst-performing evacuation segments to highlight in the bottleneck table
+  bottleneck_top_n: 10
+
+  # Minimum housing units in a block group to trigger a "second egress" recommendation.
+  # Block groups below this size may have limited improvement options.
+  second_egress_min_units: 50
+
+  # v/c ratio above which contraflow operations are recommended on multilane roads.
+  # Source: FHWA Emergency Transportation Operations guide.
+  contraflow_vc_threshold: 0.80
+
+  # Effective capacity (vph) below which a bottleneck segment triggers a capital
+  # improvement recommendation (when also on >= min_connectivity paths).
+  # Matches the "orange" bucket in _EFFECTIVE_CAPACITY_RAMP (350–700 vph).
+  capacity_improvement_eff_cap_threshold: 700
+
+  # Minimum number of evacuation paths through a segment to trigger a widening
+  # recommendation. Segments used by only one path may have limited-impact widening.
+  capacity_improvement_min_connectivity: 2
+
+  report_version: "1.0"
