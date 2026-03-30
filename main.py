@@ -153,6 +153,24 @@ def analyze(city: str, state: str, refresh: bool):
         f"{len(evac_routes)} evacuation route segments identified."
     )
 
+    # Export browser data bundle for the what-if engine (feat/whatif-browser)
+    from agents.export import (
+        export_graph_json,
+        export_parameters_json,
+        export_fhsz_json,
+        export_whatif_engine_js,
+    )
+    graph_path_cached = data_dir / "graph.graphml"
+    exit_nodes_path   = data_dir / "exit_nodes.json"
+    if graph_path_cached.exists():
+        with console.status("Exporting browser data bundle..."):
+            export_graph_json(graph_path_cached, exit_nodes_path, roads_gdf, config, city_config, output_dir)
+            export_parameters_json(config, city_config, output_dir)
+            export_fhsz_json(datasets["fhsz"], output_dir)
+            export_whatif_engine_js()   # regenerate static/whatif_engine.js from export.py + utils
+        console.print("  Browser bundle: [cyan]output/{city}/graph.json + parameters.json + fhsz.json[/cyan]")
+        console.print("  JS engine:      [cyan]static/whatif_engine.js[/cyan] (regenerated)")
+
 
 @cli.command()
 @click.option("--city", required=True, help="City name (must match a prior analyze run)")
@@ -630,9 +648,18 @@ def demo(city: str, state: str, projects_file: str, output_name: str):
     console.print()
     _print_demo_summary(evaluated, config)
 
+    # ── Export test vectors for anti-divergence suite ─────────────────────────
+    from agents.export import export_test_vectors
+    with console.status("Exporting test vectors..."):
+        export_test_vectors(evaluated, audits, output_dir)
+    console.print("  Test vectors: [cyan]output/{city}/test_vectors.json[/cyan]")
+    console.print("  Anti-divergence: [dim]node --test tests/test_whatif_engine.js[/dim]")
+
     # ── Generate map ───────────────────────────────────────────────────────
     console.print("\n[bold]Generating demo map...[/bold]")
     map_path = output_dir / f"{output_name}.html"
+    graph_json_path = output_dir / "graph.json"
+    params_json_path = output_dir / "parameters.json"
     create_demo_map(
         projects=evaluated,
         roads_gdf=roads_gdf,
@@ -643,6 +670,8 @@ def demo(city: str, state: str, projects_file: str, output_name: str):
         demo_title=demo_title,
         audits=audits,
         evacuation_paths=evacuation_paths,
+        graph_json_path=graph_json_path if graph_json_path.exists() else None,
+        params_json_path=params_json_path if params_json_path.exists() else None,
     )
     console.print(f"  Map saved: [cyan]{map_path}[/cyan]")
     console.print(f"  Open with: [dim]open {map_path}[/dim]")

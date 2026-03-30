@@ -223,6 +223,8 @@ def create_demo_map(
     demo_title: str = "Fire Evacuation Impact Analysis",
     audits: list[dict] | None = None,
     evacuation_paths: list | None = None,
+    graph_json_path: Path | None = None,
+    params_json_path: Path | None = None,
 ) -> Path:
     """
     Generate a multi-project comparison map — v3.0 ΔT Standard.
@@ -874,7 +876,561 @@ def create_demo_map(
     output_path.parent.mkdir(parents=True, exist_ok=True)
     m.save(str(output_path))
     logger.info(f"Demo map saved: {output_path}")
+
+    # ── What-if bundle injection (feat/whatif-browser) ────────────────────
+    # Inline graph.json, parameters.json, fhsz GeoJSON, and the JS engine into
+    # the saved HTML so the file is fully self-contained (works from file://).
+    if graph_json_path and graph_json_path.exists() and params_json_path and params_json_path.exists():
+        _inject_whatif_bundle(output_path, graph_json_path, params_json_path, fhsz_gdf)
+        logger.info("  What-if bundle injected into demo map.")
+    else:
+        logger.info("  Skipping what-if bundle (graph.json or parameters.json not found).")
+
     return output_path
+
+
+# ---------------------------------------------------------------------------
+# What-if browser bundle injection (feat/whatif-browser)
+# ---------------------------------------------------------------------------
+
+def _inject_whatif_bundle(
+    html_path: Path,
+    graph_json_path: Path,
+    params_json_path: Path,
+    fhsz_gdf: gpd.GeoDataFrame,
+) -> None:
+    """
+    Read the saved demo_map.html, inject the what-if JS engine + data bundle,
+    and write the file back.  All three data sources are inlined as JS globals
+    so the file remains standalone (no fetch() calls, works from file://).
+
+    Injected globals:
+      JOSH_GRAPH   — graph.json contents  (nodes, edges, exit_nodes)
+      JOSH_PARAMS  — parameters.json contents
+      JOSH_FHSZ    — fhsz GeoJSON FeatureCollection
+
+    The engine (static/whatif_engine.js) is also inlined and reads these globals
+    on first evaluateProject() call.
+    """
+    import json as _json
+    from pathlib import Path as _Path
+
+    # Load data files
+    graph_data   = _json.loads(graph_json_path.read_text())
+    params_data  = _json.loads(params_json_path.read_text())
+    fhsz_geojson = _json.loads(fhsz_gdf.to_crs("EPSG:4326").to_json())
+
+    # Locate engine source
+    engine_path = _Path(__file__).parent.parent.parent / "static" / "whatif_engine.js"
+    engine_js   = engine_path.read_text() if engine_path.exists() else "// engine not found"
+
+    # Build injection block
+    data_block = f"""
+<script id="josh-whatif-data">
+const JOSH_GRAPH  = {_json.dumps(graph_data,  separators=(',',':'))};
+const JOSH_PARAMS = {_json.dumps(params_data, separators=(',',':'))};
+const JOSH_FHSZ   = {_json.dumps(fhsz_geojson, separators=(',',':'))};
+</script>
+<script id="josh-whatif-engine">
+{engine_js}
+</script>
+<script id="josh-whatif-ui">
+{_build_whatif_ui_js()}
+</script>
+{_build_whatif_ui_html()}
+"""
+
+    # Inject before </body>
+    html = html_path.read_text(encoding="utf-8")
+    if "</body>" in html:
+        html = html.replace("</body>", data_block + "\n</body>", 1)
+    else:
+        html += data_block
+    html_path.write_text(html, encoding="utf-8")
+
+
+def _build_whatif_ui_html() -> str:
+    """
+    Fixed sidebar panel for the what-if project input form.
+    Styled to match the existing JOSH control panel aesthetic (dark header,
+    white body, same font stack).
+    """
+    return """
+<div id="josh-whatif-panel" style="
+    position: fixed;
+    bottom: 32px;
+    right: 16px;
+    width: 300px;
+    background: #fff;
+    border-radius: 8px;
+    box-shadow: 0 4px 24px rgba(0,0,0,0.22);
+    z-index: 10000;
+    font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    font-size: 13px;
+    overflow: hidden;
+    display: none;
+">
+  <div style="background:#1c4a6e;color:#fff;padding:10px 14px;display:flex;align-items:center;gap:8px;cursor:move;" id="josh-whatif-drag-handle">
+    <span style="font-size:15px;">&#9654;</span>
+    <span style="font-weight:600;font-size:13px;letter-spacing:0.02em;">What-If Analysis</span>
+    <span style="margin-left:auto;cursor:pointer;font-size:16px;opacity:0.7;" onclick="joshWhatIf.closePanel();" title="Close">&#10005;</span>
+  </div>
+  <div style="padding:12px 14px;">
+    <div id="josh-whatif-instructions" style="color:#555;font-size:12px;margin-bottom:10px;line-height:1.5;">
+      Set units &amp; stories, then drop a pin.
+    </div>
+    <div style="display:flex;gap:8px;margin-bottom:8px;">
+      <label style="flex:1;">
+        <div style="font-size:11px;color:#777;margin-bottom:3px;">Units</div>
+        <input id="josh-wi-units" type="number" min="1" max="999" value="50" style="width:100%;box-sizing:border-box;border:1px solid #ccc;border-radius:4px;padding:5px 7px;font-size:13px;">
+      </label>
+      <label style="flex:1;">
+        <div style="font-size:11px;color:#777;margin-bottom:3px;">Stories</div>
+        <input id="josh-wi-stories" type="number" min="0" max="60" value="4" style="width:100%;box-sizing:border-box;border:1px solid #ccc;border-radius:4px;padding:5px 7px;font-size:13px;">
+      </label>
+    </div>
+    <div id="josh-whatif-result" style="display:none;margin-top:10px;border-top:1px solid #eee;padding-top:10px;"></div>
+    <div style="margin-top:10px;display:flex;gap:6px;">
+      <button id="josh-wi-btn-pin" onclick="joshWhatIf.startDropPin()" style="
+          flex:1;background:#1c4a6e;color:#fff;border:none;border-radius:5px;
+          padding:7px 0;font-size:12px;cursor:pointer;font-weight:600;">
+        &#x2316; Drop Pin
+      </button>
+      <button id="josh-wi-btn-clear" onclick="joshWhatIf.clearWhatIf()" style="
+          flex:0 0 auto;background:#f5f5f5;color:#555;border:1px solid #ccc;
+          border-radius:5px;padding:7px 10px;font-size:12px;cursor:pointer;
+          display:none;">
+        &#x2715; Clear
+      </button>
+    </div>
+    <div style="margin-top:10px;color:#999;font-size:10px;line-height:1.4;border-top:1px solid #f0f0f0;padding-top:8px;" id="josh-wi-disclaimer">
+      What-if estimates only &mdash; not a legal determination.<br>
+      Run <code>main.py evaluate</code> for a binding audit trail.
+    </div>
+  </div>
+</div>
+
+<style>
+.josh-wi-tooltip {
+  font-family: system-ui, sans-serif;
+  font-size: 11px;
+  padding: 4px 8px;
+  background: rgba(28,74,110,0.92);
+  color: #fff;
+  border: none;
+  border-radius: 4px;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+  white-space: nowrap;
+}
+.josh-wi-tooltip::before { display: none; }
+</style>
+
+<button id="josh-whatif-open-btn" onclick="joshWhatIf.openPanel()" style="
+    position: fixed;
+    bottom: 32px;
+    right: 16px;
+    z-index: 10000;
+    background: #1c4a6e;
+    color: #fff;
+    border: none;
+    border-radius: 6px;
+    padding: 9px 15px;
+    font-family: system-ui, sans-serif;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    box-shadow: 0 3px 12px rgba(0,0,0,0.25);
+    letter-spacing: 0.01em;
+">&#43; What-If Project</button>
+"""
+
+
+def _build_whatif_ui_js() -> str:
+    """
+    JavaScript controller for the what-if panel.
+
+    UX state machine:
+      IDLE        — no pin; "Drop Pin" button only
+      AWAITING    — crosshair cursor, one-time map click listener; "Cancel" button
+      PIN PLACED  — draggable pin on map; inputs auto-re-evaluate (300ms debounce);
+                    "Drop New Pin" + "✕ Clear" buttons
+
+    Dragging: L.marker with DivIcon (dashed circle) instead of L.circleMarker,
+    which has no drag support.  On dragend, routes redraw and result updates.
+
+    Auto re-evaluate: input event listeners on Units + Stories.  If a pin is
+    placed (_lat !== null), changes trigger a 300ms debounced re-evaluate so the
+    result is always live — no "stale result" state.
+    """
+    return r"""
+(function () {
+  const TIER_COLOR = {
+    'MINISTERIAL':                         '#27ae60',
+    'MINISTERIAL WITH STANDARD CONDITIONS': '#e67e22',
+    'DISCRETIONARY':                        '#e74c3c',
+  };
+  const TIER_LABEL = {
+    'MINISTERIAL':                         'Ministerial',
+    'MINISTERIAL WITH STANDARD CONDITIONS': 'Ministerial w/ Conditions',
+    'DISCRETIONARY':                        'Discretionary',
+  };
+  const ZONE_LABEL = {
+    'vhfhsz':        'Very High FHSZ',
+    'high_fhsz':     'High FHSZ',
+    'moderate_fhsz': 'Moderate FHSZ',
+    'non_fhsz':      'Non-FHSZ',
+  };
+
+  // ── Module state ────────────────────────────────────────────────────────────
+  let _dropPinActive = false;
+  let _markers       = [];        // all map layers owned by the what-if UI
+  let _wiMarker      = null;      // the draggable L.marker (kept separate for setIcon/drag)
+  let _mapObj        = null;
+  let _origCursor    = '';
+  let _lat           = null;      // last placed pin latitude  (null = no pin)
+  let _lng           = null;      // last placed pin longitude
+  let _debounce      = null;      // setTimeout handle for input debounce
+
+  // ── Map discovery ───────────────────────────────────────────────────────────
+  function _getMap() {
+    if (_mapObj) return _mapObj;
+    for (const k in window) {
+      if (window[k] && window[k]._leaflet_id && window[k].getCenter) {
+        _mapObj = window[k]; return _mapObj;
+      }
+    }
+    const el = document.querySelector('.folium-map');
+    if (el && el._leaflet_id) { _mapObj = window['map_' + el._leaflet_id] || null; }
+    return _mapObj;
+  }
+
+  // ── DivIcon factory — dashed circle with "?" label, colour-coded by tier ─────
+  // Uses L.divIcon instead of L.circleMarker so the marker is draggable.
+  // 28px gives a comfortable drag target and stands out on a busy street map.
+  // The "?" reinforces the exploratory / what-if nature of the pin.
+  function _wiIcon(color) {
+    return L.divIcon({
+      className: '',   // suppress Leaflet's default white square
+      html: `<div style="
+        width: 28px; height: 28px;
+        border: 2.5px dashed ${color};
+        border-radius: 50%;
+        background: ${color};
+        opacity: 0.75;
+        box-sizing: border-box;
+        display: flex; align-items: center; justify-content: center;
+        font-family: system-ui, sans-serif;
+        font-size: 14px; font-weight: 700;
+        color: #fff;
+        text-shadow: 0 1px 2px rgba(0,0,0,0.4);
+        cursor: grab;
+      ">?</div>`,
+      iconSize:   [28, 28],
+      iconAnchor: [14, 14],   // centred on the click/drag point
+    });
+  }
+
+  // ── Panel open ──────────────────────────────────────────────────────────────
+  function openPanel() {
+    document.getElementById('josh-whatif-open-btn').style.display = 'none';
+    document.getElementById('josh-whatif-panel').style.display    = 'block';
+  }
+
+  // ── State transitions ───────────────────────────────────────────────────────
+
+  /** Enter AWAITING state: crosshair cursor, one-time click listener. */
+  function startDropPin() {
+    const map = _getMap();
+    if (!map) { alert('Map not ready \u2014 please wait a moment and try again.'); return; }
+    _dropPinActive = true;
+    _origCursor = map.getContainer().style.cursor;
+    map.getContainer().style.cursor = 'crosshair';
+    document.getElementById('josh-whatif-instructions').textContent =
+      'Click the map to place a pin\u2026';
+    const btn = document.getElementById('josh-wi-btn-pin');
+    btn.textContent = '\u2716 Cancel';
+    btn.onclick = cancelDropPin;
+    map.once('click', _onMapClick);
+  }
+
+  /** Cancel AWAITING state without placing a pin. */
+  function cancelDropPin() {
+    const map = _getMap();
+    if (map) {
+      map.getContainer().style.cursor = _origCursor;
+      map.off('click', _onMapClick);
+    }
+    _dropPinActive = false;
+    _restoreIdleOrPinnedButton();
+    document.getElementById('josh-whatif-instructions').textContent =
+      _lat !== null
+        ? 'Drag pin or adjust inputs to update.'
+        : 'Set units & stories, then drop a pin.';
+  }
+
+  /**
+   * Restore the Drop Pin button to the correct label for the current state:
+   *   - PIN PLACED → "Drop New Pin" (re-enter AWAITING to relocate)
+   *   - IDLE       → "Drop Pin"
+   */
+  function _restoreIdleOrPinnedButton() {
+    const btn = document.getElementById('josh-wi-btn-pin');
+    if (_lat !== null) {
+      btn.textContent = '\u2316 Drop New Pin';
+    } else {
+      btn.textContent = '\u2316 Drop Pin';
+    }
+    btn.onclick = startDropPin;
+  }
+
+  // ── Map click handler (AWAITING → PIN PLACED) ───────────────────────────────
+  function _onMapClick(e) {
+    _dropPinActive = false;
+    const map = _getMap();
+    if (map) map.getContainer().style.cursor = _origCursor;
+    _placePin(e.latlng.lat, e.latlng.lng);
+  }
+
+  /** Place (or replace) the draggable marker and evaluate. */
+  function _placePin(lat, lng) {
+    // Remove existing pin + routes; keep nothing from prior evaluation
+    _clearAll();
+    const map = _getMap();
+    _lat = lat;
+    _lng = lng;
+
+    if (map) {
+      _wiMarker = L.marker([lat, lng], {
+        icon: _wiIcon('#e67e22'),   // neutral orange while evaluating
+        draggable: true,
+        zIndexOffset: 500,
+      }).addTo(map);
+      _wiMarker.on('dragstart', _onDragStart);
+      _wiMarker.on('dragend',   _onDragEnd);
+      _markers.push(_wiMarker);
+    }
+
+    _evaluateAt(lat, lng);
+  }
+
+  // ── Drag handlers ───────────────────────────────────────────────────────────
+
+  function _onDragStart() {
+    // Dim result and clear old routes while the pin is moving
+    const el = document.getElementById('josh-whatif-result');
+    if (el) el.style.opacity = '0.3';
+    document.getElementById('josh-whatif-instructions').textContent = 'Moving pin\u2026';
+    _clearRoutes();
+  }
+
+  function _onDragEnd(e) {
+    _lat = e.target.getLatLng().lat;
+    _lng = e.target.getLatLng().lng;
+    _evaluateAt(_lat, _lng);
+  }
+
+  // ── Route line color ramp ───────────────────────────────────────────────────
+  // Mirrors the AntPath ramp used for official project routes:
+  //   < 40% threshold  → green  (ample capacity)
+  //   40–75%           → yellow (moderate load)
+  //   75–100%          → orange (approaching threshold)
+  //   > 100% (flagged) → red    (exceeds threshold)
+  function _routeColor(delta_t, threshold) {
+    const ratio = threshold > 0 ? delta_t / threshold : 1;
+    if (ratio > 1.0)  return '#e74c3c';   // red    — flagged
+    if (ratio > 0.75) return '#e67e22';   // orange — approaching
+    if (ratio > 0.40) return '#f1c40f';   // yellow — moderate
+    return '#27ae60';                      // green  — ample
+  }
+
+  // ── Core evaluation ─────────────────────────────────────────────────────────
+
+  /**
+   * Run WhatIfEngine.evaluateProject() for the current inputs at (lat, lng),
+   * redraw route polylines, update the pin icon colour, and render the result.
+   * Called from: initial pin placement, drag end, debounced input change.
+   */
+  function _evaluateAt(lat, lng) {
+    const units   = parseInt(document.getElementById('josh-wi-units').value,   10) || 1;
+    const stories = parseInt(document.getElementById('josh-wi-stories').value, 10) || 0;
+
+    let result;
+    try {
+      result = WhatIfEngine.evaluateProject(lat, lng, units, stories);
+    } catch (err) {
+      document.getElementById('josh-whatif-instructions').textContent =
+        'Error: ' + err.message;
+      const el = document.getElementById('josh-whatif-result');
+      if (el) el.style.opacity = '1';
+      return;
+    }
+
+    const map       = _getMap();
+    const tierColor = TIER_COLOR[result.tier] || '#888';
+
+    // Update pin icon to tier colour
+    if (_wiMarker) _wiMarker.setIcon(_wiIcon(tierColor));
+
+    // Clear stale routes (pin is kept via _wiMarker exclusion in _clearRoutes)
+    _clearRoutes();
+
+    if (map) {
+      for (const path of result.paths) {
+        if (!path.path_coords || path.path_coords.length < 2) continue;
+        const lineColor = _routeColor(path.delta_t_minutes, path.threshold_minutes);
+
+        // Full route — thin dashed line
+        const routeLine = L.polyline(path.path_coords, {
+          color:     lineColor,
+          weight:    3,
+          opacity:   0.75,
+          dashArray: path.flagged ? null : '6,4',
+        });
+        routeLine.bindTooltip(
+          `Evacuation route \u00b7 \u0394T ${path.delta_t_minutes.toFixed(2)} min ` +
+          `(threshold ${path.threshold_minutes.toFixed(2)} min)` +
+          (path.flagged ? ' \u26a0 EXCEEDS THRESHOLD' : ''),
+          { sticky: true, className: 'josh-wi-tooltip' }
+        );
+        routeLine.addTo(map);
+        _markers.push(routeLine);
+
+        // Bottleneck segment — thick highlight
+        if (path.bottleneck_coords && path.bottleneck_coords.length === 2) {
+          const bnLine = L.polyline(path.bottleneck_coords, {
+            color: lineColor, weight: 8, opacity: 0.9,
+          });
+          bnLine.bindTooltip(
+            `Bottleneck \u00b7 ${path.bottleneckOsmid} \u00b7 ${path.bottleneckEffCapVph.toFixed(0)} vph`,
+            { sticky: true, className: 'josh-wi-tooltip' }
+          );
+          bnLine.addTo(map);
+          _markers.push(bnLine);
+        }
+      }
+    }
+
+    // Restore result opacity (may have been dimmed during drag)
+    const resultEl = document.getElementById('josh-whatif-result');
+    if (resultEl) resultEl.style.opacity = '1';
+
+    _renderResult(result);
+    _restoreIdleOrPinnedButton();
+    // Show the Clear button now that a pin is placed
+    document.getElementById('josh-wi-btn-clear').style.display = '';
+    document.getElementById('josh-whatif-instructions').textContent =
+      'Drag pin or adjust inputs to update.';
+  }
+
+  // ── Result renderer ─────────────────────────────────────────────────────────
+  function _renderResult(result) {
+    const color      = TIER_COLOR[result.tier] || '#888';
+    const tierLabel  = TIER_LABEL[result.tier] || result.tier;
+    const zoneLabel  = ZONE_LABEL[result.hazard_zone] || result.hazard_zone;
+    const maxDT      = result.max_delta_t_minutes;
+    const threshold  = result.paths.length > 0 ? result.paths[0].threshold_minutes : null;
+    const flaggedCnt = result.paths.filter(p => p.flagged).length;
+
+    let pathRows = '';
+    for (const p of result.paths) {
+      const dtColor = p.flagged ? '#e74c3c' : '#27ae60';
+      pathRows += `<tr>
+        <td style="padding:2px 6px;font-size:11px;color:#555;max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${p.bottleneckOsmid}">${p.bottleneckOsmid}</td>
+        <td style="padding:2px 6px;font-size:11px;text-align:right;color:${dtColor};font-weight:${p.flagged?'700':'400'};">${p.delta_t_minutes.toFixed(2)}</td>
+        <td style="padding:2px 6px;font-size:11px;text-align:right;color:#999;">${p.threshold_minutes.toFixed(2)}</td>
+      </tr>`;
+    }
+
+    const builtAt    = result.built_at ? result.built_at.slice(0, 10) : '?';
+    const threshDisp = threshold !== null ? threshold.toFixed(2) : '\u2014';
+
+    const el = document.getElementById('josh-whatif-result');
+    el.style.display = 'block';
+    el.innerHTML = `
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
+        <span style="display:inline-block;width:12px;height:12px;border-radius:50%;background:${color};border:2px dashed ${color};opacity:0.9;flex-shrink:0;"></span>
+        <span style="font-weight:700;font-size:13px;color:${color};">${tierLabel}</span>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:4px 12px;font-size:11px;color:#555;margin-bottom:8px;">
+        <div>Zone: <b>${zoneLabel}</b></div>
+        <div>Vehicles: <b>${result.project_vehicles.toFixed(0)} vph</b></div>
+        <div>Max &Delta;T: <b style="color:${threshold !== null && maxDT > threshold ? '#e74c3c' : '#333'};">${maxDT.toFixed(2)} min</b></div>
+        <div>Threshold: <b>${threshDisp} min</b></div>
+        <div>Paths: <b>${result.serving_paths_count}</b></div>
+        <div>Flagged: <b style="color:${flaggedCnt > 0 ? '#e74c3c' : '#27ae60'};">${flaggedCnt}</b></div>
+      </div>
+      ${pathRows ? `
+      <div style="font-size:10px;color:#aaa;margin-bottom:2px;">Bottleneck &nbsp; &Delta;T &nbsp; Limit (min)</div>
+      <table style="width:100%;border-collapse:collapse;">
+        <tbody>${pathRows}</tbody>
+      </table>` : '<div style="font-size:11px;color:#aaa;">No serving paths found.</div>'}
+      <div style="margin-top:8px;font-size:10px;color:#bbb;">
+        Data: OSM ${builtAt} &middot; v${result.parameters_version}
+      </div>
+    `;
+  }
+
+  // ── Clear helpers ───────────────────────────────────────────────────────────
+
+  /** Remove only route polylines; keep _wiMarker (used during drag + input re-eval). */
+  function _clearRoutes() {
+    const map = _getMap();
+    _markers = _markers.filter(m => {
+      if (m === _wiMarker) return true;   // keep the pin
+      try { map && map.removeLayer(m); } catch (_) {}
+      return false;
+    });
+  }
+
+  /** Remove everything — pin, routes, and all state. Returns to IDLE. */
+  function _clearAll() {
+    const map = _getMap();
+    for (const m of _markers) { try { map && map.removeLayer(m); } catch (_) {} }
+    _markers  = [];
+    _wiMarker = null;
+  }
+
+  /** Public clear: full reset to IDLE state. */
+  function clearWhatIf() {
+    clearTimeout(_debounce);
+    _clearAll();
+    _lat = null;
+    _lng = null;
+    const resultEl = document.getElementById('josh-whatif-result');
+    resultEl.style.display  = 'none';
+    resultEl.style.opacity  = '1';
+    resultEl.innerHTML      = '';
+    document.getElementById('josh-wi-btn-clear').style.display = 'none';
+    document.getElementById('josh-whatif-instructions').textContent =
+      'Set units & stories, then drop a pin.';
+    _restoreIdleOrPinnedButton();
+  }
+
+  // ── Input auto-re-evaluate ──────────────────────────────────────────────────
+  // Attach listeners once the DOM is ready.  Only fires when a pin is placed.
+  document.addEventListener('DOMContentLoaded', () => {
+    ['josh-wi-units', 'josh-wi-stories'].forEach(id => {
+      const el = document.getElementById(id);
+      if (!el) return;
+      el.addEventListener('input', () => {
+        if (_lat === null) return;          // no pin yet — do nothing
+        clearTimeout(_debounce);
+        document.getElementById('josh-whatif-instructions').textContent = 'Updating\u2026';
+        _debounce = setTimeout(() => _evaluateAt(_lat, _lng), 300);
+      });
+    });
+  });
+
+  /** Close the panel and restore the open button. Cancels any active drop-pin mode. */
+  function closePanel() {
+    cancelDropPin();
+    document.getElementById('josh-whatif-panel').style.display    = 'none';
+    document.getElementById('josh-whatif-open-btn').style.display = '';
+  }
+
+  window.joshWhatIf = { openPanel, closePanel, startDropPin, cancelDropPin, clearWhatIf };
+})();
+"""
 
 
 # ---------------------------------------------------------------------------

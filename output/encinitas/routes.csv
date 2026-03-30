@@ -1,17 +1,11 @@
 name,highway,road_type,lane_count,speed_limit,capacity_vph,fhsz_zone,hazard_degradation,effective_capacity_vph,baseline_demand_vph,vc_ratio,los,connectivity_score,catchment_units,demand_source,catchment_hu,catchment_employees,resident_demand_vph,employee_demand_vph,student_demand_vph,length_meters,lane_count_estimated,speed_estimated,aadt_estimated
 Newport Avenue,residential,two_lane,2,25,1125.0,moderate_fhsz,0.75,843.75,1390.5,1.236,F,2,618.0,catchment_based,2356,1723,3357.2999999999997,1723.0,0.0,54.036037746021705,False,True,True
-Santa Fe Drive,secondary,multilane,5,25,9500.0,non_fhsz,1.0,9500.0,1174.5,0.12363157894736843,B,1,522.0,catchment_based,2777,3227,3957.2249999999995,3227.0,0.0,235.7312576057772,False,False,True
-,motorway_link,freeway,2,45,4500.0,non_fhsz,1.0,4500.0,3854.25,0.8565,E,4,1713.0,catchment_based,3292,1948,4691.099999999999,1948.0,0.0,306.23402583728006,False,True,True
-Birmingham Drive,secondary,multilane,3,35,5700.0,non_fhsz,1.0,5700.0,3854.25,0.6761842105263158,E,4,1713.0,catchment_based,3292,1948,4691.099999999999,1948.0,0.0,49.84421787984178,False,True,True
-,motorway_link,freeway,2,45,4500.0,non_fhsz,1.0,4500.0,6086.25,1.3525,F,4,2705.0,catchment_based,2884,2896,4109.7,2896.0,0.0,320.81658077736813,False,True,True
-Encinitas Boulevard,primary,multilane,6,40,11400.0,non_fhsz,1.0,11400.0,6086.25,0.5338815789473684,D,4,2705.0,catchment_based,2884,2896,4109.7,2896.0,0.0,58.98564120052938,False,False,True
 La Costa Avenue,secondary,multilane,2,40,3800.0,non_fhsz,1.0,3800.0,1372.5,0.3611842105263158,C,2,610.0,catchment_based,1345,329,1916.6249999999998,329.0,0.0,93.16772774163805,True,False,True
 La Costa Avenue,secondary,multilane,2,40,3800.0,non_fhsz,1.0,3800.0,1372.5,0.3611842105263158,C,2,610.0,catchment_based,1345,329,1916.6249999999998,329.0,0.0,17.585984578703894,True,False,True
 La Costa Avenue,secondary,multilane,2,40,3800.0,non_fhsz,1.0,3800.0,1372.5,0.3611842105263158,C,2,610.0,catchment_based,1345,329,1916.6249999999998,329.0,0.0,17.585984578703894,True,False,True
 Sheridan Road,residential,two_lane,1,25,1125.0,moderate_fhsz,0.75,843.75,1372.5,1.22,F,2,610.0,catchment_based,1345,329,1916.6249999999998,329.0,0.0,165.4342437773775,True,True,True
 La Costa Avenue,secondary,multilane,2,40,3800.0,moderate_fhsz,0.75,2850.0,1372.5,0.3611842105263158,C,2,610.0,catchment_based,1661,1127,2366.9249999999997,1127.0,0.0,133.81674442737292,True,False,True
 Santa Fe Drive,secondary,multilane,1,25,1900.0,non_fhsz,1.0,1900.0,1174.5,0.6181578947368421,E,1,522.0,catchment_based,2777,3227,3957.2249999999995,3227.0,0.0,84.57149423035601,False,False,True
-Santa Fe Drive,secondary,multilane,4,25,7600.0,non_fhsz,1.0,7600.0,1174.5,0.15453947368421053,B,1,522.0,catchment_based,2777,3227,3957.2249999999995,3227.0,0.0,235.7312576057772,False,False,True
 Hygeia Avenue,residential,two_lane,2,25,1125.0,non_fhsz,1.0,1125.0,1163.25,1.034,F,1,517.0,catchment_based,1864,703,2656.2,703.0,0.0,84.1895336813824,False,True,True
 Capri Road,tertiary,two_lane,1,25,1125.0,vhfhsz,0.35,393.75,1424.25,1.266,F,1,633.0,catchment_based,1339,1278,1908.0749999999998,1278.0,0.0,106.03480724314721,True,True,True
 Birmingham Drive,secondary,multilane,2,30,3800.0,non_fhsz,1.0,3800.0,4700.25,1.2369078947368422,F,3,2089.0,catchment_based,3292,1948,4691.099999999999,1948.0,0.0,16.082460592901565,False,False,True
@@ -20,7 +14,6 @@ La Costa Avenue,secondary,multilane,2,40,3800.0,non_fhsz,1.0,3800.0,1372.5,0.361
 La Costa Avenue,secondary,multilane,2,40,3800.0,non_fhsz,1.0,3800.0,1372.5,0.3611842105263158,C,2,610.0,catchment_based,1680,410,2394.0,410.0,0.0,88.91097217280623,True,False,True
 La Costa Avenue,secondary,multilane,2,40,3800.0,non_fhsz,1.0,3800.0,1372.5,0.3611842105263158,C,2,610.0,catchment_based,1345,329,1916.6249999999998,329.0,0.0,93.16772774163805,True,False,True
 La Costa Avenue,secondary,multilane,2,40,3800.0,non_fhsz,1.0,3800.0,1372.5,0.3611842105263158,C,2,610.0,catchment_based,1680,410,2394.0,410.0,0.0,88.91097217280623,True,False,True
-Encinitas Boulevard,primary,multilane,2,40,3800.0,non_fhsz,1.0,3800.0,4542.75,1.1954605263157896,F,4,2019.0,catchment_based,4596,6168,6549.299999999999,6168.0,0.0,224.20271677814057,False,False,True
 Manchester Avenue,secondary,multilane,2,35,3800.0,vhfhsz,0.35,1330.0,1804.5,0.4748684210526316,D,2,802.0,catchment_based,2550,2171,3633.7499999999995,2171.0,0.0,30.142700826544413,True,True,True
 Manchester Avenue,secondary,multilane,2,35,3800.0,vhfhsz,0.35,1330.0,1804.5,0.4748684210526316,D,2,802.0,catchment_based,2550,2171,3633.7499999999995,2171.0,0.0,273.7147410077411,True,True,True
 Gardendale Road,residential,two_lane,1,25,1125.0,non_fhsz,1.0,1125.0,5550.75,4.934,F,4,2467.0,catchment_based,2982,1017,4249.349999999999,1017.0,0.0,71.38157453986256,True,True,True
@@ -31,12 +24,9 @@ Melba Road,tertiary,two_lane,1,25,1125.0,non_fhsz,1.0,1125.0,1174.5,1.044,F,1,52
 Melba Road,tertiary,two_lane,1,25,1125.0,non_fhsz,1.0,1125.0,1174.5,1.044,F,1,522.0,catchment_based,2478,5362,3531.1499999999996,5362.0,0.0,102.04505079650392,True,True,True
 Hygeia Avenue,residential,two_lane,2,25,1125.0,non_fhsz,1.0,1125.0,1163.25,1.034,F,1,517.0,catchment_based,2535,1458,3612.3749999999995,1458.0,0.0,60.58354303756646,False,True,True
 Hygeia Avenue,residential,two_lane,2,25,1125.0,non_fhsz,1.0,1125.0,1163.25,1.034,F,1,517.0,catchment_based,2535,1458,3612.3749999999995,1458.0,0.0,88.02172240777486,False,True,True
-Rancho Santa Fe Road,secondary,multilane,3,40,5700.0,non_fhsz,1.0,5700.0,2556.0,0.44842105263157894,D,5,1136.0,catchment_based,2265,1524,3227.6249999999995,1524.0,0.0,92.71871327883781,False,False,True
-Rancho Santa Fe Road,secondary,multilane,3,40,5700.0,non_fhsz,1.0,5700.0,2556.0,0.44842105263157894,D,5,1136.0,catchment_based,2265,1524,3227.6249999999995,1524.0,0.0,252.05194958249945,False,False,True
 Countrywood Lane,residential,two_lane,1,25,1125.0,non_fhsz,1.0,1125.0,924.75,0.822,E,1,411.0,catchment_based,2982,1017,4249.349999999999,1017.0,0.0,94.10737892900917,True,True,True
 Countrywood Lane,residential,two_lane,1,25,1125.0,non_fhsz,1.0,1125.0,924.75,0.822,E,1,411.0,catchment_based,2982,1017,4249.349999999999,1017.0,0.0,49.56197924148466,True,True,True
 West G Street,residential,two_lane,1,25,1125.0,non_fhsz,1.0,1125.0,1487.25,1.322,F,1,661.0,catchment_based,1526,5120,2174.5499999999997,5120.0,0.0,88.12641214850593,True,True,True
-South Coast Highway,primary,multilane,5,30,9500.0,non_fhsz,1.0,9500.0,1487.25,0.15655263157894736,B,1,661.0,catchment_based,1526,5120,2174.5499999999997,5120.0,0.0,146.9209077893501,False,False,True
 West G Street,residential,two_lane,1,25,1125.0,non_fhsz,1.0,1125.0,1487.25,1.322,F,1,661.0,catchment_based,1526,5120,2174.5499999999997,5120.0,0.0,92.0974427620393,True,True,True
 West G Street,residential,two_lane,1,25,1125.0,non_fhsz,1.0,1125.0,1487.25,1.322,F,1,661.0,catchment_based,1526,5120,2174.5499999999997,5120.0,0.0,88.12641214850593,True,True,True
 2nd Street,residential,two_lane,2,25,1125.0,non_fhsz,1.0,1125.0,1487.25,1.322,F,1,661.0,catchment_based,1526,5120,2174.5499999999997,5120.0,0.0,145.83193900207448,False,True,True
@@ -55,26 +45,17 @@ Gardena Road,residential,two_lane,2,25,1125.0,non_fhsz,1.0,1125.0,1026.0,0.912,E
 Gardena Road,residential,two_lane,2,25,1125.0,non_fhsz,1.0,1125.0,1026.0,0.912,E,1,456.0,catchment_based,2409,3973,3432.825,3973.0,0.0,42.908909560307286,False,True,True
 Santa Fe Drive,secondary,multilane,3,35,5700.0,non_fhsz,1.0,5700.0,4322.25,0.7582894736842105,E,4,1921.0,catchment_based,2777,3227,3957.2249999999995,3227.0,0.0,100.30972259445677,False,False,True
 Gardena Road,residential,two_lane,2,25,1125.0,non_fhsz,1.0,1125.0,1026.0,0.912,E,1,456.0,catchment_based,3248,4330,4628.4,4330.0,0.0,402.45410885579713,False,True,True
-Santa Fe Drive,secondary,multilane,6,35,11400.0,non_fhsz,1.0,11400.0,5348.25,0.4691447368421053,D,5,2377.0,catchment_based,2777,3227,3957.2249999999995,3227.0,0.0,91.91325622256275,False,False,True
 Eolus Avenue,tertiary,two_lane,1,25,1125.0,high_fhsz,0.5,562.5,1372.5,1.22,F,2,610.0,catchment_based,1978,595,2818.6499999999996,595.0,0.0,17.28907618072962,True,True,True
 Eolus Avenue,tertiary,two_lane,1,25,1125.0,high_fhsz,0.5,562.5,1372.5,1.22,F,2,610.0,catchment_based,1978,595,2818.6499999999996,595.0,0.0,324.6486727639545,True,True,True
 Avenida la Posta,residential,two_lane,1,25,1125.0,non_fhsz,1.0,1125.0,3714.75,3.302,F,6,1651.0,catchment_based,2823,1623,4022.7749999999996,1623.0,0.0,259.1907202288169,True,True,True
 Avenida la Posta,residential,two_lane,1,25,1125.0,non_fhsz,1.0,1125.0,3714.75,3.302,F,6,1651.0,catchment_based,2823,1623,4022.7749999999996,1623.0,0.0,133.00186919951432,True,True,True
 Windsor Road,tertiary,two_lane,2,25,1125.0,non_fhsz,1.0,1125.0,1066.5,0.948,E,1,474.0,catchment_based,3813,2012,5433.525,2012.0,0.0,92.34699706803758,False,True,True
-Villa Cardiff Drive,tertiary,two_lane,2,25,1125.0,non_fhsz,1.0,1125.0,1066.5,0.948,E,1,474.0,catchment_based,3292,1948,4691.099999999999,1948.0,0.0,68.6188565807999,False,True,True
 Nolbey Street,residential,two_lane,2,25,1125.0,non_fhsz,1.0,1125.0,969.75,0.862,E,1,431.0,catchment_based,3292,1948,4691.099999999999,1948.0,0.0,96.10844136961401,False,True,True
-Villa Cardiff Drive,tertiary,two_lane,1,25,1125.0,non_fhsz,1.0,1125.0,2036.25,1.81,F,2,905.0,catchment_based,3292,1948,4691.099999999999,1948.0,0.0,295.83768752733675,True,True,True
-Villa Cardiff Drive,tertiary,two_lane,2,25,1125.0,non_fhsz,1.0,1125.0,1066.5,0.948,E,1,474.0,catchment_based,3292,1948,4691.099999999999,1948.0,0.0,68.6188565807999,False,True,True
-Villa Cardiff Drive,tertiary,two_lane,1,25,1125.0,non_fhsz,1.0,1125.0,2036.25,1.81,F,2,905.0,catchment_based,3292,1948,4691.099999999999,1948.0,0.0,295.8376875273368,True,True,True
 Birmingham Drive,secondary,multilane,3,35,5700.0,non_fhsz,1.0,5700.0,1818.0,0.31894736842105265,C,2,808.0,catchment_based,3292,1948,4691.099999999999,1948.0,0.0,182.85411275999303,False,True,True
-Birmingham Drive,secondary,multilane,3,35,5700.0,non_fhsz,1.0,5700.0,3854.25,0.6761842105263158,E,4,1713.0,catchment_based,3292,1948,4691.099999999999,1948.0,0.0,49.84421787984178,False,True,True
-Birmingham Drive,secondary,multilane,3,30,5700.0,non_fhsz,1.0,5700.0,4700.25,0.8246052631578947,E,3,2089.0,catchment_based,3292,1948,4691.099999999999,1948.0,0.0,59.75772340093105,False,False,True
-Birmingham Drive,secondary,multilane,2,30,3800.0,non_fhsz,1.0,3800.0,4700.25,1.2369078947368422,F,3,2089.0,catchment_based,3292,1948,4691.099999999999,1948.0,0.0,85.62792789383134,False,False,True
 Lone Jack Road,tertiary,two_lane,1,25,1125.0,non_fhsz,1.0,1125.0,2556.0,2.272,F,5,1136.0,catchment_based,748,1037,1065.8999999999999,1037.0,0.0,61.76451661280753,True,True,True
 Lone Jack Road,tertiary,two_lane,1,25,1125.0,moderate_fhsz,0.75,843.75,2556.0,2.272,F,5,1136.0,catchment_based,1783,1710,2540.7749999999996,1710.0,0.0,592.0607737231566,True,True,True
 Newport Avenue,residential,two_lane,2,25,1125.0,non_fhsz,1.0,1125.0,1390.5,1.236,F,2,618.0,catchment_based,2970,2875,4232.25,2875.0,0.0,194.98477650382554,False,True,True
 Newport Avenue,residential,two_lane,2,25,1125.0,non_fhsz,1.0,1125.0,1390.5,1.236,F,2,618.0,catchment_based,2970,2875,4232.25,2875.0,0.0,124.92076810914841,False,True,True
-Newcastle Avenue,residential,two_lane,2,25,1125.0,moderate_fhsz,0.75,843.75,1390.5,1.236,F,2,618.0,catchment_based,2970,2875,4232.25,2875.0,0.0,284.9474807836419,False,True,True
 Cambridge Avenue,residential,two_lane,2,25,1125.0,high_fhsz,0.5,562.5,1887.75,1.678,F,1,839.0,catchment_based,2074,1435,2955.45,1435.0,0.0,34.69672745814974,False,True,True
 Cambridge Avenue,residential,two_lane,2,25,1125.0,high_fhsz,0.5,562.5,1887.75,1.678,F,1,839.0,catchment_based,2074,1435,2955.45,1435.0,0.0,181.80706940071744,False,True,True
 Montgomery Avenue,tertiary,two_lane,2,25,1125.0,non_fhsz,1.0,1125.0,1887.75,1.678,F,1,839.0,catchment_based,1453,1509,2070.5249999999996,1509.0,0.0,187.78148247572358,False,True,True
@@ -92,7 +73,6 @@ Chesterfield Drive,tertiary,two_lane,1,25,1125.0,non_fhsz,1.0,1125.0,1431.0,1.27
 Chesterfield Drive,tertiary,two_lane,1,25,1125.0,non_fhsz,1.0,1125.0,1431.0,1.272,F,1,636.0,catchment_based,2615,1730,3726.3749999999995,1730.0,0.0,76.98286754902064,True,True,True
 Norfolk Drive,residential,two_lane,1,25,1125.0,non_fhsz,1.0,1125.0,1431.0,1.272,F,1,636.0,catchment_based,2913,1792,4151.025,1792.0,0.0,77.70272330235609,True,True,True
 Norfolk Drive,residential,two_lane,1,25,1125.0,non_fhsz,1.0,1125.0,1431.0,1.272,F,1,636.0,catchment_based,2615,1730,3726.3749999999995,1730.0,0.0,78.51495747522831,True,True,True
-Shields Avenue,residential,two_lane,1,25,1125.0,non_fhsz,1.0,1125.0,852.75,0.758,E,1,379.0,catchment_based,2809,1724,4002.825,1724.0,0.0,322.5784575048452,True,True,True
 South El Camino Real,primary,multilane,5,55,9500.0,vhfhsz,0.35,3325.0,2223.0,0.234,C,2,988.0,catchment_based,1576,1819,2245.7999999999997,1819.0,0.0,340.25983071418926,False,False,True
 South El Camino Real,primary,multilane,5,55,9500.0,vhfhsz,0.35,3325.0,2223.0,0.234,C,2,988.0,catchment_based,988,941,1407.8999999999999,941.0,0.0,251.56492311337354,False,False,True
 La Veta Avenue,residential,two_lane,2,25,1125.0,non_fhsz,1.0,1125.0,1201.5,1.068,F,1,534.0,catchment_based,2651,3957,3777.6749999999997,3957.0,0.0,70.51154355645738,False,True,True
@@ -107,26 +87,20 @@ Birmingham Drive,secondary,multilane,2,35,3800.0,moderate_fhsz,0.75,2850.0,1818.
 Colony Terrace,residential,two_lane,1,25,1125.0,vhfhsz,0.35,393.75,1629.0,1.448,F,1,724.0,catchment_based,1296,950,1846.8,950.0,0.0,386.24082218274305,True,True,True
 Manchester Avenue,secondary,multilane,2,35,3800.0,vhfhsz,0.35,1330.0,1804.5,0.4748684210526316,D,2,802.0,catchment_based,2550,2171,3633.7499999999995,2171.0,0.0,273.71474100774105,True,True,True
 Manchester Avenue,secondary,multilane,2,35,3800.0,vhfhsz,0.35,1330.0,1804.5,0.4748684210526316,D,2,802.0,catchment_based,1296,950,1846.8,950.0,0.0,470.7594968108925,True,True,True
-Quail Gardens Drive,secondary,multilane,2,30,3800.0,non_fhsz,1.0,3800.0,2144.25,0.5642763157894737,D,1,953.0,catchment_based,2181,2852,3107.9249999999997,2852.0,0.0,109.967915472239,False,False,True
-Encinitas Boulevard,primary,multilane,6,45,11400.0,non_fhsz,1.0,11400.0,2459.25,0.21572368421052632,C,2,1093.0,catchment_based,2853,2916,4065.5249999999996,2916.0,0.0,382.6075267900454,False,False,True
-Encinitas Boulevard,primary,multilane,6,45,11400.0,non_fhsz,1.0,11400.0,4603.5,0.4038157894736842,D,3,2046.0,catchment_based,3296,3308,4696.799999999999,3308.0,0.0,271.0775916062242,False,False,True
 La Veta Avenue,residential,two_lane,2,25,1125.0,non_fhsz,1.0,1125.0,1201.5,1.068,F,1,534.0,catchment_based,2651,3957,3777.6749999999997,3957.0,0.0,70.51154355645738,False,True,True
 La Veta Avenue,residential,two_lane,2,25,1125.0,non_fhsz,1.0,1125.0,1201.5,1.068,F,1,534.0,catchment_based,1990,1371,2835.7499999999995,1371.0,0.0,213.592557318372,False,True,True
 La Mesa Avenue,residential,two_lane,1,25,1125.0,non_fhsz,1.0,1125.0,1082.25,0.962,F,1,481.0,catchment_based,1532,1091,2183.1,1091.0,0.0,70.10867913426621,True,True,True
 La Mesa Avenue,residential,two_lane,1,25,1125.0,non_fhsz,1.0,1125.0,1082.25,0.962,F,1,481.0,catchment_based,2193,3677,3125.0249999999996,3677.0,0.0,71.33458353255872,True,True,True
 Whitewood Place,residential,two_lane,1,25,1125.0,non_fhsz,1.0,1125.0,2328.75,2.07,F,1,1035.0,catchment_based,2159,1468,3076.575,1468.0,0.0,136.99532645487662,True,True,True
-Whitewood Place,residential,two_lane,1,25,1125.0,non_fhsz,1.0,1125.0,2328.75,2.07,F,1,1035.0,catchment_based,2159,1468,3076.575,1468.0,0.0,527.8624966705169,True,True,True
 Whitewood Place,residential,two_lane,1,25,1125.0,non_fhsz,1.0,1125.0,2328.75,2.07,F,1,1035.0,catchment_based,2159,1468,3076.575,1468.0,0.0,67.93717751990042,True,True,True
 Whitewood Place,residential,two_lane,1,25,1125.0,non_fhsz,1.0,1125.0,2328.75,2.07,F,1,1035.0,catchment_based,2159,1468,3076.575,1468.0,0.0,136.99532645487662,True,True,True
 Whitewood Place,residential,two_lane,1,25,1125.0,non_fhsz,1.0,1125.0,2328.75,2.07,F,1,1035.0,catchment_based,2159,1468,3076.575,1468.0,0.0,67.93717751990042,True,True,True
-Valleda Lane,residential,two_lane,1,25,1125.0,moderate_fhsz,0.75,843.75,544.5,0.484,D,1,242.0,catchment_based,2633,3380,3752.0249999999996,3380.0,0.0,386.7794647152913,True,True,True
 Santa Fe Drive,secondary,multilane,3,35,5700.0,non_fhsz,1.0,5700.0,996.75,0.1748684210526316,B,1,443.0,catchment_based,2347,1630,3344.475,1630.0,0.0,79.61734502063297,False,False,True
 Santa Fe Drive,secondary,multilane,3,35,5700.0,non_fhsz,1.0,5700.0,996.75,0.1748684210526316,B,1,443.0,catchment_based,2818,2733,4015.6499999999996,2733.0,0.0,113.83106434408165,False,False,True
 Village Run East,residential,two_lane,1,25,1125.0,non_fhsz,1.0,1125.0,924.75,0.822,E,1,411.0,catchment_based,2420,1521,3448.4999999999995,1521.0,0.0,222.6875444933451,True,True,True
 Lone Jack Road,tertiary,two_lane,1,25,1125.0,non_fhsz,1.0,1125.0,2556.0,2.272,F,5,1136.0,catchment_based,748,1037,1065.8999999999999,1037.0,0.0,101.96266392369478,True,True,True
 Lone Jack Road,tertiary,two_lane,1,25,1125.0,non_fhsz,1.0,1125.0,2556.0,2.272,F,5,1136.0,catchment_based,748,1037,1065.8999999999999,1037.0,0.0,61.76451661280753,True,True,True
 Saxony Road,tertiary,two_lane,1,40,1700.0,non_fhsz,1.0,1700.0,1482.75,0.8722058823529412,E,1,659.0,catchment_based,2070,1507,2949.7499999999995,1507.0,0.0,100.6412605799833,True,False,True
-Saxony Road,tertiary,two_lane,1,25,1125.0,non_fhsz,1.0,1125.0,1482.75,1.318,F,1,659.0,catchment_based,2070,1507,2949.7499999999995,1507.0,0.0,245.3852386450966,True,False,True
 Parkwood Lane,residential,two_lane,1,25,1125.0,moderate_fhsz,0.75,843.75,495.0,0.44,D,1,220.0,catchment_based,1978,595,2818.6499999999996,595.0,0.0,237.77683694796934,True,True,True
 Parkwood Lane,residential,two_lane,1,25,1125.0,moderate_fhsz,0.75,843.75,495.0,0.44,D,1,220.0,catchment_based,1978,595,2818.6499999999996,595.0,0.0,237.77683694796934,True,True,True
 Eolus Avenue,tertiary,two_lane,1,25,1125.0,high_fhsz,0.5,562.5,1372.5,1.22,F,2,610.0,catchment_based,1978,595,2818.6499999999996,595.0,0.0,324.6486727639545,True,True,True
@@ -177,7 +151,6 @@ Village Run East,residential,two_lane,1,25,1125.0,non_fhsz,1.0,1125.0,924.75,0.8
 Hygeia Avenue,residential,two_lane,2,25,1125.0,non_fhsz,1.0,1125.0,1163.25,1.034,F,1,517.0,catchment_based,3100,1774,4417.5,1774.0,0.0,38.71216106714401,False,True,True
 Hygeia Avenue,residential,two_lane,2,25,1125.0,non_fhsz,1.0,1125.0,1163.25,1.034,F,1,517.0,catchment_based,3320,1859,4731.0,1859.0,0.0,339.45375965410625,False,True,True
 Turner Avenue,residential,two_lane,1,25,1125.0,non_fhsz,1.0,1125.0,852.75,0.758,E,1,379.0,catchment_based,2009,1396,2862.825,1396.0,0.0,126.92412220958109,True,True,True
-Encinitas Boulevard,primary,multilane,2,45,3800.0,non_fhsz,1.0,3800.0,852.75,0.2244078947368421,C,1,379.0,catchment_based,3389,3013,4829.325,3013.0,0.0,159.80988149852078,False,False,True
 Turner Avenue,residential,two_lane,1,25,1125.0,non_fhsz,1.0,1125.0,852.75,0.758,E,1,379.0,catchment_based,2009,1396,2862.825,1396.0,0.0,77.61775012049998,True,True,True
 Turner Avenue,residential,two_lane,1,25,1125.0,non_fhsz,1.0,1125.0,852.75,0.758,E,1,379.0,catchment_based,2009,1396,2862.825,1396.0,0.0,126.92412220958109,True,True,True
 Turner Avenue,residential,two_lane,1,25,1125.0,non_fhsz,1.0,1125.0,852.75,0.758,E,1,379.0,catchment_based,2251,1625,3207.6749999999997,1625.0,0.0,78.40499994566888,True,True,True
@@ -186,31 +159,24 @@ Turner Avenue,residential,two_lane,1,25,1125.0,non_fhsz,1.0,1125.0,852.75,0.758,
 Turner Avenue,residential,two_lane,1,25,1125.0,non_fhsz,1.0,1125.0,852.75,0.758,E,1,379.0,catchment_based,2251,1625,3207.6749999999997,1625.0,0.0,78.40499994566888,True,True,True
 Turner Avenue,residential,two_lane,1,25,1125.0,non_fhsz,1.0,1125.0,852.75,0.758,E,1,379.0,catchment_based,2809,1724,4002.825,1724.0,0.0,187.14281132296648,True,True,True
 Shields Avenue,residential,two_lane,1,25,1125.0,non_fhsz,1.0,1125.0,852.75,0.758,E,1,379.0,catchment_based,1642,1303,2339.85,1303.0,0.0,33.48226948539635,True,True,True
-Shields Avenue,residential,two_lane,1,25,1125.0,non_fhsz,1.0,1125.0,852.75,0.758,E,1,379.0,catchment_based,2809,1724,4002.825,1724.0,0.0,322.5784575048452,True,True,True
 El Portal Street,tertiary,two_lane,2,25,1125.0,non_fhsz,1.0,1125.0,1082.25,0.962,F,1,481.0,catchment_based,1990,1371,2835.7499999999995,1371.0,0.0,40.63827922993492,False,True,True
 El Portal Street,tertiary,two_lane,2,25,1125.0,non_fhsz,1.0,1125.0,1082.25,0.962,F,1,481.0,catchment_based,1990,1371,2835.7499999999995,1371.0,0.0,80.07764773843991,False,True,True
-La Veta Avenue,residential,two_lane,2,25,1125.0,non_fhsz,1.0,1125.0,1201.5,1.068,F,1,534.0,catchment_based,1990,1371,2835.7499999999995,1371.0,0.0,244.57844202525774,False,True,True
 La Veta Avenue,residential,two_lane,2,25,1125.0,non_fhsz,1.0,1125.0,1201.5,1.068,F,1,534.0,catchment_based,1990,1371,2835.7499999999995,1371.0,0.0,286.124264286217,False,True,True
 La Mesa Avenue,residential,two_lane,1,25,1125.0,non_fhsz,1.0,1125.0,1082.25,0.962,F,1,481.0,catchment_based,1532,1091,2183.1,1091.0,0.0,230.34487494133194,True,True,True
 La Mesa Avenue,residential,two_lane,1,25,1125.0,non_fhsz,1.0,1125.0,1082.25,0.962,F,1,481.0,catchment_based,1532,1091,2183.1,1091.0,0.0,284.1581892674186,True,True,True
 El Portal Street,tertiary,two_lane,2,25,1125.0,non_fhsz,1.0,1125.0,1082.25,0.962,F,1,481.0,catchment_based,1990,1371,2835.7499999999995,1371.0,0.0,80.07764773843991,False,True,True
 Tzena Way,residential,two_lane,1,25,1125.0,non_fhsz,1.0,1125.0,544.5,0.484,D,1,242.0,catchment_based,2223,2615,3167.7749999999996,2615.0,0.0,83.06811422420645,True,True,True
-Valleda Lane,residential,two_lane,1,25,1125.0,moderate_fhsz,0.75,843.75,544.5,0.484,D,1,242.0,catchment_based,2633,3380,3752.0249999999996,3380.0,0.0,386.7794647152913,True,True,True
 Jolina Way,residential,two_lane,1,25,1125.0,non_fhsz,1.0,1125.0,544.5,0.484,D,1,242.0,catchment_based,1665,2516,2372.625,2516.0,0.0,243.89150515654669,True,True,True
 Tzena Way,residential,two_lane,1,25,1125.0,non_fhsz,1.0,1125.0,544.5,0.484,D,1,242.0,catchment_based,2686,2631,3827.5499999999997,2631.0,0.0,262.3487036430212,True,True,True
 Tzena Way,residential,two_lane,1,25,1125.0,non_fhsz,1.0,1125.0,544.5,0.484,D,1,242.0,catchment_based,2223,2615,3167.7749999999996,2615.0,0.0,83.06811422420645,True,True,True
 Tzena Way,residential,two_lane,1,25,1125.0,non_fhsz,1.0,1125.0,544.5,0.484,D,1,242.0,catchment_based,2686,2631,3827.5499999999997,2631.0,0.0,262.3487036430212,True,True,True
-Caminito Cape Sebastian,residential,two_lane,1,25,1125.0,vhfhsz,0.35,393.75,591.75,0.526,D,1,263.0,catchment_based,2160,859,3077.9999999999995,859.0,0.0,237.00809842555424,True,True,True
 Willowspring South Drive,tertiary,two_lane,1,25,1125.0,non_fhsz,1.0,1125.0,996.75,0.886,E,1,443.0,catchment_based,1273,1395,1814.0249999999999,1395.0,0.0,68.95487502651105,True,True,True
 Willowspring South Drive,tertiary,two_lane,1,25,1125.0,non_fhsz,1.0,1125.0,996.75,0.886,E,1,443.0,catchment_based,1767,1517,2517.975,1517.0,0.0,160.4932371247307,True,True,True
 Delphinium Street,residential,two_lane,1,25,1125.0,moderate_fhsz,0.75,843.75,1703.25,1.514,F,1,757.0,catchment_based,2853,2916,4065.5249999999996,2916.0,0.0,318.3597734792938,True,True,True
-Bumann Road,residential,two_lane,1,25,1125.0,vhfhsz,0.35,393.75,252.0,0.224,C,1,112.0,catchment_based,147,998,209.475,998.0,0.0,763.0516972478218,True,True,True
 Bumann Road,residential,two_lane,1,25,1125.0,vhfhsz,0.35,393.75,252.0,0.224,C,1,112.0,catchment_based,386,1055,550.05,1055.0,0.0,319.3682864667912,True,True,True
 Avenida la Posta,residential,two_lane,1,25,1125.0,non_fhsz,1.0,1125.0,3714.75,3.302,F,6,1651.0,catchment_based,925,869,1318.125,869.0,0.0,92.43861813233079,True,True,True
 Avenida la Posta,residential,two_lane,1,25,1125.0,non_fhsz,1.0,1125.0,3714.75,3.302,F,6,1651.0,catchment_based,925,869,1318.125,869.0,0.0,334.0550930254405,True,True,True
 Glen Arbor Drive,secondary,multilane,2,35,3800.0,moderate_fhsz,0.75,2850.0,2328.75,0.6128289473684211,E,1,1035.0,catchment_based,1725,1197,2458.125,1197.0,0.0,181.0046570551545,True,True,True
-Saxony Road,tertiary,two_lane,1,25,1125.0,non_fhsz,1.0,1125.0,1482.75,1.318,F,1,659.0,catchment_based,2070,1507,2949.7499999999995,1507.0,0.0,245.38523864509654,True,False,True
-Saxony Road,tertiary,two_lane,4,25,1125.0,non_fhsz,1.0,1125.0,1482.75,1.318,F,1,659.0,catchment_based,2884,2896,4109.7,2896.0,0.0,193.49667196985664,False,False,True
 Avenida la Posta,residential,two_lane,1,25,1125.0,non_fhsz,1.0,1125.0,3714.75,3.302,F,6,1651.0,catchment_based,1073,203,1529.0249999999999,203.0,0.0,65.6915931683723,True,True,True
 Avenida la Posta,residential,two_lane,1,25,1125.0,non_fhsz,1.0,1125.0,3714.75,3.302,F,6,1651.0,catchment_based,2823,1623,4022.7749999999996,1623.0,0.0,259.1907202288169,True,True,True
 Berryman Canyon,residential,two_lane,1,25,1125.0,vhfhsz,0.35,393.75,1111.5,0.988,F,1,494.0,catchment_based,1431,1228,2039.1749999999997,1228.0,0.0,229.5745664177295,True,True,True
@@ -218,17 +184,12 @@ Tennis Club Drive,residential,two_lane,1,25,1125.0,vhfhsz,0.35,393.75,1111.5,0.9
 Tennis Club Drive,residential,two_lane,1,25,1125.0,vhfhsz,0.35,393.75,1111.5,0.988,F,1,494.0,catchment_based,988,941,1407.8999999999999,941.0,0.0,119.47462056887699,True,True,True
 Evergreen Drive,residential,two_lane,1,25,1125.0,non_fhsz,1.0,1125.0,1172.25,1.042,F,1,521.0,catchment_based,2758,1070,3930.1499999999996,1070.0,0.0,381.23287961716505,True,True,True
 Evergreen Drive,residential,two_lane,1,25,1125.0,non_fhsz,1.0,1125.0,1172.25,1.042,F,1,521.0,catchment_based,3229,2173,4601.325,2173.0,0.0,112.09230522338136,True,True,True
-Santa Fe Drive,secondary,multilane,6,35,11400.0,non_fhsz,1.0,11400.0,5348.25,0.4691447368421053,D,5,2377.0,catchment_based,2777,3227,3957.2249999999995,3227.0,0.0,91.91325622256275,False,False,True
 Santa Fe Drive,secondary,multilane,3,35,5700.0,non_fhsz,1.0,5700.0,4322.25,0.7582894736842105,E,4,1921.0,catchment_based,2777,3227,3957.2249999999995,3227.0,0.0,100.30972259445677,False,False,True
 Arcadia Road,residential,two_lane,1,25,1125.0,non_fhsz,1.0,1125.0,2153.25,1.914,F,2,957.0,catchment_based,3248,4330,4628.4,4330.0,0.0,401.2461932935862,True,True,True
 Santa Fe Drive,secondary,multilane,3,35,5700.0,non_fhsz,1.0,5700.0,4322.25,0.7582894736842105,E,4,1921.0,catchment_based,2777,3227,3957.2249999999995,3227.0,0.0,104.49800058923535,False,False,True
 Santa Fe Drive,secondary,multilane,3,35,5700.0,non_fhsz,1.0,5700.0,4322.25,0.7582894736842105,E,4,1921.0,catchment_based,2777,3227,3957.2249999999995,3227.0,0.0,104.49800058923535,False,False,True
-Santa Fe Drive,secondary,multilane,3,35,5700.0,non_fhsz,1.0,5700.0,2169.0,0.38052631578947366,C,2,964.0,catchment_based,3247,2146,4626.974999999999,2146.0,0.0,406.828822129805,False,False,True
 Windsor Road,tertiary,two_lane,2,25,1125.0,non_fhsz,1.0,1125.0,1066.5,0.948,E,1,474.0,catchment_based,2839,1871,4045.575,1871.0,0.0,119.86554212476332,False,True,True
-Santa Fe Drive,secondary,multilane,4,35,7600.0,non_fhsz,1.0,7600.0,2169.0,0.28539473684210526,C,2,964.0,catchment_based,3247,2146,4626.974999999999,2146.0,0.0,406.82882212980496,False,False,True
-Santa Fe Drive,secondary,multilane,3,35,5700.0,non_fhsz,1.0,5700.0,2169.0,0.38052631578947366,C,2,964.0,catchment_based,2744,2078,3910.2,2078.0,0.0,138.71792451180607,False,False,True
 Santa Fe Drive,secondary,multilane,3,35,5700.0,non_fhsz,1.0,5700.0,2169.0,0.38052631578947366,C,2,964.0,catchment_based,2288,1907,3260.3999999999996,1907.0,0.0,63.30887217925995,False,False,True
-Santa Fe Drive,secondary,multilane,3,35,5700.0,non_fhsz,1.0,5700.0,2169.0,0.38052631578947366,C,2,964.0,catchment_based,2744,2078,3910.2,2078.0,0.0,138.7179245118061,False,False,True
 Santa Fe Drive,secondary,multilane,3,35,5700.0,non_fhsz,1.0,5700.0,2169.0,0.38052631578947366,C,2,964.0,catchment_based,2288,1907,3260.3999999999996,1907.0,0.0,63.30887217925995,False,False,True
 Santa Fe Drive,secondary,multilane,3,35,5700.0,non_fhsz,1.0,5700.0,2169.0,0.38052631578947366,C,2,964.0,catchment_based,2798,2091,3987.1499999999996,2091.0,0.0,99.5640156415642,False,False,True
 Evergreen Drive,residential,two_lane,1,25,1125.0,non_fhsz,1.0,1125.0,1172.25,1.042,F,1,521.0,catchment_based,3229,2173,4601.325,2173.0,0.0,112.09230522338135,True,True,True
@@ -242,24 +203,17 @@ Santa Fe Drive,secondary,multilane,3,35,5700.0,non_fhsz,1.0,5700.0,996.75,0.1748
 Santa Fe Drive,secondary,multilane,3,35,5700.0,non_fhsz,1.0,5700.0,996.75,0.1748684210526316,B,1,443.0,catchment_based,2347,1630,3344.475,1630.0,0.0,90.32799423608589,False,False,True
 Santa Fe Drive,secondary,multilane,3,35,5700.0,non_fhsz,1.0,5700.0,996.75,0.1748684210526316,B,1,443.0,catchment_based,2347,1630,3344.475,1630.0,0.0,90.32799423608589,False,False,True
 Santa Fe Drive,secondary,multilane,3,35,5700.0,non_fhsz,1.0,5700.0,996.75,0.1748684210526316,B,1,443.0,catchment_based,2347,1630,3344.475,1630.0,0.0,106.57796406082275,False,False,True
-Santa Fe Drive,secondary,multilane,4,35,7600.0,non_fhsz,1.0,7600.0,996.75,0.13115131578947367,B,1,443.0,catchment_based,2347,1630,3344.475,1630.0,0.0,61.409174965812355,False,False,True
 Santa Fe Drive,secondary,multilane,3,35,5700.0,non_fhsz,1.0,5700.0,996.75,0.1748684210526316,B,1,443.0,catchment_based,2347,1630,3344.475,1630.0,0.0,106.57796406082275,False,False,True
 Santa Fe Drive,secondary,multilane,3,35,5700.0,non_fhsz,1.0,5700.0,996.75,0.1748684210526316,B,1,443.0,catchment_based,2304,1643,3283.2,1643.0,0.0,118.90055150967862,False,False,True
-Santa Fe Drive,secondary,multilane,3,35,5700.0,non_fhsz,1.0,5700.0,996.75,0.1748684210526316,B,1,443.0,catchment_based,2347,1630,3344.475,1630.0,0.0,61.409174965812355,False,False,True
 Santa Fe Drive,secondary,multilane,3,35,5700.0,non_fhsz,1.0,5700.0,996.75,0.1748684210526316,B,1,443.0,catchment_based,2304,1643,3283.2,1643.0,0.0,71.41997832472448,False,False,True
 Santa Fe Drive,secondary,multilane,3,35,5700.0,non_fhsz,1.0,5700.0,996.75,0.1748684210526316,B,1,443.0,catchment_based,2304,1643,3283.2,1643.0,0.0,118.90055150967862,False,False,True
-Santa Fe Drive,secondary,multilane,4,35,7600.0,non_fhsz,1.0,7600.0,996.75,0.13115131578947367,B,1,443.0,catchment_based,1783,1579,2540.7749999999996,1579.0,0.0,285.5639501301638,False,False,True
 Santa Fe Drive,secondary,multilane,3,35,5700.0,non_fhsz,1.0,5700.0,996.75,0.1748684210526316,B,1,443.0,catchment_based,2304,1643,3283.2,1643.0,0.0,71.41997832472448,False,False,True
 Willowspring Drive North,tertiary,two_lane,1,25,1125.0,non_fhsz,1.0,1125.0,2328.75,2.07,F,1,1035.0,catchment_based,1446,798,2060.5499999999997,798.0,0.0,124.73209425251109,True,True,True
 Melba Road,tertiary,two_lane,1,25,1125.0,non_fhsz,1.0,1125.0,2153.25,1.914,F,2,957.0,catchment_based,2409,3973,3432.825,3973.0,0.0,100.63372200303958,True,False,True
 Melba Road,tertiary,two_lane,1,25,1125.0,non_fhsz,1.0,1125.0,2153.25,1.914,F,2,957.0,catchment_based,2409,3973,3432.825,3973.0,0.0,107.75831891776943,True,False,True
 Willowspring Drive North,tertiary,two_lane,1,25,1125.0,non_fhsz,1.0,1125.0,2328.75,2.07,F,1,1035.0,catchment_based,2519,1001,3589.575,1001.0,0.0,68.24865231612604,True,True,True
-East E Street,tertiary,two_lane,2,25,1125.0,non_fhsz,1.0,1125.0,1487.25,1.322,F,1,661.0,catchment_based,1526,5120,2174.5499999999997,5120.0,0.0,114.08753927048829,False,True,True
-South Coast Highway,primary,multilane,5,30,9500.0,non_fhsz,1.0,9500.0,1487.25,0.15655263157894736,B,1,661.0,catchment_based,1526,5120,2174.5499999999997,5120.0,0.0,147.32370503321027,False,False,True
 2nd Street,residential,two_lane,2,25,1125.0,non_fhsz,1.0,1125.0,1487.25,1.322,F,1,661.0,catchment_based,1526,5120,2174.5499999999997,5120.0,0.0,147.43166993165764,False,True,True
 East D Street,tertiary,two_lane,2,25,1125.0,non_fhsz,1.0,1125.0,771.75,0.686,E,1,343.0,catchment_based,4165,7474,5935.124999999999,7474.0,0.0,229.82180039241055,False,False,True
-South Vulcan Avenue,secondary,multilane,4,35,7600.0,non_fhsz,1.0,7600.0,2259.0,0.29723684210526313,C,2,1004.0,catchment_based,3035,6086,4324.875,6086.0,0.0,308.08658428724686,False,False,True
-South Vulcan Avenue,secondary,multilane,4,35,7600.0,non_fhsz,1.0,7600.0,1487.25,0.1956907894736842,B,1,661.0,catchment_based,3035,6086,4324.875,6086.0,0.0,143.79606610561547,False,False,True
 East D Street,tertiary,two_lane,2,25,1125.0,non_fhsz,1.0,1125.0,771.75,0.686,E,1,343.0,catchment_based,3631,7259,5174.174999999999,7259.0,0.0,21.8296730769281,False,False,True
 East D Street,tertiary,two_lane,2,25,1125.0,non_fhsz,1.0,1125.0,771.75,0.686,E,1,343.0,catchment_based,4165,7474,5935.124999999999,7474.0,0.0,229.82180039241055,False,False,True
 East D Street,tertiary,two_lane,2,25,1125.0,non_fhsz,1.0,1125.0,771.75,0.686,E,1,343.0,catchment_based,4067,7730,5795.474999999999,7730.0,0.0,52.75149346902386,False,False,True
@@ -270,13 +224,10 @@ Ocean View Avenue,residential,two_lane,1,25,1125.0,non_fhsz,1.0,1125.0,1030.5,0.
 Lone Jack Road,tertiary,two_lane,1,25,1125.0,high_fhsz,0.5,562.5,951.75,0.846,E,4,423.0,catchment_based,860,1668,1225.5,1668.0,0.0,247.7974516233907,True,True,True
 Lone Jack Road,tertiary,two_lane,1,25,1125.0,moderate_fhsz,0.75,843.75,951.75,0.846,E,4,423.0,catchment_based,748,1037,1065.8999999999999,1037.0,0.0,194.495792289096,True,True,True
 Camino del Rancho,residential,two_lane,1,25,1125.0,high_fhsz,0.5,562.5,78.75,0.07,A,1,35.0,catchment_based,860,1668,1225.5,1668.0,0.0,144.39255995311086,True,True,True
-Lone Jack Road,tertiary,two_lane,1,25,1125.0,high_fhsz,0.5,562.5,951.75,0.846,E,4,423.0,catchment_based,825,1301,1175.625,1301.0,0.0,154.93707038734345,True,True,True
 Lone Jack Road,tertiary,two_lane,1,25,1125.0,high_fhsz,0.5,562.5,951.75,0.846,E,4,423.0,catchment_based,860,1668,1225.5,1668.0,0.0,247.79745162339074,True,True,True
 2nd Street,residential,two_lane,2,25,1125.0,non_fhsz,1.0,1125.0,1487.25,1.322,F,1,661.0,catchment_based,2022,5191,2881.35,5191.0,0.0,146.0505756662185,False,True,True
 2nd Street,residential,two_lane,2,25,1125.0,non_fhsz,1.0,1125.0,1487.25,1.322,F,1,661.0,catchment_based,1526,5120,2174.5499999999997,5120.0,0.0,147.42341167827269,False,True,True
 Delphinium Street,residential,two_lane,1,25,1125.0,non_fhsz,1.0,1125.0,1703.25,1.514,F,1,757.0,catchment_based,2853,2916,4065.5249999999996,2916.0,0.0,95.57463768002486,True,True,True
-Encinitas Boulevard,primary,multilane,6,45,11400.0,non_fhsz,1.0,11400.0,2459.25,0.21572368421052632,C,2,1093.0,catchment_based,2853,2916,4065.5249999999996,2916.0,0.0,382.6075267900455,False,False,True
-Encinitas Boulevard,primary,multilane,5,45,9500.0,non_fhsz,1.0,9500.0,756.0,0.07957894736842105,A,1,336.0,catchment_based,2853,2916,4065.5249999999996,2916.0,0.0,164.2724663453008,False,False,True
 Delphinium Street,residential,two_lane,1,25,1125.0,non_fhsz,1.0,1125.0,1703.25,1.514,F,1,757.0,catchment_based,2853,2916,4065.5249999999996,2916.0,0.0,75.55672563713881,True,True,True
 Delphinium Street,residential,two_lane,1,25,1125.0,non_fhsz,1.0,1125.0,1703.25,1.514,F,1,757.0,catchment_based,2853,2916,4065.5249999999996,2916.0,0.0,95.57463768002486,True,True,True
 Teaberry Street,residential,two_lane,1,25,1125.0,non_fhsz,1.0,1125.0,1703.25,1.514,F,1,757.0,catchment_based,2853,2916,4065.5249999999996,2916.0,0.0,176.37269141414038,True,True,True
@@ -326,15 +277,9 @@ Robert Lane,residential,two_lane,1,25,1125.0,vhfhsz,0.35,393.75,922.5,0.82,E,1,4
 Gardendale Road,residential,two_lane,1,25,1125.0,non_fhsz,1.0,1125.0,5550.75,4.934,F,4,2467.0,catchment_based,2467,913,3515.475,913.0,0.0,59.897348908153695,True,True,True
 Gardendale Road,residential,two_lane,1,25,1125.0,non_fhsz,1.0,1125.0,5550.75,4.934,F,4,2467.0,catchment_based,2467,913,3515.475,913.0,0.0,86.25131966803303,True,True,True
 Village Run East,residential,two_lane,1,25,1125.0,non_fhsz,1.0,1125.0,924.75,0.822,E,1,411.0,catchment_based,2467,913,3515.475,913.0,0.0,130.2718163932032,True,True,True
-Rancho Santa Fe Road,secondary,multilane,3,40,5700.0,non_fhsz,1.0,5700.0,2556.0,0.44842105263157894,D,5,1136.0,catchment_based,2265,1524,3227.6249999999995,1524.0,0.0,252.0519495824994,False,False,True
-Rancho Santa Fe Road,secondary,multilane,3,40,5700.0,non_fhsz,1.0,5700.0,2556.0,0.44842105263157894,D,5,1136.0,catchment_based,2265,1524,3227.6249999999995,1524.0,0.0,165.42027600489317,False,False,True
 North Vulcan Avenue,secondary,multilane,2,40,3800.0,non_fhsz,1.0,3800.0,1653.75,0.4351973684210526,D,1,735.0,catchment_based,2544,600,3625.2,600.0,0.0,324.38439450865013,False,False,True
 North Vulcan Avenue,secondary,multilane,2,40,3800.0,non_fhsz,1.0,3800.0,1653.75,0.4351973684210526,D,1,735.0,catchment_based,2599,733,3703.575,733.0,0.0,257.5884057132108,False,False,True
 B Street,tertiary,two_lane,1,40,1700.0,non_fhsz,1.0,1700.0,1201.5,0.706764705882353,E,1,534.0,catchment_based,2513,3838,3581.0249999999996,3838.0,0.0,93.24205461019488,True,False,True
-Encinitas Boulevard,primary,multilane,5,40,9500.0,non_fhsz,1.0,9500.0,2283.75,0.24039473684210527,C,2,1015.0,catchment_based,2513,3838,3581.0249999999996,3838.0,0.0,114.12999139995307,False,False,True
-North Coast Highway,primary,multilane,4,45,7600.0,non_fhsz,1.0,7600.0,1082.25,0.14240131578947368,B,1,481.0,catchment_based,2513,3838,3581.0249999999996,3838.0,0.0,130.3268574098119,False,True,True
-South Coast Highway,primary,multilane,4,30,7600.0,non_fhsz,1.0,7600.0,1487.25,0.1956907894736842,B,1,661.0,catchment_based,1526,5120,2174.5499999999997,5120.0,0.0,146.9209077893501,False,False,True
-South Coast Highway,primary,multilane,4,30,7600.0,non_fhsz,1.0,7600.0,1487.25,0.1956907894736842,B,1,661.0,catchment_based,1526,5120,2174.5499999999997,5120.0,0.0,147.32370503321025,False,False,True
 Willowspring South Drive,tertiary,two_lane,1,25,1125.0,non_fhsz,1.0,1125.0,996.75,0.886,E,1,443.0,catchment_based,1767,1517,2517.975,1517.0,0.0,160.4932371247307,True,True,True
 Willowspring South Drive,tertiary,two_lane,1,25,1125.0,non_fhsz,1.0,1125.0,996.75,0.886,E,1,443.0,catchment_based,2491,1651,3549.6749999999997,1651.0,0.0,105.72589788357041,True,True,True
 Bumann Road,residential,two_lane,1,25,1125.0,high_fhsz,0.5,562.5,252.0,0.224,C,1,112.0,catchment_based,386,1055,550.05,1055.0,0.0,114.89073953190933,True,True,True
@@ -357,10 +302,8 @@ Monterey Place,residential,two_lane,1,25,1125.0,vhfhsz,0.35,393.75,2349.0,2.088,
 Phoebe Street,residential,two_lane,2,25,1125.0,non_fhsz,1.0,1125.0,1271.25,1.13,F,1,565.0,catchment_based,1864,703,2656.2,703.0,0.0,12.418242869948296,False,True,True
 Phoebe Street,residential,two_lane,2,25,1125.0,non_fhsz,1.0,1125.0,1271.25,1.13,F,1,565.0,catchment_based,1864,703,2656.2,703.0,0.0,225.90101005344906,False,True,True
 Jolina Way,residential,two_lane,1,25,1125.0,non_fhsz,1.0,1125.0,544.5,0.484,D,1,242.0,catchment_based,1665,2516,2372.625,2516.0,0.0,243.89150515654669,True,True,True
-Mountain Vista Drive,secondary,multilane,5,35,9500.0,non_fhsz,1.0,9500.0,544.5,0.05731578947368421,A,1,242.0,catchment_based,1665,2516,2372.625,2516.0,0.0,140.4518332534825,False,True,True
 Melba Road,tertiary,two_lane,1,25,1125.0,non_fhsz,1.0,1125.0,1174.5,1.044,F,1,522.0,catchment_based,978,2419,1393.6499999999999,2419.0,0.0,102.0327556939066,True,True,True
 Devonshire Drive,tertiary,two_lane,1,25,1125.0,non_fhsz,1.0,1125.0,1174.5,1.044,F,1,522.0,catchment_based,1817,2776,2589.225,2776.0,0.0,370.50894363051134,True,True,True
-Orchard Wood Road,residential,two_lane,1,25,1125.0,moderate_fhsz,0.75,843.75,10188.0,9.056,F,11,4528.0,catchment_based,935,1081,1332.3749999999998,1081.0,0.0,234.78264487585434,True,True,True
 Village View Road,residential,two_lane,1,25,1125.0,non_fhsz,1.0,1125.0,10188.0,9.056,F,11,4528.0,catchment_based,935,1081,1332.3749999999998,1081.0,0.0,96.3542015463627,True,True,True
 Ocean View Avenue,residential,two_lane,1,25,1125.0,non_fhsz,1.0,1125.0,1030.5,0.916,E,1,458.0,catchment_based,1634,1036,2328.45,1036.0,0.0,50.606639615349394,True,True,True
 Ocean View Avenue,residential,two_lane,1,25,1125.0,non_fhsz,1.0,1125.0,1030.5,0.916,E,1,458.0,catchment_based,2168,1251,3089.3999999999996,1251.0,0.0,104.3138638564294,True,True,True
@@ -406,7 +349,6 @@ Liverpool Drive,tertiary,two_lane,2,25,1125.0,non_fhsz,1.0,1125.0,2812.5,2.5,F,2
 Liverpool Drive,tertiary,two_lane,2,25,1125.0,non_fhsz,1.0,1125.0,2812.5,2.5,F,2,1250.0,catchment_based,2615,1730,3726.3749999999995,1730.0,0.0,77.01424327717858,False,True,True
 Liverpool Drive,tertiary,two_lane,2,25,1125.0,non_fhsz,1.0,1125.0,2812.5,2.5,F,2,1250.0,catchment_based,3387,1969,4826.474999999999,1969.0,0.0,74.3605147954824,False,True,True
 Liverpool Drive,tertiary,two_lane,2,25,1125.0,non_fhsz,1.0,1125.0,2812.5,2.5,F,2,1250.0,catchment_based,2913,1792,4151.025,1792.0,0.0,79.08601569122224,False,True,True
-Mackinnon Avenue,tertiary,two_lane,2,25,1125.0,non_fhsz,1.0,1125.0,2812.5,2.5,F,2,1250.0,catchment_based,3818,2051,5440.65,2051.0,0.0,272.37805030946805,False,True,True
 Liverpool Drive,tertiary,two_lane,2,25,1125.0,non_fhsz,1.0,1125.0,2812.5,2.5,F,2,1250.0,catchment_based,3387,1969,4826.474999999999,1969.0,0.0,74.3605147954824,False,True,True
 Glasgow Avenue,tertiary,two_lane,2,25,1125.0,non_fhsz,1.0,1125.0,1431.0,1.272,F,1,636.0,catchment_based,3387,1969,4826.474999999999,1969.0,0.0,201.13370505568943,False,True,True
 Willowspring Drive North,secondary,multilane,1,35,1900.0,non_fhsz,1.0,1900.0,5550.75,2.9214473684210525,F,4,2467.0,catchment_based,2518,1641,3588.1499999999996,1641.0,0.0,169.3718158685228,False,True,True
@@ -414,7 +356,6 @@ Willowspring Drive North,secondary,multilane,1,35,1900.0,non_fhsz,1.0,1900.0,555
 Gardendale Road,residential,two_lane,1,25,1125.0,non_fhsz,1.0,1125.0,5550.75,4.934,F,4,2467.0,catchment_based,1483,968,2113.2749999999996,968.0,0.0,34.24078284079935,True,True,True
 Willowspring Drive North,secondary,multilane,1,35,1900.0,non_fhsz,1.0,1900.0,5550.75,2.9214473684210525,F,4,2467.0,catchment_based,1725,1197,2458.125,1197.0,0.0,95.7705563460952,False,True,True
 Wandering Road,residential,two_lane,1,25,1125.0,non_fhsz,1.0,1125.0,5550.75,4.934,F,4,2467.0,catchment_based,1725,1197,2458.125,1197.0,0.0,115.69262063696675,True,True,True
-Willowspring Drive North,secondary,multilane,1,35,1900.0,moderate_fhsz,0.75,1425.0,5550.75,2.9214473684210525,F,4,2467.0,catchment_based,1725,1197,2458.125,1197.0,0.0,135.94470760633203,False,True,True
 Willowspring Drive North,tertiary,two_lane,1,25,1125.0,non_fhsz,1.0,1125.0,2328.75,2.07,F,1,1035.0,catchment_based,1446,798,2060.5499999999997,798.0,0.0,124.98187704905257,True,True,True
 Willowspring Drive North,tertiary,two_lane,1,25,1125.0,non_fhsz,1.0,1125.0,2328.75,2.07,F,1,1035.0,catchment_based,1446,798,2060.5499999999997,798.0,0.0,93.21148660141675,True,True,True
 Willowspring Drive North,tertiary,two_lane,1,25,1125.0,non_fhsz,1.0,1125.0,2328.75,2.07,F,1,1035.0,catchment_based,1446,798,2060.5499999999997,798.0,0.0,352.0784018390053,True,True,True
@@ -431,7 +372,6 @@ Willowspring South Drive,tertiary,two_lane,1,25,1125.0,moderate_fhsz,0.75,843.75
 Willowspring South Drive,tertiary,two_lane,1,25,1125.0,moderate_fhsz,0.75,843.75,996.75,0.886,E,1,443.0,catchment_based,2491,1651,3549.6749999999997,1651.0,0.0,99.6915051263118,True,True,True
 Willowspring South Drive,tertiary,two_lane,1,25,1125.0,moderate_fhsz,0.75,843.75,996.75,0.886,E,1,443.0,catchment_based,1661,543,2366.9249999999997,543.0,0.0,120.60539317248218,True,True,True
 Andrew Avenue,tertiary,two_lane,1,25,1125.0,non_fhsz,1.0,1125.0,1372.5,1.22,F,2,610.0,catchment_based,1680,410,2394.0,410.0,0.0,208.81521541240056,True,True,True
-North Vulcan Avenue,secondary,multilane,2,40,3800.0,non_fhsz,1.0,3800.0,1653.75,0.4351973684210526,D,1,735.0,catchment_based,1680,410,2394.0,410.0,0.0,284.69457059231195,False,False,True
 North Vulcan Avenue,secondary,multilane,2,40,3800.0,non_fhsz,1.0,3800.0,1653.75,0.4351973684210526,D,1,735.0,catchment_based,1855,512,2643.375,512.0,0.0,373.17257169742805,False,False,True
 Andrew Avenue,tertiary,two_lane,1,25,1125.0,non_fhsz,1.0,1125.0,1372.5,1.22,F,2,610.0,catchment_based,1680,410,2394.0,410.0,0.0,110.23664695001037,True,True,True
 Andrew Avenue,tertiary,two_lane,1,25,1125.0,non_fhsz,1.0,1125.0,1372.5,1.22,F,2,610.0,catchment_based,1680,410,2394.0,410.0,0.0,208.81521541240053,True,True,True
@@ -460,21 +400,15 @@ Tennis Club Drive,residential,two_lane,1,25,1125.0,vhfhsz,0.35,393.75,1111.5,0.9
 South El Camino Real,primary,multilane,5,55,9500.0,vhfhsz,0.35,3325.0,2223.0,0.234,C,2,988.0,catchment_based,988,941,1407.8999999999999,941.0,0.0,251.56492311337354,False,False,True
 South El Camino Real,primary,multilane,5,55,9500.0,vhfhsz,0.35,3325.0,2223.0,0.234,C,2,988.0,catchment_based,1431,1228,2039.1749999999997,1228.0,0.0,309.4112313533592,False,False,True
 Fortuna Ranch Road,residential,two_lane,1,25,1125.0,vhfhsz,0.35,393.75,252.0,0.224,C,1,112.0,catchment_based,386,1055,550.05,1055.0,0.0,255.31017163486646,True,True,True
-La Costa Avenue,secondary,multilane,2,40,3800.0,non_fhsz,1.0,3800.0,3026.25,0.7963815789473684,E,3,1345.0,catchment_based,1680,410,2394.0,410.0,0.0,170.52525742391524,False,False,True
 Birmingham Drive,secondary,multilane,2,35,3800.0,non_fhsz,1.0,3800.0,1818.0,0.47842105263157897,D,2,808.0,catchment_based,3188,980,4542.9,980.0,0.0,195.7162669674258,False,True,True
 Birmingham Drive,secondary,multilane,3,35,5700.0,non_fhsz,1.0,5700.0,1818.0,0.31894736842105265,C,2,808.0,catchment_based,3292,1948,4691.099999999999,1948.0,0.0,182.85411275999303,False,True,True
-Kilkenny Drive,residential,two_lane,2,25,1125.0,non_fhsz,1.0,1125.0,1390.5,1.236,F,2,618.0,catchment_based,2356,1723,3357.2999999999997,1723.0,0.0,88.59762853977355,False,True,True
-Newcastle Avenue,residential,two_lane,2,25,1125.0,moderate_fhsz,0.75,843.75,1390.5,1.236,F,2,618.0,catchment_based,2970,2875,4232.25,2875.0,0.0,284.9474807836419,False,True,True
 Newport Avenue,residential,two_lane,2,25,1125.0,moderate_fhsz,0.75,843.75,1390.5,1.236,F,2,618.0,catchment_based,2356,1723,3357.2999999999997,1723.0,0.0,54.036037746021705,False,True,True
 Newport Avenue,residential,two_lane,2,25,1125.0,non_fhsz,1.0,1125.0,1390.5,1.236,F,2,618.0,catchment_based,2970,2875,4232.25,2875.0,0.0,194.98477650382554,False,True,True
 Birmingham Drive,secondary,multilane,2,35,3800.0,moderate_fhsz,0.75,2850.0,1818.0,0.47842105263157897,D,2,808.0,catchment_based,1239,328,1765.5749999999998,328.0,0.0,78.22004336257625,False,True,True
 Birmingham Drive,secondary,multilane,2,35,3800.0,moderate_fhsz,0.75,2850.0,1818.0,0.47842105263157897,D,2,808.0,catchment_based,1733,1147,2469.5249999999996,1147.0,0.0,91.80286718260814,False,True,True
-Rancho Santa Fe Road,secondary,multilane,3,40,5700.0,non_fhsz,1.0,5700.0,2556.0,0.44842105263157894,D,5,1136.0,catchment_based,1748,1343,2490.8999999999996,1343.0,0.0,220.27937423840567,False,False,True
 Rancho Santa Fe Road,secondary,multilane,2,40,3800.0,non_fhsz,1.0,3800.0,2556.0,0.6726315789473685,E,5,1136.0,catchment_based,1750,1420,2493.75,1420.0,0.0,439.9950782193788,True,False,True
 Sylvia Street,tertiary,two_lane,2,25,1125.0,non_fhsz,1.0,1125.0,1201.5,1.068,F,1,534.0,catchment_based,2193,3677,3125.0249999999996,3677.0,0.0,34.54075139582271,False,True,True
 Sylvia Street,tertiary,two_lane,2,25,1125.0,non_fhsz,1.0,1125.0,1201.5,1.068,F,1,534.0,catchment_based,2193,3677,3125.0249999999996,3677.0,0.0,37.6241259263213,False,True,True
-Manchester Avenue,secondary,multilane,2,35,3800.0,vhfhsz,0.35,1330.0,1804.5,0.4748684210526316,D,2,802.0,catchment_based,1806,1134,2573.5499999999997,1134.0,0.0,342.50941468526196,True,True,True
-Manchester Avenue,secondary,multilane,2,35,3800.0,vhfhsz,0.35,1330.0,1804.5,0.4748684210526316,D,2,802.0,catchment_based,1576,1819,2245.7999999999997,1819.0,0.0,475.7711044354967,False,True,True
 Birmingham Drive,secondary,multilane,3,30,5700.0,non_fhsz,1.0,5700.0,1887.75,0.3311842105263158,C,1,839.0,catchment_based,2615,1730,3726.3749999999995,1730.0,0.0,78.5542699317118,False,False,True
 Birmingham Drive,secondary,multilane,3,30,5700.0,non_fhsz,1.0,5700.0,1887.75,0.3311842105263158,C,1,839.0,catchment_based,2615,1730,3726.3749999999995,1730.0,0.0,76.76353430612588,False,False,True
 Chesterfield Drive,tertiary,two_lane,1,25,1125.0,non_fhsz,1.0,1125.0,1431.0,1.272,F,1,636.0,catchment_based,2913,1792,4151.025,1792.0,0.0,76.43301401605444,True,True,True
@@ -488,25 +422,21 @@ North Vulcan Avenue,secondary,multilane,2,40,3800.0,non_fhsz,1.0,3800.0,1653.75,
 Melba Road,tertiary,two_lane,1,25,1125.0,non_fhsz,1.0,1125.0,1174.5,1.044,F,1,522.0,catchment_based,2022,5191,2881.35,5191.0,0.0,98.82030484330102,True,True,True
 Caudor Street,tertiary,two_lane,1,25,1125.0,vhfhsz,0.35,393.75,1424.25,1.266,F,1,633.0,catchment_based,1023,480,1457.7749999999999,480.0,0.0,64.68193899413214,True,True,True
 Capri Road,tertiary,two_lane,1,25,1125.0,vhfhsz,0.35,393.75,1424.25,1.266,F,1,633.0,catchment_based,1339,1278,1908.0749999999998,1278.0,0.0,106.0348072431472,True,True,True
-Capri Road,tertiary,two_lane,1,25,1125.0,vhfhsz,0.35,393.75,1424.25,1.266,F,1,633.0,catchment_based,1023,480,1457.7749999999999,480.0,0.0,285.05736840376784,True,True,True
 Orpheus Avenue,tertiary,two_lane,2,20,900.0,non_fhsz,1.0,900.0,1030.5,1.145,F,1,458.0,catchment_based,2024,1250,2884.2,1250.0,0.0,275.94953558346907,False,False,True
 Orpheus Avenue,tertiary,two_lane,2,20,900.0,non_fhsz,1.0,900.0,1030.5,1.145,F,1,458.0,catchment_based,1634,1036,2328.45,1036.0,0.0,128.41341565352008,False,False,True
 Eolus Avenue,tertiary,two_lane,1,25,1125.0,moderate_fhsz,0.75,843.75,1372.5,1.22,F,2,610.0,catchment_based,1978,595,2818.6499999999996,595.0,0.0,187.85781515049337,True,True,True
 Quail Gardens Drive,secondary,multilane,3,30,5700.0,non_fhsz,1.0,5700.0,2144.25,0.3761842105263158,C,1,953.0,catchment_based,2853,2916,4065.5249999999996,2916.0,0.0,170.52702365068228,False,False,True
 Quail Gardens Drive,secondary,multilane,3,30,5700.0,non_fhsz,1.0,5700.0,2144.25,0.3761842105263158,C,1,953.0,catchment_based,2181,2852,3107.9249999999997,2852.0,0.0,185.3261152522755,False,False,True
-Manchester Avenue,secondary,multilane,3,35,5700.0,vhfhsz,0.35,1994.9999999999998,1804.5,0.31657894736842107,C,2,802.0,catchment_based,2550,2171,3633.7499999999995,2171.0,0.0,265.1566150579605,False,True,True
 Sheridan Road,residential,two_lane,1,25,1125.0,moderate_fhsz,0.75,843.75,1372.5,1.22,F,2,610.0,catchment_based,1345,329,1916.6249999999998,329.0,0.0,184.53238515529512,True,True,True
 B Street,tertiary,two_lane,1,40,1700.0,non_fhsz,1.0,1700.0,1201.5,0.706764705882353,E,1,534.0,catchment_based,2513,3838,3581.0249999999996,3838.0,0.0,44.66980784175478,True,False,True
 B Street,tertiary,two_lane,1,40,1700.0,non_fhsz,1.0,1700.0,1201.5,0.706764705882353,E,1,534.0,catchment_based,2513,3838,3581.0249999999996,3838.0,0.0,93.24205461019488,True,False,True
 Rancho Santa Fe Road,secondary,multilane,2,40,3800.0,non_fhsz,1.0,3800.0,2556.0,0.6726315789473685,E,5,1136.0,catchment_based,1750,1420,2493.75,1420.0,0.0,439.9950782193788,True,False,True
-Rancho Santa Fe Road,secondary,multilane,3,40,5700.0,non_fhsz,1.0,5700.0,2556.0,0.44842105263157894,D,5,1136.0,catchment_based,2265,1524,3227.6249999999995,1524.0,0.0,92.71871327883781,False,False,True
 Hygeia Avenue,residential,two_lane,2,25,1125.0,non_fhsz,1.0,1125.0,1163.25,1.034,F,1,517.0,catchment_based,3100,1774,4417.5,1774.0,0.0,72.52837683270751,False,True,True
 Hygeia Avenue,residential,two_lane,2,25,1125.0,non_fhsz,1.0,1125.0,1163.25,1.034,F,1,517.0,catchment_based,2535,1458,3612.3749999999995,1458.0,0.0,85.18439982875184,False,True,True
 Gardendale Road,residential,two_lane,1,25,1125.0,non_fhsz,1.0,1125.0,5550.75,4.934,F,4,2467.0,catchment_based,2467,913,3515.475,913.0,0.0,120.81996986041229,True,True,True
 Gardendale Road,residential,two_lane,1,25,1125.0,non_fhsz,1.0,1125.0,5550.75,4.934,F,4,2467.0,catchment_based,2467,913,3515.475,913.0,0.0,59.897348908153695,True,True,True
 Countrywood Lane,residential,two_lane,1,25,1125.0,non_fhsz,1.0,1125.0,924.75,0.822,E,1,411.0,catchment_based,2982,1017,4249.349999999999,1017.0,0.0,49.56197924148466,True,True,True
 Countrywood Lane,residential,two_lane,1,25,1125.0,non_fhsz,1.0,1125.0,924.75,0.822,E,1,411.0,catchment_based,2982,1017,4249.349999999999,1017.0,0.0,81.8413581214744,True,True,True
-Whitewood Place,residential,two_lane,1,25,1125.0,non_fhsz,1.0,1125.0,2328.75,2.07,F,1,1035.0,catchment_based,2159,1468,3076.575,1468.0,0.0,527.8624966705169,True,True,True
 Mountain Vista Drive,residential,two_lane,1,25,1125.0,non_fhsz,1.0,1125.0,2328.75,2.07,F,1,1035.0,catchment_based,1446,798,2060.5499999999997,798.0,0.0,153.2139222824502,True,True,True
 Knights Bridge Court,residential,two_lane,1,25,1125.0,non_fhsz,1.0,1125.0,1066.5,0.948,E,1,474.0,catchment_based,2265,680,3227.6249999999995,680.0,0.0,44.84929303297836,True,True,True
 Kings Cross Drive,residential,two_lane,1,25,1125.0,non_fhsz,1.0,1125.0,1066.5,0.948,E,1,474.0,catchment_based,2265,680,3227.6249999999995,680.0,0.0,83.06272754220291,True,True,True
@@ -529,8 +459,6 @@ Hygeia Avenue,residential,two_lane,2,25,1125.0,non_fhsz,1.0,1125.0,1163.25,1.034
 Hygeia Avenue,residential,two_lane,2,25,1125.0,non_fhsz,1.0,1125.0,1163.25,1.034,F,1,517.0,catchment_based,3100,1774,4417.5,1774.0,0.0,72.52837683270751,False,True,True
 Hygeia Avenue,residential,two_lane,2,25,1125.0,non_fhsz,1.0,1125.0,1163.25,1.034,F,1,517.0,catchment_based,3100,1774,4417.5,1774.0,0.0,152.4725110956373,False,True,True
 Hygeia Avenue,residential,two_lane,2,25,1125.0,non_fhsz,1.0,1125.0,1163.25,1.034,F,1,517.0,catchment_based,3100,1774,4417.5,1774.0,0.0,40.18206896716843,False,True,True
-Leucadia Boulevard,primary,multilane,4,30,7600.0,non_fhsz,1.0,7600.0,2713.5,0.3570394736842105,C,2,1206.0,catchment_based,3100,1774,4417.5,1774.0,0.0,64.59211787229114,False,False,True
-Leucadia Boulevard,primary,multilane,3,30,5700.0,non_fhsz,1.0,5700.0,1550.25,0.2719736842105263,C,1,689.0,catchment_based,3100,1774,4417.5,1774.0,0.0,110.60633342701271,False,False,True
 Hygeia Avenue,residential,two_lane,2,25,1125.0,non_fhsz,1.0,1125.0,1163.25,1.034,F,1,517.0,catchment_based,3100,1774,4417.5,1774.0,0.0,38.71216106714401,False,True,True
 Hygeia Avenue,residential,two_lane,2,25,1125.0,non_fhsz,1.0,1125.0,1163.25,1.034,F,1,517.0,catchment_based,3100,1774,4417.5,1774.0,0.0,40.18206896716843,False,True,True
 Hygeia Avenue,residential,two_lane,2,25,1125.0,non_fhsz,1.0,1125.0,1163.25,1.034,F,1,517.0,catchment_based,1864,703,2656.2,703.0,0.0,84.1895336813824,False,True,True
@@ -550,7 +478,6 @@ Gardendale Road,residential,two_lane,1,25,1125.0,non_fhsz,1.0,1125.0,5550.75,4.9
 Gardendale Road,residential,two_lane,1,25,1125.0,non_fhsz,1.0,1125.0,5550.75,4.934,F,4,2467.0,catchment_based,2981,1657,4247.924999999999,1657.0,0.0,144.5006793232782,True,True,True
 Village Run East,residential,two_lane,1,25,1125.0,non_fhsz,1.0,1125.0,924.75,0.822,E,1,411.0,catchment_based,2467,913,3515.475,913.0,0.0,130.2718163932032,True,True,True
 Village Run East,residential,two_lane,1,25,1125.0,non_fhsz,1.0,1125.0,924.75,0.822,E,1,411.0,catchment_based,2467,913,3515.475,913.0,0.0,78.00692517760923,True,True,True
-North Coast Highway,primary,multilane,4,45,7600.0,non_fhsz,1.0,7600.0,1082.25,0.14240131578947368,B,1,481.0,catchment_based,2994,4243,4266.45,4243.0,0.0,546.8371429705849,False,True,True
 La Veta Avenue,residential,two_lane,2,25,1125.0,non_fhsz,1.0,1125.0,1201.5,1.068,F,1,534.0,catchment_based,1990,1371,2835.7499999999995,1371.0,0.0,286.124264286217,False,True,True
 La Veta Avenue,residential,two_lane,2,25,1125.0,non_fhsz,1.0,1125.0,1201.5,1.068,F,1,534.0,catchment_based,1990,1371,2835.7499999999995,1371.0,0.0,213.592557318372,False,True,True
 La Mesa Avenue,residential,two_lane,1,25,1125.0,non_fhsz,1.0,1125.0,1082.25,0.962,F,1,481.0,catchment_based,1532,1091,2183.1,1091.0,0.0,284.1581892674186,True,True,True
@@ -565,24 +492,12 @@ Requeza Street,residential,two_lane,1,25,1125.0,non_fhsz,1.0,1125.0,1059.75,0.94
 Requeza Street,residential,two_lane,1,25,1125.0,non_fhsz,1.0,1125.0,1059.75,0.942,E,1,471.0,catchment_based,1413,1548,2013.5249999999999,1548.0,0.0,117.94545665040219,True,False,True
 Evergreen Drive,residential,two_lane,1,25,1125.0,non_fhsz,1.0,1125.0,1172.25,1.042,F,1,521.0,catchment_based,2758,1070,3930.1499999999996,1070.0,0.0,381.23287961716517,True,True,True
 Encinitas Boulevard,primary,multilane,2,45,3800.0,non_fhsz,1.0,3800.0,852.75,0.2244078947368421,C,1,379.0,catchment_based,2926,2997,4169.549999999999,2997.0,0.0,82.70690132066954,False,False,True
-Encinitas Boulevard,primary,multilane,6,45,11400.0,non_fhsz,1.0,11400.0,756.0,0.06631578947368422,A,1,336.0,catchment_based,2608,3527,3716.3999999999996,3527.0,0.0,159.54332467371918,False,False,True
 Encinitas Boulevard,primary,multilane,2,45,3800.0,non_fhsz,1.0,3800.0,756.0,0.19894736842105262,B,1,336.0,catchment_based,2608,3527,3716.3999999999996,3527.0,0.0,211.4698445338499,True,False,True
-Encinitas Boulevard,primary,multilane,6,45,11400.0,non_fhsz,1.0,11400.0,756.0,0.06631578947368422,A,1,336.0,catchment_based,2608,3527,3716.3999999999996,3527.0,0.0,159.54332467371916,False,False,True
 Encinitas Boulevard,primary,multilane,2,45,3800.0,non_fhsz,1.0,3800.0,756.0,0.19894736842105262,B,1,336.0,catchment_based,3064,3698,4366.2,3698.0,0.0,97.75999898804152,True,False,True
-Encinitas Boulevard,primary,multilane,5,45,9500.0,non_fhsz,1.0,9500.0,756.0,0.07957894736842105,A,1,336.0,catchment_based,3736,3762,5323.799999999999,3762.0,0.0,476.39406753508865,False,False,True
 Encinitas Boulevard,primary,multilane,2,45,3800.0,non_fhsz,1.0,3800.0,756.0,0.19894736842105262,B,1,336.0,catchment_based,3064,3698,4366.2,3698.0,0.0,97.75999898804153,True,False,True
-Encinitas Boulevard,primary,multilane,5,45,9500.0,non_fhsz,1.0,9500.0,756.0,0.07957894736842105,A,1,336.0,catchment_based,3736,3762,5323.799999999999,3762.0,0.0,476.39406753508854,False,False,True
 Encinitas Boulevard,primary,multilane,2,45,3800.0,non_fhsz,1.0,3800.0,756.0,0.19894736842105262,B,1,336.0,catchment_based,1900,1974,2707.4999999999995,1974.0,0.0,127.80617320300559,True,False,True
 Encinitas Boulevard,primary,multilane,2,45,3800.0,non_fhsz,1.0,3800.0,756.0,0.19894736842105262,B,1,336.0,catchment_based,1900,1974,2707.4999999999995,1974.0,0.0,127.80617320300559,True,False,True
-Encinitas Boulevard,primary,multilane,5,45,9500.0,non_fhsz,1.0,9500.0,756.0,0.07957894736842105,A,1,336.0,catchment_based,2853,2916,4065.5249999999996,2916.0,0.0,164.27246634530084,False,False,True
-Encinitas Boulevard,primary,multilane,6,45,11400.0,non_fhsz,1.0,11400.0,4603.5,0.4038157894736842,D,3,2046.0,catchment_based,3296,3308,4696.799999999999,3308.0,0.0,271.0775916062242,False,False,True
-Encinitas Boulevard,primary,multilane,4,40,7600.0,non_fhsz,1.0,7600.0,4603.5,0.6057236842105264,E,3,2046.0,catchment_based,4097,3874,5838.224999999999,3874.0,0.0,274.13960646229424,False,False,True
 Saxony Road,tertiary,two_lane,4,40,1700.0,non_fhsz,1.0,1700.0,1482.75,0.8722058823529412,E,1,659.0,catchment_based,2884,2896,4109.7,2896.0,0.0,180.33062918520457,False,False,True
-Encinitas Boulevard,primary,multilane,6,40,11400.0,non_fhsz,1.0,11400.0,6086.25,0.5338815789473684,D,4,2705.0,catchment_based,2884,2896,4109.7,2896.0,0.0,58.98564120052938,False,False,True
-Encinitas Boulevard,primary,multilane,3,45,5700.0,non_fhsz,1.0,5700.0,4603.5,0.8076315789473684,E,3,2046.0,catchment_based,2884,2896,4109.7,2896.0,0.0,95.13839409436841,False,True,True
-South Vulcan Avenue,secondary,multilane,4,35,7600.0,non_fhsz,1.0,7600.0,2259.0,0.29723684210526313,C,2,1004.0,catchment_based,3035,6086,4324.875,6086.0,0.0,308.08658428724686,False,False,True
-Encinitas Boulevard,primary,multilane,5,40,9500.0,non_fhsz,1.0,9500.0,2283.75,0.24039473684210527,C,2,1015.0,catchment_based,2513,3838,3581.0249999999996,3838.0,0.0,114.12999139995303,False,False,True
-Encinitas Boulevard,primary,multilane,4,40,7600.0,non_fhsz,1.0,7600.0,4542.75,0.5977302631578948,D,4,2019.0,catchment_based,3643,5226,5191.275,5226.0,0.0,224.84877958788638,False,False,True
 Requeza Street,residential,two_lane,1,25,1125.0,non_fhsz,1.0,1125.0,1059.75,0.942,E,1,471.0,catchment_based,2170,2355,3092.2499999999995,2355.0,0.0,71.68118983238138,True,False,True
 Requeza Street,residential,two_lane,1,25,1125.0,non_fhsz,1.0,1125.0,1059.75,0.942,E,1,471.0,catchment_based,2170,2355,3092.2499999999995,2355.0,0.0,130.96303391572013,True,False,True
 Nolbey Street,residential,two_lane,2,25,1125.0,non_fhsz,1.0,1125.0,969.75,0.862,E,1,431.0,catchment_based,3709,1044,5285.325,1044.0,0.0,362.10458015958295,False,True,True
@@ -600,7 +515,6 @@ Norfolk Drive,residential,two_lane,1,25,1125.0,moderate_fhsz,0.75,843.75,1431.0,
 Norfolk Drive,residential,two_lane,1,25,1125.0,moderate_fhsz,0.75,843.75,1431.0,1.272,F,1,636.0,catchment_based,2074,1435,2955.45,1435.0,0.0,75.79536395572468,True,True,True
 Edinburg Avenue,residential,two_lane,2,25,1125.0,moderate_fhsz,0.75,843.75,1431.0,1.272,F,1,636.0,catchment_based,2074,1435,2955.45,1435.0,0.0,194.8842028689826,False,True,True
 A Street,residential,two_lane,1,25,1125.0,non_fhsz,1.0,1125.0,1201.5,1.068,F,1,534.0,catchment_based,2513,3838,3581.0249999999996,3838.0,0.0,45.36471899100255,True,True,True
-A Street,residential,two_lane,1,25,1125.0,non_fhsz,1.0,1125.0,1201.5,1.068,F,1,534.0,catchment_based,2513,3838,3581.0249999999996,3838.0,0.0,91.90489683518769,True,True,True
 2nd Street,residential,two_lane,2,25,1125.0,non_fhsz,1.0,1125.0,1487.25,1.322,F,1,661.0,catchment_based,1526,5120,2174.5499999999997,5120.0,0.0,147.43166993165764,False,True,True
 2nd Street,residential,two_lane,2,25,1125.0,non_fhsz,1.0,1125.0,1487.25,1.322,F,1,661.0,catchment_based,1526,5120,2174.5499999999997,5120.0,0.0,147.77614276326412,False,True,True
 2nd Street,residential,two_lane,2,25,1125.0,non_fhsz,1.0,1125.0,1487.25,1.322,F,1,661.0,catchment_based,1526,5120,2174.5499999999997,5120.0,0.0,147.42341167827266,False,True,True
@@ -611,17 +525,14 @@ Piraeus Street,secondary,multilane,2,35,3800.0,vhfhsz,0.35,1330.0,1424.25,0.3748
 La Mesa Avenue,residential,two_lane,1,25,1125.0,non_fhsz,1.0,1125.0,1082.25,0.962,F,1,481.0,catchment_based,1532,1091,2183.1,1091.0,0.0,70.10867913426621,True,True,True
 La Mesa Avenue,residential,two_lane,1,25,1125.0,non_fhsz,1.0,1125.0,1082.25,0.962,F,1,481.0,catchment_based,1532,1091,2183.1,1091.0,0.0,111.56230159574979,True,True,True
 Lone Jack Road,tertiary,two_lane,1,25,1125.0,non_fhsz,1.0,1125.0,2556.0,2.272,F,5,1136.0,catchment_based,1748,1343,2490.8999999999996,1343.0,0.0,113.8700799814966,True,True,True
-Rancho Santa Fe Road,secondary,multilane,3,40,5700.0,non_fhsz,1.0,5700.0,2556.0,0.44842105263157894,D,5,1136.0,catchment_based,1748,1343,2490.8999999999996,1343.0,0.0,220.2793742384057,False,False,True
 Saxony Road,tertiary,two_lane,4,40,1700.0,non_fhsz,1.0,1700.0,1482.75,0.8722058823529412,E,1,659.0,catchment_based,2884,2896,4109.7,2896.0,0.0,113.16677980496277,False,False,True
 Saxony Road,tertiary,two_lane,4,40,1700.0,non_fhsz,1.0,1700.0,1482.75,0.8722058823529412,E,1,659.0,catchment_based,2884,2896,4109.7,2896.0,0.0,180.33062918520457,False,False,True
-Saxony Road,tertiary,two_lane,4,25,1125.0,non_fhsz,1.0,1125.0,1482.75,1.318,F,1,659.0,catchment_based,2884,2896,4109.7,2896.0,0.0,193.49667196985664,False,False,True
 Saxony Road,tertiary,two_lane,4,40,1700.0,non_fhsz,1.0,1700.0,1482.75,0.8722058823529412,E,1,659.0,catchment_based,2884,2896,4109.7,2896.0,0.0,113.16677980496277,False,False,True
 Silver Berry Place,residential,two_lane,1,25,1125.0,non_fhsz,1.0,1125.0,1482.75,1.318,F,1,659.0,catchment_based,2070,1507,2949.7499999999995,1507.0,0.0,37.28813645311142,True,True,True
 Saxony Road,tertiary,two_lane,1,40,1700.0,non_fhsz,1.0,1700.0,1482.75,0.8722058823529412,E,1,659.0,catchment_based,2070,1507,2949.7499999999995,1507.0,0.0,251.68853551561293,True,False,True
 Saxony Road,tertiary,two_lane,1,40,1700.0,non_fhsz,1.0,1700.0,1482.75,0.8722058823529412,E,1,659.0,catchment_based,2070,1507,2949.7499999999995,1507.0,0.0,100.6412605799833,True,False,True
 Saxony Road,tertiary,two_lane,1,40,1700.0,non_fhsz,1.0,1700.0,1482.75,0.8722058823529412,E,1,659.0,catchment_based,2070,1507,2949.7499999999995,1507.0,0.0,251.68853551561293,True,False,True
 Piraeus Street,secondary,multilane,2,35,3800.0,non_fhsz,1.0,3800.0,1424.25,0.3748026315789474,C,1,633.0,catchment_based,1023,480,1457.7749999999999,480.0,0.0,165.26058126106804,False,True,True
-Piraeus Street,secondary,multilane,2,35,3800.0,non_fhsz,1.0,3800.0,1424.25,0.3748026315789474,C,1,633.0,catchment_based,2140,1045,3049.4999999999995,1045.0,0.0,362.3517620506732,False,True,True
 A Street,residential,two_lane,1,25,1125.0,non_fhsz,1.0,1125.0,1201.5,1.068,F,1,534.0,catchment_based,2193,3677,3125.0249999999996,3677.0,0.0,24.654393565182414,True,True,True
 A Street,residential,two_lane,1,25,1125.0,non_fhsz,1.0,1125.0,1201.5,1.068,F,1,534.0,catchment_based,2193,3677,3125.0249999999996,3677.0,0.0,38.399728838790764,True,True,True
 Brookside Lane,residential,two_lane,1,25,1125.0,vhfhsz,0.35,393.75,78.75,0.07,A,1,35.0,catchment_based,860,1668,1225.5,1668.0,0.0,468.6114987216632,True,True,True
@@ -639,11 +550,6 @@ Cambridge Avenue,residential,two_lane,2,25,1125.0,moderate_fhsz,0.75,843.75,1887
 Norfolk Drive,residential,two_lane,1,25,1125.0,moderate_fhsz,0.75,843.75,1431.0,1.272,F,1,636.0,catchment_based,2074,1435,2955.45,1435.0,0.0,75.79536395572468,True,True,True
 Norfolk Drive,residential,two_lane,1,25,1125.0,moderate_fhsz,0.75,843.75,1431.0,1.272,F,1,636.0,catchment_based,2913,1792,4151.025,1792.0,0.0,76.99292345686742,True,True,True
 Cambridge Avenue,residential,two_lane,2,25,1125.0,high_fhsz,0.5,562.5,1887.75,1.678,F,1,839.0,catchment_based,2074,1435,2955.45,1435.0,0.0,34.69672745814974,False,True,True
-Ocean Cove Drive,residential,two_lane,1,25,1125.0,vhfhsz,0.35,393.75,591.75,0.526,D,1,263.0,catchment_based,2160,859,3077.9999999999995,859.0,0.0,59.322899454118996,True,True,True
-Caminito Cape Sebastian,residential,two_lane,1,25,1125.0,vhfhsz,0.35,393.75,591.75,0.526,D,1,263.0,catchment_based,2160,859,3077.9999999999995,859.0,0.0,237.0080984255543,True,True,True
-Manchester Avenue,secondary,multilane,2,25,3800.0,vhfhsz,0.35,1330.0,1390.5,0.3659210526315789,C,2,618.0,catchment_based,3389,2102,4829.325,2102.0,0.0,994.0410835380942,False,False,True
-Ocean Cove Drive,residential,two_lane,1,25,1125.0,vhfhsz,0.35,393.75,591.75,0.526,D,1,263.0,catchment_based,2160,859,3077.9999999999995,859.0,0.0,59.322899454118996,True,True,True
-Manchester Avenue,secondary,multilane,2,45,3800.0,vhfhsz,0.35,1330.0,1982.25,0.5216447368421052,D,3,881.0,catchment_based,2160,859,3077.9999999999995,859.0,0.0,102.30040075282061,False,False,True
 Calle Ryan,residential,two_lane,1,25,1125.0,vhfhsz,0.35,393.75,1111.5,0.988,F,1,494.0,catchment_based,988,941,1407.8999999999999,941.0,0.0,76.02226425899315,True,True,True
 Calle Ryan,residential,two_lane,1,25,1125.0,vhfhsz,0.35,393.75,1111.5,0.988,F,1,494.0,catchment_based,1431,1228,2039.1749999999997,1228.0,0.0,284.9616384374206,True,True,True
 Calle Ryan,residential,two_lane,1,25,1125.0,vhfhsz,0.35,393.75,1111.5,0.988,F,1,494.0,catchment_based,988,941,1407.8999999999999,941.0,0.0,46.64138116072749,True,True,True
@@ -651,18 +557,11 @@ Calle Ryan,residential,two_lane,1,25,1125.0,vhfhsz,0.35,393.75,1111.5,0.988,F,1,
 Calle Ryan,residential,two_lane,1,25,1125.0,vhfhsz,0.35,393.75,1111.5,0.988,F,1,494.0,catchment_based,1431,1228,2039.1749999999997,1228.0,0.0,284.96163843742073,True,True,True
 South El Camino Real,primary,multilane,5,55,9500.0,vhfhsz,0.35,3325.0,2223.0,0.234,C,2,988.0,catchment_based,1431,1228,2039.1749999999997,1228.0,0.0,309.4112313533592,False,False,True
 South El Camino Real,primary,multilane,5,55,9500.0,vhfhsz,0.35,3325.0,2223.0,0.234,C,2,988.0,catchment_based,1576,1819,2245.7999999999997,1819.0,0.0,47.48030075052612,False,False,True
-South El Camino Real,primary,multilane,6,55,11400.0,vhfhsz,0.35,3989.9999999999995,2223.0,0.195,B,2,988.0,catchment_based,1576,1819,2245.7999999999997,1819.0,0.0,167.6505720800062,False,False,True
-Manchester Avenue,primary,multilane,2,45,3800.0,vhfhsz,0.35,1330.0,4027.5,1.0598684210526317,F,4,1790.0,catchment_based,1576,1819,2245.7999999999997,1819.0,0.0,665.7919815504423,False,False,True
 Manchester Avenue,secondary,multilane,3,35,5700.0,vhfhsz,0.35,1994.9999999999998,1804.5,0.31657894736842107,C,2,802.0,catchment_based,1576,1819,2245.7999999999997,1819.0,0.0,40.754387876002895,False,True,True
-South El Camino Real,primary,multilane,6,55,11400.0,vhfhsz,0.35,3989.9999999999995,2223.0,0.195,B,2,988.0,catchment_based,1576,1819,2245.7999999999997,1819.0,0.0,167.65057208000619,False,False,True
-East E Street,tertiary,two_lane,2,25,1125.0,non_fhsz,1.0,1125.0,1487.25,1.322,F,1,661.0,catchment_based,1526,5120,2174.5499999999997,5120.0,0.0,114.08753927048829,False,True,True
-South Vulcan Avenue,secondary,multilane,4,35,7600.0,non_fhsz,1.0,7600.0,1487.25,0.1956907894736842,B,1,661.0,catchment_based,3035,6086,4324.875,6086.0,0.0,143.7960661056155,False,False,True
 Mozart Avenue,residential,two_lane,2,25,1125.0,non_fhsz,1.0,1125.0,1887.75,1.678,F,1,839.0,catchment_based,1453,1509,2070.5249999999996,1509.0,0.0,230.3083996138975,False,True,True
 San Elijo Avenue,secondary,multilane,2,25,3800.0,moderate_fhsz,0.75,2850.0,1390.5,0.3659210526315789,C,2,618.0,catchment_based,2356,1723,3357.2999999999997,1723.0,0.0,260.3350858777409,False,False,True
-Kilkenny Drive,residential,two_lane,2,25,1125.0,non_fhsz,1.0,1125.0,1390.5,1.236,F,2,618.0,catchment_based,2356,1723,3357.2999999999997,1723.0,0.0,88.59762853977355,False,True,True
 San Elijo Avenue,secondary,multilane,2,25,3800.0,high_fhsz,0.5,1900.0,1390.5,0.3659210526315789,C,2,618.0,catchment_based,2356,1723,3357.2999999999997,1723.0,0.0,121.36253074365854,False,False,True
 San Elijo Avenue,secondary,multilane,2,25,3800.0,moderate_fhsz,0.75,2850.0,1390.5,0.3659210526315789,C,2,618.0,catchment_based,2356,1723,3357.2999999999997,1723.0,0.0,260.3350858777408,False,False,True
-Manchester Avenue,secondary,multilane,2,45,3800.0,vhfhsz,0.35,1330.0,1390.5,0.3659210526315789,C,2,618.0,catchment_based,3389,2102,4829.325,2102.0,0.0,994.0410835380948,False,False,True
 San Elijo Avenue,secondary,multilane,2,25,3800.0,high_fhsz,0.5,1900.0,1390.5,0.3659210526315789,C,2,618.0,catchment_based,2356,1723,3357.2999999999997,1723.0,0.0,121.36253074365854,False,False,True
 Melba Road,tertiary,two_lane,1,25,1125.0,non_fhsz,1.0,1125.0,1174.5,1.044,F,1,522.0,catchment_based,978,2419,1393.6499999999999,2419.0,0.0,102.0327556939066,True,True,True
 Melba Road,tertiary,two_lane,1,25,1125.0,non_fhsz,1.0,1125.0,1174.5,1.044,F,1,522.0,catchment_based,1639,5005,2335.575,5005.0,0.0,99.55343462832707,True,True,True
@@ -672,7 +571,6 @@ Chesterfield Drive,tertiary,two_lane,1,25,1125.0,non_fhsz,1.0,1125.0,1431.0,1.27
 Chesterfield Drive,tertiary,two_lane,1,25,1125.0,non_fhsz,1.0,1125.0,1431.0,1.272,F,1,636.0,catchment_based,2615,1730,3726.3749999999995,1730.0,0.0,80.70061460389651,True,True,True
 Norfolk Drive,residential,two_lane,1,25,1125.0,non_fhsz,1.0,1125.0,1431.0,1.272,F,1,636.0,catchment_based,2615,1730,3726.3749999999995,1730.0,0.0,78.51495747522831,True,True,True
 Manchester Avenue,secondary,multilane,2,35,3800.0,vhfhsz,0.35,1330.0,1804.5,0.4748684210526316,D,2,802.0,catchment_based,1296,950,1846.8,950.0,0.0,658.9987686479107,True,True,True
-Manchester Avenue,secondary,multilane,2,35,3800.0,vhfhsz,0.35,1330.0,1804.5,0.4748684210526316,D,2,802.0,catchment_based,1806,1134,2573.5499999999997,1134.0,0.0,342.50941468526196,True,True,True
 Manchester Avenue,secondary,multilane,2,35,3800.0,vhfhsz,0.35,1330.0,1804.5,0.4748684210526316,D,2,802.0,catchment_based,1296,950,1846.8,950.0,0.0,470.7594968108924,True,True,True
 Manchester Avenue,secondary,multilane,2,35,3800.0,vhfhsz,0.35,1330.0,1804.5,0.4748684210526316,D,2,802.0,catchment_based,1296,950,1846.8,950.0,0.0,658.9987686479104,True,True,True
 Birmingham Drive,tertiary,two_lane,2,25,1125.0,high_fhsz,0.5,562.5,1147.5,1.02,F,1,510.0,catchment_based,1733,1147,2469.5249999999996,1147.0,0.0,57.60634981742006,False,True,True
@@ -694,9 +592,6 @@ Camino del Rancho,residential,two_lane,1,25,1125.0,high_fhsz,0.5,562.5,78.75,0.0
 Brookside Lane,residential,two_lane,1,25,1125.0,vhfhsz,0.35,393.75,78.75,0.07,A,1,35.0,catchment_based,860,1668,1225.5,1668.0,0.0,468.61149872166334,True,True,True
 Teaberry Street,residential,two_lane,1,25,1125.0,non_fhsz,1.0,1125.0,1703.25,1.514,F,1,757.0,catchment_based,2853,2916,4065.5249999999996,2916.0,0.0,71.02248718568681,True,True,True
 Teaberry Street,residential,two_lane,1,25,1125.0,non_fhsz,1.0,1125.0,1703.25,1.514,F,1,757.0,catchment_based,2853,2916,4065.5249999999996,2916.0,0.0,176.37269141414038,True,True,True
-Birmingham Drive,secondary,multilane,3,30,5700.0,non_fhsz,1.0,5700.0,1887.75,0.3311842105263158,C,1,839.0,catchment_based,3292,1948,4691.099999999999,1948.0,0.0,92.88176705310194,False,False,True
-Birmingham Drive,secondary,multilane,3,30,5700.0,non_fhsz,1.0,5700.0,4700.25,0.8246052631578947,E,3,2089.0,catchment_based,3292,1948,4691.099999999999,1948.0,0.0,59.75772340093104,False,False,True
-Liverpool Drive,tertiary,two_lane,2,25,1125.0,non_fhsz,1.0,1125.0,2812.5,2.5,F,2,1250.0,catchment_based,3818,2051,5440.65,2051.0,0.0,272.378050309468,False,True,True
 Kings Cross Drive,residential,two_lane,1,25,1125.0,non_fhsz,1.0,1125.0,1066.5,0.948,E,1,474.0,catchment_based,2265,680,3227.6249999999995,680.0,0.0,232.7402158344011,True,True,True
 Ocean View Avenue,residential,two_lane,1,25,1125.0,non_fhsz,1.0,1125.0,1030.5,0.916,E,1,458.0,catchment_based,3172,4123,4520.099999999999,4123.0,0.0,167.4662888203867,True,True,True
 Ocean View Avenue,residential,two_lane,1,25,1125.0,non_fhsz,1.0,1125.0,1030.5,0.916,E,1,458.0,catchment_based,2513,3838,3581.0249999999996,3838.0,0.0,84.32207752106329,True,True,True
@@ -724,7 +619,6 @@ Village Run East,residential,two_lane,1,25,1125.0,non_fhsz,1.0,1125.0,924.75,0.8
 Orpheus Avenue,tertiary,two_lane,2,20,900.0,non_fhsz,1.0,900.0,1030.5,1.145,F,1,458.0,catchment_based,2657,1516,3786.2249999999995,1516.0,0.0,32.18867674943606,False,False,True
 Orpheus Avenue,tertiary,two_lane,2,20,900.0,non_fhsz,1.0,900.0,1030.5,1.145,F,1,458.0,catchment_based,2657,1516,3786.2249999999995,1516.0,0.0,223.68798201540903,False,False,True
 Leucadia Boulevard,primary,multilane,3,30,5700.0,non_fhsz,1.0,5700.0,2713.5,0.4760526315789474,D,2,1206.0,catchment_based,2054,1053,2926.95,1053.0,0.0,101.19387738956671,False,False,True
-Leucadia Boulevard,primary,multilane,4,30,7600.0,non_fhsz,1.0,7600.0,2713.5,0.3570394736842105,C,2,1206.0,catchment_based,3100,1774,4417.5,1774.0,0.0,64.59211787229114,False,False,True
 Requeza Street,residential,two_lane,1,25,1125.0,non_fhsz,1.0,1125.0,1059.75,0.942,E,1,471.0,catchment_based,2170,2355,3092.2499999999995,2355.0,0.0,71.68118983238138,True,False,True
 Requeza Street,residential,two_lane,1,25,1125.0,non_fhsz,1.0,1125.0,1059.75,0.942,E,1,471.0,catchment_based,1413,1548,2013.5249999999999,1548.0,0.0,46.43940838185973,True,False,True
 Puebla Street,residential,two_lane,1,25,1125.0,non_fhsz,1.0,1125.0,1030.5,0.916,E,1,458.0,catchment_based,2657,1516,3786.2249999999995,1516.0,0.0,160.5413843039412,True,True,True
@@ -741,9 +635,7 @@ Village View Road,residential,two_lane,1,25,1125.0,non_fhsz,1.0,1125.0,5550.75,4
 Village View Road,residential,two_lane,1,25,1125.0,non_fhsz,1.0,1125.0,10188.0,9.056,F,11,4528.0,catchment_based,925,869,1318.125,869.0,0.0,105.44384919490201,True,True,True
 Village Green Road,residential,two_lane,1,25,1125.0,non_fhsz,1.0,1125.0,1041.75,0.926,E,1,463.0,catchment_based,2053,1428,2925.5249999999996,1428.0,0.0,81.18762072859184,True,True,True
 Birmingham Drive,secondary,multilane,2,30,3800.0,non_fhsz,1.0,3800.0,4700.25,1.2369078947368422,F,3,2089.0,catchment_based,3292,1948,4691.099999999999,1948.0,0.0,16.082460592901565,False,False,True
-Birmingham Drive,secondary,multilane,2,30,3800.0,non_fhsz,1.0,3800.0,4700.25,1.2369078947368422,F,3,2089.0,catchment_based,3292,1948,4691.099999999999,1948.0,0.0,85.62792789383133,False,False,True
 Birmingham Drive,secondary,multilane,3,30,5700.0,non_fhsz,1.0,5700.0,1887.75,0.3311842105263158,C,1,839.0,catchment_based,3818,2051,5440.65,2051.0,0.0,78.95114202483236,False,False,True
-Birmingham Drive,secondary,multilane,3,30,5700.0,non_fhsz,1.0,5700.0,1887.75,0.3311842105263158,C,1,839.0,catchment_based,3292,1948,4691.099999999999,1948.0,0.0,92.88176705310194,False,False,True
 Birmingham Drive,secondary,multilane,3,30,5700.0,non_fhsz,1.0,5700.0,1887.75,0.3311842105263158,C,1,839.0,catchment_based,1979,1612,2820.075,1612.0,0.0,84.99989335033128,False,False,True
 Fortuna Ranch Road,residential,two_lane,1,25,1125.0,moderate_fhsz,0.75,843.75,252.0,0.224,C,1,112.0,catchment_based,1099,1725,1566.0749999999998,1725.0,0.0,78.85179090023779,True,True,True
 Fortuna Ranch Road,residential,two_lane,1,25,1125.0,non_fhsz,1.0,1125.0,252.0,0.224,C,1,112.0,catchment_based,1099,1725,1566.0749999999998,1725.0,0.0,391.9013118070212,True,True,True
@@ -759,9 +651,6 @@ Piraeus Street,secondary,multilane,2,35,3800.0,non_fhsz,1.0,3800.0,1424.25,0.374
 Piraeus Street,secondary,multilane,2,35,3800.0,non_fhsz,1.0,3800.0,1424.25,0.3748026315789474,C,1,633.0,catchment_based,1023,480,1457.7749999999999,480.0,0.0,165.26058126106804,False,True,True
 Sparta Drive,tertiary,two_lane,1,25,1125.0,non_fhsz,1.0,1125.0,1424.25,1.266,F,1,633.0,catchment_based,1023,480,1457.7749999999999,480.0,0.0,251.68564436854953,True,True,True
 Olympus Street,tertiary,two_lane,1,25,1125.0,moderate_fhsz,0.75,843.75,1424.25,1.266,F,1,633.0,catchment_based,1023,480,1457.7749999999999,480.0,0.0,71.27468233252974,True,True,True
-North Coast Highway,primary,multilane,3,45,5700.0,non_fhsz,1.0,5700.0,1082.25,0.18986842105263158,B,1,481.0,catchment_based,2994,4243,4266.45,4243.0,0.0,546.8371429705849,False,True,True
-North Coast Highway,primary,multilane,4,45,7600.0,non_fhsz,1.0,7600.0,1082.25,0.14240131578947368,B,1,481.0,catchment_based,2513,3838,3581.0249999999996,3838.0,0.0,130.3268574098119,False,True,True
-A Street,residential,two_lane,1,25,1125.0,non_fhsz,1.0,1125.0,1201.5,1.068,F,1,534.0,catchment_based,2513,3838,3581.0249999999996,3838.0,0.0,91.90489683518769,True,True,True
 Nardo Road,tertiary,two_lane,1,25,1125.0,non_fhsz,1.0,1125.0,1059.75,0.942,E,1,471.0,catchment_based,1413,1548,2013.5249999999999,1548.0,0.0,237.74909380349385,True,True,True
 Requeza Street,residential,two_lane,1,25,1125.0,non_fhsz,1.0,1125.0,1059.75,0.942,E,1,471.0,catchment_based,1413,1548,2013.5249999999999,1548.0,0.0,39.60855792077291,True,False,True
 Nardo Road,tertiary,two_lane,1,25,1125.0,non_fhsz,1.0,1125.0,1059.75,0.942,E,1,471.0,catchment_based,1413,1548,2013.5249999999999,1548.0,0.0,9.286305335498943,True,True,True
@@ -782,7 +671,6 @@ Ocean View Avenue,residential,two_lane,1,25,1125.0,non_fhsz,1.0,1125.0,1030.5,0.
 Ocean View Avenue,residential,two_lane,1,25,1125.0,non_fhsz,1.0,1125.0,1030.5,0.916,E,1,458.0,catchment_based,1634,1036,2328.45,1036.0,0.0,62.00300595183776,True,True,True
 Ocean View Avenue,residential,two_lane,1,25,1125.0,non_fhsz,1.0,1125.0,1030.5,0.916,E,1,458.0,catchment_based,2657,1516,3786.2249999999995,1516.0,0.0,100.48885921086733,True,True,True
 ,motorway_link,freeway,1,45,2250.0,non_fhsz,1.0,2250.0,1424.25,0.633,E,1,633.0,catchment_based,2140,1045,3049.4999999999995,1045.0,0.0,26.503633779350686,False,True,True
-Piraeus Street,secondary,multilane,2,35,3800.0,non_fhsz,1.0,3800.0,1424.25,0.3748026315789474,C,1,633.0,catchment_based,2140,1045,3049.4999999999995,1045.0,0.0,362.3517620506732,False,True,True
 Orchard Wood Road,residential,two_lane,1,25,1125.0,high_fhsz,0.5,562.5,10188.0,9.056,F,11,4528.0,catchment_based,935,1081,1332.3749999999998,1081.0,0.0,80.12849311927317,True,True,True
 Orchard Wood Road,residential,two_lane,1,25,1125.0,vhfhsz,0.35,393.75,10188.0,9.056,F,11,4528.0,catchment_based,935,1081,1332.3749999999998,1081.0,0.0,127.40613423549465,True,True,True
 Wandering Road,residential,two_lane,1,25,1125.0,high_fhsz,0.5,562.5,5550.75,4.934,F,4,2467.0,catchment_based,1725,1197,2458.125,1197.0,0.0,113.75548824023939,True,True,True
@@ -792,19 +680,16 @@ Amargosa Drive,tertiary,two_lane,1,25,1125.0,vhfhsz,0.35,393.75,10188.0,9.056,F,
 Village Green Road,residential,two_lane,1,25,1125.0,non_fhsz,1.0,1125.0,1041.75,0.926,E,1,463.0,catchment_based,2053,1428,2925.5249999999996,1428.0,0.0,80.7563786764907,True,True,True
 Village Green Road,residential,two_lane,1,25,1125.0,non_fhsz,1.0,1125.0,1041.75,0.926,E,1,463.0,catchment_based,1811,1199,2580.6749999999997,1199.0,0.0,73.93122627253199,True,True,True
 Calle Ryan,residential,two_lane,1,25,1125.0,vhfhsz,0.35,393.75,1111.5,0.988,F,1,494.0,catchment_based,988,941,1407.8999999999999,941.0,0.0,46.64138116072749,True,True,True
-Rancho Santa Fe Road,secondary,multilane,3,40,5700.0,non_fhsz,1.0,5700.0,2556.0,0.44842105263157894,D,5,1136.0,catchment_based,2265,1524,3227.6249999999995,1524.0,0.0,165.42027600489317,False,False,True
 Chesterfield Drive,tertiary,two_lane,1,25,1125.0,non_fhsz,1.0,1125.0,1431.0,1.272,F,1,636.0,catchment_based,2615,1730,3726.3749999999995,1730.0,0.0,80.7006146038965,True,True,True
 Chesterfield Drive,tertiary,two_lane,1,25,1125.0,non_fhsz,1.0,1125.0,1431.0,1.272,F,1,636.0,catchment_based,2074,1435,2955.45,1435.0,0.0,67.08482891923438,True,True,True
 Glasgow Avenue,tertiary,two_lane,2,25,1125.0,non_fhsz,1.0,1125.0,1431.0,1.272,F,1,636.0,catchment_based,3387,1969,4826.474999999999,1969.0,0.0,201.13370505568943,False,True,True
 Bumann Road,residential,two_lane,1,25,1125.0,vhfhsz,0.35,393.75,252.0,0.224,C,1,112.0,catchment_based,386,1055,550.05,1055.0,0.0,319.3682864667911,True,True,True
 Bumann Road,residential,two_lane,1,25,1125.0,high_fhsz,0.5,562.5,252.0,0.224,C,1,112.0,catchment_based,386,1055,550.05,1055.0,0.0,114.89073953190933,True,True,True
-North Vulcan Avenue,secondary,multilane,2,40,3800.0,non_fhsz,1.0,3800.0,1653.75,0.4351973684210526,D,1,735.0,catchment_based,3634,1989,5178.45,1989.0,0.0,765.4130745502321,False,False,True
 Orpheus Avenue,tertiary,two_lane,2,20,900.0,non_fhsz,1.0,900.0,1030.5,1.145,F,1,458.0,catchment_based,1634,1036,2328.45,1036.0,0.0,128.41341565352008,False,False,True
 Orpheus Avenue,tertiary,two_lane,2,20,900.0,non_fhsz,1.0,900.0,1030.5,1.145,F,1,458.0,catchment_based,2649,1656,3774.825,1656.0,0.0,239.17610920637662,False,False,True
 Village Green Road,residential,two_lane,1,25,1125.0,non_fhsz,1.0,1125.0,1041.75,0.926,E,1,463.0,catchment_based,1977,1234,2817.225,1234.0,0.0,77.61636794889078,True,True,True
 Village Green Road,residential,two_lane,1,25,1125.0,non_fhsz,1.0,1125.0,1041.75,0.926,E,1,463.0,catchment_based,1977,1234,2817.225,1234.0,0.0,80.7331619123002,True,True,True
 Orpheus Avenue,tertiary,two_lane,2,20,900.0,non_fhsz,1.0,900.0,1030.5,1.145,F,1,458.0,catchment_based,2657,1516,3786.2249999999995,1516.0,0.0,32.18867674943606,False,False,True
-Orpheus Avenue,tertiary,two_lane,2,20,900.0,non_fhsz,1.0,900.0,1030.5,1.145,F,1,458.0,catchment_based,2657,1516,3786.2249999999995,1516.0,0.0,112.49961699062052,False,False,True
 Orchard Wood Road,residential,two_lane,1,25,1125.0,high_fhsz,0.5,562.5,10188.0,9.056,F,11,4528.0,catchment_based,935,1081,1332.3749999999998,1081.0,0.0,80.86888245341085,True,True,True
 Orchard Wood Road,residential,two_lane,1,25,1125.0,high_fhsz,0.5,562.5,10188.0,9.056,F,11,4528.0,catchment_based,935,1081,1332.3749999999998,1081.0,0.0,80.12849311927317,True,True,True
 Requeza Street,residential,two_lane,1,25,1125.0,non_fhsz,1.0,1125.0,1059.75,0.942,E,1,471.0,catchment_based,2170,2355,3092.2499999999995,2355.0,0.0,130.96303391572013,True,False,True
@@ -830,7 +715,6 @@ Orchard Glen Circle,residential,two_lane,1,25,1125.0,moderate_fhsz,0.75,843.75,1
 Orchard Wood Road,residential,two_lane,1,25,1125.0,moderate_fhsz,0.75,843.75,10188.0,9.056,F,11,4528.0,catchment_based,935,1081,1332.3749999999998,1081.0,0.0,122.30018495509586,True,True,True
 Orchard Glen Circle,residential,two_lane,1,25,1125.0,moderate_fhsz,0.75,843.75,10188.0,9.056,F,11,4528.0,catchment_based,935,1081,1332.3749999999998,1081.0,0.0,284.54564297640053,True,True,True
 Orchard Wood Road,residential,two_lane,1,25,1125.0,moderate_fhsz,0.75,843.75,10188.0,9.056,F,11,4528.0,catchment_based,935,1081,1332.3749999999998,1081.0,0.0,122.30018495509586,True,True,True
-Village View Road,residential,two_lane,1,25,1125.0,moderate_fhsz,0.75,843.75,10188.0,9.056,F,11,4528.0,catchment_based,935,1081,1332.3749999999998,1081.0,0.0,234.78264487585434,True,True,True
 Orchard Wood Road,residential,two_lane,1,25,1125.0,vhfhsz,0.35,393.75,10188.0,9.056,F,11,4528.0,catchment_based,935,1081,1332.3749999999998,1081.0,0.0,168.39024314651454,True,True,True
 Orchard Wood Road,residential,two_lane,1,25,1125.0,vhfhsz,0.35,393.75,10188.0,9.056,F,11,4528.0,catchment_based,935,1081,1332.3749999999998,1081.0,0.0,127.40613423549465,True,True,True
 Orchard Wood Road,residential,two_lane,1,25,1125.0,vhfhsz,0.35,393.75,10188.0,9.056,F,11,4528.0,catchment_based,935,1081,1332.3749999999998,1081.0,0.0,168.3902431465145,True,True,True
@@ -838,7 +722,6 @@ Amargosa Drive,tertiary,two_lane,1,25,1125.0,vhfhsz,0.35,393.75,10188.0,9.056,F,
 Shields Avenue,residential,two_lane,1,25,1125.0,non_fhsz,1.0,1125.0,852.75,0.758,E,1,379.0,catchment_based,1642,1303,2339.85,1303.0,0.0,33.48226948539635,True,True,True
 Orpheus Avenue,tertiary,two_lane,2,20,900.0,non_fhsz,1.0,900.0,1030.5,1.145,F,1,458.0,catchment_based,1990,1371,2835.7499999999995,1371.0,0.0,209.62543488521158,False,False,True
 North Vulcan Avenue,secondary,multilane,2,40,3800.0,non_fhsz,1.0,3800.0,1653.75,0.4351973684210526,D,1,735.0,catchment_based,3320,1859,4731.0,1859.0,0.0,468.5802565736961,False,False,True
-North Vulcan Avenue,secondary,multilane,2,40,3800.0,non_fhsz,1.0,3800.0,1653.75,0.4351973684210526,D,1,735.0,catchment_based,3634,1989,5178.45,1989.0,0.0,765.4130745502322,False,False,True
 North Vulcan Avenue,secondary,multilane,2,40,3800.0,non_fhsz,1.0,3800.0,1653.75,0.4351973684210526,D,1,735.0,catchment_based,2599,733,3703.575,733.0,0.0,257.5884057132108,False,False,True
 North Vulcan Avenue,secondary,multilane,2,40,3800.0,non_fhsz,1.0,3800.0,1653.75,0.4351973684210526,D,1,735.0,catchment_based,3320,1859,4731.0,1859.0,0.0,468.580256573696,False,False,True
 Gatepost Road,residential,two_lane,1,25,1125.0,non_fhsz,1.0,1125.0,924.75,0.822,E,1,411.0,catchment_based,2467,913,3515.475,913.0,0.0,71.27399429154798,True,True,True
@@ -848,9 +731,7 @@ Gatepost Road,residential,two_lane,1,25,1125.0,non_fhsz,1.0,1125.0,924.75,0.822,
 Village Run East,residential,two_lane,1,25,1125.0,non_fhsz,1.0,1125.0,924.75,0.822,E,1,411.0,catchment_based,2467,913,3515.475,913.0,0.0,106.48109865072098,True,True,True
 Paseo de Las Flores,tertiary,two_lane,2,25,1125.0,non_fhsz,1.0,1125.0,1512.0,1.344,F,1,672.0,catchment_based,1941,1804,2765.9249999999997,1804.0,0.0,9.081647983444652,False,True,True
 Paseo de Las Flores,tertiary,two_lane,2,25,1125.0,vhfhsz,0.35,393.75,1512.0,1.344,F,1,672.0,catchment_based,1941,1804,2765.9249999999997,1804.0,0.0,772.1868553946931,False,True,True
-Quail Gardens Drive,secondary,multilane,3,35,5700.0,moderate_fhsz,0.75,4275.0,1512.0,0.26526315789473687,C,1,672.0,catchment_based,1941,1804,2765.9249999999997,1804.0,0.0,164.17574601047434,False,False,True
 Leucadia Boulevard,primary,multilane,2,40,3800.0,non_fhsz,1.0,3800.0,1550.25,0.4079605263157895,D,1,689.0,catchment_based,3100,1774,4417.5,1774.0,0.0,37.95248948926181,True,False,True
-Leucadia Boulevard,primary,multilane,3,30,5700.0,non_fhsz,1.0,5700.0,1550.25,0.2719736842105263,C,1,689.0,catchment_based,3100,1774,4417.5,1774.0,0.0,110.60633342701271,False,False,True
 Leucadia Boulevard,primary,multilane,3,30,5700.0,non_fhsz,1.0,5700.0,2713.5,0.4760526315789474,D,2,1206.0,catchment_based,2054,1053,2926.95,1053.0,0.0,101.1938773895667,False,False,True
 Leucadia Boulevard,primary,multilane,2,30,3800.0,non_fhsz,1.0,3800.0,2713.5,0.714078947368421,E,2,1206.0,catchment_based,3346,1604,4768.049999999999,1604.0,0.0,44.597831839627794,True,False,True
 Leucadia Boulevard,primary,multilane,1,40,1900.0,non_fhsz,1.0,1900.0,2713.5,1.428157894736842,F,2,1206.0,catchment_based,3346,1604,4768.049999999999,1604.0,0.0,43.30731863104607,False,False,True
@@ -861,18 +742,11 @@ Piraeus Street,secondary,multilane,2,35,3800.0,non_fhsz,1.0,3800.0,1424.25,0.374
 Piraeus Street,secondary,multilane,2,35,3800.0,non_fhsz,1.0,3800.0,1424.25,0.3748026315789474,C,1,633.0,catchment_based,1243,565,1771.2749999999999,565.0,0.0,359.24466048333545,False,True,True
 Piraeus Street,secondary,multilane,2,35,3800.0,moderate_fhsz,0.75,2850.0,1424.25,0.3748026315789474,C,1,633.0,catchment_based,1243,565,1771.2749999999999,565.0,0.0,143.46884334354692,False,True,True
 Piraeus Street,secondary,multilane,2,35,3800.0,non_fhsz,1.0,3800.0,1424.25,0.3748026315789474,C,1,633.0,catchment_based,1243,565,1771.2749999999999,565.0,0.0,358.6006912901954,False,True,True
-,motorway_link,freeway,1,45,2250.0,non_fhsz,1.0,2250.0,4542.75,2.019,F,4,2019.0,catchment_based,2884,2896,4109.7,2896.0,0.0,413.4767159604056,False,True,True
-,motorway_link,freeway,1,45,2250.0,non_fhsz,1.0,2250.0,1174.5,0.522,D,1,522.0,catchment_based,2777,3227,3957.2249999999995,3227.0,0.0,326.91344611070485,False,True,True
-,motorway_link,freeway,2,45,4500.0,vhfhsz,0.35,1575.0,1982.25,0.4405,D,3,881.0,catchment_based,2458,921,3502.6499999999996,921.0,0.0,399.3113963427101,False,True,True
 Village Run East,residential,two_lane,1,25,1125.0,non_fhsz,1.0,1125.0,924.75,0.822,E,1,411.0,catchment_based,2467,913,3515.475,913.0,0.0,130.2206318040964,True,True,True
 Cottage Grove Drive,residential,two_lane,1,25,1125.0,non_fhsz,1.0,1125.0,1041.75,0.926,E,1,463.0,catchment_based,2467,913,3515.475,913.0,0.0,95.30109595733231,True,True,True
 Village Run East,residential,two_lane,1,25,1125.0,non_fhsz,1.0,1125.0,924.75,0.822,E,1,411.0,catchment_based,2467,913,3515.475,913.0,0.0,78.00692517760923,True,True,True
 La Mesa Avenue,residential,two_lane,1,25,1125.0,non_fhsz,1.0,1125.0,1082.25,0.962,F,1,481.0,catchment_based,1532,1091,2183.1,1091.0,0.0,230.34487494133194,True,True,True
 Birmingham Drive,secondary,multilane,2,30,3800.0,non_fhsz,1.0,3800.0,4700.25,1.2369078947368422,F,3,2089.0,catchment_based,3292,1948,4691.099999999999,1948.0,0.0,18.999445058556535,False,False,True
-,motorway_link,freeway,1,45,2250.0,non_fhsz,1.0,2250.0,4700.25,2.089,F,3,2089.0,catchment_based,3292,1948,4691.099999999999,1948.0,0.0,343.7990097780121,False,True,True
-,motorway_link,freeway,3,45,6750.0,non_fhsz,1.0,6750.0,5348.25,0.7923333333333333,E,5,2377.0,catchment_based,2777,3227,3957.2249999999995,3227.0,0.0,306.79035227613747,False,True,True
-,motorway_link,freeway,3,45,6750.0,non_fhsz,1.0,6750.0,3744.0,0.5546666666666666,D,3,1664.0,catchment_based,2140,1045,3049.4999999999995,1045.0,0.0,343.0328624448802,False,True,True
-,motorway_link,freeway,2,45,4500.0,non_fhsz,1.0,4500.0,1424.25,0.3165,C,1,633.0,catchment_based,2140,1045,3049.4999999999995,1045.0,0.0,293.42452848276025,False,True,True
 Paseo de Las Flores,tertiary,two_lane,2,25,1125.0,vhfhsz,0.35,393.75,1512.0,1.344,F,1,672.0,catchment_based,1941,1804,2765.9249999999997,1804.0,0.0,772.186855394693,False,True,True
 Paseo de Las Flores,tertiary,two_lane,2,25,1125.0,vhfhsz,0.35,393.75,1512.0,1.344,F,1,672.0,catchment_based,672,64,957.5999999999999,64.0,0.0,119.76387598531247,False,True,True
 Cypress Hills Drive,residential,two_lane,1,25,1125.0,vhfhsz,0.35,393.75,1512.0,1.344,F,1,672.0,catchment_based,672,64,957.5999999999999,64.0,0.0,81.76367102384765,True,True,True
@@ -883,8 +757,6 @@ Cypress Hills Drive,residential,two_lane,1,25,1125.0,vhfhsz,0.35,393.75,1512.0,1
 Cypress Hills Drive,residential,two_lane,1,25,1125.0,vhfhsz,0.35,393.75,1512.0,1.344,F,1,672.0,catchment_based,1716,1392,2445.2999999999997,1392.0,0.0,77.85132620402239,True,True,True
 Cypress Hills Drive,residential,two_lane,1,25,1125.0,vhfhsz,0.35,393.75,1512.0,1.344,F,1,672.0,catchment_based,1716,1392,2445.2999999999997,1392.0,0.0,131.3596213735554,True,True,True
 Cypress Hills Drive,residential,two_lane,1,25,1125.0,vhfhsz,0.35,393.75,1512.0,1.344,F,1,672.0,catchment_based,1716,1392,2445.2999999999997,1392.0,0.0,77.85132620402239,True,True,True
-Heritage Lane,residential,two_lane,1,25,1125.0,vhfhsz,0.35,393.75,1512.0,1.344,F,1,672.0,catchment_based,1429,871,2036.3249999999998,871.0,0.0,161.85361582655318,True,True,True
-Heritage Lane,residential,two_lane,1,25,1125.0,vhfhsz,0.35,393.75,1512.0,1.344,F,1,672.0,catchment_based,1429,871,2036.3249999999998,871.0,0.0,161.85361582655318,True,True,True
 Paseo de Las Flores,tertiary,two_lane,2,25,1125.0,vhfhsz,0.35,393.75,1512.0,1.344,F,1,672.0,catchment_based,672,64,957.5999999999999,64.0,0.0,119.76387598531248,False,True,True
 Ranch Road,residential,two_lane,1,25,1125.0,vhfhsz,0.35,393.75,711.0,0.632,E,1,316.0,catchment_based,316,798,450.29999999999995,798.0,0.0,7.661263145937737,True,True,True
 Quail Gardens Drive,secondary,multilane,1,35,1900.0,vhfhsz,0.35,665.0,711.0,0.3742105263157895,C,1,316.0,catchment_based,316,798,450.29999999999995,798.0,0.0,515.9822306362934,False,True,True
@@ -900,36 +772,18 @@ Montgomery Avenue,tertiary,two_lane,2,25,1125.0,non_fhsz,1.0,1125.0,1887.75,1.67
 Montgomery Avenue,tertiary,two_lane,2,25,1125.0,non_fhsz,1.0,1125.0,1887.75,1.678,F,1,839.0,catchment_based,1453,1509,2070.5249999999996,1509.0,0.0,187.7814824757236,False,True,True
 Amargosa Drive,tertiary,two_lane,1,25,1125.0,vhfhsz,0.35,393.75,10188.0,9.056,F,11,4528.0,catchment_based,935,1081,1332.3749999999998,1081.0,0.0,119.2715811966279,True,True,True
 North El Camino Real,primary,multilane,3,35,5700.0,non_fhsz,1.0,5700.0,852.75,0.14960526315789474,B,1,379.0,catchment_based,2202,2863,3137.85,2863.0,0.0,149.52692428986845,False,False,True
-North El Camino Real,primary,multilane,4,55,7600.0,non_fhsz,1.0,7600.0,852.75,0.11220394736842106,B,1,379.0,catchment_based,1665,2516,2372.625,2516.0,0.0,250.29948024760702,False,False,True
-North El Camino Real,primary,multilane,6,55,11400.0,vhfhsz,0.35,3989.9999999999995,1397.25,0.12256578947368421,B,2,621.0,catchment_based,1582,3787,2254.35,3787.0,0.0,265.5010562363605,False,False,True
 North El Camino Real,primary,multilane,2,55,3800.0,vhfhsz,0.35,1330.0,1397.25,0.3676973684210526,C,2,621.0,catchment_based,2368,2386,3374.3999999999996,2386.0,0.0,12.129300206589328,True,False,True
 North El Camino Real,primary,multilane,3,55,5700.0,non_fhsz,1.0,5700.0,1397.25,0.24513157894736842,C,2,621.0,catchment_based,1665,2516,2372.625,2516.0,0.0,107.67432665082097,False,False,True
-Mountain Vista Drive,secondary,multilane,5,35,9500.0,non_fhsz,1.0,9500.0,544.5,0.05731578947368421,A,1,242.0,catchment_based,1665,2516,2372.625,2516.0,0.0,140.4518332534825,False,True,True
-North El Camino Real,primary,multilane,5,55,9500.0,non_fhsz,1.0,9500.0,1397.25,0.14707894736842106,B,2,621.0,catchment_based,1665,2516,2372.625,2516.0,0.0,129.71561848199778,False,False,True
 North El Camino Real,primary,multilane,3,55,5700.0,non_fhsz,1.0,5700.0,852.75,0.14960526315789474,B,1,379.0,catchment_based,2444,3092,3482.7,3092.0,0.0,96.99704863688711,False,False,True
-North El Camino Real,primary,multilane,4,55,7600.0,high_fhsz,0.5,3800.0,1397.25,0.1838486842105263,B,2,621.0,catchment_based,2075,3281,2956.8749999999995,3281.0,0.0,329.8035371961505,False,False,True
-North El Camino Real,primary,multilane,4,35,7600.0,non_fhsz,1.0,7600.0,852.75,0.11220394736842106,B,1,379.0,catchment_based,2444,3092,3482.7,3092.0,0.0,105.14477794804655,False,False,True
 North El Camino Real,primary,multilane,3,35,5700.0,non_fhsz,1.0,5700.0,852.75,0.14960526315789474,B,1,379.0,catchment_based,2202,2863,3137.85,2863.0,0.0,63.79312176078294,False,False,True
-Santa Fe Drive,secondary,multilane,3,35,5700.0,non_fhsz,1.0,5700.0,996.75,0.1748684210526316,B,1,443.0,catchment_based,1783,1579,2540.7749999999996,1579.0,0.0,285.5639501301638,False,False,True
-South El Camino Real,primary,multilane,6,40,11400.0,non_fhsz,1.0,11400.0,996.75,0.0874342105263158,A,1,443.0,catchment_based,1273,1395,1814.0249999999999,1395.0,0.0,189.25201683933727,False,False,True
-South El Camino Real,primary,multilane,6,40,11400.0,non_fhsz,1.0,11400.0,996.75,0.0874342105263158,A,1,443.0,catchment_based,1273,1395,1814.0249999999999,1395.0,0.0,189.2520168393373,False,False,True
 Willowspring South Drive,tertiary,two_lane,1,25,1125.0,non_fhsz,1.0,1125.0,996.75,0.886,E,1,443.0,catchment_based,1273,1395,1814.0249999999999,1395.0,0.0,68.95487502651105,True,True,True
-Leucadia Boulevard,primary,multilane,5,45,9500.0,vhfhsz,0.35,3325.0,265.5,0.02794736842105263,A,1,118.0,catchment_based,2570,4649,3662.2499999999995,4649.0,0.0,243.95993309074908,False,False,True
 Leucadia Boulevard,primary,multilane,2,45,3800.0,vhfhsz,0.35,1330.0,265.5,0.06986842105263158,A,1,118.0,catchment_based,2570,4649,3662.2499999999995,4649.0,0.0,9.950790019394912,True,False,True
-Town Center Place,tertiary,two_lane,1,40,1700.0,vhfhsz,0.35,595.0,265.5,0.1561764705882353,B,1,118.0,catchment_based,2570,4649,3662.2499999999995,4649.0,0.0,144.62823025143717,True,False,True
 Garden View Road,secondary,multilane,2,35,3800.0,vhfhsz,0.35,1330.0,2349.0,0.6181578947368421,E,1,1044.0,catchment_based,2802,4666,3992.8499999999995,4666.0,0.0,974.2177622473325,True,True,True
-Leucadia Boulevard,primary,multilane,2,45,3800.0,vhfhsz,0.35,1330.0,711.0,0.18710526315789475,B,1,316.0,catchment_based,3103,4614,4421.775,4614.0,0.0,1125.928548629299,False,False,True
-Garden View Road,secondary,multilane,2,35,3800.0,vhfhsz,0.35,1330.0,2349.0,0.6181578947368421,E,1,1044.0,catchment_based,2150,3672,3063.7499999999995,3672.0,0.0,16.8477611095757,True,True,True
-Quail Gardens Drive,secondary,multilane,1,35,1900.0,high_fhsz,0.5,950.0,711.0,0.3742105263157895,C,1,316.0,catchment_based,1941,1804,2765.9249999999997,1804.0,0.0,126.83679457910135,False,True,True
-Leucadia Boulevard,primary,multilane,2,45,3800.0,vhfhsz,0.35,1330.0,1512.0,0.39789473684210525,C,1,672.0,catchment_based,3103,4614,4421.775,4614.0,0.0,1127.2504870565126,False,False,True
 Avenida la Posta,residential,two_lane,1,25,1125.0,non_fhsz,1.0,1125.0,3714.75,3.302,F,6,1651.0,catchment_based,2823,1623,4022.7749999999996,1623.0,0.0,133.00186919951435,True,True,True
 Rancho Santa Fe Road,secondary,multilane,2,35,3800.0,non_fhsz,1.0,3800.0,2556.0,0.6726315789473685,E,5,1136.0,catchment_based,2265,1524,3227.6249999999995,1524.0,0.0,165.38853797891966,True,True,True
-Leucadia Boulevard,primary,multilane,2,40,3800.0,non_fhsz,1.0,3800.0,3744.0,0.9852631578947368,F,3,1664.0,catchment_based,2140,1045,3049.4999999999995,1045.0,0.0,68.10392191120432,False,False,True
 Leucadia Boulevard,primary,multilane,2,40,3800.0,non_fhsz,1.0,3800.0,2713.5,0.714078947368421,E,2,1206.0,catchment_based,2657,1516,3786.2249999999995,1516.0,0.0,39.740198401425054,False,False,True
 Orpheus Avenue,tertiary,two_lane,4,25,1125.0,non_fhsz,1.0,1125.0,1030.5,0.916,E,1,458.0,catchment_based,2140,1045,3049.4999999999995,1045.0,0.0,15.613391634508483,False,True,True
-Leucadia Boulevard,primary,multilane,2,40,3800.0,non_fhsz,1.0,3800.0,2713.5,0.714078947368421,E,2,1206.0,catchment_based,3346,1604,4768.049999999999,1604.0,0.0,105.70164118097588,False,False,True
 Orpheus Avenue,tertiary,two_lane,4,25,1125.0,non_fhsz,1.0,1125.0,1030.5,0.916,E,1,458.0,catchment_based,2140,1045,3049.4999999999995,1045.0,0.0,15.613391634508483,False,True,True
-Orpheus Avenue,tertiary,two_lane,2,20,900.0,non_fhsz,1.0,900.0,1030.5,1.145,F,1,458.0,catchment_based,2657,1516,3786.2249999999995,1516.0,0.0,112.4996169906205,False,False,True
 Leucadia Boulevard,primary,multilane,2,30,3800.0,non_fhsz,1.0,3800.0,2713.5,0.714078947368421,E,2,1206.0,catchment_based,3346,1604,4768.049999999999,1604.0,0.0,44.597831839627794,True,False,True
 Newport Avenue,residential,two_lane,2,25,1125.0,non_fhsz,1.0,1125.0,1390.5,1.236,F,2,618.0,catchment_based,2071,2436,2951.1749999999997,2436.0,0.0,14.660386043928264,False,True,True
 Encinitas Boulevard,primary,multilane,2,45,3800.0,non_fhsz,1.0,3800.0,852.75,0.2244078947368421,C,1,379.0,catchment_based,2202,2863,3137.85,2863.0,0.0,75.43718487501859,True,False,True
@@ -952,10 +806,7 @@ Leucadia Boulevard,primary,multilane,1,40,1900.0,non_fhsz,1.0,1900.0,2713.5,1.42
 ,primary,multilane,2,30,3800.0,non_fhsz,1.0,3800.0,1550.25,0.4079605263157895,D,1,689.0,catchment_based,3100,1774,4417.5,1774.0,0.0,9.189393926966488,True,False,True
 ,primary,multilane,1,30,1900.0,non_fhsz,1.0,1900.0,2713.5,1.428157894736842,F,2,1206.0,catchment_based,2713,1338,3866.0249999999996,1338.0,0.0,3.895843536989098,False,False,True
 ,primary,multilane,2,30,3800.0,non_fhsz,1.0,3800.0,1550.25,0.4079605263157895,D,1,689.0,catchment_based,3100,1774,4417.5,1774.0,0.0,9.351913493378028,True,False,True
-Manchester Avenue,primary,multilane,2,45,3800.0,vhfhsz,0.35,1330.0,4099.5,1.0788157894736843,F,5,1822.0,catchment_based,2160,859,3077.9999999999995,859.0,0.0,98.16379775470489,False,False,True
 La Costa Avenue,secondary,multilane,2,40,3800.0,non_fhsz,1.0,3800.0,1372.5,0.3611842105263158,C,2,610.0,catchment_based,1680,410,2394.0,410.0,0.0,101.930564799262,True,False,True
-North Vulcan Avenue,secondary,multilane,2,40,3800.0,non_fhsz,1.0,3800.0,1653.75,0.4351973684210526,D,1,735.0,catchment_based,1680,410,2394.0,410.0,0.0,284.69457059231195,False,False,True
-La Costa Avenue,secondary,multilane,2,40,3800.0,non_fhsz,1.0,3800.0,3026.25,0.7963815789473684,E,3,1345.0,catchment_based,1680,410,2394.0,410.0,0.0,170.52525742391524,False,False,True
 North Coast Highway,primary,multilane,2,45,3800.0,non_fhsz,1.0,3800.0,1271.25,0.33453947368421055,C,1,565.0,catchment_based,2862,1579,4078.3499999999995,1579.0,0.0,141.83075826295686,False,True,True
 Phoebe Street,residential,two_lane,2,25,1125.0,non_fhsz,1.0,1125.0,1271.25,1.13,F,1,565.0,catchment_based,1864,703,2656.2,703.0,0.0,12.418242869948296,False,True,True
 Phoebe Street,residential,two_lane,2,25,1125.0,non_fhsz,1.0,1125.0,1271.25,1.13,F,1,565.0,catchment_based,1864,703,2656.2,703.0,0.0,225.90101005344906,False,True,True
@@ -967,11 +818,7 @@ North Coast Highway,primary,multilane,2,45,3800.0,non_fhsz,1.0,3800.0,1271.25,0.
 North Coast Highway,primary,multilane,2,45,3800.0,non_fhsz,1.0,3800.0,1271.25,0.33453947368421055,C,1,565.0,catchment_based,2544,600,3625.2,600.0,0.0,67.61388020712715,False,True,True
 North Coast Highway,primary,multilane,2,45,3800.0,non_fhsz,1.0,3800.0,1271.25,0.33453947368421055,C,1,565.0,catchment_based,2544,600,3625.2,600.0,0.0,100.94339703627062,False,True,True
 North Coast Highway,primary,multilane,2,45,3800.0,non_fhsz,1.0,3800.0,1271.25,0.33453947368421055,C,1,565.0,catchment_based,2544,600,3625.2,600.0,0.0,100.94339703627062,False,True,True
-North Coast Highway,primary,multilane,2,45,3800.0,non_fhsz,1.0,3800.0,1271.25,0.33453947368421055,C,1,565.0,catchment_based,2544,600,3625.2,600.0,0.0,109.9291934964852,False,True,True
-North Coast Highway,primary,multilane,2,45,3800.0,non_fhsz,1.0,3800.0,1271.25,0.33453947368421055,C,1,565.0,catchment_based,2544,600,3625.2,600.0,0.0,109.9291934964852,False,True,True
-North Coast Highway,primary,multilane,2,45,3800.0,non_fhsz,1.0,3800.0,1271.25,0.33453947368421055,C,1,565.0,catchment_based,2544,600,3625.2,600.0,0.0,292.1020588635858,False,True,True
 North Coast Highway,primary,multilane,2,45,3800.0,non_fhsz,1.0,3800.0,2025.0,0.5328947368421053,D,2,900.0,catchment_based,1855,512,2643.375,512.0,0.0,160.78848365274808,False,True,True
-North Coast Highway,primary,multilane,2,45,3800.0,non_fhsz,1.0,3800.0,1271.25,0.33453947368421055,C,1,565.0,catchment_based,2544,600,3625.2,600.0,0.0,292.1020588635858,False,True,True
 North Coast Highway,primary,multilane,2,45,3800.0,non_fhsz,1.0,3800.0,2025.0,0.5328947368421053,D,2,900.0,catchment_based,1855,512,2643.375,512.0,0.0,160.78848365274806,False,True,True
 North Coast Highway,primary,multilane,2,45,3800.0,non_fhsz,1.0,3800.0,2025.0,0.5328947368421053,D,2,900.0,catchment_based,1290,196,1838.2499999999998,196.0,0.0,111.22245350300966,False,True,True
 North Coast Highway,primary,multilane,2,45,3800.0,non_fhsz,1.0,3800.0,2025.0,0.5328947368421053,D,2,900.0,catchment_based,1290,196,1838.2499999999998,196.0,0.0,167.53590970649046,False,True,True
@@ -981,25 +828,19 @@ Devonshire Drive,tertiary,two_lane,1,25,1125.0,non_fhsz,1.0,1125.0,1174.5,1.044,
 ,secondary,multilane,2,35,3800.0,non_fhsz,1.0,3800.0,1174.5,0.30907894736842106,C,1,522.0,catchment_based,2291,2953,3264.6749999999997,2953.0,0.0,12.792070994297871,True,False,True
 ,motorway_link,freeway,2,45,4500.0,vhfhsz,0.35,1575.0,4099.5,0.911,E,5,1822.0,catchment_based,2458,921,3502.6499999999996,921.0,0.0,518.728755915467,False,True,True
 Hygeia Avenue,residential,two_lane,2,25,1125.0,non_fhsz,1.0,1125.0,1163.25,1.034,F,1,517.0,catchment_based,2649,1656,3774.825,1656.0,0.0,112.94436372171916,False,True,True
-Encinitas Boulevard,primary,multilane,5,40,9500.0,non_fhsz,1.0,9500.0,4542.75,0.47818421052631577,D,4,2019.0,catchment_based,3643,5226,5191.275,5226.0,0.0,224.84877958788636,False,False,True
 Manchester Avenue,secondary,multilane,3,35,5700.0,vhfhsz,0.35,1994.9999999999998,1804.5,0.31657894736842107,C,2,802.0,catchment_based,1576,1819,2245.7999999999997,1819.0,0.0,40.754387876002895,False,True,True
-Manchester Avenue,secondary,multilane,2,35,3800.0,vhfhsz,0.35,1330.0,1804.5,0.4748684210526316,D,2,802.0,catchment_based,1576,1819,2245.7999999999997,1819.0,0.0,475.77110443549674,False,True,True
-Manchester Avenue,primary,multilane,2,45,3800.0,vhfhsz,0.35,1330.0,4027.5,1.0598684210526317,F,4,1790.0,catchment_based,2238,1553,3189.1499999999996,1553.0,0.0,677.2910177729634,False,False,True
 Quail Gardens Drive,secondary,multilane,3,30,5700.0,non_fhsz,1.0,5700.0,2144.25,0.3761842105263158,C,1,953.0,catchment_based,2181,2852,3107.9249999999997,2852.0,0.0,49.758967466834065,False,False,True
 Quail Gardens Drive,secondary,multilane,3,30,5700.0,non_fhsz,1.0,5700.0,2144.25,0.3761842105263158,C,1,953.0,catchment_based,2181,2852,3107.9249999999997,2852.0,0.0,185.32611525227554,False,False,True
 Quail Gardens Drive,secondary,multilane,3,30,5700.0,non_fhsz,1.0,5700.0,2144.25,0.3761842105263158,C,1,953.0,catchment_based,2181,2852,3107.9249999999997,2852.0,0.0,49.758967466834065,False,False,True
 Tennis Club Drive,residential,two_lane,1,25,1125.0,vhfhsz,0.35,393.75,1111.5,0.988,F,1,494.0,catchment_based,988,941,1407.8999999999999,941.0,0.0,121.63723962809068,True,True,True
 Encinitas Boulevard,primary,multilane,2,45,3800.0,non_fhsz,1.0,3800.0,852.75,0.2244078947368421,C,1,379.0,catchment_based,2202,2863,3137.85,2863.0,0.0,75.43718487501859,True,False,True
-Encinitas Boulevard,primary,multilane,2,45,3800.0,non_fhsz,1.0,3800.0,852.75,0.2244078947368421,C,1,379.0,catchment_based,2202,2863,3137.85,2863.0,0.0,99.77104286864314,False,False,True
 Willowspring South Drive,tertiary,two_lane,1,25,1125.0,moderate_fhsz,0.75,843.75,996.75,0.886,E,1,443.0,catchment_based,1661,543,2366.9249999999997,543.0,0.0,91.23513748100623,True,True,True
 Caudor Street,tertiary,two_lane,1,25,1125.0,moderate_fhsz,0.75,843.75,1424.25,1.266,F,1,633.0,catchment_based,1023,480,1457.7749999999999,480.0,0.0,174.2982499706784,True,True,True
 Caudor Street,tertiary,two_lane,1,25,1125.0,high_fhsz,0.5,562.5,1424.25,1.266,F,1,633.0,catchment_based,1023,480,1457.7749999999999,480.0,0.0,355.169170190847,True,True,True
 Olympus Street,tertiary,two_lane,1,25,1125.0,moderate_fhsz,0.75,843.75,1424.25,1.266,F,1,633.0,catchment_based,1023,480,1457.7749999999999,480.0,0.0,71.27468233252974,True,True,True
 Olympus Street,tertiary,two_lane,1,25,1125.0,moderate_fhsz,0.75,843.75,1424.25,1.266,F,1,633.0,catchment_based,1023,480,1457.7749999999999,480.0,0.0,339.16819263767394,True,True,True
-North El Camino Real,primary,multilane,6,55,11400.0,vhfhsz,0.35,3989.9999999999995,1397.25,0.12256578947368421,B,2,621.0,catchment_based,2496,4080,3556.7999999999997,4080.0,0.0,736.7246740946852,False,False,True
 Garden View Road,secondary,multilane,2,40,3800.0,vhfhsz,0.35,1330.0,2349.0,0.6181578947368421,E,1,1044.0,catchment_based,2368,2386,3374.3999999999996,2386.0,0.0,203.05883826909798,True,False,True
 North El Camino Real,primary,multilane,3,55,5700.0,high_fhsz,0.5,2850.0,1397.25,0.24513157894736842,C,2,621.0,catchment_based,1696,2322,2416.7999999999997,2322.0,0.0,48.36434186697442,False,False,True
-North El Camino Real,primary,multilane,4,55,7600.0,vhfhsz,0.35,2660.0,1397.25,0.1838486842105263,B,2,621.0,catchment_based,2368,2386,3374.3999999999996,2386.0,0.0,140.06309734852775,False,False,True
 East D Street,tertiary,two_lane,2,25,1125.0,non_fhsz,1.0,1125.0,771.75,0.686,E,1,343.0,catchment_based,3631,7259,5174.174999999999,7259.0,0.0,15.716854039091134,False,False,True
 East D Street,tertiary,two_lane,2,25,1125.0,non_fhsz,1.0,1125.0,771.75,0.686,E,1,343.0,catchment_based,3631,7259,5174.174999999999,7259.0,0.0,21.8296730769281,False,False,True
 Newport Avenue,residential,two_lane,2,25,1125.0,non_fhsz,1.0,1125.0,1390.5,1.236,F,2,618.0,catchment_based,2707,2554,3857.4749999999995,2554.0,0.0,45.59383202222713,False,True,True
@@ -1022,7 +863,6 @@ Caudor Street,tertiary,two_lane,1,25,1125.0,moderate_fhsz,0.75,843.75,1424.25,1.
 Lone Jack Road,tertiary,two_lane,1,25,1125.0,moderate_fhsz,0.75,843.75,873.0,0.776,E,3,388.0,catchment_based,1099,1725,1566.0749999999998,1725.0,0.0,244.64700657338653,True,True,True
 Lone Jack Road,tertiary,two_lane,1,25,1125.0,high_fhsz,0.5,562.5,873.0,0.776,E,3,388.0,catchment_based,1099,1725,1566.0749999999998,1725.0,0.0,276.3698601921422,True,True,True
 Lone Jack Road,tertiary,two_lane,1,25,1125.0,high_fhsz,0.5,562.5,873.0,0.776,E,3,388.0,catchment_based,1099,1725,1566.0749999999998,1725.0,0.0,276.3698601921422,True,True,True
-Lone Jack Road,tertiary,two_lane,1,25,1125.0,high_fhsz,0.5,562.5,951.75,0.846,E,4,423.0,catchment_based,825,1301,1175.625,1301.0,0.0,154.93707038734345,True,True,True
 Melba Road,tertiary,two_lane,1,25,1125.0,non_fhsz,1.0,1125.0,2153.25,1.914,F,2,957.0,catchment_based,1887,1725,2688.975,1725.0,0.0,43.44916012318006,True,False,True
 Melba Road,tertiary,two_lane,1,25,1125.0,non_fhsz,1.0,1125.0,2153.25,1.914,F,2,957.0,catchment_based,1887,1725,2688.975,1725.0,0.0,55.90982741300279,True,False,True
 Nardo Road,tertiary,two_lane,1,25,1125.0,non_fhsz,1.0,1125.0,1059.75,0.942,E,1,471.0,catchment_based,1413,1548,2013.5249999999999,1548.0,0.0,9.286305335498943,True,True,True
@@ -1038,7 +878,6 @@ A Street,residential,two_lane,1,25,1125.0,non_fhsz,1.0,1125.0,1201.5,1.068,F,1,5
 A Street,residential,two_lane,1,25,1125.0,non_fhsz,1.0,1125.0,1201.5,1.068,F,1,534.0,catchment_based,2994,4243,4266.45,4243.0,0.0,44.65853539177132,True,True,True
 Sylvia Street,tertiary,two_lane,2,25,1125.0,non_fhsz,1.0,1125.0,1201.5,1.068,F,1,534.0,catchment_based,2651,3957,3777.6749999999997,3957.0,0.0,45.30561050701537,False,True,True
 Sylvia Street,tertiary,two_lane,2,25,1125.0,non_fhsz,1.0,1125.0,1201.5,1.068,F,1,534.0,catchment_based,2994,4243,4266.45,4243.0,0.0,47.896632871776504,False,True,True
-Capri Road,tertiary,two_lane,1,25,1125.0,vhfhsz,0.35,393.75,1424.25,1.266,F,1,633.0,catchment_based,1023,480,1457.7749999999999,480.0,0.0,285.05736840376784,True,True,True
 ,residential,two_lane,1,25,1125.0,non_fhsz,1.0,1125.0,1201.5,1.068,F,1,534.0,catchment_based,2994,4243,4266.45,4243.0,0.0,110.96485838922545,True,True,True
 A Street,residential,two_lane,1,25,1125.0,non_fhsz,1.0,1125.0,1201.5,1.068,F,1,534.0,catchment_based,2513,3838,3581.0249999999996,3838.0,0.0,45.36471899100255,True,True,True
 ,residential,two_lane,1,25,1125.0,non_fhsz,1.0,1125.0,1201.5,1.068,F,1,534.0,catchment_based,2994,4243,4266.45,4243.0,0.0,110.96485838922545,True,True,True
@@ -1048,7 +887,6 @@ B Street,tertiary,two_lane,1,40,1700.0,non_fhsz,1.0,1700.0,1201.5,0.706764705882
 B Street,tertiary,two_lane,1,40,1700.0,non_fhsz,1.0,1700.0,1201.5,0.706764705882353,E,1,534.0,catchment_based,2513,3838,3581.0249999999996,3838.0,0.0,46.06939263714695,True,False,True
 ,residential,two_lane,1,25,1125.0,non_fhsz,1.0,1125.0,1201.5,1.068,F,1,534.0,catchment_based,2513,3838,3581.0249999999996,3838.0,0.0,127.32410036892108,True,True,True
 Manchester Avenue,secondary,multilane,2,35,3800.0,vhfhsz,0.35,1330.0,1804.5,0.4748684210526316,D,2,802.0,catchment_based,2550,2171,3633.7499999999995,2171.0,0.0,30.142700826544413,True,True,True
-Manchester Avenue,secondary,multilane,4,35,7600.0,vhfhsz,0.35,2660.0,1804.5,0.2374342105263158,C,2,802.0,catchment_based,2550,2171,3633.7499999999995,2171.0,0.0,265.15661505796044,False,True,True
 Stafford Avenue,residential,two_lane,2,25,1125.0,non_fhsz,1.0,1125.0,1887.75,1.678,F,1,839.0,catchment_based,2563,1804,3652.2749999999996,1804.0,0.0,78.18450585755046,False,True,True
 Stafford Avenue,residential,two_lane,2,25,1125.0,non_fhsz,1.0,1125.0,1887.75,1.678,F,1,839.0,catchment_based,2563,1804,3652.2749999999996,1804.0,0.0,18.671843883614102,False,True,True
 A Street,residential,two_lane,1,25,1125.0,non_fhsz,1.0,1125.0,1201.5,1.068,F,1,534.0,catchment_based,2193,3677,3125.0249999999996,3677.0,0.0,38.399728838790764,True,True,True
@@ -1059,9 +897,7 @@ Fox Point Dr,residential,two_lane,1,25,1125.0,high_fhsz,0.5,562.5,711.0,0.632,E,
 Coral Cove Way,residential,two_lane,1,25,1125.0,non_fhsz,1.0,1125.0,1653.75,1.47,F,1,735.0,catchment_based,2544,600,3625.2,600.0,0.0,63.79055602815716,True,True,True
 Coral Cove Way,residential,two_lane,1,25,1125.0,non_fhsz,1.0,1125.0,1653.75,1.47,F,1,735.0,catchment_based,2544,600,3625.2,600.0,0.0,42.419086994126324,True,True,True
 Reef Break Way,residential,two_lane,1,25,1125.0,non_fhsz,1.0,1125.0,1653.75,1.47,F,1,735.0,catchment_based,2544,600,3625.2,600.0,0.0,64.69921548550604,True,True,True
-Stonesteps Way,residential,two_lane,1,25,1125.0,non_fhsz,1.0,1125.0,1653.75,1.47,F,1,735.0,catchment_based,2934,814,4180.95,814.0,0.0,379.4570658333618,True,True,True
 Reef Break Way,residential,two_lane,1,25,1125.0,non_fhsz,1.0,1125.0,1653.75,1.47,F,1,735.0,catchment_based,2544,600,3625.2,600.0,0.0,64.69921548550604,True,True,True
-Stonesteps Way,residential,two_lane,1,25,1125.0,non_fhsz,1.0,1125.0,1653.75,1.47,F,1,735.0,catchment_based,2934,814,4180.95,814.0,0.0,379.4570658333618,True,True,True
 Coral Cove Way,residential,two_lane,1,25,1125.0,non_fhsz,1.0,1125.0,1653.75,1.47,F,1,735.0,catchment_based,2544,600,3625.2,600.0,0.0,63.79055602815716,True,True,True
 North Vulcan Avenue,secondary,multilane,2,40,3800.0,non_fhsz,1.0,3800.0,1653.75,0.4351973684210526,D,1,735.0,catchment_based,2544,600,3625.2,600.0,0.0,119.83267293812285,False,False,True
 North Vulcan Avenue,secondary,multilane,2,40,3800.0,non_fhsz,1.0,3800.0,1653.75,0.4351973684210526,D,1,735.0,catchment_based,2544,600,3625.2,600.0,0.0,95.622936398041,False,False,True
@@ -1083,10 +919,8 @@ Enclave Court,residential,two_lane,1,25,1125.0,vhfhsz,0.35,393.75,1111.5,0.988,F
 Enclave Court,residential,two_lane,1,25,1125.0,vhfhsz,0.35,393.75,1111.5,0.988,F,1,494.0,catchment_based,1431,1228,2039.1749999999997,1228.0,0.0,144.80446533672108,True,True,True
 Windsor Road,tertiary,two_lane,2,25,1125.0,non_fhsz,1.0,1125.0,1066.5,0.948,E,1,474.0,catchment_based,1912,597,2724.6,597.0,0.0,82.63595278496719,False,True,True
 Windsor Road,tertiary,two_lane,2,25,1125.0,non_fhsz,1.0,1125.0,1066.5,0.948,E,1,474.0,catchment_based,1912,597,2724.6,597.0,0.0,92.4920706423757,False,True,True
-Cereus Street,residential,two_lane,1,25,1125.0,non_fhsz,1.0,1125.0,1163.25,1.034,F,1,517.0,catchment_based,1990,1371,2835.7499999999995,1371.0,0.0,131.02807566818908,True,True,True
 Hermes Avenue,residential,two_lane,1,25,1125.0,non_fhsz,1.0,1125.0,1163.25,1.034,F,1,517.0,catchment_based,1990,1371,2835.7499999999995,1371.0,0.0,126.60269099386633,True,True,True
 Cereus Street,residential,two_lane,1,25,1125.0,non_fhsz,1.0,1125.0,1163.25,1.034,F,1,517.0,catchment_based,1456,1156,2074.7999999999997,1156.0,0.0,74.44911440543625,True,True,True
-Cereus Street,residential,two_lane,1,25,1125.0,non_fhsz,1.0,1125.0,1163.25,1.034,F,1,517.0,catchment_based,1990,1371,2835.7499999999995,1371.0,0.0,131.02807566818908,True,True,True
 Hermes Avenue,residential,two_lane,1,25,1125.0,non_fhsz,1.0,1125.0,1163.25,1.034,F,1,517.0,catchment_based,1990,1371,2835.7499999999995,1371.0,0.0,126.60269099386633,True,True,True
 Hermes Avenue,residential,two_lane,1,25,1125.0,non_fhsz,1.0,1125.0,1163.25,1.034,F,1,517.0,catchment_based,1990,1371,2835.7499999999995,1371.0,0.0,69.56233396240425,True,True,True
 Encinitas Boulevard,residential,two_lane,1,25,1125.0,non_fhsz,1.0,1125.0,756.0,0.672,E,1,336.0,catchment_based,2608,3527,3716.3999999999996,3527.0,0.0,285.9515311823621,True,True,True
@@ -1097,7 +931,6 @@ Montgomery Avenue,tertiary,two_lane,2,25,1125.0,non_fhsz,1.0,1125.0,1887.75,1.67
 North Coast Highway,primary,multilane,1,15,1900.0,non_fhsz,1.0,1900.0,1082.25,0.5696052631578947,D,1,481.0,catchment_based,1990,1371,2835.7499999999995,1371.0,0.0,8.830482793389631,False,False,True
 North Coast Highway,primary,multilane,1,15,1900.0,non_fhsz,1.0,1900.0,1082.25,0.5696052631578947,D,1,481.0,catchment_based,1990,1371,2835.7499999999995,1371.0,0.0,9.52746571076182,False,False,True
 El Portal Street,tertiary,two_lane,1,25,1125.0,non_fhsz,1.0,1125.0,1082.25,0.962,F,1,481.0,catchment_based,1990,1371,2835.7499999999995,1371.0,0.0,16.544174333328485,False,True,True
-North Coast Highway,primary,multilane,1,45,1900.0,non_fhsz,1.0,1900.0,1082.25,0.5696052631578947,D,1,481.0,catchment_based,1990,1371,2835.7499999999995,1371.0,0.0,285.06106990203165,False,True,True
 Requeza Street,residential,two_lane,1,25,1125.0,non_fhsz,1.0,1125.0,1059.75,0.942,E,1,471.0,catchment_based,1413,1548,2013.5249999999999,1548.0,0.0,117.94545665040219,True,False,True
 Requeza Street,residential,two_lane,1,25,1125.0,non_fhsz,1.0,1125.0,1059.75,0.942,E,1,471.0,catchment_based,1413,1548,2013.5249999999999,1548.0,0.0,39.60855792077291,True,False,True
 Sea Ridge Court,residential,two_lane,1,25,1125.0,non_fhsz,1.0,1125.0,1059.75,0.942,E,1,471.0,catchment_based,2170,2355,3092.2499999999995,2355.0,0.0,120.38262287353503,True,True,True
@@ -1108,18 +941,14 @@ Quail Gardens Drive,secondary,multilane,1,35,1900.0,vhfhsz,0.35,665.0,711.0,0.37
 Ranch Road,residential,two_lane,1,25,1125.0,vhfhsz,0.35,393.75,711.0,0.632,E,1,316.0,catchment_based,316,798,450.29999999999995,798.0,0.0,7.661263145937737,True,True,True
 Quail Gardens Drive,secondary,multilane,1,35,1900.0,vhfhsz,0.35,665.0,711.0,0.3742105263157895,C,1,316.0,catchment_based,316,798,450.29999999999995,798.0,0.0,329.4470278717255,False,True,True
 Ranch Road,residential,two_lane,1,25,1125.0,vhfhsz,0.35,393.75,711.0,0.632,E,1,316.0,catchment_based,316,798,450.29999999999995,798.0,0.0,75.29548527250833,True,True,True
-Quail Gardens Drive,secondary,multilane,1,35,1900.0,vhfhsz,0.35,665.0,711.0,0.3742105263157895,C,1,316.0,catchment_based,1941,1804,2765.9249999999997,1804.0,0.0,640.0634594950136,False,True,True
 Fox Point Dr,residential,two_lane,1,25,1125.0,high_fhsz,0.5,562.5,711.0,0.632,E,1,316.0,catchment_based,1941,1804,2765.9249999999997,1804.0,0.0,7.823479538047557,True,True,True
 Fox Point Dr,residential,two_lane,1,25,1125.0,high_fhsz,0.5,562.5,711.0,0.632,E,1,316.0,catchment_based,1941,1804,2765.9249999999997,1804.0,0.0,103.28702336652611,True,True,True
-Quail Gardens Drive,secondary,multilane,1,30,1900.0,non_fhsz,1.0,1900.0,2144.25,1.1285526315789474,F,1,953.0,catchment_based,2382,1813,3394.35,1813.0,0.0,306.13397635584823,False,False,True
 Ecke Ranch Road,unclassified,two_lane,1,25,1125.0,non_fhsz,1.0,1125.0,2144.25,1.906,F,1,953.0,catchment_based,2382,1813,3394.35,1813.0,0.0,8.414080986666882,True,True,True
-Quail Gardens Drive,secondary,multilane,1,30,1900.0,non_fhsz,1.0,1900.0,2144.25,1.1285526315789474,F,1,953.0,catchment_based,2382,1813,3394.35,1813.0,0.0,146.69199844017217,False,False,True
 Ecke Ranch Road,unclassified,two_lane,1,25,1125.0,non_fhsz,1.0,1125.0,2144.25,1.906,F,1,953.0,catchment_based,2382,1813,3394.35,1813.0,0.0,92.52659302441288,True,True,True
 Paseo de Las Flores,tertiary,two_lane,2,25,1125.0,non_fhsz,1.0,1125.0,1512.0,1.344,F,1,672.0,catchment_based,1941,1804,2765.9249999999997,1804.0,0.0,9.081647983444652,False,True,True
 Quail Gardens Drive,secondary,multilane,1,30,1900.0,non_fhsz,1.0,1900.0,2144.25,1.1285526315789474,F,1,953.0,catchment_based,2382,1813,3394.35,1813.0,0.0,68.17842881116718,False,False,True
 Lone Hill Lane,residential,two_lane,1,25,1125.0,high_fhsz,0.5,562.5,616.5,0.548,D,1,274.0,catchment_based,987,1094,1406.475,1094.0,0.0,59.559814561614964,True,True,True
 Lone Hill Lane,residential,two_lane,1,25,1125.0,high_fhsz,0.5,562.5,616.5,0.548,D,1,274.0,catchment_based,987,1094,1406.475,1094.0,0.0,32.09972212783819,True,True,True
-Manchester Avenue,secondary,multilane,2,45,3800.0,vhfhsz,0.35,1330.0,1982.25,0.5216447368421052,D,3,881.0,catchment_based,2160,859,3077.9999999999995,859.0,0.0,102.3004007528206,False,False,True
 Colony Terrace,residential,two_lane,1,25,1125.0,vhfhsz,0.35,393.75,1629.0,1.448,F,1,724.0,catchment_based,1296,950,1846.8,950.0,0.0,386.2408221827431,True,True,True
 Silver Berry Place,residential,two_lane,1,25,1125.0,non_fhsz,1.0,1125.0,1482.75,1.318,F,1,659.0,catchment_based,2070,1507,2949.7499999999995,1507.0,0.0,37.28813645311142,True,True,True
 ,tertiary,two_lane,1,25,1125.0,high_fhsz,0.5,562.5,1372.5,1.22,F,2,610.0,catchment_based,1243,565,1771.2749999999999,565.0,0.0,9.658771517834362,True,True,True
@@ -1129,16 +958,13 @@ Andrew Avenue,tertiary,two_lane,1,25,1125.0,high_fhsz,0.5,562.5,1372.5,1.22,F,2,
 Andrew Avenue,tertiary,two_lane,1,25,1125.0,high_fhsz,0.5,562.5,1372.5,1.22,F,2,610.0,catchment_based,1243,565,1771.2749999999999,565.0,0.0,14.461752217822633,True,True,True
 ,tertiary,two_lane,1,25,1125.0,high_fhsz,0.5,562.5,1372.5,1.22,F,2,610.0,catchment_based,1243,565,1771.2749999999999,565.0,0.0,7.4132975726999,True,True,True
 ,unclassified,two_lane,3,25,1125.0,high_fhsz,0.5,562.5,72.0,0.064,A,1,32.0,catchment_based,2160,859,3077.9999999999995,859.0,0.0,16.72749261011537,False,True,True
-Manchester Avenue,primary,multilane,2,45,3800.0,vhfhsz,0.35,1330.0,72.0,0.018947368421052633,A,1,32.0,catchment_based,2238,1553,3189.1499999999996,1553.0,0.0,672.6251391467257,False,False,True
 Berryman Canyon,residential,two_lane,1,25,1125.0,vhfhsz,0.35,393.75,1111.5,0.988,F,1,494.0,catchment_based,1431,1228,2039.1749999999997,1228.0,0.0,163.54954302780294,True,True,True
 Fox Point Dr,residential,two_lane,1,25,1125.0,moderate_fhsz,0.75,843.75,711.0,0.632,E,1,316.0,catchment_based,1941,1804,2765.9249999999997,1804.0,0.0,88.90029840843306,True,True,True
 Fox Point Dr,residential,two_lane,1,25,1125.0,moderate_fhsz,0.75,843.75,711.0,0.632,E,1,316.0,catchment_based,1941,1804,2765.9249999999997,1804.0,0.0,88.90029840843306,True,True,True
 Fox Point Dr,residential,two_lane,1,25,1125.0,high_fhsz,0.5,562.5,711.0,0.632,E,1,316.0,catchment_based,1941,1804,2765.9249999999997,1804.0,0.0,103.28702336652613,True,True,True
-Bumann Road,residential,two_lane,1,25,1125.0,vhfhsz,0.35,393.75,252.0,0.224,C,1,112.0,catchment_based,147,998,209.475,998.0,0.0,763.0516972478221,True,True,True
 El Portal Street,tertiary,two_lane,2,25,1125.0,non_fhsz,1.0,1125.0,1082.25,0.962,F,1,481.0,catchment_based,1990,1371,2835.7499999999995,1371.0,0.0,13.711813043592906,False,True,True
 El Portal Street,tertiary,two_lane,1,25,1125.0,non_fhsz,1.0,1125.0,1082.25,0.962,F,1,481.0,catchment_based,1990,1371,2835.7499999999995,1371.0,0.0,18.568107449766984,False,True,True
 North Coast Highway,primary,multilane,1,15,1900.0,non_fhsz,1.0,1900.0,1082.25,0.5696052631578947,D,1,481.0,catchment_based,1990,1371,2835.7499999999995,1371.0,0.0,5.03690736029297,False,False,True
-La Veta Avenue,residential,two_lane,2,25,1125.0,non_fhsz,1.0,1125.0,1201.5,1.068,F,1,534.0,catchment_based,1990,1371,2835.7499999999995,1371.0,0.0,244.5784420252578,False,True,True
 Ecke Ranch Road,unclassified,two_lane,1,25,1125.0,non_fhsz,1.0,1125.0,2144.25,1.906,F,1,953.0,catchment_based,2382,1813,3394.35,1813.0,0.0,92.52659302441288,True,True,True
 Bishops Gate Road,tertiary,two_lane,1,25,1125.0,non_fhsz,1.0,1125.0,753.75,0.67,E,1,335.0,catchment_based,1855,512,2643.375,512.0,0.0,60.208279408925975,True,True,True
 North Coast Highway,primary,multilane,2,45,3800.0,non_fhsz,1.0,3800.0,1271.25,0.33453947368421055,C,1,565.0,catchment_based,2544,600,3625.2,600.0,0.0,16.9006877240005,False,True,True

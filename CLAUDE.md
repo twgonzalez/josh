@@ -33,7 +33,15 @@ uv run python main.py analyze --city "Berkeley" --state "CA" --refresh
 
 # Regenerate the primary demo map (REQUIRED after any visualization code change)
 uv run python main.py demo --city "Berkeley"
-# → output/berkeley/demo_map.html
+# → output/berkeley/demo_map.html  (includes what-if bundle if graph.json exists)
+
+# Anti-divergence test: validate JS engine against Python (no npm needed)
+# REQUIRED after any change to agents/export.py or static/whatif_utils.js
+# NOTE: static/whatif_engine.js is GENERATED — never edit it directly.
+#       Edit agents/export.py (algorithm JS strings) or static/whatif_utils.js (utilities).
+#       analyze regenerates whatif_engine.js automatically.
+node --test tests/test_whatif_engine.js
+# Prerequisites: analyze + demo must have run first (generates graph.json + test_vectors.json)
 
 # Validate project coordinates against the Census geocoder (REQUIRED after adding projects)
 uv run python main.py geocode --city "Berkeley"
