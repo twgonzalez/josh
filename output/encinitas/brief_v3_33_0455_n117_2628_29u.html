@@ -316,7 +316,7 @@
       </div>
       <div style="text-align:right; font-size:11px; color:#a8c8e8; line-height:1.8; flex-shrink:0;">
         <div style="font-weight:700; color:#fff; font-size:12px;">JOSH-2026-EL-CAMINO-REAL-CORRI-33_0455-n117_2628</div>
-        <div>Issued: 2026-03-29</div>
+        <div>Issued: 2026-03-30</div>
         <div>29 dwelling units</div>
       </div>
     </div>
@@ -549,13 +549,168 @@
     Flagged when &#916;T &gt; 6.00 min (threshold = 120 min &times; 5%)
   </div>
 
-  <p style="margin:0; font-size:11px; color:#6c757d; font-style:italic;">
+  <p style="margin:0 0 10px; font-size:11px; color:#6c757d; font-style:italic;">
     This determination applies the above authorities mechanically. No engineering judgment was
     exercised. The same methodology is applied uniformly to all projects under AB 747.
-    Full reproducible audit trail:
-    <a href="../viewer.html?doc=encinitas/determination_33_0455_n117_2628_29u.txt" style="font-family:monospace; font-size:10px; background:#f1f3f5;
-       padding:2px 6px; border-radius:3px; color:#1a56db; text-decoration:none;">determination_33_0455_n117_2628_29u.txt</a>
   </p>
+  <details class="no-print" style="margin-top:4px;">
+  <summary style="cursor:pointer; font-size:11px; color:#1a56db; font-family:monospace;
+                  background:#f1f3f5; padding:3px 8px; border-radius:3px; display:inline-block;
+                  user-select:none; list-style:none;">
+    &#9654; determination_33_0455_n117_2628_29u.txt
+  </summary>
+  <pre style="margin:8px 0 0; padding:10px 12px; background:#f8f9fa; border:1px solid #dee2e6;
+              border-radius:4px; font-size:10px; line-height:1.5; overflow-x:auto;
+              white-space:pre-wrap; word-break:break-word; color:#212529;">======================================================================
+FIRE EVACUATION CAPACITY ANALYSIS  -  PROJECT DETERMINATION
+JOSH v3.4 (dT Standard  -  Constant Mobilization, NFPA 101)
+======================================================================
+Date:           2026-03-30T18:13:49.951625
+Project:        El Camino Real Corridor  -  Maximum Ministerial
+Address:        El Camino Real at Encinitas Blvd, Encinitas (hypothetical)
+APN:            Not provided
+Location:       33.0455, -117.2628
+Dwelling Units: 29
+Stories:        3
+
+ALGORITHM
+----------------------------------------
+  Universal 5-Step Evacuation Capacity Algorithm v3.2 (dT Standard  -  constant mobilization)
+  Each scenario applies: (1) applicability check, (2) scale gate, (3) route identification (EvacuationPath objects with bottleneck tracking), (4) demand calculation (mobilization rate 0.90 x vpu x units  -  NFPA 101 design basis), (5) dT test (project_vehicles / bottleneck_effective_capacity x 60 + egress). FHSZ affects road capacity degradation only  -  not mobilization. Most restrictive tier across all applicable scenarios is the final determination.
+  Reference: See legal.md for full legal basis and defense reference.
+
+======================================================================
+SCENARIO: WILDLAND_AB747
+  Legal Basis: AB 747 (California Government Code Sec.65302.15)  -  General Plan Safety Element mandatory update for evacuation route capacity analysis; HCM 2022 (Highway Capacity Manual, 7th Edition)  -  effective capacity with hazard degradation; NFPA 101 (Life Safety Code)  -  0.90 mobilization design basis (100% occupant evacuation, adjusted for ~10% zero-vehicle households per Census ACS B25044); NIST TN 2135 (Maranghides et al.)  -  safe egress windows by hazard zone
+  Result: MINISTERIAL WITH STANDARD CONDITIONS  |  Triggered: NO
+======================================================================
+
+  STEP 1  -  APPLICABILITY CHECK (Standard 3: FHSZ Modifier)
+  --------------------------------------
+  Method: Always applicable; site FHSZ check via GIS point-in-polygon
+  Result: APPLICABLE
+  Note: Not in FHSZ (hazard_zone=non_fhsz)  -  no road degradation. Mobilization rate 0.90 (NFPA 101 design basis, constant).
+  Standard 3 (FHSZ): Not in FHSZ [HAZ_CLASS=0]  hazard_zone=non_fhsz  (not in FHSZ)
+  Mobilization Rate: 0.90 (NFPA 101 design basis  -  constant; Census ACS B25044 zero-vehicle adjustment)
+
+  STEP 2  -  SCALE GATE (Standard 1)
+  --------------------------------------
+  29 &gt;= 15 -&gt; TRIGGERED
+  (29 units vs. 15 threshold)
+
+  STEP 3  -  ROUTE IDENTIFICATION (Standard 2)
+  --------------------------------------
+  Method: Project-origin Dijkstra (v3.4, travel-time weight)  -  fastest path from project site to each regional-network exit node (motorway/trunk/primary at city boundary); weight=length/speed_limit (seconds) per speed_defaults config; 53 nodes within 0.5 mi network zone; respects road barriers (I-5, rail, etc.)
+  Radius: 0.5 miles (804.7 m)
+  Serving route segments found: 29
+  Serving EvacuationPaths identified: 4
+    - South El Camino Real: eff_cap=3325 vph, fhsz=vhfhsz, deg=0.35, vc=0.234 (informational)
+    - Beechtree Drive: eff_cap=1125 vph, fhsz=non_fhsz, deg=1.00, vc=0.250 (informational)
+    - North El Camino Real: eff_cap=5700 vph, fhsz=non_fhsz, deg=1.00, vc=0.400 (informational)
+    - Leucadia Boulevard: eff_cap=1900 vph, fhsz=high_fhsz, deg=0.50, vc=0.400 (informational)
+    - Encinitas Boulevard: eff_cap=3800 vph, fhsz=non_fhsz, deg=1.00, vc=0.400 (informational)
+    - Manchester Avenue: eff_cap=1900 vph, fhsz=high_fhsz, deg=0.50, vc=1.079 (informational)
+
+  STEP 4  -  DEMAND CALCULATION
+  --------------------------------------
+  Formula: 29 x 2.5 x 0.90
+  Hazard Zone: non_fhsz
+  Mobilization Rate: 0.90 (NFPA 101 design basis, constant)
+  Project vehicles (peak hour): 65.2 vph
+  Source (vehicles/unit): U.S. Census ACS B25044
+  Source (mobilization): NFPA 101 (Life Safety Code) design basis  -  100% occupant evacuation; adjusted 0.90 for ~10% zero-vehicle households (Census ACS B25044).
+
+  STEP 5  -  dT TEST (Standard 4)
+  --------------------------------------
+  Method: dT = (project_vehicles / bottleneck_effective_capacity) x 60 + egress
+  Hazard Zone: non_fhsz
+  Mobilization Rate: 0.90 (NFPA 101 design basis, constant)
+  Project Vehicles: 65.2 vph
+  Egress Penalty: 0.0 min (NFPA 101/IBC; applies to buildings &gt;= 4 stories)
+  Safe Egress Window: 120 min (non_fhsz, NIST TN 2135)
+  Max Project Share:  5%
+  dT Threshold:       6.00 min (120 min window x 5%, NIST TN 2135)
+  Paths Evaluated: 4
+  Max dT: 5.89 min
+  Triggered: NO
+
+  Per-Path Results (all evaluated paths  -  no deduplication):
+    Path proj_49391372_382940196  |  origin BG: project_origin  |  20 segments
+    Bottleneck: Beechtree Drive [within threshold]
+      Road: Two-lane highway  |  Speed: 25 mph  |  Lanes: 1  |  HAZ_CLASS: 0 (non_fhsz)
+      HCM cap: 1125 vph  x degradation 1.00 (non_fhsz)  = eff cap 1125 vph
+      dT = (65.2 vph / 1125 vph) x 60 + 0.0 min egress = 3.48 min  (threshold: 6.00 min (120 min x 5%))
+
+    Path proj_49391372_384802950  |  origin BG: project_origin  |  18 segments
+    Bottleneck: Beechtree Drive [within threshold]
+      Road: Two-lane highway  |  Speed: 25 mph  |  Lanes: 1  |  HAZ_CLASS: 0 (non_fhsz)
+      HCM cap: 1125 vph  x degradation 1.00 (non_fhsz)  = eff cap 1125 vph
+      dT = (65.2 vph / 1125 vph) x 60 + 0.0 min egress = 3.48 min  (threshold: 6.00 min (120 min x 5%))
+
+    Path proj_49391372_384813390  |  origin BG: project_origin  |  17 segments
+    Bottleneck: Beechtree Drive [within threshold]
+      Road: Two-lane highway  |  Speed: 25 mph  |  Lanes: 1  |  HAZ_CLASS: 0 (non_fhsz)
+      HCM cap: 1125 vph  x degradation 1.00 (non_fhsz)  = eff cap 1125 vph
+      dT = (65.2 vph / 1125 vph) x 60 + 0.0 min egress = 3.48 min  (threshold: 6.00 min (120 min x 5%))
+
+    Path proj_49391372_49750431  |  origin BG: project_origin  |  24 segments
+    Bottleneck: Manchester Avenue [within threshold]
+      Road: Multi-lane highway  |  Speed: 45 mph  |  Lanes: 1  |  HAZ_CLASS: 3 (vhfhsz)
+      HCM cap: 1900 vph  x degradation 0.35 (vhfhsz)  = eff cap 665 vph
+      dT = (65.2 vph / 665 vph) x 60 + 0.0 min egress = 5.89 min  (threshold: 6.00 min (120 min x 5%))
+
+
+  -&gt; Scenario Tier: MINISTERIAL WITH STANDARD CONDITIONS
+  Reason: Project meets the 15-unit applicability threshold and has 4 serving path(s). Max dT 5.9 min within threshold (6.00 min). Not in FHSZ (hazard_zone=non_fhsz)  -  no road degradation. Mobilization: 0.90 (NFPA 101 design basis, constant). Ministerial approval with standard conditions applied automatically. Legal basis: AB 747 (California Government Code Sec.65302.15)  -  General Plan Safety Element mandatory update for evacuation route capacity analysis; HCM 2022 (Highway Capacity Manual, 7th Edition)  -  effective capacity with hazard degradation; NFPA 101 (Life Safety Code)  -  0.90 mobilization design basis (100% occupant evacuation, adjusted for ~10% zero-vehicle households per Census ACS B25044); NIST TN 2135 (Maranghides et al.)  -  safe egress windows by hazard zone.
+
+======================================================================
+SCENARIO: SB79_TRANSIT
+  Legal Basis: SB 79 (2025)  -  objective health and safety standard carve-out for by-right projects (transit proximity context); California Public Utilities Code Sec.21155 (Tier 1/2 transit)
+  Result: NOT_APPLICABLE  |  Triggered: NO
+======================================================================
+  NOT APPLICABLE: SB 79: project is not within 0.5 miles of Tier 1/2 transit. Informational only  -  no tier impact.
+  SB 79 Transit Proximity: outside transit buffer
+
+======================================================================
+FINAL DETERMINATION
+======================================================================
+  RESULT: MINISTERIAL WITH STANDARD CONDITIONS
+
+  Project meets the 15-unit applicability threshold and has 4 serving path(s). Max dT 5.9 min within threshold (6.00 min). Not in FHSZ (hazard_zone=non_fhsz)  -  no road degradation. Mobilization: 0.90 (NFPA 101 design basis, constant). Ministerial approval with standard conditions applied automatically. Legal basis: AB 747 (California Government Code Sec.65302.15)  -  General Plan Safety Element mandatory update for evacuation route capacity analysis; HCM 2022 (Highway Capacity Manual, 7th Edition)  -  effective capacity with hazard degradation; NFPA 101 (Life Safety Code)  -  0.90 mobilization design basis (100% occupant evacuation, adjusted for ~10% zero-vehicle households per Census ACS B25044); NIST TN 2135 (Maranghides et al.)  -  safe egress windows by hazard zone.
+
+  PARAMETERS APPLIED
+  --------------------------------------
+  Hazard Zone:        non_fhsz
+  Mobilization Rate:  0.90 (NFPA 101 design basis  -  constant; ~10% zero-vehicle HHs per Census ACS B25044)
+  Vehicles per Unit:  2.5 (U.S. Census ACS B25044)
+  Egress Penalty:     0.0 min (NFPA 101/IBC  -  3 stories)
+  Safe Egress Window: 120 min (non_fhsz, per NIST TN 2135)
+  Max Project Share:  5%
+  dT Threshold:       6.00 min (120 x 5%)
+  Max dT (project):   5.89 min
+
+  Determination Tier:
+    MINISTERIAL WITH STANDARD CONDITIONS
+
+  The project meets the dwelling unit size threshold and all serving paths&#x27; dT
+  are within the applicable threshold for the project&#x27;s hazard zone.
+  Approved ministerially. The following pre-adopted, objective conditions apply
+  automatically: PRC Sec.4291 defensible space (if FHSZ); AB 1600 evacuation
+  infrastructure impact fee (if fee schedule adopted); emergency vehicle access
+  per local fire code; WUI building standards compliance (if FHSZ).
+
+  Scenario Tier Summary:
+    wildland_ab747: MINISTERIAL WITH STANDARD CONDITIONS
+    sb79_transit: NOT_APPLICABLE
+
+  Aggregation Logic: Most restrictive tier across all applicable scenarios wins.
+  Tier Ranking: DISCRETIONARY(3) &gt; MINISTERIAL WITH STANDARD CONDITIONS(2) &gt; MINISTERIAL(1) &gt; NOT_APPLICABLE(0)
+
+  This determination is based solely on objective, verifiable criteria.
+  No professional discretion was applied. All calculations are reproducible.
+  See legal.md for full legal basis and defense reference.
+======================================================================</pre>
+</details>
 </div>
 <h2 class="section-label">Appeal Rights</h2>
 <div class="appeal-box">

@@ -2,7 +2,7 @@
 FIRE EVACUATION CAPACITY ANALYSIS  -  PROJECT DETERMINATION
 JOSH v3.4 (dT Standard  -  Constant Mobilization, NFPA 101)
 ======================================================================
-Date:           2026-03-29T19:28:07.348418
+Date:           2026-03-30T18:41:38.188561
 Project:        Clark Avenue Apartments
 Address:        599 Union St (ingress/egress) / Clark Ave (egress only), Leucadia
 APN:            Not provided

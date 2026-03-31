@@ -316,7 +316,7 @@
       </div>
       <div style="text-align:right; font-size:11px; color:#a8c8e8; line-height:1.8; flex-shrink:0;">
         <div style="font-weight:700; color:#fff; font-size:12px;">JOSH-2026-SAGE-CANYON-APARTMEN-33_0260-n117_2548</div>
-        <div>Issued: 2026-03-29</div>
+        <div>Issued: 2026-03-30</div>
         <div>120 dwelling units</div>
       </div>
     </div>
@@ -567,13 +567,177 @@
     Flagged when &#916;T &gt; 2.25 min (threshold = 45 min &times; 5%)
   </div>
 
-  <p style="margin:0; font-size:11px; color:#6c757d; font-style:italic;">
+  <p style="margin:0 0 10px; font-size:11px; color:#6c757d; font-style:italic;">
     This determination applies the above authorities mechanically. No engineering judgment was
     exercised. The same methodology is applied uniformly to all projects under AB 747.
-    Full reproducible audit trail:
-    <a href="../viewer.html?doc=encinitas/determination_33_0260_n117_2548_120u.txt" style="font-family:monospace; font-size:10px; background:#f1f3f5;
-       padding:2px 6px; border-radius:3px; color:#1a56db; text-decoration:none;">determination_33_0260_n117_2548_120u.txt</a>
   </p>
+  <details class="no-print" style="margin-top:4px;">
+  <summary style="cursor:pointer; font-size:11px; color:#1a56db; font-family:monospace;
+                  background:#f1f3f5; padding:3px 8px; border-radius:3px; display:inline-block;
+                  user-select:none; list-style:none;">
+    &#9654; determination_33_0260_n117_2548_120u.txt
+  </summary>
+  <pre style="margin:8px 0 0; padding:10px 12px; background:#f8f9fa; border:1px solid #dee2e6;
+              border-radius:4px; font-size:10px; line-height:1.5; overflow-x:auto;
+              white-space:pre-wrap; word-break:break-word; color:#212529;">======================================================================
+FIRE EVACUATION CAPACITY ANALYSIS  -  PROJECT DETERMINATION
+JOSH v3.4 (dT Standard  -  Constant Mobilization, NFPA 101)
+======================================================================
+Date:           2026-03-30T18:13:48.516596
+Project:        Sage Canyon Apartments
+Address:        SE corner Sage Canyon Dr &amp; El Camino Real, New Encinitas
+APN:            Not provided
+Location:       33.026, -117.2548
+Dwelling Units: 120
+Stories:        5
+
+ALGORITHM
+----------------------------------------
+  Universal 5-Step Evacuation Capacity Algorithm v3.2 (dT Standard  -  constant mobilization)
+  Each scenario applies: (1) applicability check, (2) scale gate, (3) route identification (EvacuationPath objects with bottleneck tracking), (4) demand calculation (mobilization rate 0.90 x vpu x units  -  NFPA 101 design basis), (5) dT test (project_vehicles / bottleneck_effective_capacity x 60 + egress). FHSZ affects road capacity degradation only  -  not mobilization. Most restrictive tier across all applicable scenarios is the final determination.
+  Reference: See legal.md for full legal basis and defense reference.
+
+======================================================================
+SCENARIO: WILDLAND_AB747
+  Legal Basis: AB 747 (California Government Code Sec.65302.15)  -  General Plan Safety Element mandatory update for evacuation route capacity analysis; HCM 2022 (Highway Capacity Manual, 7th Edition)  -  effective capacity with hazard degradation; NFPA 101 (Life Safety Code)  -  0.90 mobilization design basis (100% occupant evacuation, adjusted for ~10% zero-vehicle households per Census ACS B25044); NIST TN 2135 (Maranghides et al.)  -  safe egress windows by hazard zone
+  Result: DISCRETIONARY  |  Triggered: YES
+======================================================================
+
+  STEP 1  -  APPLICABILITY CHECK (Standard 3: FHSZ Modifier)
+  --------------------------------------
+  Method: Always applicable; site FHSZ check via GIS point-in-polygon
+  Result: APPLICABLE
+  Note: FHSZ Zone 3 (vhfhsz)  -  road capacity degradation applied; mobilization unaffected. Mobilization rate 0.90 (NFPA 101 design basis, constant).
+  Standard 3 (FHSZ): Zone 3 (Very High) [HAZ_CLASS=3]  hazard_zone=vhfhsz  (IN FIRE ZONE)
+  Mobilization Rate: 0.90 (NFPA 101 design basis  -  constant; Census ACS B25044 zero-vehicle adjustment)
+
+  STEP 2  -  SCALE GATE (Standard 1)
+  --------------------------------------
+  120 &gt;= 15 -&gt; TRIGGERED
+  (120 units vs. 15 threshold)
+
+  STEP 3  -  ROUTE IDENTIFICATION (Standard 2)
+  --------------------------------------
+  Method: Project-origin Dijkstra (v3.4, travel-time weight)  -  fastest path from project site to each regional-network exit node (motorway/trunk/primary at city boundary); weight=length/speed_limit (seconds) per speed_defaults config; 16 nodes within 0.5 mi network zone; respects road barriers (I-5, rail, etc.)
+  Radius: 0.5 miles (804.7 m)
+  Serving route segments found: 23
+  Serving EvacuationPaths identified: 5
+    - South El Camino Real: eff_cap=3325 vph, fhsz=vhfhsz, deg=0.35, vc=0.234 (informational)
+    - Sage Canyon Drive: eff_cap=394 vph, fhsz=vhfhsz, deg=0.35, vc=0.250 (informational)
+    - North El Camino Real: eff_cap=5700 vph, fhsz=non_fhsz, deg=1.00, vc=0.150 (informational)
+    - 232293513: eff_cap=1575 vph, fhsz=vhfhsz, deg=0.35, vc=0.911 (informational)
+    - Manchester Avenue: eff_cap=1900 vph, fhsz=high_fhsz, deg=0.50, vc=1.079 (informational)
+
+  STEP 4  -  DEMAND CALCULATION
+  --------------------------------------
+  Formula: 120 x 2.5 x 0.90
+  Hazard Zone: vhfhsz
+  Mobilization Rate: 0.90 (NFPA 101 design basis, constant)
+  Project vehicles (peak hour): 270.0 vph
+  Source (vehicles/unit): U.S. Census ACS B25044
+  Source (mobilization): NFPA 101 (Life Safety Code) design basis  -  100% occupant evacuation; adjusted 0.90 for ~10% zero-vehicle households (Census ACS B25044).
+
+  STEP 5  -  dT TEST (Standard 4)
+  --------------------------------------
+  Method: dT = (project_vehicles / bottleneck_effective_capacity) x 60 + egress
+  Hazard Zone: vhfhsz
+  Mobilization Rate: 0.90 (NFPA 101 design basis, constant)
+  Project Vehicles: 270.0 vph
+  Egress Penalty: 7.5 min (NFPA 101/IBC; applies to buildings &gt;= 4 stories)
+  Safe Egress Window: 45 min (vhfhsz, NIST TN 2135)
+  Max Project Share:  5%
+  dT Threshold:       2.25 min (45 min window x 5%, NIST TN 2135)
+  Paths Evaluated: 5
+  Max dT: 48.64 min
+  Triggered: YES  -  DISCRETIONARY
+
+  Per-Path Results (all evaluated paths  -  no deduplication):
+    Path proj_10153990402_382940196  |  origin BG: project_origin  |  29 segments
+    Bottleneck: Sage Canyon Drive *** dT EXCEEDS THRESHOLD  -  DISCRETIONARY ***
+      Road: Two-lane highway  |  Speed: 25 mph  |  Lanes: 1  |  HAZ_CLASS: 3 (vhfhsz)
+      HCM cap: 1125 vph  x degradation 0.35 (vhfhsz)  = eff cap 394 vph
+      dT = (270.0 vph / 394 vph) x 60 + 7.5 min egress = 48.64 min  (threshold: 2.25 min (45 min x 5%))
+
+    Path proj_10153990402_384802950  |  origin BG: project_origin  |  27 segments
+    Bottleneck: Sage Canyon Drive *** dT EXCEEDS THRESHOLD  -  DISCRETIONARY ***
+      Road: Two-lane highway  |  Speed: 25 mph  |  Lanes: 1  |  HAZ_CLASS: 3 (vhfhsz)
+      HCM cap: 1125 vph  x degradation 0.35 (vhfhsz)  = eff cap 394 vph
+      dT = (270.0 vph / 394 vph) x 60 + 7.5 min egress = 48.64 min  (threshold: 2.25 min (45 min x 5%))
+
+    Path proj_10153990402_1435124013  |  origin BG: project_origin  |  10 segments
+    Bottleneck: Sage Canyon Drive *** dT EXCEEDS THRESHOLD  -  DISCRETIONARY ***
+      Road: Two-lane highway  |  Speed: 25 mph  |  Lanes: 1  |  HAZ_CLASS: 3 (vhfhsz)
+      HCM cap: 1125 vph  x degradation 0.35 (vhfhsz)  = eff cap 394 vph
+      dT = (270.0 vph / 394 vph) x 60 + 7.5 min egress = 48.64 min  (threshold: 2.25 min (45 min x 5%))
+
+    Path proj_10153990402_49750431  |  origin BG: project_origin  |  11 segments
+    Bottleneck: Sage Canyon Drive *** dT EXCEEDS THRESHOLD  -  DISCRETIONARY ***
+      Road: Two-lane highway  |  Speed: 25 mph  |  Lanes: 1  |  HAZ_CLASS: 3 (vhfhsz)
+      HCM cap: 1125 vph  x degradation 0.35 (vhfhsz)  = eff cap 394 vph
+      dT = (270.0 vph / 394 vph) x 60 + 7.5 min egress = 48.64 min  (threshold: 2.25 min (45 min x 5%))
+
+    Path proj_10153990402_49752064  |  origin BG: project_origin  |  9 segments
+    Bottleneck: Sage Canyon Drive *** dT EXCEEDS THRESHOLD  -  DISCRETIONARY ***
+      Road: Two-lane highway  |  Speed: 25 mph  |  Lanes: 1  |  HAZ_CLASS: 3 (vhfhsz)
+      HCM cap: 1125 vph  x degradation 0.35 (vhfhsz)  = eff cap 394 vph
+      dT = (270.0 vph / 394 vph) x 60 + 7.5 min egress = 48.64 min  (threshold: 2.25 min (45 min x 5%))
+
+
+  -&gt; Scenario Tier: DISCRETIONARY
+  Reason: Project meets the 15-unit applicability threshold and 5 serving path(s) exceed the dT threshold of 2.25 min (max dT: 48.6 min). FHSZ Zone 3 (vhfhsz)  -  road capacity degradation applied. Mobilization: 0.90 (NFPA 101 design basis, constant). Discretionary review required. Legal basis: AB 747 (California Government Code Sec.65302.15)  -  General Plan Safety Element mandatory update for evacuation route capacity analysis; HCM 2022 (Highway Capacity Manual, 7th Edition)  -  effective capacity with hazard degradation; NFPA 101 (Life Safety Code)  -  0.90 mobilization design basis (100% occupant evacuation, adjusted for ~10% zero-vehicle households per Census ACS B25044); NIST TN 2135 (Maranghides et al.)  -  safe egress windows by hazard zone.
+
+======================================================================
+SCENARIO: SB79_TRANSIT
+  Legal Basis: SB 79 (2025)  -  objective health and safety standard carve-out for by-right projects (transit proximity context); California Public Utilities Code Sec.21155 (Tier 1/2 transit)
+  Result: NOT_APPLICABLE  |  Triggered: NO
+======================================================================
+  NOT APPLICABLE: SB 79: project is not within 0.5 miles of Tier 1/2 transit. Informational only  -  no tier impact.
+  SB 79 Transit Proximity: outside transit buffer
+
+======================================================================
+FINAL DETERMINATION
+======================================================================
+  RESULT: DISCRETIONARY REVIEW REQUIRED
+
+  Project meets the 15-unit applicability threshold and 5 serving path(s) exceed the dT threshold of 2.25 min (max dT: 48.6 min). FHSZ Zone 3 (vhfhsz)  -  road capacity degradation applied. Mobilization: 0.90 (NFPA 101 design basis, constant). Discretionary review required. Legal basis: AB 747 (California Government Code Sec.65302.15)  -  General Plan Safety Element mandatory update for evacuation route capacity analysis; HCM 2022 (Highway Capacity Manual, 7th Edition)  -  effective capacity with hazard degradation; NFPA 101 (Life Safety Code)  -  0.90 mobilization design basis (100% occupant evacuation, adjusted for ~10% zero-vehicle households per Census ACS B25044); NIST TN 2135 (Maranghides et al.)  -  safe egress windows by hazard zone.
+
+  PARAMETERS APPLIED
+  --------------------------------------
+  Hazard Zone:        vhfhsz
+  Mobilization Rate:  0.90 (NFPA 101 design basis  -  constant; ~10% zero-vehicle HHs per Census ACS B25044)
+  Vehicles per Unit:  2.5 (U.S. Census ACS B25044)
+  Egress Penalty:     7.5 min (NFPA 101/IBC  -  5 stories)
+  Safe Egress Window: 45 min (vhfhsz, per NIST TN 2135)
+  Max Project Share:  5%
+  dT Threshold:       2.25 min (45 x 5%)
+  Max dT (project):   48.64 min
+
+  Determination Tier:
+    DISCRETIONARY REVIEW REQUIRED
+
+  At least one scenario triggered DISCRETIONARY: the project meets the
+  dwelling unit size threshold and at least one serving path&#x27;s dT exceeds
+  the applicable threshold for the project&#x27;s hazard zone.
+
+  dT = (project_vehicles / bottleneck_effective_capacity) x 60 + egress_penalty
+  The baseline state of the road is irrelevant  -  projects in already-failing
+  zones are tested equally (key v3.0 correction from v2.0 marginal causation test).
+
+  NOTE: Fire zone location (Standard 3) affects mobilization rate and dT threshold;
+  it does not independently gate the determination.
+
+  Scenario Tier Summary:
+    wildland_ab747: DISCRETIONARY
+    sb79_transit: NOT_APPLICABLE
+
+  Aggregation Logic: Most restrictive tier across all applicable scenarios wins.
+  Tier Ranking: DISCRETIONARY(3) &gt; MINISTERIAL WITH STANDARD CONDITIONS(2) &gt; MINISTERIAL(1) &gt; NOT_APPLICABLE(0)
+
+  This determination is based solely on objective, verifiable criteria.
+  No professional discretion was applied. All calculations are reproducible.
+  See legal.md for full legal basis and defense reference.
+======================================================================</pre>
+</details>
 </div>
 <h2 class="section-label">Appeal Rights</h2>
 <div class="appeal-box">

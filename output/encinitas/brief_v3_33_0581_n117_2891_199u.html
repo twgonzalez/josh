@@ -316,7 +316,7 @@
       </div>
       <div style="text-align:right; font-size:11px; color:#a8c8e8; line-height:1.8; flex-shrink:0;">
         <div style="font-weight:700; color:#fff; font-size:12px;">JOSH-2026-CLARK-AVENUE-APARTME-33_0581-n117_2891</div>
-        <div>Issued: 2026-03-29</div>
+        <div>Issued: 2026-03-30</div>
         <div>199 dwelling units</div>
       </div>
     </div>
@@ -564,13 +564,203 @@
     Flagged when &#916;T &gt; 6.00 min (threshold = 120 min &times; 5%)
   </div>
 
-  <p style="margin:0; font-size:11px; color:#6c757d; font-style:italic;">
+  <p style="margin:0 0 10px; font-size:11px; color:#6c757d; font-style:italic;">
     This determination applies the above authorities mechanically. No engineering judgment was
     exercised. The same methodology is applied uniformly to all projects under AB 747.
-    Full reproducible audit trail:
-    <a href="../viewer.html?doc=encinitas/determination_33_0581_n117_2891_199u.txt" style="font-family:monospace; font-size:10px; background:#f1f3f5;
-       padding:2px 6px; border-radius:3px; color:#1a56db; text-decoration:none;">determination_33_0581_n117_2891_199u.txt</a>
   </p>
+  <details class="no-print" style="margin-top:4px;">
+  <summary style="cursor:pointer; font-size:11px; color:#1a56db; font-family:monospace;
+                  background:#f1f3f5; padding:3px 8px; border-radius:3px; display:inline-block;
+                  user-select:none; list-style:none;">
+    &#9654; determination_33_0581_n117_2891_199u.txt
+  </summary>
+  <pre style="margin:8px 0 0; padding:10px 12px; background:#f8f9fa; border:1px solid #dee2e6;
+              border-radius:4px; font-size:10px; line-height:1.5; overflow-x:auto;
+              white-space:pre-wrap; word-break:break-word; color:#212529;">======================================================================
+FIRE EVACUATION CAPACITY ANALYSIS  -  PROJECT DETERMINATION
+JOSH v3.4 (dT Standard  -  Constant Mobilization, NFPA 101)
+======================================================================
+Date:           2026-03-30T18:13:48.058655
+Project:        Clark Avenue Apartments
+Address:        599 Union St (ingress/egress) / Clark Ave (egress only), Leucadia
+APN:            Not provided
+Location:       33.058122, -117.289088
+Dwelling Units: 199
+Stories:        3
+
+ALGORITHM
+----------------------------------------
+  Universal 5-Step Evacuation Capacity Algorithm v3.2 (dT Standard  -  constant mobilization)
+  Each scenario applies: (1) applicability check, (2) scale gate, (3) route identification (EvacuationPath objects with bottleneck tracking), (4) demand calculation (mobilization rate 0.90 x vpu x units  -  NFPA 101 design basis), (5) dT test (project_vehicles / bottleneck_effective_capacity x 60 + egress). FHSZ affects road capacity degradation only  -  not mobilization. Most restrictive tier across all applicable scenarios is the final determination.
+  Reference: See legal.md for full legal basis and defense reference.
+
+======================================================================
+SCENARIO: WILDLAND_AB747
+  Legal Basis: AB 747 (California Government Code Sec.65302.15)  -  General Plan Safety Element mandatory update for evacuation route capacity analysis; HCM 2022 (Highway Capacity Manual, 7th Edition)  -  effective capacity with hazard degradation; NFPA 101 (Life Safety Code)  -  0.90 mobilization design basis (100% occupant evacuation, adjusted for ~10% zero-vehicle households per Census ACS B25044); NIST TN 2135 (Maranghides et al.)  -  safe egress windows by hazard zone
+  Result: DISCRETIONARY  |  Triggered: YES
+======================================================================
+
+  STEP 1  -  APPLICABILITY CHECK (Standard 3: FHSZ Modifier)
+  --------------------------------------
+  Method: Always applicable; site FHSZ check via GIS point-in-polygon
+  Result: APPLICABLE
+  Note: Not in FHSZ (hazard_zone=non_fhsz)  -  no road degradation. Mobilization rate 0.90 (NFPA 101 design basis, constant).
+  Standard 3 (FHSZ): Not in FHSZ [HAZ_CLASS=0]  hazard_zone=non_fhsz  (not in FHSZ)
+  Mobilization Rate: 0.90 (NFPA 101 design basis  -  constant; Census ACS B25044 zero-vehicle adjustment)
+
+  STEP 2  -  SCALE GATE (Standard 1)
+  --------------------------------------
+  199 &gt;= 15 -&gt; TRIGGERED
+  (199 units vs. 15 threshold)
+
+  STEP 3  -  ROUTE IDENTIFICATION (Standard 2)
+  --------------------------------------
+  Method: Project-origin Dijkstra (v3.4, travel-time weight)  -  fastest path from project site to each regional-network exit node (motorway/trunk/primary at city boundary); weight=length/speed_limit (seconds) per speed_defaults config; 11 nodes within 0.5 mi network zone; respects road barriers (I-5, rail, etc.)
+  Radius: 0.5 miles (804.7 m)
+  Serving route segments found: 30
+  Serving EvacuationPaths identified: 9
+    - Saxony Road: eff_cap=1700 vph, fhsz=non_fhsz, deg=1.00, vc=0.250 (informational)
+    - Union Street: eff_cap=1125 vph, fhsz=non_fhsz, deg=1.00, vc=0.250 (informational)
+    - 1052679566: eff_cap=2250 vph, fhsz=non_fhsz, deg=1.00, vc=0.500 (informational)
+    - North El Camino Real: eff_cap=1900 vph, fhsz=high_fhsz, deg=0.50, vc=0.400 (informational)
+    - Leucadia Boulevard: eff_cap=1900 vph, fhsz=high_fhsz, deg=0.50, vc=0.400 (informational)
+    - Clark Avenue: eff_cap=1125 vph, fhsz=non_fhsz, deg=1.00, vc=0.250 (informational)
+    - Piraeus Street: eff_cap=3800 vph, fhsz=non_fhsz, deg=1.00, vc=0.400 (informational)
+
+  STEP 4  -  DEMAND CALCULATION
+  --------------------------------------
+  Formula: 199 x 2.5 x 0.90
+  Hazard Zone: non_fhsz
+  Mobilization Rate: 0.90 (NFPA 101 design basis, constant)
+  Project vehicles (peak hour): 447.8 vph
+  Source (vehicles/unit): U.S. Census ACS B25044
+  Source (mobilization): NFPA 101 (Life Safety Code) design basis  -  100% occupant evacuation; adjusted 0.90 for ~10% zero-vehicle households (Census ACS B25044).
+
+  STEP 5  -  dT TEST (Standard 4)
+  --------------------------------------
+  Method: dT = (project_vehicles / bottleneck_effective_capacity) x 60 + egress
+  Hazard Zone: non_fhsz
+  Mobilization Rate: 0.90 (NFPA 101 design basis, constant)
+  Project Vehicles: 447.8 vph
+  Egress Penalty: 0.0 min (NFPA 101/IBC; applies to buildings &gt;= 4 stories)
+  Safe Egress Window: 120 min (non_fhsz, NIST TN 2135)
+  Max Project Share:  5%
+  dT Threshold:       6.00 min (120 min window x 5%, NIST TN 2135)
+  Paths Evaluated: 9
+  Max dT: 23.88 min
+  Triggered: YES  -  DISCRETIONARY
+
+  Per-Path Results (all evaluated paths  -  no deduplication):
+    Path proj_49608655_382940196  |  origin BG: project_origin  |  19 segments
+    Bottleneck: Union Street *** dT EXCEEDS THRESHOLD  -  DISCRETIONARY ***
+      Road: Two-lane highway  |  Speed: 25 mph  |  Lanes: 1  |  HAZ_CLASS: 0 (non_fhsz)
+      HCM cap: 1125 vph  x degradation 1.00 (non_fhsz)  = eff cap 1125 vph
+      dT = (447.8 vph / 1125 vph) x 60 + 0.0 min egress = 23.88 min  (threshold: 6.00 min (120 min x 5%))
+
+    Path proj_49608655_384802950  |  origin BG: project_origin  |  17 segments
+    Bottleneck: Union Street *** dT EXCEEDS THRESHOLD  -  DISCRETIONARY ***
+      Road: Two-lane highway  |  Speed: 25 mph  |  Lanes: 1  |  HAZ_CLASS: 0 (non_fhsz)
+      HCM cap: 1125 vph  x degradation 1.00 (non_fhsz)  = eff cap 1125 vph
+      dT = (447.8 vph / 1125 vph) x 60 + 0.0 min egress = 23.88 min  (threshold: 6.00 min (120 min x 5%))
+
+    Path proj_49608655_384813390  |  origin BG: project_origin  |  16 segments
+    Bottleneck: Union Street *** dT EXCEEDS THRESHOLD  -  DISCRETIONARY ***
+      Road: Two-lane highway  |  Speed: 25 mph  |  Lanes: 1  |  HAZ_CLASS: 0 (non_fhsz)
+      HCM cap: 1125 vph  x degradation 1.00 (non_fhsz)  = eff cap 1125 vph
+      dT = (447.8 vph / 1125 vph) x 60 + 0.0 min egress = 23.88 min  (threshold: 6.00 min (120 min x 5%))
+
+    Path proj_49608655_384825998  |  origin BG: project_origin  |  12 segments
+    Bottleneck: Union Street *** dT EXCEEDS THRESHOLD  -  DISCRETIONARY ***
+      Road: Two-lane highway  |  Speed: 25 mph  |  Lanes: 1  |  HAZ_CLASS: 0 (non_fhsz)
+      HCM cap: 1125 vph  x degradation 1.00 (non_fhsz)  = eff cap 1125 vph
+      dT = (447.8 vph / 1125 vph) x 60 + 0.0 min egress = 23.88 min  (threshold: 6.00 min (120 min x 5%))
+
+    Path proj_49608655_291697249  |  origin BG: project_origin  |  9 segments
+    Bottleneck: Union Street *** dT EXCEEDS THRESHOLD  -  DISCRETIONARY ***
+      Road: Two-lane highway  |  Speed: 25 mph  |  Lanes: 1  |  HAZ_CLASS: 0 (non_fhsz)
+      HCM cap: 1125 vph  x degradation 1.00 (non_fhsz)  = eff cap 1125 vph
+      dT = (447.8 vph / 1125 vph) x 60 + 0.0 min egress = 23.88 min  (threshold: 6.00 min (120 min x 5%))
+
+    Path proj_49608655_291697662  |  origin BG: project_origin  |  13 segments
+    Bottleneck: Union Street *** dT EXCEEDS THRESHOLD  -  DISCRETIONARY ***
+      Road: Two-lane highway  |  Speed: 25 mph  |  Lanes: 1  |  HAZ_CLASS: 0 (non_fhsz)
+      HCM cap: 1125 vph  x degradation 1.00 (non_fhsz)  = eff cap 1125 vph
+      dT = (447.8 vph / 1125 vph) x 60 + 0.0 min egress = 23.88 min  (threshold: 6.00 min (120 min x 5%))
+
+    Path proj_3643380325_291697731  |  origin BG: project_egress_1  |  6 segments
+    Bottleneck: Clark Avenue *** dT EXCEEDS THRESHOLD  -  DISCRETIONARY ***
+      Road: Two-lane highway  |  Speed: 25 mph  |  Lanes: 1  |  HAZ_CLASS: 0 (non_fhsz)
+      HCM cap: 1125 vph  x degradation 1.00 (non_fhsz)  = eff cap 1125 vph
+      dT = (447.8 vph / 1125 vph) x 60 + 0.0 min egress = 23.88 min  (threshold: 6.00 min (120 min x 5%))
+
+    Path proj_3643380325_49752118  |  origin BG: project_egress_1  |  7 segments
+    Bottleneck: Clark Avenue *** dT EXCEEDS THRESHOLD  -  DISCRETIONARY ***
+      Road: Two-lane highway  |  Speed: 25 mph  |  Lanes: 1  |  HAZ_CLASS: 0 (non_fhsz)
+      HCM cap: 1125 vph  x degradation 1.00 (non_fhsz)  = eff cap 1125 vph
+      dT = (447.8 vph / 1125 vph) x 60 + 0.0 min egress = 23.88 min  (threshold: 6.00 min (120 min x 5%))
+
+    Path proj_3643380325_291697662  |  origin BG: project_egress_1  |  4 segments
+    Bottleneck: Clark Avenue *** dT EXCEEDS THRESHOLD  -  DISCRETIONARY ***
+      Road: Two-lane highway  |  Speed: 25 mph  |  Lanes: 1  |  HAZ_CLASS: 0 (non_fhsz)
+      HCM cap: 1125 vph  x degradation 1.00 (non_fhsz)  = eff cap 1125 vph
+      dT = (447.8 vph / 1125 vph) x 60 + 0.0 min egress = 23.88 min  (threshold: 6.00 min (120 min x 5%))
+
+
+  -&gt; Scenario Tier: DISCRETIONARY
+  Reason: Project meets the 15-unit applicability threshold and 9 serving path(s) exceed the dT threshold of 6.00 min (max dT: 23.9 min). Not in FHSZ (hazard_zone=non_fhsz)  -  no road degradation. Mobilization: 0.90 (NFPA 101 design basis, constant). Discretionary review required. Legal basis: AB 747 (California Government Code Sec.65302.15)  -  General Plan Safety Element mandatory update for evacuation route capacity analysis; HCM 2022 (Highway Capacity Manual, 7th Edition)  -  effective capacity with hazard degradation; NFPA 101 (Life Safety Code)  -  0.90 mobilization design basis (100% occupant evacuation, adjusted for ~10% zero-vehicle households per Census ACS B25044); NIST TN 2135 (Maranghides et al.)  -  safe egress windows by hazard zone.
+
+======================================================================
+SCENARIO: SB79_TRANSIT
+  Legal Basis: SB 79 (2025)  -  objective health and safety standard carve-out for by-right projects (transit proximity context); California Public Utilities Code Sec.21155 (Tier 1/2 transit)
+  Result: NOT_APPLICABLE  |  Triggered: NO
+======================================================================
+  NOT APPLICABLE: SB 79: project is not within 0.5 miles of Tier 1/2 transit. Informational only  -  no tier impact.
+  SB 79 Transit Proximity: outside transit buffer
+
+======================================================================
+FINAL DETERMINATION
+======================================================================
+  RESULT: DISCRETIONARY REVIEW REQUIRED
+
+  Project meets the 15-unit applicability threshold and 9 serving path(s) exceed the dT threshold of 6.00 min (max dT: 23.9 min). Not in FHSZ (hazard_zone=non_fhsz)  -  no road degradation. Mobilization: 0.90 (NFPA 101 design basis, constant). Discretionary review required. Legal basis: AB 747 (California Government Code Sec.65302.15)  -  General Plan Safety Element mandatory update for evacuation route capacity analysis; HCM 2022 (Highway Capacity Manual, 7th Edition)  -  effective capacity with hazard degradation; NFPA 101 (Life Safety Code)  -  0.90 mobilization design basis (100% occupant evacuation, adjusted for ~10% zero-vehicle households per Census ACS B25044); NIST TN 2135 (Maranghides et al.)  -  safe egress windows by hazard zone.
+
+  PARAMETERS APPLIED
+  --------------------------------------
+  Hazard Zone:        non_fhsz
+  Mobilization Rate:  0.90 (NFPA 101 design basis  -  constant; ~10% zero-vehicle HHs per Census ACS B25044)
+  Vehicles per Unit:  2.5 (U.S. Census ACS B25044)
+  Egress Penalty:     0.0 min (NFPA 101/IBC  -  3 stories)
+  Safe Egress Window: 120 min (non_fhsz, per NIST TN 2135)
+  Max Project Share:  5%
+  dT Threshold:       6.00 min (120 x 5%)
+  Max dT (project):   23.88 min
+
+  Determination Tier:
+    DISCRETIONARY REVIEW REQUIRED
+
+  At least one scenario triggered DISCRETIONARY: the project meets the
+  dwelling unit size threshold and at least one serving path&#x27;s dT exceeds
+  the applicable threshold for the project&#x27;s hazard zone.
+
+  dT = (project_vehicles / bottleneck_effective_capacity) x 60 + egress_penalty
+  The baseline state of the road is irrelevant  -  projects in already-failing
+  zones are tested equally (key v3.0 correction from v2.0 marginal causation test).
+
+  NOTE: Fire zone location (Standard 3) affects mobilization rate and dT threshold;
+  it does not independently gate the determination.
+
+  Scenario Tier Summary:
+    wildland_ab747: DISCRETIONARY
+    sb79_transit: NOT_APPLICABLE
+
+  Aggregation Logic: Most restrictive tier across all applicable scenarios wins.
+  Tier Ranking: DISCRETIONARY(3) &gt; MINISTERIAL WITH STANDARD CONDITIONS(2) &gt; MINISTERIAL(1) &gt; NOT_APPLICABLE(0)
+
+  This determination is based solely on objective, verifiable criteria.
+  No professional discretion was applied. All calculations are reproducible.
+  See legal.md for full legal basis and defense reference.
+======================================================================</pre>
+</details>
 </div>
 <h2 class="section-label">Appeal Rights</h2>
 <div class="appeal-box">
