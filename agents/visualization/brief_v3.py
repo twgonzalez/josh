@@ -152,6 +152,8 @@ def _wrap_html(city_name: str, case_num: str, body: str) -> str:
       padding-bottom: 8px;
       border-bottom: 2px solid #e9ecef;
     }}
+  details summary::marker {{ display: none; }}
+  details summary::-webkit-details-marker {{ display: none; }}
   </style>
 </head>
 {body}
@@ -1143,8 +1145,7 @@ def _build_audit_trail_block(audit_file: str, audit_text: str) -> str:
     return f"""<details class="no-print" style="margin-top:4px;">
   <summary style="cursor:pointer; font-size:11px; color:#1a56db; font-family:monospace;
                   background:#f1f3f5; padding:3px 8px; border-radius:3px; display:inline-block;
-                  user-select:none; list-style:none;
-                  -webkit-appearance:none; appearance:none;">
+                  user-select:none; list-style:none;">
     &#9654; {audit_file}
   </summary>
   <pre style="margin:8px 0 0; padding:10px 12px; background:#f8f9fa; border:1px solid #dee2e6;
