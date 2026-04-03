@@ -2566,6 +2566,12 @@ def _inject_what_happened_layer(
 
     injection = css + "\n" + html_panel + "\n" + js
     html = html_path.read_text(encoding="utf-8")
-    html = html.replace("</body>", injection + "\n</body>", 1)
+    # Use rfind to target the real page </body>, not one embedded inside
+    # the _BRIEFS JS string blob added by _inject_brief_modals.
+    idx = html.rfind("</body>")
+    if idx == -1:
+        html += injection
+    else:
+        html = html[:idx] + injection + "\n</body>" + html[idx + len("</body>"):]
     html_path.write_text(html, encoding="utf-8")
     logger.info("  'What Happened' layer injected into demo map.")
