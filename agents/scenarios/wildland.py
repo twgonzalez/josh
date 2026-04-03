@@ -817,28 +817,60 @@ def check_fire_zone(
     fhsz_wgs84 = fhsz_gdf.to_crs("EPSG:4326")
     joined     = gpd.sjoin(project_pt, fhsz_wgs84, how="left", predicate="within")
 
-    if joined.empty or joined["HAZ_CLASS"].isna().all():
-        detail.update({
-            "result":           False,
-            "zone_level":       0,
-            "hazard_zone":      "non_fhsz",
-            "zone_description": "Not in FHSZ",
-        })
-        return False, detail
+    gap_resolved = False
+    gap_dist_m   = None
 
-    zone_level  = int(joined["HAZ_CLASS"].dropna().max())
-    in_trigger  = zone_level >= 2
-    hazard_zone = _HAZ_CLASS_TO_ZONE.get(zone_level, "non_fhsz")
+    if joined.empty or joined["HAZ_CLASS"].isna().all():
+        # Point fell in a gap between FHSZ polygons.  Apply nearest-neighbour
+        # fallback: if the closest polygon boundary is within 50 m, inherit its
+        # HAZ_CLASS.  CAL FIRE FHSZ tiles can have slivers and road-right-of-way
+        # gaps that are artefacts of the digitising process, not genuine zone
+        # boundaries.  50 m was chosen to close typical road ROW gaps (~20–30 m)
+        # while still respecting real zone transitions.
+        fhsz_merc  = fhsz_gdf.to_crs("EPSG:3857")
+        pt_merc    = project_pt.to_crs("EPSG:3857").geometry.iloc[0]
+        distances  = fhsz_merc.geometry.distance(pt_merc)
+        nearest_i  = distances.idxmin()
+        gap_dist_m = float(distances.loc[nearest_i])
+        gap_threshold_m = 50.0
+
+        if gap_dist_m <= gap_threshold_m:
+            zone_level   = int(fhsz_gdf.loc[nearest_i, "HAZ_CLASS"])
+            in_trigger   = zone_level >= 2
+            hazard_zone  = _HAZ_CLASS_TO_ZONE.get(zone_level, "non_fhsz")
+            gap_resolved = True
+        else:
+            detail.update({
+                "result":           False,
+                "zone_level":       0,
+                "hazard_zone":      "non_fhsz",
+                "zone_description": "Not in FHSZ",
+                "note": f"Point not within any FHSZ polygon; nearest polygon "
+                        f"{gap_dist_m:.0f} m away (>{gap_threshold_m:.0f} m threshold).",
+            })
+            return False, detail
+    else:
+        zone_level  = int(joined["HAZ_CLASS"].dropna().max())
+        in_trigger  = zone_level >= 2
+        hazard_zone = _HAZ_CLASS_TO_ZONE.get(zone_level, "non_fhsz")
+
+    zone_desc = {
+        0: "Not in FHSZ",
+        1: "Zone 1 (Moderate)",
+        2: "Zone 2 (High)",
+        3: "Zone 3 (Very High)",
+    }.get(zone_level, f"Zone {zone_level}")
 
     detail.update({
         "result":           in_trigger,
         "zone_level":       zone_level,
         "hazard_zone":      hazard_zone,
-        "zone_description": {
-            0: "Not in FHSZ",
-            1: "Zone 1 (Moderate)",
-            2: "Zone 2 (High)",
-            3: "Zone 3 (Very High)",
-        }.get(zone_level, f"Zone {zone_level}"),
+        "zone_description": zone_desc,
     })
+    if gap_resolved:
+        detail["note"] = (
+            f"FHSZ gap resolved: point fell {gap_dist_m:.1f} m from nearest "
+            f"polygon boundary (≤50 m threshold). Assigned {zone_desc} by "
+            f"nearest-neighbour. CAL FIRE digitising artefact — road ROW gap."
+        )
     return in_trigger, detail

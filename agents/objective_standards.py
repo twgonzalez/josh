@@ -313,6 +313,8 @@ def generate_audit_trail(
                 f"hazard_zone={fz.get('hazard_zone', 'non_fhsz')}  "
                 f"({'IN FIRE ZONE' if fz.get('result') else 'not in FHSZ'})"
             )
+            if "note" in fz:
+                lines.append(f"  Note: {fz['note']}")
             lines.append(
                 f"  Mobilization Rate: {s1.get('std3_mobilization_rate', 0.90):.2f} "
                 f"(NFPA 101 design basis — constant; Census ACS B25044 zero-vehicle adjustment)"
