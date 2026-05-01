@@ -102,7 +102,7 @@ The staff report finding does four things: states the standard, states the input
 
 ### Conditional Ministerial Finding (ΔT within threshold on all routes)
 
-> The proposed project includes [N] net new residential units at [address]. The City applied the JOSH ΔT Evacuation Capacity Standard (City Council Resolution No. [XXX]). The analysis identified [N] serving evacuation routes within the 0.5-mile project radius. The highest ΔT result is [X.X] minutes on [Route Name], against a threshold of [X.XX] minutes for the project's [Zone] fire hazard designation. The project is within the threshold on all serving routes and is approved at the ministerial tier, subject to the standard conditions set forth in Exhibit A.
+> The proposed project includes [N] net new residential units at [address]. The City applied the JOSH ΔT Evacuation Capacity Standard (City Council Resolution No. [XXX]). The analysis identified [N] serving evacuation routes within the 0.5-mile project radius. The highest ΔT result is [X.X] minutes on [Route Name], against a threshold of [X.XX] minutes for the project's [Zone] fire hazard designation. The project is within the threshold on all serving routes and is approved at the ministerial tier, subject to standard building, fire, and engineering conditions of approval.
 
 ### Discretionary Finding (ΔT exceeds threshold on one or more routes)
 
