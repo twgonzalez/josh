@@ -59,6 +59,7 @@ jobs:
           cp docs/JOSH_PE_Technical_Brief.md output/docs/
           cp docs/JOSH_v3_Specification.md output/docs/
           cp docs/JOSH_City_Planner_Guide.md output/docs/
+          cp docs/JOSH_City_Engineer_Guide.md output/docs/
 
       - name: Setup Pages
         uses: actions/configure-pages@v4
