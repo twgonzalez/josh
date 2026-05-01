@@ -53,6 +53,11 @@ jobs:
           cp pages/viewer.html output/viewer.html
           cp pages/mayors_presentation.html output/mayors_presentation.html
           cp -r static output/static
+          mkdir -p output/docs
+          cp docs/JOSH_Plain_English_For_Court.md output/docs/
+          cp docs/JOSH_Legal_Defensibility_Memo.md output/docs/
+          cp docs/JOSH_PE_Technical_Brief.md output/docs/
+          cp docs/JOSH_v3_Specification.md output/docs/
 
       - name: Setup Pages
         uses: actions/configure-pages@v4
