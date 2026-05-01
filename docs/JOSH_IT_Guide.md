@@ -169,6 +169,28 @@ Reads the project inventory, runs Dijkstra routing from each project site to the
 
 `analyze` must run before `demo`. After that, adding a new project only requires updating the projects YAML and re-running `demo` — the capacity analysis does not need to repeat.
 
+### `report` — AB 747 city-wide evacuation capacity report
+
+```bash
+uv run python build.py report \
+  --city "Berkeley" \
+  --data-dir data/berkeley
+```
+
+Generates the city-wide evacuation capacity report required under Government Code §65302.15 (AB 747). `analyze` must run before `report` — the report reads the capacity analysis outputs along with the Census ACS block group data:
+
+- `output/{city}/ab747_report.html` — the self-contained HTML report
+
+The report inventories every residential block group in the city, identifies which are in FHSZ zones and lack a second independent evacuation route, and summarizes total exit capacity in vehicles per hour. It is the input to a city's AB 747 Safety Element update and the supporting document for an AB 1600 nexus study if the city pursues impact fees.
+
+The included Berkeley data files already contain everything `report` needs:
+
+| Additional file | Contents |
+|---|---|
+| `data/berkeley/block_groups.geojson` | Census ACS block groups with residential unit counts |
+
+`analyze` and `demo` are the city-specific steps. `report` is the policy-facing output that connects the technical analysis to the Safety Element and nexus study workflows.
+
 ------
 
 ## The Parameters File

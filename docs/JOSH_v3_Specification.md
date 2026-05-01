@@ -665,6 +665,21 @@ MITIGATION PATHWAYS
 
 ### 5.8 Agent 7: Report Generation
 
+#### CLI command
+
+```bash
+uv run python build.py report \
+  --city "Berkeley" \
+  --data-dir data/berkeley
+# → output/{city}/ab747_report.html
+```
+
+**Prerequisites:** `build.py analyze` must run first. In addition to the files produced by `analyze`, `report` reads `data/{city}/block_groups.geojson` (Census ACS block groups with residential unit counts).
+
+**Output:** `output/{city}/ab747_report.html` — a self-contained HTML report inventorying residential block groups, FHSZ exposure, single-access exposure, total exit capacity in vehicles per hour, and per-block-group clearance time. This is the input to the city's AB 747 Safety Element update and the supporting document for an AB 1600 nexus study.
+
+#### Determination letter citation requirements
+
 Determination letters must cite:
 - AB 747 (Gov. Code §65302.15)
 - HCM 2022 edition and specific exhibits used
