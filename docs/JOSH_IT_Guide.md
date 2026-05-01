@@ -2,210 +2,117 @@
 
 California Stewardship Fund — May 2026
 
-**Prepared for city IT departments evaluating JOSH for self-hosted deployment**
+**Prepared for city IT departments evaluating JOSH: what is open source, what a city implementation requires, and how to work with CSF to get it built**
 
 ------
 
 ## What This Guide Is For
 
-JOSH is open source software. Every line of code is publicly available, auditable, and licensed under AGPL-3.0. A city IT department with standard Python and GIS tooling can deploy JOSH independently, run it against the city's own data, and produce legally defensible determination maps — without purchasing a license, subscribing to a service, or depending on any external infrastructure.
+JOSH has two distinct components, and understanding the distinction is the starting point for any IT evaluation.
 
-This guide explains what that looks like in practice: what the software is, what it requires, what it touches, and what it produces. It also describes how California Stewardship Fund can support cities that want help with initial setup, methodology validation, or keeping pace with legal and parameter updates — and how that engagement can be structured without creating a dependency.
+The first component is the **JOSH methodology engine** — the open-source algorithm that computes ΔT, evaluates the objective standards, and runs in the browser as an interactive determination tool. This is publicly available under AGPL-3.0 at `github.com/twgonzalez/josh`. Any engineer can read it, audit it, and verify that it does what the methodology documents say it does.
 
-------
+The second component is the **city implementation** — the data acquisition, road network processing, FHSZ integration, and map generation that produces a determination map specific to a city's road network, hazard zones, and project inventory. This is specialist work. CSF maintains its own implementation and builds city maps under engagement. A city can also build its own implementation to the published specifications; this guide describes what that requires.
 
-## What JOSH Is — and What It Isn't
-
-JOSH is a Python command-line tool. It is not a web application, a SaaS platform, a cloud service, or an AI system. It has no server component, no database, no login system, and no ongoing operational infrastructure. It runs on a workstation or laptop, downloads public data, runs a deterministic calculation, and writes a static HTML file to disk.
-
-That HTML file is the deliverable. It is self-contained — all data and rendering code are embedded — and opens in any browser directly from the file system. No web server is required to view or distribute it. A planner can open it by double-clicking the file. A city attorney can receive it by email. A council member can view it on a tablet without an internet connection.
-
-There is no JOSH account to create, no API key to manage, no cloud credential to rotate, and no usage data sent back to California Stewardship Fund or anyone else. The software is a pipeline that reads public data and writes a file.
+The methodology is open. The implementation is a service.
 
 ------
 
-## Technical Prerequisites
+## What Is Open Source
 
-A city IT department running JOSH needs four standard tools:
+The public JOSH repository (`github.com/twgonzalez/josh`) contains:
 
-| Tool | Version | Purpose |
+- The ΔT calculation algorithm and objective standards engine
+- The interactive browser client — the determination map, what-if panel, audit trail generator, and brief renderer
+- The legal methodology parameters (`config/parameters.yaml`) — every threshold, capacity factor, and rate, with citations to the published source for each
+- The anti-divergence test suite, which verifies that the browser engine produces results identical to the reference Python implementation
+- The Berkeley demonstration map, which shows the full output a city implementation produces
+
+City IT can inspect every line of this code before any engagement with CSF. The methodology is not a black box. The parameters are not proprietary. Any qualified engineer can verify that the system does what the methodology documents say it does.
+
+What the public repository does **not** contain is the data acquisition pipeline — the code that downloads and processes city-specific road network data, FHSZ polygons, Census boundaries, and traffic records, and assembles them into the `JOSH_DATA` bundle that the browser engine consumes. That pipeline is CSF's reference implementation. It is not open source.
+
+------
+
+## What a City Implementation Requires
+
+Building a city-specific JOSH implementation involves five distinct technical workstreams. A city IT department evaluating whether to build in-house or engage CSF should understand what each requires.
+
+### 1. Road network acquisition and classification
+
+The JOSH engine requires a road network graph for the city's jurisdiction — every road segment with its highway classification, lane count, posted speed limit, and spatial geometry. The public source for this data is OpenStreetMap, accessed via the OSMnx Python library.
+
+OSM data quality varies by jurisdiction. Private roads in covenant communities, recently reclassified arterials, and non-standard jurisdictions (fire protection districts, unincorporated county areas) frequently have incorrect highway tags that inflate or deflate HCM capacity estimates. A city implementation must include a validated road override process — a mechanism to correct OSM classifications against city GIS records and official functional classification maps, with documented reasons for each correction. Incorrect road classifications produce incorrect ΔT results, and those results will be challenged by applicants. The override record is part of the administrative record.
+
+### 2. FHSZ data integration
+
+Cal Fire's standard FHSZ API returns State Responsibility Area zones only. Cities with Local Responsibility Area designations — including most incorporated cities in Southern California — receive zero features from the standard API. A compliant city implementation must resolve LRA FHSZ data from an alternative source: a locally adopted FHSZ ordinance, a county GIS service, or a pre-downloaded and validated GeoJSON that has been confirmed against the city's officially adopted fire hazard zone designations.
+
+Misidentifying a project site's FHSZ designation produces an incorrect threshold and potentially an incorrect determination tier. This is the data quality issue with the highest legal exposure in the implementation.
+
+### 3. Routing graph and exit node configuration
+
+The JOSH routing algorithm finds evacuation paths from a project site to the edge of the city's jurisdiction. For cities with standard Census TIGER boundaries, the boundary is well-defined and boundary-adjacent roads are easily identified as exit nodes. For non-municipal jurisdictions — fire protection districts, county service areas, special districts — the boundary polygon must be constructed from an authoritative non-Census source, and the primary evacuation exit nodes must be explicitly confirmed against the routing graph.
+
+Incorrect exit node configuration causes the routing algorithm to identify the wrong evacuation paths, producing incorrect bottleneck identification and incorrect ΔT results.
+
+### 4. JOSH_DATA assembly and map generation
+
+The JOSH browser engine consumes a structured data bundle — `window.JOSH_DATA` — embedded in the determination map HTML. This bundle includes the road network graph, capacity parameters, FHSZ polygon data, and pre-evaluated project results. Generating this bundle requires running the full analysis pipeline against validated city data and serializing the results in the JOSH_DATA schema.
+
+The schema version is tracked in the public repository. A city implementation must produce output conforming to the current schema version for the browser engine to load it correctly.
+
+### 5. Ongoing maintenance
+
+A city implementation is not a one-time build. It requires:
+
+- **Data refresh**: Road network, FHSZ, and boundary data should be refreshed annually or whenever the city adopts a road reclassification, a boundary change, or an updated FHSZ designation. Each refresh requires re-running the full analysis and regenerating all determination maps.
+- **Methodology updates**: When CSF releases an updated methodology version — revised parameters, corrected algorithms, or legal standard changes — the city must evaluate whether to adopt the update and, if so, re-run the analysis for all active projects.
+- **Project record maintenance**: New projects must be added to the city's project inventory, geocoded to verified coordinates, and analyzed before a determination is issued.
+- **Road override maintenance**: As the city corrects OSM road classifications, override records must be kept current and applied consistently.
+
+------
+
+## Validating a City Implementation
+
+A city that builds its own implementation can verify correctness against the JOSH anti-divergence test suite, which is included in the public repository. The test suite generates known-result test vectors from the reference implementation and confirms that the browser engine produces identical results.
+
+A city implementation that passes the anti-divergence tests and uses validated road and FHSZ input data produces results that are consistent with the published methodology. A city implementation that has not been validated against the test suite cannot claim that consistency.
+
+CSF does not certify third-party implementations. A city that builds its own implementation is responsible for the correctness of its input data and the validity of its determinations.
+
+------
+
+## Working with CSF
+
+California Stewardship Fund builds city JOSH implementations under engagement. This is the primary way cities get a determination map that is validated, legally defensible, and maintained.
+
+A CSF-built implementation includes:
+
+- Road network acquisition and classification validation against the city's official records
+- FHSZ data resolution for the city's specific regulatory context, including LRA zone configuration
+- Routing graph configuration and exit node validation
+- Full analysis and JOSH_DATA bundle generation
+- The interactive determination map as a deliverable, validated against the anti-divergence test suite
+- Documentation of every road classification decision, data source, and override in a form suitable for inclusion in the administrative record
+
+Where ongoing support is appropriate — annual data refreshes, methodology update adoption, expert witness availability for challenged determinations, or expansion to additional project types — CSF and the city can evaluate whether a Memorandum of Understanding or a services agreement is the right instrument.
+
+Cities that want to evaluate CSF's implementation approach, review a sample administrative record package, or discuss what an engagement would involve are encouraged to reach out directly. The Berkeley demonstration map, accessible from this site, shows what a completed city implementation looks like.
+
+------
+
+## Summary: Build vs. Engage
+
+| Question | Build In-House | Engage CSF |
 |---|---|---|
-| Python | 3.11+ | Runtime for all analysis code |
-| uv | Latest | Python environment and dependency manager |
-| Node.js | 20+ | Runs the JavaScript test suite (developer verification only — not required for production use) |
-| git | Any modern version | Pulls the JOSH source code and tracks city-specific configuration |
-
-All four are available on macOS, Windows, and Linux. All four are free. No additional licenses are required.
-
-Python library dependencies — GeoPandas, OSMnx, NetworkX, Shapely, PyYAML, Click, and Rich — are managed automatically by uv and installed into an isolated virtual environment on first run. They do not affect the system Python installation.
-
-A machine with 8 GB of RAM and a standard SSD is adequate for any California city. The most computationally intensive step — building the OSMnx routing graph for a city — completes in under 60 seconds and its result is cached to disk for all subsequent runs.
-
-------
-
-## The Two-Repo Architecture
-
-JOSH uses a two-repository structure designed to separate the public methodology from city-specific data.
-
-**The public repository** (`github.com/twgonzalez/josh`) contains the methodology engine: the road network analysis code, the ΔT calculation, the objective standards evaluation, the map renderer, and the JavaScript client that runs in the browser. This repository is open source under AGPL-3.0. The city can fork it, inspect it, and modify it. Methodology updates from California Stewardship Fund are released here and can be pulled at the city's discretion.
-
-**The city-private repository** contains everything specific to the city: the city configuration file, the project YAML files with applicant data, any road override corrections, and the generated output maps. This repository lives on the city's own infrastructure — a city-managed GitHub organization, a city-run GitLab instance, or any standard git host. California Stewardship Fund never has access to it unless the city explicitly shares it.
-
-The two repositories communicate by a single environment variable: `JOSH_DIR` points the private pipeline at the local copy of the public engine. The city's operational data is always under city control.
-
-### What the city owns and controls
-
-| Item | Stored in | Controlled by |
-|---|---|---|
-| City configuration (boundary, FHSZ source, exit nodes) | City-private repo | City IT |
-| Project records (applicant address, units, stories) | City-private repo | City IT / Planning |
-| Road override corrections | City-private repo | City Engineer / IT |
-| Generated determination maps | City-private repo | City IT |
-| Downloaded data cache (OSM, FHSZ, Census) | Local disk, gitignored | City IT |
-| Methodology engine and algorithm | Public repo | CSF (open source) |
-| Legal parameters (ΔT thresholds, HCM table, NFPA rates) | Public repo `config/parameters.yaml` | CSF (open source, city can fork) |
-
-The city's data never leaves city infrastructure. The methodology is public and auditable. The split is clean.
-
-------
-
-## What Running JOSH Looks Like
-
-Day-to-day operation reduces to three commands, each of which a trained planner's assistant or GIS technician can run:
-
-```bash
-# Step 1 — Download and cache city data (run once, refresh every 90 days or on demand)
-uv run python acquire.py --city "Encinitas"
-
-# Step 2 — Build the routing graph and run capacity analysis
-uv run python build.py analyze --city "Encinitas" --data-dir data/encinitas
-
-# Step 3 — Generate the interactive determination map
-uv run python build.py demo --city "Encinitas" \
-  --data-dir data/encinitas \
-  --projects projects/encinitas_demo.yaml
-```
-
-The output is a single HTML file in `output/encinitas/demo_map.html`. Open it in any browser. No server. No additional steps.
-
-Adding a new project for review requires editing a plain-text YAML file:
-
-```yaml
-- name: "123 Ocean View Drive"
-  address: "123 Ocean View Drive, Encinitas, CA"
-  units: 42
-  stories: 4
-```
-
-Then re-run Step 3. The new project appears on the map with its determination, audit trail, and route visualization. Total time from application intake to map update: under five minutes once the city's data is cached.
-
-### Who runs it
-
-JOSH does not require a dedicated GIS analyst or software engineer to operate. A planning technician or administrative analyst with basic command-line familiarity can run the standard workflow after a half-day orientation. The commands are the same every time. The only variable input is the project YAML file.
-
-For initial setup — configuring the city YAML, identifying exit nodes for the routing algorithm, validating the FHSZ data source, and verifying the first analysis against a known project — a GIS analyst or city engineer should be involved. That setup work is a one-time effort per city.
-
-------
-
-## Data Sources and Security
-
-JOSH downloads data from four public sources, all of which are free and require no API key:
-
-| Source | What JOSH Downloads | Update Frequency |
-|---|---|---|
-| OpenStreetMap (via OSMnx) | Road network geometry and classification | On demand; 90-day cache TTL |
-| Cal Fire OSFM ArcGIS REST API | Fire Hazard Severity Zone polygons | On demand; 90-day cache TTL |
-| U.S. Census TIGER | City boundary polygon | On demand; 90-day cache TTL |
-| U.S. Census Bureau Geocoder | Project coordinate validation | Per-geocode request; no cache |
-
-JOSH does not connect to any California Stewardship Fund server. It does not send usage data, project data, applicant data, or any city information to any external party. The Census geocoder receives only a street address for coordinate validation — no name, parcel, or applicant data is transmitted.
-
-No applicant personally identifiable information is stored in JOSH. The project YAML files contain address, unit count, and story count — the same information on the face of a building permit application. These files live in the city's private repository under city access controls.
-
-The AGPL-3.0 license means that if the city modifies the JOSH source code and distributes the result, those modifications must also be made available under the same open license. For internal city use — running JOSH to produce determination maps for city staff — this license condition does not apply. The city can use and modify JOSH internally without any license obligation to CSF.
-
-### Auditability
-
-Every parameter in the JOSH methodology is in a plain-text YAML file (`config/parameters.yaml`) that city IT can inspect, print, and provide to any auditor. Every road capacity value, every degradation factor, every threshold comes from this file and traces to a published source citation documented alongside the value. There is no black box. There is no proprietary model. The city can hand the parameters file to the city attorney and say: here is every number the system uses, and here is where each one comes from.
-
-------
-
-## Output and Delivery
-
-The primary output is `output/{city}/demo_map.html` — a single self-contained HTML file. It includes:
-
-- An interactive Leaflet map with the city road network, FHSZ overlay, project markers, and evacuation route traces
-- A project sidebar showing each project's ΔT result, determination tier, and route visualization
-- An on-demand determination brief (generated in the browser, no server request)
-- A downloadable plain-text audit trail for each project
-- A what-if panel allowing planning staff to test modified unit counts or stories in real time
-
-The file works from `file://` — a planner opens it by double-clicking. It also serves from any standard HTTP server (city intranet, SharePoint, a city-hosted GitHub Pages equivalent) without any server-side logic. It is a static file.
-
-The city can distribute this file to city attorneys, the fire chief, council members, or applicants. It requires no JOSH installation to view.
-
-------
-
-## Keeping It Current
-
-### Data refresh
-
-Cached public data has a 90-day TTL. The city runs:
-
-```bash
-uv run python acquire.py --city "Encinitas" --refresh
-```
-
-This re-downloads road network, FHSZ, and boundary data and rebuilds the routing graph. The command takes 3–5 minutes. OSM road geometry changes slowly; for most cities, an annual refresh is sufficient unless road reclassifications or new infrastructure trigger an earlier update.
-
-### Methodology updates
-
-When California Stewardship Fund releases a methodology update — a parameter change, an algorithm improvement, or a legal standard revision — the update appears in the public repository as a new release. The city pulls the update using standard git:
-
-```bash
-git pull origin main
-```
-
-The city then re-runs the analysis for all active cities to regenerate determination maps under the updated methodology. The city controls when it adopts an update. It does not happen automatically. A city running a specific version of the methodology for an ongoing legal proceeding can hold that version in place by pinning to a git tag.
-
-### Project records
-
-Planner staff maintain the project YAML files — adding new projects as applications arrive, archiving completed ones. No database migration, no schema upgrade, no IT involvement required for routine project management. YAML files are plain text and version-controlled in git.
-
-------
-
-## What CSF Provides, What the City Provides
-
-| Item | Provided by |
-|---|---|
-| Open source methodology engine | CSF (public repo, AGPL-3.0) |
-| Legal parameters file (`config/parameters.yaml`) | CSF (public repo) |
-| Methodology documentation (PE Brief, Legal Memo, this guide) | CSF |
-| City configuration setup (initial) | City IT / GIS, with CSF documentation |
-| Road override corrections | City Engineer, recorded by City IT |
-| Project YAML maintenance | Planning Staff |
-| Data refresh cadence | City IT |
-| Output map hosting / distribution | City IT |
-| Private city repository infrastructure | City IT |
-
-CSF maintains the methodology. The city operates it. Neither depends on the other for day-to-day function.
-
-------
-
-## Working with California Stewardship Fund
-
-A city with motivated IT staff and a GIS analyst can implement JOSH independently using this guide, the setup documentation in the public repository, and the methodology documents in the Document Library. The public repository includes a worked example for Berkeley that covers the full pipeline from initial data download through map generation. Most cities can replicate that process for their own jurisdiction in one to two focused working sessions.
-
-For cities that want additional support, California Stewardship Fund can discuss a more structured engagement. That might include:
-
-- Initial city configuration and validation of the first analysis against a known project or reference condition
-- Review of the city's road override file to confirm classification corrections are complete and defensible
-- Methodology validation for the city's specific FHSZ context, including LRA zone configuration where the standard Cal Fire API does not provide data
-- Ongoing support for methodology updates — ensuring the city's implementation stays current with parameter revisions and legal standard changes
-- Expert witness availability if a determination is challenged and the methodology needs to be explained in a legal proceeding
-
-Where that level of engagement is appropriate, CSF and the city can evaluate whether a Memorandum of Understanding or a services agreement is the right instrument. An MOU typically covers the scope of CSF's support, the city's obligations for data maintenance, and the terms under which CSF can reference the city's adoption of the standard in public communications.
-
-No engagement with CSF is required to use JOSH. The methodology is public, the code is open source, and the city's data stays under city control regardless of whether a formal relationship exists. The question is simply whether the city wants to move faster, with more confidence, and with direct access to the people who built and maintain the standard.
-
-That is a conversation CSF is happy to have at whatever pace works for the city.
+| Methodology engine | Public, auditable, AGPL-3.0 | Same — all cities use the public engine |
+| Road network validation | City GIS staff + engineer time | Included in engagement |
+| FHSZ data resolution for LRA cities | Requires local regulatory research | Included in engagement |
+| Routing configuration | Requires GIS and graph analysis expertise | Included in engagement |
+| Administrative record documentation | City staff responsible | Included in engagement |
+| Validation against test suite | City staff responsible | Included in engagement |
+| Liability for determination correctness | City's implementation, city's responsibility | City's determination; CSF's validated data and documented methodology |
+| Ongoing refresh and updates | City IT and GIS staff | Available under MOU |
+
+The methodology is public. The standard is open. What CSF provides is the specialist implementation work that makes a city's use of that standard defensible in a legal proceeding — and the ongoing relationship that keeps it current.
