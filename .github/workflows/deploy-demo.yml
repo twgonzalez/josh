@@ -61,6 +61,7 @@ jobs:
           cp docs/JOSH_City_Planner_Guide.md output/docs/
           cp docs/JOSH_City_Engineer_Guide.md output/docs/
           cp docs/JOSH_Fire_Chief_Guide.md output/docs/
+          cp docs/JOSH_IT_Guide.md output/docs/
 
       - name: Setup Pages
         uses: actions/configure-pages@v4
