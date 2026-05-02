@@ -379,15 +379,103 @@
     }
     .footer-inner a:hover { color: var(--white); }
 
+    /* ── PRINT COVER (screen: hidden) ──────────────────────────── */
+    .print-cover { display: none; }
+
     /* ── PRINT ───────────────────────────────────────────────── */
     @media print {
-      header { position: static; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-      footer { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-      .header-actions, .toc-sidebar { display: none; }
-      .doc-layout { grid-template-columns: 1fr; }
-      .doc-body { padding: 24px 0; }
-      .md pre { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-      .md thead tr { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+      @page {
+        size: letter;
+        margin: 0.85in 1in 0.8in;
+      }
+
+      /* Hide all screen chrome */
+      header, footer, .doc-meta, .toc-sidebar { display: none !important; }
+
+      /* Org kicker that replaces the nav header */
+      .print-cover {
+        display: block;
+        margin-bottom: 20pt;
+        padding-bottom: 10pt;
+        border-bottom: 1.5pt solid var(--red);
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+      }
+      .print-cover-org {
+        font-size: 8pt;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.1em;
+        color: var(--gray-600);
+      }
+      .print-cover-sys {
+        font-size: 8pt;
+        color: var(--gray-600);
+        margin-top: 2pt;
+      }
+
+      /* Layout */
+      .doc-layout { display: block; }
+      .doc-body   { max-width: 100%; padding: 0; margin: 0; }
+      body        { background: white; }
+
+      /* Typography — print rhythm (10.5–11pt) */
+      .md h1 {
+        font-size: 22pt;
+        line-height: 1.2;
+        border-bottom: none;   /* print-cover carries the red rule */
+        padding-bottom: 0;
+        margin-bottom: 6pt;
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+      }
+      .md h2 { font-size: 13pt; margin-top: 24pt; margin-bottom: 6pt; }
+      .md h3 { font-size: 11pt; margin-top: 16pt; margin-bottom: 4pt; }
+      .md p, .md li { font-size: 10.5pt; line-height: 1.65; margin-bottom: 8pt; }
+      .md table { font-size: 9.5pt; }
+
+      /* Page-break control */
+      h2, h3 { break-after: avoid; page-break-after: avoid; }
+      table, pre, blockquote { break-inside: avoid; page-break-inside: avoid; }
+
+      /* Code — light background for print (saves ink, reads cleanly B&W) */
+      .md pre {
+        background: #f4f6f8 !important;
+        border: 0.5pt solid #ccc !important;
+        border-left: 2.5pt solid var(--navy) !important;
+        border-radius: 0;
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+      }
+      .md pre code {
+        color: #1a2b4a !important;
+        font-size: 8.5pt;
+      }
+      .md code {
+        background: #f0f0f0 !important;
+        color: var(--navy) !important;
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+      }
+
+      /* Tables — preserve navy header */
+      .md thead tr {
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+      }
+      .md tbody tr:hover { background: none; }
+
+      /* Blockquotes */
+      .md blockquote {
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+      }
+
+      /* Links — plain black, no underline decoration */
+      .md a { color: var(--text) !important; border-bottom: none !important; }
+
+      /* HR */
+      .md hr { margin: 18pt 0; }
     }
 
     /* ── RESPONSIVE ─────────────────────────────────────────── */
@@ -432,6 +520,10 @@
 
   <div class="doc-layout">
     <div class="doc-body">
+      <div class="print-cover">
+        <div class="print-cover-org">California Stewardship</div>
+        <div class="print-cover-sys">JOSH Evacuation Capacity Standard</div>
+      </div>
       <article class="md" id="md-content"></article>
     </div>
     <aside class="toc-sidebar" id="toc-sidebar">
