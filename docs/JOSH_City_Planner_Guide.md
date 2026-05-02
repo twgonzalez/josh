@@ -1,6 +1,6 @@
 # City Planner's Implementation Guide
 
-California Stewardship Fund — May 2026
+California Stewardship — May 2026
 
 **Prepared for planning staff responsible for day-to-day project review under the JOSH ΔT Evacuation Capacity Standard**
 

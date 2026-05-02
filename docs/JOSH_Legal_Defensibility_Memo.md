@@ -1,6 +1,6 @@
 # JOSH ΔT Standard — Legal Defensibility Memorandum
 
-**Prepared for:** California Stewardship Fund / Municipal Partners **Date:** March 2026 **Re:** Legal basis for the ΔT Evacuation Capacity Standard; recommendation for adoption by city council resolution as an objective development standard
+**Prepared for:** California Stewardship / Municipal Partners **Date:** March 2026 **Re:** Legal basis for the ΔT Evacuation Capacity Standard; recommendation for adoption by city council resolution as an objective development standard
 
 ------
 

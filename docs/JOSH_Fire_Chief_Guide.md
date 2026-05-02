@@ -1,6 +1,6 @@
 # Fire Chief's Guide to the JOSH Evacuation Capacity Standard
 
-California Stewardship Fund — May 2026
+California Stewardship — May 2026
 
 **Prepared for fire chiefs and fire marshals whose authority over life safety at the building level now extends — through this standard — to the roads those buildings depend on**
 
@@ -46,7 +46,7 @@ Every number in the JOSH calculation comes from a source your department already
 
 **IFC §503** — the fire apparatus access road standard — is your standard. Minimum 20 feet clear width for one-way access, 26 feet for two-way. No dead-end road beyond 150 feet without an approved turnaround. These are the site-level physical access requirements your department enforces through plan check. They operate alongside JOSH, not within it, and are addressed further below.
 
-None of these inputs were chosen by the city, by California Stewardship Fund, or by any planning consultant. They are your standards, applied consistently to every project, producing a result that any engineer can independently verify.
+None of these inputs were chosen by the city, by California Stewardship, or by any planning consultant. They are your standards, applied consistently to every project, producing a result that any engineer can independently verify.
 
 ------
 

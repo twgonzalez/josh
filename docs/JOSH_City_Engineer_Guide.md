@@ -1,6 +1,6 @@
 # City Engineer's Verification and Conditions Guide
 
-California Stewardship Fund — May 2026
+California Stewardship — May 2026
 
 **Prepared for city engineers responsible for verifying JOSH determinations, reviewing road classification inputs, and specifying road improvement conditions of approval**
 

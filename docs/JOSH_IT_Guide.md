@@ -1,6 +1,6 @@
 # IT Implementation Guide
 
-California Stewardship Fund — May 2026
+California Stewardship — May 2026
 
 **Prepared for city IT departments evaluating JOSH for self-hosted deployment**
 
@@ -12,7 +12,7 @@ JOSH is open source in the functional sense, not just the legal one. The public 
 
 A city IT department that clones the repository can have a working Berkeley determination map running in under ten minutes.
 
-That is the starting point for evaluating JOSH. Everything that follows describes what is in the box, what it takes to run it for a different city, and how California Stewardship Fund can help if the city wants expert support for implementation.
+That is the starting point for evaluating JOSH. Everything that follows describes what is in the box, what it takes to run it for a different city, and how California Stewardship can help if the city wants expert support for implementation.
 
 ------
 
@@ -376,10 +376,10 @@ node --test tests/test_sidebar.js          # project management and audit trail
 
 ------
 
-## Working with CSF
+## Working with California Stewardship
 
 The methodology is public. The data is documented. The code runs. Cities that have the GIS and Python capability to work through the road classification and FHSZ resolution steps for their own jurisdiction can do so independently.
 
-For cities that want expert support — validated road classification, LRA FHSZ data resolution, exit node configuration, administrative record documentation, or ongoing maintenance as methodology updates are released — California Stewardship Fund delivers city implementations under engagement. Where that relationship is ongoing, a Memorandum of Understanding is the typical instrument.
+For cities that want expert support — validated road classification, LRA FHSZ data resolution, exit node configuration, administrative record documentation, or ongoing maintenance as methodology updates are released — California Stewardship delivers city implementations under engagement. Where that relationship is ongoing, a Memorandum of Understanding is the typical instrument.
 
 To discuss what an engagement would involve, or to ask questions about self-implementation, reach out at info@californiastewardship.org. The Berkeley map linked from this site shows exactly what a completed implementation looks like.
