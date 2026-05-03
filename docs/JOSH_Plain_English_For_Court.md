@@ -212,6 +212,28 @@ This standard implements what the Legislature directed cities to do.
 
 ------
 
+## How JOSH Fulfills the AB 747 Requirement
+
+AB 747 amended Government Code §65302.15 to require every city in a high or very high fire hazard severity zone to include in its Safety Element an assessment of evacuation routes — specifically: identification of the routes, an analysis of their capacity, and an evaluation of their safety and viability. A companion measure, SB 99 (also 2019), added a requirement to identify residential neighborhoods that lack two distinct evacuation routes.
+
+These are the four things the law requires. JOSH produces each one automatically, from public data, without staff engineering judgment.
+
+**Route identification.** JOSH downloads the complete road network for the city from OpenStreetMap and builds a routing graph. For each project location, it runs a shortest-path algorithm that finds every route from the project to the nearest safe exit. The output is a georeferenced inventory of evacuation route segments — the road name, the OpenStreetMap way identifier, the length in feet, and the number of connected paths that depend on each segment. This is the route inventory required by §65302.15.
+
+**Capacity analysis.** For each segment in that inventory, JOSH applies the Highway Capacity Manual to compute the maximum throughput in vehicles per hour. It then queries Cal Fire's official FHSZ layer and applies the published capacity reduction factor for the segment's hazard zone — 35% of normal capacity in Very High zones, 50% in High, 75% in Moderate. The result is an effective capacity in vehicles per hour for each segment under fire conditions. The report ranks the ten worst bottlenecks by effective capacity and maps them by color across the city. This is the capacity analysis required by §65302.15.
+
+**Safety and viability evaluation.** For each project, JOSH calculates ΔT — the additional minutes the project's vehicles add to the worst-case evacuation bottleneck — and compares it to the threshold derived from NIST's documented escape windows. The report also calculates city-wide clearance time: how long it would take to move the entire existing population through the network, compared to the VHFHSZ escape window documented in the Camp Fire investigation. This is the viability assessment required by §65302.15.
+
+**Single-access identification.** JOSH scans the road network for residential areas served by only one road connecting to the larger network — the exact condition SB 99 requires cities to identify. The report flags each such area, the number of housing units depending on that single connection, and the capacity of that connection under fire conditions.
+
+All four outputs appear in a single self-contained document — `output/{city}/ab747_report.html` — suitable for inclusion in the Safety Element record and in any permit file as documentation that the §65302.15 analysis was performed.
+
+**Time to generate.** A city's road network, FHSZ data, and routing graph are downloaded once and cached locally. This initial setup takes approximately ten to fifteen minutes on a standard laptop. After that, generating the complete AB 747 compliance report — route inventory, capacity analysis, clearance time, project evaluations, bottleneck rankings, SB 99 single-access scan — takes under sixty seconds. The same report can be regenerated any time a new project is proposed, without re-downloading the underlying data.
+
+The Legislature required cities to perform this analysis but did not prescribe a methodology. JOSH is the methodology. It converts the statutory requirement from an aspiration into a document in the permit file, produced in minutes from public data, using the same national standards the Legislature cited when it enacted the law.
+
+------
+
 ## A Real-World Example of Why This Matters
 
 On the morning of November 8, 2018, a wildfire ignited in Butte County, California. Within two hours, it reached the town of Paradise — a community of 26,000 people served by a handful of two-lane roads through forested terrain.
