@@ -2,7 +2,7 @@
 FIRE EVACUATION CAPACITY ANALYSIS  -  PROJECT DETERMINATION
 JOSH v4.0 (dT Standard  -  Constant Mobilization, NFPA 101)
 ======================================================================
-Date:           2026-04-13T07:00:56.935111
+Date:           2026-05-05T14:26:06.653025
 Project:        Downtown Mid-Rise
 Address:        Shattuck Ave & Center St, Downtown Berkeley
 APN:            Not provided

@@ -1131,6 +1131,10 @@
         const ap = _antPathFn(coords, {
           color, weight: 3, opacity: 0.8, delay: 1200, dashArray: [10, 20],
         });
+        const ok  = !path.flagged;
+        const tip = 'Route ' + (path.route_id || '?') + '  ·  ' +
+                    (+(path.delta_t || 0)).toFixed(2) + ' min ' + (ok ? '✓' : '▲');
+        ap.bindTooltip(tip, { sticky: true });
         ap.addTo(map);
         _routeLayers.push(ap);
       }
@@ -1138,6 +1142,9 @@
       const bkEdge = bkMap.get(String(path.bottleneck_osmid || ''));
       if (bkEdge && bkEdge.geom && bkEdge.geom.length >= 2 && typeof window.L !== 'undefined') {
         const bl = window.L.polyline(bkEdge.geom, { color, weight: 6, opacity: 0.9 });
+        const bnTip = 'Route ' + (path.route_id || '?') + ' bottleneck' +
+                      (path.bottleneck_name ? ': ' + _formatBottleneck(path) : '');
+        bl.bindTooltip(bnTip, { sticky: true });
         bl.addTo(map);
         _routeLayers.push(bl);
       }
@@ -1563,17 +1570,25 @@
       html += '<div style="background:' + color + ';color:#fff;padding:8px 12px;border-radius:5px;' +
               'font-size:12px;font-weight:700;margin-bottom:10px;">' + _esc(tier) + '</div>';
 
-      // Summary line
-      html += '<div style="font-size:12px;color:#555;margin-bottom:8px;">' +
-              _esc(fhszLbl) + ' &nbsp;&middot;&nbsp; ' + _esc(String(p.units)) + ' units</div>';
+      // FHSZ zone label
+      html += '<div style="font-size:11px;color:#777;margin-bottom:8px;">' + _esc(fhszLbl) + '</div>';
 
-      // Vehicles + egress
-      html += '<div style="font-size:12px;color:#555;margin-bottom:8px;">' +
-              _esc(String(r.project_vehicles)) + ' vehicles';
+      // Stats grid: units | vehicles
+      html += '<div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:10px;">' +
+              '<div style="background:#f5f7fa;border-radius:6px;padding:8px 10px;text-align:center;">' +
+                '<div style="font-size:22px;font-weight:700;color:#1c4a6e;line-height:1.1;">' + _esc(String(p.units)) + '</div>' +
+                '<div style="font-size:10px;color:#888;text-transform:uppercase;letter-spacing:0.04em;margin-top:3px;">units</div>' +
+              '</div>' +
+              '<div style="background:#f5f7fa;border-radius:6px;padding:8px 10px;text-align:center;">' +
+                '<div style="font-size:22px;font-weight:700;color:#1c4a6e;line-height:1.1;">' + _esc(String(r.project_vehicles)) + '</div>' +
+                '<div style="font-size:10px;color:#888;text-transform:uppercase;letter-spacing:0.04em;margin-top:3px;">vehicles</div>' +
+              '</div>' +
+              '</div>';
+
       if (r.egress_minutes > 0) {
-        html += ' &nbsp;+&nbsp; ' + r.egress_minutes.toFixed(1) + ' min egress penalty';
+        html += '<div style="font-size:11px;color:#777;margin-bottom:8px;">' +
+                r.egress_minutes.toFixed(1) + ' min egress penalty</div>';
       }
-      html += '</div>';
 
       // Routes
       if ((r.paths || []).length === 0) {
@@ -1585,17 +1600,21 @@
           const dColor   = ok ? '#27ae60' : '#e74c3c';
           const dIcon    = ok ? '\u2713' : '\u25b2';
           const thrLabel = !ok ? '> ' + (r.delta_t_threshold || 0).toFixed(2) + ' min max' : '';
-          html += '<div style="margin-bottom:6px;">' +
-            '<div style="display:flex;align-items:center;gap:6px;">' +
-              '<span style="font-size:12px;font-weight:600;">Route ' + _esc(path.route_id) + '</span>' +
-              '<span style="font-size:12px;color:' + dColor + ';">' + path.delta_t.toFixed(2) + ' min ' + dIcon + '</span>' +
+          html += '<div style="margin-bottom:8px;padding:8px 10px;background:#fafafa;border-radius:6px;' +
+                  'border-left:3px solid ' + dColor + ';">' +
+            '<div style="display:flex;align-items:baseline;gap:6px;margin-bottom:' + (thrLabel || path.bottleneck_name ? '4px' : '0') + ';">' +
+              '<span style="font-size:11px;font-weight:600;color:#555;text-transform:uppercase;letter-spacing:0.04em;">Route ' + _esc(path.route_id) + '</span>' +
+              '<span style="font-size:20px;font-weight:700;color:' + dColor + ';line-height:1;">' + path.delta_t.toFixed(2) + '</span>' +
+              '<span style="font-size:11px;font-weight:600;color:' + dColor + ';">min ' + dIcon + '</span>' +
             '</div>';
           if (thrLabel) {
-            html += '<div style="font-size:11px;color:#e74c3c;margin-left:8px;">' + _esc(thrLabel) + '</div>';
+            html += '<div style="display:inline-block;font-size:10px;font-weight:700;color:#c0392b;' +
+                    'background:#fde8e8;border:1px solid #f5c0c0;border-radius:3px;' +
+                    'padding:1px 6px;margin-bottom:4px;">' + _esc(thrLabel) + '</div>';
           }
           if (path.bottleneck_name) {
             var bnDesc = _formatBottleneck(path);
-            html += '<div style="font-size:11px;color:#777;margin-left:8px;">' +
+            html += '<div style="font-size:11px;color:#777;">' +
                     'Bottleneck: ' + _esc(bnDesc) + '</div>';
           }
           html += '</div>';
