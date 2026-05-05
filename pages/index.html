@@ -11,765 +11,800 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>JOSH — Fire Evacuation Capacity Analysis System</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;0,800;1,400;1,600&family=Cormorant+SC:wght@400;600;700&family=EB+Garamond:ital,wght@0,400;0,500;1,400&family=Source+Sans+3:wght@400;500;600;700&display=swap" rel="stylesheet">
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
     :root {
-      --navy:      #1a2b4a;
-      --navy-mid:  #243a60;
-      --red:       #c0392b;
-      --red-dark:  #a93226;
-      --gold:      #b8860b;
-      --gold-light:#fff8e1;
-      --white:     #ffffff;
-      --gray-100:  #f8f9fa;
-      --gray-200:  #e9ecef;
-      --gray-400:  #ced4da;
-      --gray-600:  #6c757d;
-      --gray-800:  #343a40;
-      --text:      #212529;
-      --serif:     Georgia, "Times New Roman", serif;
-      --sans:      -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      --hearth:    #1A2438;
+      --hearth-md: #243350;
+      --hearth-lt: #2e4168;
+      --ember:     #C49A28;
+      --ember-lt:  #DBB84A;
+      --linen:     #F5EFE2;
+      --parchment: #EDE4CF;
+      --walnut:    #3A2E1E;
+
+      --display: 'Playfair Display', Georgia, serif;
+      --sub:     'Cormorant SC', Georgia, serif;
+      --body:    'EB Garamond', Georgia, serif;
+      --ui:      'Source Sans 3', system-ui, sans-serif;
+
+      --t100: rgba(245,239,226,1.00);
+      --t65:  rgba(245,239,226,0.65);
+      --t40:  rgba(245,239,226,0.40);
+      --border: rgba(196,154,40,0.20);
+      --border-faint: rgba(196,154,40,0.10);
     }
 
     html { scroll-behavior: smooth; }
 
     body {
-      font-family: var(--sans);
-      background: var(--gray-100);
-      color: var(--text);
-      line-height: 1.65;
-      font-size: 16px;
+      font-family: var(--body);
+      background: var(--hearth);
+      color: var(--linen);
+      line-height: 1.7;
+      font-size: 17px;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
     }
 
-    /* ─── HEADER ─────────────────────────────────────────────── */
+    /* ── LAYOUT ─────────────────────────────────────────────── */
+    .container { max-width: 1120px; margin: 0 auto; padding: 0 40px; }
+
+    section { padding: 72px 0; }
+    section + section {
+      border-top: 1px solid;
+      border-image: linear-gradient(90deg, transparent 0%, rgba(196,154,40,0.25) 30%, rgba(196,154,40,0.25) 70%, transparent 100%) 1;
+    }
+
+    h2 {
+      font-family: var(--display);
+      font-size: clamp(26px, 3vw, 36px);
+      font-weight: 700;
+      color: var(--linen);
+      line-height: 1.15;
+      margin-bottom: 8px;
+      letter-spacing: -0.01em;
+    }
+    h2 em { font-style: italic; color: var(--ember); }
+
+    .section-lead {
+      font-family: var(--body);
+      font-style: italic;
+      font-size: 18px;
+      color: var(--t65);
+      margin-bottom: 36px;
+      max-width: 64ch;
+      line-height: 1.6;
+    }
+
+    /* ── EYEBROW ────────────────────────────────────────────── */
+    .eyebrow-flanked {
+      font-family: var(--ui);
+      font-weight: 700;
+      font-size: 14px;
+      letter-spacing: 0.22em;
+      text-transform: uppercase;
+      color: var(--linen);
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      margin-bottom: 22px;
+    }
+    .eyebrow-flanked::before,
+    .eyebrow-flanked::after {
+      content: "";
+      flex: 1;
+      min-width: 32px;
+      height: 1px;
+    }
+    .eyebrow-flanked::before { background: linear-gradient(90deg,  transparent, rgba(196,154,40,0.9)); }
+    .eyebrow-flanked::after  { background: linear-gradient(270deg, transparent, rgba(196,154,40,0.9)); }
+
+    .eyebrow-label {
+      font-family: var(--ui);
+      font-weight: 700;
+      font-size: 13px;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: var(--ember);
+      display: block;
+      margin-bottom: 14px;
+    }
+
+    .rule {
+      height: 1px;
+      background: linear-gradient(90deg, transparent 0%, rgba(196,154,40,0.6) 50%, transparent 100%);
+      margin: 20px 0 28px;
+      max-width: 72px;
+    }
+
+    /* ── HEADER ─────────────────────────────────────────────── */
     header {
-      background: var(--navy);
-      color: var(--white);
-      padding: 0;
-      border-bottom: 4px solid var(--red);
+      background: var(--hearth);
+      border-bottom: 1px solid var(--border);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      backdrop-filter: blur(8px);
     }
     .header-inner {
-      max-width: 1100px;
+      max-width: 1120px;
       margin: 0 auto;
-      padding: 24px 32px 20px;
-      display: flex;
-      flex-direction: column;
-      gap: 12px;
-    }
-    .header-brand h1 {
-      font-size: clamp(18px, 2.4vw, 28px);
-      font-weight: 800;
-      letter-spacing: 0.06em;
-      font-family: var(--serif);
-      white-space: nowrap;
-    }
-    .header-brand h1 span {
-      color: var(--red);
-      font-style: italic;
-    }
-    .header-bottom {
+      padding: 14px 40px;
       display: flex;
       align-items: center;
       justify-content: space-between;
-      gap: 16px;
-      flex-wrap: wrap;
+      gap: 24px;
     }
-    .header-brand .tagline {
+
+    .wordmark { display: flex; align-items: center; gap: 12px; text-decoration: none; }
+    .wordmark-seal { width: 38px; height: 38px; object-fit: contain; flex-shrink: 0; }
+    .wordmark-text { line-height: 1.2; }
+    .wordmark-name {
+      font-family: var(--sub);
+      font-weight: 700;
       font-size: 13px;
-      color: #8ea8cc;
-      letter-spacing: 0.03em;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--linen);
+      display: block;
+      white-space: nowrap;
+      line-height: 1.3;
     }
+    .wordmark-domain {
+      font-family: var(--ui);
+      font-weight: 700;
+      font-size: 12px;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: var(--ember);
+      display: block;
+      margin-top: 3px;
+    }
+
     .header-nav {
       display: flex;
-      gap: 20px;
+      align-items: center;
+      gap: 24px;
       flex-shrink: 0;
       flex-wrap: wrap;
     }
     .header-nav a {
-      color: #8ea8cc;
-      text-decoration: none;
+      font-family: var(--ui);
       font-size: 13px;
-      font-weight: 500;
-      letter-spacing: 0.03em;
-      white-space: nowrap;
+      font-weight: 600;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--t65);
+      text-decoration: none;
       transition: color 0.15s;
+      white-space: nowrap;
     }
-    .header-nav a:hover { color: var(--white); }
+    .header-nav a:hover { color: var(--ember); }
+    .header-nav a.btn-nav {
+      background: var(--ember);
+      color: var(--hearth);
+      padding: 7px 16px;
+      border-radius: 3px;
+      font-size: 13px;
+    }
+    .header-nav a.btn-nav:hover { background: var(--ember-lt); color: var(--hearth); }
 
-    /* ─── LAYOUT ─────────────────────────────────────────────── */
-    .container {
-      max-width: 1100px;
-      margin: 0 auto;
-      padding: 0 32px;
-    }
-
-    section { padding: 56px 0; }
-    section + section { border-top: 1px solid var(--gray-200); }
-
-    h2 {
-      font-family: var(--serif);
-      font-size: 24px;
-      font-weight: 700;
-      color: var(--navy);
-      margin-bottom: 6px;
-    }
-    .section-lead {
-      font-size: 16px;
-      color: var(--gray-600);
-      margin-bottom: 28px;
-      max-width: 720px;
-    }
-
-    /* ─── HERO ───────────────────────────────────────────────── */
-    .hero {
-      background: var(--navy);
-      color: var(--white);
-      border-bottom: 4px solid var(--red);
-      padding: 64px 0 56px;
-    }
+    /* ── HERO ───────────────────────────────────────────────── */
+    .hero { padding: 80px 0 72px; }
     .hero-inner {
-      max-width: 1100px;
+      max-width: 1120px;
       margin: 0 auto;
-      padding: 0 32px;
+      padding: 0 40px;
       display: grid;
-      grid-template-columns: 1fr 340px;
-      gap: 48px;
+      grid-template-columns: 1fr 360px;
+      gap: 64px;
       align-items: center;
     }
-    .hero-text .eyebrow {
+    .hero-text .hero-eyebrow {
+      font-family: var(--ui);
+      font-weight: 700;
+      font-size: 13px;
+      letter-spacing: 0.16em;
       text-transform: uppercase;
-      letter-spacing: 0.12em;
-      font-size: 11px;
-      font-weight: 700;
-      color: var(--red);
-      margin-bottom: 14px;
-    }
-    .hero-text h2 {
-      font-family: var(--serif);
-      font-size: 34px;
-      font-weight: 700;
-      color: var(--white);
-      line-height: 1.25;
+      color: var(--ember);
       margin-bottom: 20px;
     }
+    .hero-text h2 {
+      font-family: var(--display);
+      font-size: clamp(30px, 3.5vw, 46px);
+      font-weight: 700;
+      color: var(--linen);
+      line-height: 1.1;
+      margin-bottom: 26px;
+    }
+    .hero-text h2 em { font-style: italic; color: var(--ember); }
     .hero-text p {
-      font-size: 16px;
-      color: #aab8cc;
-      max-width: 600px;
-      margin-bottom: 14px;
-    }
-    .hero-text p strong { color: var(--white); }
-
-    .hero-card {
-      background: var(--navy-mid);
-      border: 1px solid #2e4a72;
-      border-radius: 8px;
-      padding: 28px 24px;
-    }
-    .hero-card .card-label {
-      text-transform: uppercase;
-      font-size: 10px;
-      letter-spacing: 0.12em;
-      font-weight: 700;
-      color: #8ea8cc;
+      font-family: var(--body);
+      font-size: 18px;
+      color: var(--t65);
+      max-width: 56ch;
       margin-bottom: 16px;
-    }
-    .hero-card .stat-row {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      padding: 10px 0;
-      border-bottom: 1px solid #2e4a72;
-    }
-    .hero-card .stat-row:last-child { border-bottom: none; }
-    .hero-card .stat-num {
-      font-family: var(--serif);
-      font-size: 22px;
-      font-weight: 700;
-      color: var(--white);
-      min-width: 52px;
-      text-align: right;
-    }
-    .hero-card .stat-desc {
-      font-size: 12px;
-      color: #8ea8cc;
-      line-height: 1.4;
-    }
-    .hero-card .stat-source {
-      font-size: 10px;
-      color: #5a7a9a;
-      margin-top: 2px;
-      font-style: italic;
-    }
-
-    /* ─── PRINCIPLE BLOCK ────────────────────────────────────── */
-    .principle-block {
-      background: var(--white);
-    }
-    .principle-inner {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 48px;
-      align-items: start;
-    }
-    blockquote.core-principle {
-      border-left: 5px solid var(--red);
-      padding: 24px 28px;
-      background: var(--gray-100);
-      margin: 0 0 24px 0;
-      border-radius: 0 6px 6px 0;
-    }
-    blockquote.core-principle p {
-      font-family: var(--serif);
-      font-size: 20px;
-      font-style: italic;
-      color: var(--navy);
-      line-height: 1.45;
-      margin-bottom: 12px;
-    }
-    blockquote.core-principle cite {
-      font-size: 12px;
-      color: var(--gray-600);
-      font-style: normal;
-    }
-    .principle-body p {
-      font-size: 15px;
-      color: var(--gray-800);
-      margin-bottom: 14px;
-    }
-
-    /* ─── THREE PILLARS ──────────────────────────────────────── */
-    .pillars {
-      background: var(--gray-100);
-    }
-    .pillar-grid {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 24px;
-    }
-    .pillar-card {
-      background: var(--white);
-      border: 1px solid var(--gray-200);
-      border-radius: 8px;
-      padding: 28px 24px;
-      border-top: 4px solid var(--navy);
-    }
-    .pillar-card .pillar-icon {
-      font-size: 28px;
-      margin-bottom: 14px;
-      display: block;
-    }
-    .pillar-card h3 {
-      font-family: var(--serif);
-      font-size: 17px;
-      font-weight: 700;
-      color: var(--navy);
-      margin-bottom: 10px;
-    }
-    .pillar-card p {
-      font-size: 14px;
-      color: var(--gray-800);
-      line-height: 1.6;
-    }
-    .pillar-card ul {
-      margin: 10px 0 0 16px;
-      font-size: 13px;
-      color: var(--gray-800);
-      line-height: 1.8;
-    }
-
-    /* ─── FOUR STEPS ─────────────────────────────────────────── */
-    .four-steps {
-      background: var(--white);
-    }
-    .steps-grid {
-      display: grid;
-      grid-template-columns: repeat(4, 1fr);
-      gap: 0;
-      border: 1px solid var(--gray-200);
-      border-radius: 8px;
-      overflow: hidden;
-    }
-    .step {
-      padding: 24px 20px;
-      border-right: 1px solid var(--gray-200);
-      position: relative;
-    }
-    .step:last-child { border-right: none; }
-    .step-num {
-      width: 32px;
-      height: 32px;
-      background: var(--navy);
-      color: var(--white);
-      border-radius: 50%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 14px;
-      font-weight: 800;
-      margin-bottom: 12px;
-      font-family: var(--serif);
-    }
-    .step h4 {
-      font-size: 14px;
-      font-weight: 700;
-      color: var(--navy);
-      margin-bottom: 8px;
-      text-transform: uppercase;
-      letter-spacing: 0.04em;
-    }
-    .step p {
-      font-size: 13px;
-      color: var(--gray-800);
-      line-height: 1.6;
-    }
-    .step .step-source {
-      font-size: 11px;
-      color: var(--gray-600);
-      margin-top: 10px;
-      font-style: italic;
-    }
-
-    .calc-example {
-      margin-top: 28px;
-      background: var(--navy);
-      color: var(--white);
-      border-radius: 8px;
-      padding: 24px 28px;
-      display: grid;
-      grid-template-columns: 1fr auto;
-      gap: 32px;
-      align-items: center;
-    }
-    .calc-example pre {
-      font-family: "Menlo", "Consolas", "Courier New", monospace;
-      font-size: 13px;
-      color: #aab8cc;
-      white-space: pre;
       line-height: 1.7;
     }
-    .calc-example pre strong { color: #ffffff; }
-    .calc-result {
+    .hero-text p strong { color: var(--linen); font-weight: 500; }
+
+    .hero-card {
+      background: var(--hearth-md);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 32px 28px;
+    }
+    .hero-card .card-label {
+      font-family: var(--ui);
+      font-size: 13px;
+      font-weight: 700;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: var(--t40);
+      margin-bottom: 20px;
+    }
+    .stat-row {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      padding: 11px 0;
+      border-bottom: 1px solid var(--border-faint);
+    }
+    .stat-row:last-child { border-bottom: none; }
+    .stat-num {
+      font-family: var(--display);
+      font-size: 24px;
+      font-weight: 700;
+      color: var(--linen);
+      min-width: 58px;
       text-align: right;
       flex-shrink: 0;
     }
-    .calc-result .result-num {
-      font-family: var(--serif);
-      font-size: 48px;
-      font-weight: 700;
-      color: var(--white);
-      line-height: 1;
+    .stat-desc { font-family: var(--ui); font-size: 15px; color: var(--t65); line-height: 1.4; }
+    .stat-source { font-family: var(--body); font-size: 14px; color: var(--t40); margin-top: 3px; font-style: italic; }
+
+    /* ── PRINCIPLE ──────────────────────────────────────────── */
+    .principle-inner {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 56px;
+      align-items: start;
     }
-    .calc-result .result-unit {
-      font-size: 13px;
-      color: #8ea8cc;
-      margin-top: 4px;
+    blockquote.core-principle {
+      border-left: 3px solid var(--ember);
+      padding: 28px 30px;
+      background: var(--hearth-md);
+      border-radius: 0 6px 6px 0;
+      margin-bottom: 24px;
     }
-    .calc-result .result-verdict {
-      margin-top: 10px;
-      display: inline-block;
-      background: var(--red);
-      color: var(--white);
-      font-size: 11px;
-      font-weight: 700;
-      letter-spacing: 0.08em;
-      text-transform: uppercase;
-      padding: 4px 10px;
-      border-radius: 3px;
+    blockquote.core-principle p {
+      font-family: var(--display);
+      font-size: 20px;
+      font-style: italic;
+      color: var(--linen);
+      line-height: 1.5;
+      margin-bottom: 14px;
+    }
+    blockquote.core-principle cite {
+      font-family: var(--body);
+      font-size: 15px;
+      color: var(--t40);
+      font-style: normal;
+    }
+    .principle-body p {
+      font-family: var(--body);
+      font-size: 16px;
+      color: var(--t65);
+      margin-bottom: 16px;
+      line-height: 1.75;
+    }
+    .principle-body p strong { color: var(--linen); font-weight: 500; }
+
+    .principle-body-inline {
+      font-family: var(--body);
+      font-size: 16px;
+      color: #5A4A32;
+      line-height: 1.75;
     }
 
-    /* ─── SOURCES TABLE ──────────────────────────────────────── */
-    .sources {
-      background: var(--gray-100);
+    /* ── THREE PILLARS ──────────────────────────────────────── */
+    .pillar-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 20px; }
+    .pillar-card {
+      background: var(--hearth-md);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 32px 26px;
     }
+    .pillar-card .pillar-icon { font-size: 26px; margin-bottom: 16px; display: block; }
+    .pillar-card h3 {
+      font-family: var(--display);
+      font-size: 18px;
+      font-weight: 700;
+      color: var(--linen);
+      margin-bottom: 12px;
+      letter-spacing: -0.01em;
+    }
+    .pillar-card p { font-size: 16px; color: var(--t65); line-height: 1.7; }
+    .pillar-card ul { margin: 12px 0 0; padding: 0; list-style: none; font-size: 16px; color: var(--t65); }
+    .pillar-card ul li { padding: 5px 0 5px 18px; position: relative; line-height: 1.6; }
+    .pillar-card ul li::before {
+      content: "—";
+      position: absolute;
+      left: 0;
+      color: var(--ember);
+      font-family: var(--ui);
+      font-size: 11px;
+      top: 7px;
+    }
+
+    /* ── FOUR STEPS ─────────────────────────────────────────── */
+    .steps-grid {
+      display: grid;
+      grid-template-columns: repeat(4,1fr);
+      gap: 0;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      overflow: hidden;
+    }
+    .step {
+      padding: 28px 22px;
+      border-right: 1px solid var(--border);
+      background: var(--hearth-md);
+    }
+    .step:last-child { border-right: none; }
+    .step-num {
+      width: 32px; height: 32px;
+      background: var(--ember);
+      color: var(--hearth);
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-family: var(--display);
+      font-size: 15px; font-weight: 800;
+      margin-bottom: 14px;
+    }
+    .step h4 {
+      font-family: var(--ui);
+      font-size: 14px; font-weight: 700;
+      color: var(--ember);
+      margin-bottom: 10px;
+      text-transform: uppercase; letter-spacing: 0.08em;
+    }
+    .step p { font-size: 16px; color: var(--t65); line-height: 1.7; }
+    .step .step-source { font-size: 14px; color: var(--t40); margin-top: 12px; font-style: italic; }
+
+    .calc-example {
+      margin-top: 32px;
+      background: var(--hearth-md);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 28px 32px;
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 40px;
+      align-items: center;
+    }
+    .calc-example .calc-label {
+      font-family: var(--ui);
+      font-size: 13px; font-weight: 700;
+      text-transform: uppercase; letter-spacing: 0.14em;
+      color: var(--t40);
+      margin-bottom: 14px;
+    }
+    .calc-example pre {
+      font-family: "Menlo","Consolas","Courier New",monospace;
+      font-size: 14px;
+      color: var(--t65);
+      white-space: pre;
+      line-height: 1.8;
+    }
+    .calc-example pre strong { color: var(--linen); }
+    .calc-result { text-align: right; flex-shrink: 0; }
+    .result-num {
+      font-family: var(--display);
+      font-size: 52px; font-weight: 700;
+      color: var(--linen); line-height: 1;
+    }
+    .result-unit {
+      font-family: var(--ui);
+      font-size: 13px; letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--t40); margin-top: 6px;
+    }
+    .result-verdict {
+      margin-top: 14px;
+      display: inline-block;
+      background: var(--ember);
+      color: var(--hearth);
+      font-family: var(--ui);
+      font-size: 13px; font-weight: 700;
+      letter-spacing: 0.08em; text-transform: uppercase;
+      padding: 6px 14px; border-radius: 3px;
+    }
+
+    /* ── SOURCES TABLE ──────────────────────────────────────── */
     .sources-table {
       width: 100%;
       border-collapse: collapse;
-      background: var(--white);
-      border: 1px solid var(--gray-200);
-      border-radius: 8px;
+      background: var(--hearth-md);
+      border: 1px solid var(--border);
+      border-radius: 6px;
       overflow: hidden;
-      font-size: 14px;
     }
-    .sources-table thead tr {
-      background: var(--navy);
-      color: var(--white);
-    }
+    .sources-table thead tr { background: rgba(196,154,40,0.10); border-bottom: 1px solid var(--border); }
     .sources-table thead th {
-      padding: 11px 16px;
+      padding: 14px 18px;
       text-align: left;
-      font-size: 11px;
-      font-weight: 700;
-      letter-spacing: 0.07em;
-      text-transform: uppercase;
+      font-family: var(--ui);
+      font-size: 12px; font-weight: 700;
+      letter-spacing: 0.14em; text-transform: uppercase;
+      color: var(--ember);
     }
-    .sources-table tbody tr {
-      border-top: 1px solid var(--gray-200);
-    }
-    .sources-table tbody tr:hover { background: var(--gray-100); }
-    .sources-table tbody td {
-      padding: 12px 16px;
-      vertical-align: top;
-    }
-    .sources-table td:first-child { font-weight: 600; color: var(--navy); }
-    .sources-table .publisher {
-      font-size: 12px;
-      color: var(--gray-600);
-      margin-top: 2px;
-    }
+    .sources-table tbody tr { border-top: 1px solid var(--border-faint); }
+    .sources-table tbody tr:hover { background: rgba(196,154,40,0.04); }
+    .sources-table tbody td { padding: 14px 18px; vertical-align: top; font-size: 16px; color: var(--t65); }
+    .sources-table td:first-child { font-weight: 500; color: var(--linen); }
+    .sources-table .publisher { font-size: 14px; color: var(--t40); margin-top: 3px; font-style: italic; }
     .sources-table .use-badge {
       display: inline-block;
-      background: #e8f0fe;
-      color: #1a56a0;
-      font-size: 11px;
-      font-weight: 600;
-      padding: 2px 7px;
-      border-radius: 3px;
+      background: rgba(196,154,40,0.12);
+      color: var(--ember);
+      font-family: var(--ui);
+      font-size: 11px; font-weight: 700;
+      letter-spacing: 0.08em; text-transform: uppercase;
+      padding: 4px 10px; border-radius: 3px;
+      border: 1px solid rgba(196,154,40,0.28);
       white-space: nowrap;
     }
 
-    /* ─── WHAT JOSH ADDS ─────────────────────────────────────── */
-    .what-josh-adds {
-      background: var(--white);
-    }
-    .adds-grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 40px;
-      align-items: start;
-    }
+    /* ── WHAT JOSH ADDS ─────────────────────────────────────── */
+    .adds-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 48px; align-items: start; }
     .adds-col h3 {
-      font-size: 15px;
-      font-weight: 700;
-      color: var(--navy);
-      margin-bottom: 12px;
-      text-transform: uppercase;
-      letter-spacing: 0.05em;
+      font-family: var(--ui);
+      font-size: 13px; font-weight: 700;
+      color: var(--ember);
+      margin-bottom: 16px;
+      text-transform: uppercase; letter-spacing: 0.14em;
     }
-    .adds-col ul {
-      list-style: none;
-      padding: 0;
-    }
+    .adds-col ul { list-style: none; padding: 0; }
     .adds-col ul li {
-      padding: 10px 0;
-      border-bottom: 1px solid var(--gray-200);
-      font-size: 14px;
-      color: var(--gray-800);
-      display: flex;
-      gap: 10px;
+      padding: 10px 0 10px 22px;
+      border-bottom: 1px solid var(--border-faint);
+      font-size: 16px; color: var(--t65);
+      position: relative; line-height: 1.6;
     }
     .adds-col ul li:last-child { border-bottom: none; }
     .adds-col ul li::before {
       content: "→";
-      color: var(--red);
-      font-weight: 700;
-      flex-shrink: 0;
+      position: absolute; left: 0;
+      color: var(--ember);
+      font-family: var(--ui); font-size: 12px;
     }
 
     .demo-card {
-      background: var(--navy);
-      border-radius: 8px;
-      padding: 32px 28px;
-      color: var(--white);
+      background: var(--hearth-md);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 36px 30px;
     }
-    .demo-card .demo-label {
-      text-transform: uppercase;
-      font-size: 10px;
-      letter-spacing: 0.12em;
-      font-weight: 700;
-      color: #8ea8cc;
-      margin-bottom: 10px;
+    .demo-label {
+      font-family: var(--ui);
+      font-size: 13px; font-weight: 700;
+      letter-spacing: 0.16em; text-transform: uppercase;
+      color: var(--t40); margin-bottom: 12px;
     }
     .demo-card h3 {
-      font-family: var(--serif);
-      font-size: 20px;
-      color: var(--white);
-      margin-bottom: 10px;
+      font-family: var(--display);
+      font-size: 20px; font-weight: 700;
+      color: var(--linen);
+      margin-bottom: 12px; line-height: 1.25; letter-spacing: -0.01em;
     }
-    .demo-card p {
-      font-size: 14px;
-      color: #8ea8cc;
-      margin-bottom: 20px;
-      line-height: 1.6;
-    }
+    .demo-card p { font-size: 16px; color: var(--t65); margin-bottom: 24px; line-height: 1.7; }
     .demo-card .tier-row {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      padding: 8px 0;
-      border-bottom: 1px solid #2e4a72;
-      font-size: 13px;
+      display: flex; align-items: center; gap: 12px;
+      padding: 9px 0;
+      border-bottom: 1px solid var(--border-faint);
+      font-family: var(--ui); font-size: 14px; color: var(--t65);
     }
-    .demo-card .tier-row:last-of-type { border-bottom: none; margin-bottom: 20px; }
+    .demo-card .tier-row:last-of-type { border-bottom: none; margin-bottom: 24px; }
+    .demo-btns { display: flex; gap: 12px; flex-wrap: wrap; }
+
+    /* ── BADGES ─────────────────────────────────────────────── */
     .badge {
       display: inline-block;
-      padding: 2px 8px;
-      border-radius: 3px;
-      font-size: 10px;
-      font-weight: 700;
-      letter-spacing: 0.06em;
-      text-transform: uppercase;
+      padding: 4px 10px; border-radius: 3px;
+      font-family: var(--ui);
+      font-size: 11px; font-weight: 700;
+      letter-spacing: 0.07em; text-transform: uppercase;
       white-space: nowrap;
     }
-    .badge-min  { background: #d4edda; color: #1a7f3c; border: 1px solid #1a7f3c44; }
-    .badge-cond { background: #fff3cd; color: #856404; border: 1px solid #85640444; }
-    .badge-disc { background: #f8d7da; color: #721c24; border: 1px solid #721c2444; }
-    .demo-btns { display: flex; gap: 12px; flex-wrap: wrap; }
+    .badge-min  { background: rgba(26,127,60,0.15);  color: #6fcf97; border: 1px solid rgba(111,207,151,0.25); }
+    .badge-cond { background: rgba(196,154,40,0.15); color: var(--ember); border: 1px solid rgba(196,154,40,0.28); }
+    .badge-disc { background: rgba(235,87,87,0.15);  color: #eb5757; border: 1px solid rgba(235,87,87,0.25); }
+
+    /* ── BUTTONS ────────────────────────────────────────────── */
     .btn {
       display: inline-block;
-      padding: 10px 20px;
-      border-radius: 5px;
-      font-size: 13px;
-      font-weight: 700;
+      font-family: var(--ui);
+      font-size: 13px; font-weight: 700;
+      letter-spacing: 0.08em; text-transform: uppercase;
       text-decoration: none;
-      letter-spacing: 0.02em;
+      padding: 13px 26px; border-radius: 4px;
+      transition: all 0.15s;
     }
-    .btn-primary { background: var(--red); color: var(--white); }
-    .btn-primary:hover { background: var(--red-dark); }
+    .btn-primary { background: var(--ember); color: var(--hearth); }
+    .btn-primary:hover { background: var(--ember-lt); transform: translateY(-1px); }
     .btn-secondary {
       background: transparent;
-      color: #8ea8cc;
-      border: 1px solid #2e4a72;
+      color: var(--t65);
+      border: 1.5px solid rgba(196,154,40,0.30);
     }
-    .btn-secondary:hover { border-color: #8ea8cc; color: var(--white); }
+    .btn-secondary:hover { border-color: var(--ember); color: var(--ember); }
+    .btn-outline {
+      display: inline-block;
+      font-family: var(--ui);
+      font-size: 13px; font-weight: 700;
+      letter-spacing: 0.08em; text-transform: uppercase;
+      text-decoration: none;
+      padding: 13px 26px; border-radius: 4px;
+      background: transparent;
+      color: var(--linen);
+      border: 1.5px solid rgba(245,239,226,0.25);
+      transition: all 0.15s;
+    }
+    .btn-outline:hover { border-color: var(--ember); color: var(--ember); }
 
-    /* ─── ADOPTION PATHWAY ───────────────────────────────────── */
-    .adoption {
-      background: var(--gray-100);
-    }
-    .tier-grid {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 20px;
-    }
+    /* ── ADOPTION ───────────────────────────────────────────── */
+    .tier-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 20px; }
     .tier-card {
-      background: var(--white);
-      border: 1px solid var(--gray-200);
-      border-radius: 8px;
-      padding: 24px 20px;
+      background: var(--hearth-md);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 28px 22px;
     }
     .tier-card .tier-num {
-      width: 28px;
-      height: 28px;
-      background: var(--navy);
-      color: var(--white);
+      width: 30px; height: 30px;
+      background: var(--ember); color: var(--hearth);
       border-radius: 50%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 13px;
-      font-weight: 800;
-      margin-bottom: 12px;
-      font-family: var(--serif);
+      display: flex; align-items: center; justify-content: center;
+      font-family: var(--display); font-size: 14px; font-weight: 800;
+      margin-bottom: 14px;
     }
     .tier-card h3 {
-      font-size: 15px;
-      font-weight: 700;
-      color: var(--navy);
-      margin-bottom: 6px;
+      font-family: var(--display);
+      font-size: 18px; font-weight: 700;
+      color: var(--linen);
+      margin-bottom: 6px; letter-spacing: -0.01em;
     }
     .tier-card .tier-action {
-      font-size: 11px;
-      font-weight: 700;
-      text-transform: uppercase;
-      letter-spacing: 0.08em;
-      color: var(--red);
-      margin-bottom: 10px;
+      font-family: var(--ui);
+      font-size: 13px; font-weight: 700;
+      text-transform: uppercase; letter-spacing: 0.1em;
+      color: var(--ember); margin-bottom: 12px;
     }
-    .tier-card p {
-      font-size: 13px;
-      color: var(--gray-800);
-      line-height: 1.6;
-    }
-    .tier-card .tier-note {
-      margin-top: 10px;
-      font-size: 12px;
-      color: var(--gray-600);
-      font-style: italic;
-    }
+    .tier-card p { font-size: 16px; color: var(--t65); line-height: 1.7; }
+    .tier-card .tier-note { margin-top: 12px; font-size: 14px; color: var(--t40); font-style: italic; }
 
-    /* ─── DOCUMENT LIBRARY ───────────────────────────────────── */
-    .library {
-      background: var(--white);
-    }
-    .doc-grid {
-      display: grid;
-      grid-template-columns: repeat(2, 1fr);
-      gap: 16px;
-    }
+    /* ── DOCUMENT LIBRARY ───────────────────────────────────── */
+    .doc-grid { display: grid; grid-template-columns: repeat(2,1fr); gap: 14px; }
     .doc-card {
-      border: 1px solid var(--gray-200);
+      background: var(--hearth-md);
+      border: 1px solid var(--border);
       border-radius: 6px;
-      padding: 18px 20px;
-      text-decoration: none;
-      color: inherit;
+      padding: 22px 24px;
+      text-decoration: none; color: inherit;
       display: block;
       transition: border-color 0.15s, box-shadow 0.15s;
     }
-    .doc-card:hover {
-      border-color: var(--navy);
-      box-shadow: 0 2px 8px rgba(26,43,74,0.1);
-    }
+    .doc-card:hover { border-color: var(--ember); box-shadow: 0 0 0 1px rgba(196,154,40,0.18); }
     .doc-card .doc-audience {
-      font-size: 10px;
-      font-weight: 700;
-      text-transform: uppercase;
-      letter-spacing: 0.1em;
-      color: var(--red);
-      margin-bottom: 6px;
+      font-family: var(--ui);
+      font-size: 13px; font-weight: 700;
+      text-transform: uppercase; letter-spacing: 0.12em;
+      color: var(--ember); margin-bottom: 8px;
     }
     .doc-card h3 {
-      font-size: 15px;
-      font-weight: 700;
-      color: var(--navy);
-      margin-bottom: 6px;
+      font-family: var(--display);
+      font-size: 20px; font-weight: 700;
+      color: var(--linen); margin-bottom: 8px; letter-spacing: -0.01em;
     }
-    .doc-card p {
-      font-size: 13px;
-      color: var(--gray-600);
-      line-height: 1.5;
-    }
+    .doc-card p { font-size: 16px; color: var(--t65); line-height: 1.6; }
 
-    /* ─── FOOTER ─────────────────────────────────────────────── */
-    footer {
-      background: var(--navy);
-      color: #8ea8cc;
-      padding: 32px 0;
-      border-top: 4px solid var(--red);
-    }
-    footer .footer-inner {
-      max-width: 1100px;
-      margin: 0 auto;
-      padding: 0 32px;
-      display: grid;
-      grid-template-columns: 1fr auto;
-      gap: 32px;
-      align-items: start;
-    }
-    footer .footer-brand {
-      font-family: var(--serif);
-      font-size: 15px;
-      font-weight: 700;
-      color: var(--white);
-      margin-bottom: 8px;
-    }
-    footer .footer-text {
-      font-size: 12px;
-      line-height: 1.7;
-      max-width: 560px;
-    }
-    footer .footer-citations {
-      font-size: 11px;
-      line-height: 1.9;
-      text-align: right;
-      white-space: nowrap;
-    }
-
-    /* ─── OPEN SOURCE ────────────────────────────────────────── */
-    .opensource {
-      background: var(--gray-100);
-    }
-    .oss-grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 48px;
-      align-items: start;
-    }
-    .oss-body p {
-      font-size: 15px;
-      color: var(--gray-800);
-      margin-bottom: 14px;
-      line-height: 1.7;
-    }
-    .oss-body .oss-note {
-      font-size: 13px;
-      color: var(--gray-600);
-      font-style: italic;
-      margin-top: 4px;
-    }
+    /* ── OPEN SOURCE ────────────────────────────────────────── */
+    .oss-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 56px; align-items: start; }
+    .oss-body p { font-size: 16px; color: var(--t65); margin-bottom: 16px; line-height: 1.75; }
     .oss-card {
-      background: var(--white);
-      border: 1px solid var(--gray-200);
-      border-radius: 8px;
-      padding: 28px 24px;
-      border-top: 4px solid var(--navy);
+      background: var(--hearth-md);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 30px 26px;
     }
     .oss-card .oss-label {
-      text-transform: uppercase;
-      font-size: 10px;
-      letter-spacing: 0.12em;
-      font-weight: 700;
-      color: var(--gray-600);
-      margin-bottom: 14px;
+      font-family: var(--ui);
+      font-size: 13px; font-weight: 700;
+      letter-spacing: 0.16em; text-transform: uppercase;
+      color: var(--t40); margin-bottom: 18px;
     }
-    .oss-card .oss-row {
-      display: flex;
-      gap: 12px;
-      padding: 9px 0;
-      border-bottom: 1px solid var(--gray-200);
-      font-size: 13px;
-      color: var(--gray-800);
+    .oss-row {
+      display: flex; gap: 14px;
+      padding: 10px 0;
+      border-bottom: 1px solid var(--border-faint);
+      font-size: 16px; color: var(--t65);
       align-items: baseline;
     }
-    .oss-card .oss-row:last-child { border-bottom: none; }
-    .oss-card .oss-key {
-      font-weight: 700;
-      color: var(--navy);
-      min-width: 90px;
-      flex-shrink: 0;
+    .oss-row:last-child { border-bottom: none; }
+    .oss-key {
+      font-family: var(--ui);
+      font-size: 13px; font-weight: 700;
+      color: var(--ember);
+      min-width: 100px; flex-shrink: 0;
+      letter-spacing: 0.08em; text-transform: uppercase;
     }
-    .oss-card .oss-btns {
-      display: flex;
-      gap: 12px;
-      flex-wrap: wrap;
-      margin-top: 20px;
-    }
-    .btn-outline {
-      display: inline-block;
-      padding: 9px 18px;
-      border-radius: 5px;
-      font-size: 13px;
-      font-weight: 700;
-      text-decoration: none;
-      letter-spacing: 0.02em;
-      background: transparent;
-      color: var(--navy);
-      border: 1px solid var(--navy);
-    }
-    .btn-outline:hover { background: var(--navy); color: var(--white); }
+    .oss-btns { display: flex; gap: 12px; flex-wrap: wrap; margin-top: 24px; }
 
-    /* ─── PRINT ──────────────────────────────────────────────── */
+    /* ── FOOTER ─────────────────────────────────────────────── */
+    footer {
+      background: var(--hearth-md);
+      color: var(--t65);
+      padding: 48px 0 40px;
+      border-top: 1px solid var(--border);
+    }
+    .footer-inner {
+      max-width: 1120px; margin: 0 auto; padding: 0 40px;
+      display: grid; grid-template-columns: 1fr auto; gap: 48px; align-items: start;
+    }
+    .footer-brand {
+      font-family: var(--sub);
+      font-size: 16px; font-weight: 700;
+      letter-spacing: 0.12em; text-transform: uppercase;
+      color: var(--linen); margin-bottom: 10px;
+    }
+    .footer-text { font-size: 16px; line-height: 1.85; color: var(--t40); max-width: 520px; }
+    .footer-text a { color: var(--t65); text-decoration: underline; text-underline-offset: 3px; }
+    .footer-text a:hover { color: var(--ember); }
+    .footer-citations {
+      font-family: var(--ui);
+      font-size: 12px; letter-spacing: 0.08em; text-transform: uppercase;
+      line-height: 2.1; text-align: right; white-space: nowrap; color: var(--t40);
+    }
+
+    /* ── LINEN SECTIONS ─────────────────────────────────────── */
+    section.bg-linen {
+      background: var(--linen);
+      color: var(--hearth);
+    }
+    section.bg-parchment {
+      background: var(--parchment);
+      color: var(--hearth);
+    }
+    section.bg-linen h2,
+    section.bg-parchment h2 { color: var(--hearth); }
+    section.bg-linen h2 em,
+    section.bg-parchment h2 em { color: var(--ember); }
+    section.bg-linen .section-lead,
+    section.bg-parchment .section-lead { color: #5A4A32; }
+    section.bg-linen .eyebrow-flanked,
+    section.bg-parchment .eyebrow-flanked { color: var(--ember); }
+    section.bg-linen .rule,
+    section.bg-parchment .rule { opacity: 0.7; }
+
+    /* Cards on linen → white surface */
+    section.bg-linen .pillar-card,
+    section.bg-linen .tier-card,
+    section.bg-linen .demo-card,
+    section.bg-linen .oss-card,
+    section.bg-parchment .tier-card,
+    section.bg-parchment .doc-card {
+      background: #ffffff;
+      border-color: #DFD3B4;
+    }
+    section.bg-linen .pillar-card h3,
+    section.bg-linen .tier-card h3,
+    section.bg-linen .demo-card h3,
+    section.bg-linen .oss-card .oss-label,
+    section.bg-parchment .tier-card h3,
+    section.bg-parchment .doc-card h3 { color: var(--hearth); }
+    section.bg-linen .pillar-card p,
+    section.bg-linen .tier-card p,
+    section.bg-linen .demo-card p,
+    section.bg-parchment .tier-card p,
+    section.bg-parchment .doc-card p { color: #5A4A32; }
+    section.bg-linen .pillar-card ul li,
+    section.bg-parchment .tier-card .tier-note { color: #8A7458; }
+    section.bg-linen .tier-card .tier-action,
+    section.bg-parchment .tier-card .tier-action,
+    section.bg-linen .doc-card .doc-audience,
+    section.bg-parchment .doc-card .doc-audience { color: var(--ember); }
+
+    /* Doc cards on linen */
+    section.bg-linen .doc-card {
+      background: #ffffff;
+      border-color: #DFD3B4;
+    }
+    section.bg-linen .doc-card:hover { border-color: var(--ember); }
+    section.bg-linen .doc-card h3 { color: var(--hearth); }
+    section.bg-linen .doc-card p { color: #5A4A32; }
+
+    /* Principle section on linen */
+    section.bg-linen blockquote.core-principle {
+      background: #ffffff;
+      border-left-color: var(--ember);
+    }
+    section.bg-linen blockquote.core-principle p { color: var(--hearth); }
+    section.bg-linen blockquote.core-principle cite { color: #8A7458; }
+    section.bg-linen .principle-body p { color: #5A4A32; }
+    section.bg-linen .principle-body p strong { color: var(--hearth); font-weight: 600; }
+
+    /* Steps on linen */
+    section.bg-linen .steps-grid { border-color: #DFD3B4; }
+    section.bg-linen .step { background: #ffffff; border-right-color: #DFD3B4; }
+    section.bg-linen .step h4 { color: var(--ember); }
+    section.bg-linen .step p { color: #5A4A32; }
+    section.bg-linen .step .step-source { color: #8A7458; }
+    section.bg-linen .calc-example { background: #ffffff; border-color: #DFD3B4; }
+    section.bg-linen .calc-label { color: #8A7458; }
+    section.bg-linen .calc-example pre { color: #5A4A32; }
+    section.bg-linen .calc-example pre strong { color: var(--hearth); }
+    section.bg-linen .result-num { color: var(--hearth); }
+    section.bg-linen .result-unit { color: #8A7458; }
+
+    /* What JOSH Adds on linen */
+    section.bg-linen .adds-col h3 { color: var(--ember); }
+    section.bg-linen .adds-col ul li { color: #5A4A32; border-bottom-color: rgba(58,46,30,0.12); }
+    section.bg-linen .adds-col ul li::before { color: var(--ember); }
+    section.bg-linen .demo-label { color: #8A7458; }
+    section.bg-linen .demo-card .tier-row { color: #5A4A32; border-bottom-color: rgba(58,46,30,0.12); }
+    section.bg-linen .demo-btns .btn-secondary {
+      color: #5A4A32;
+      border-color: rgba(58,46,30,0.25);
+    }
+    section.bg-linen .demo-btns .btn-secondary:hover { border-color: var(--ember); color: var(--ember); }
+
+    /* OSS section on linen */
+    section.bg-linen .oss-body p { color: #5A4A32; }
+    section.bg-linen .oss-row { color: #5A4A32; border-bottom-color: rgba(58,46,30,0.12); }
+    section.bg-linen .oss-key { color: var(--ember); }
+    section.bg-linen .oss-card .oss-label { color: #8A7458; }
+    section.bg-linen .btn-outline {
+      color: var(--hearth);
+      border-color: rgba(26,36,56,0.25);
+    }
+    section.bg-linen .btn-outline:hover { border-color: var(--ember); color: var(--ember); }
+
+    /* ── PRINT ──────────────────────────────────────────────── */
     @media print {
-      header, footer { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-      .hero { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+      header { position: static; }
+      * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
       .header-nav { display: none; }
-      section { page-break-inside: avoid; }
-      .hero-inner { grid-template-columns: 1fr; }
-      .hero-card { display: none; }
-      .btn { border: 1px solid #333; }
     }
 
-    /* ─── RESPONSIVE ─────────────────────────────────────────── */
+    /* ── RESPONSIVE ─────────────────────────────────────────── */
     @media (max-width: 860px) {
-      .hero-inner { grid-template-columns: 1fr; }
+      .container { padding: 0 24px; }
+      section { padding: 52px 0; }
+      .header-inner { padding: 12px 24px; }
+      .header-nav { display: none; }
+      .hero-inner { padding: 0 24px; grid-template-columns: 1fr; }
       .hero-card { display: none; }
-      .principle-inner { grid-template-columns: 1fr; }
-      .pillar-grid { grid-template-columns: 1fr; }
-      .steps-grid { grid-template-columns: 1fr 1fr; }
-      .adds-grid { grid-template-columns: 1fr; }
-      .oss-grid { grid-template-columns: 1fr; }
+      .principle-inner,
+      .adds-grid,
+      .oss-grid { grid-template-columns: 1fr; gap: 32px; }
+      .pillar-grid,
       .tier-grid { grid-template-columns: 1fr; }
       .doc-grid { grid-template-columns: 1fr; }
+      .steps-grid { grid-template-columns: 1fr 1fr; }
       .calc-example { grid-template-columns: 1fr; }
       .calc-result { text-align: left; }
-      footer .footer-inner { grid-template-columns: 1fr; }
-      footer .footer-citations { text-align: left; white-space: normal; }
-      .header-inner { padding: 20px 20px 16px; }
-      .header-brand h1 { white-space: normal; }
-      .header-bottom { flex-direction: column; gap: 10px; }
-      .header-nav { gap: 10px 14px; max-width: calc(100vw - 40px); overflow-x: auto; flex-wrap: nowrap; -webkit-overflow-scrolling: touch; scrollbar-width: none; }
-      .header-nav::-webkit-scrollbar { display: none; }
+      .footer-inner { grid-template-columns: 1fr; }
+      .footer-citations { text-align: left; white-space: normal; }
+    }
+    @media (max-width: 540px) {
+      .steps-grid { grid-template-columns: 1fr; }
+      .hero-text h2 { font-size: 28px; }
     }
   </style>
 </head>
@@ -778,25 +813,21 @@
 <!-- ── HEADER ──────────────────────────────────────────────────── -->
 <header>
   <div class="header-inner">
-    <div class="header-brand">
-      <h1><span>JOSH</span> &mdash; Jurisdictional Objective Standards for Housing</h1>
-    </div>
-    <div class="header-bottom">
-      <p class="tagline">
-        California Stewardship &nbsp;&bull;&nbsp;
-        AB 747 / Gov. Code &sect;65302.15 &nbsp;&bull;&nbsp;
-        v3.4 &Delta;T Standard &nbsp;&bull;&nbsp;
-        March 2026
-      </p>
-      <nav class="header-nav">
-        <a href="#principle">The Principle</a>
-        <a href="#methodology">Methodology</a>
-        <a href="#adoption">Adoption</a>
-        <a href="#documents">Documents</a>
-        <a href="#software">Open Source</a>
-        <a href="berkeley/demo_map.html">Live Demo &rarr;</a>
-      </nav>
-    </div>
+    <a href="https://californiastewardship.org" class="wordmark" aria-label="California Stewardship Alliance — home">
+      <img src="seal.png" alt="" class="wordmark-seal" loading="eager" decoding="async">
+      <div class="wordmark-text">
+        <span class="wordmark-name">California Stewardship Alliance</span>
+        <span class="wordmark-domain">californiastewardship.org</span>
+      </div>
+    </a>
+    <nav class="header-nav">
+      <a href="#principle">The Principle</a>
+      <a href="#methodology">Methodology</a>
+      <a href="#adoption">Adoption</a>
+      <a href="#documents">Documents</a>
+      <a href="#software">Open Source</a>
+      <a class="btn-nav" href="berkeley/demo_map.html">Live Demo &rarr;</a>
+    </nav>
   </div>
 </header>
 
@@ -804,8 +835,8 @@
 <section class="hero">
   <div class="hero-inner">
     <div class="hero-text">
-      <p class="eyebrow">For City Councils, City Managers &amp; City Attorneys</p>
-      <h2>The power of JOSH is not&nbsp;the software.</h2>
+      <p class="hero-eyebrow">JOSH &mdash; Jurisdictional Objective Standards for Housing</p>
+      <h2>The power of JOSH is not <em>the software.</em></h2>
       <p>
         JOSH is a <strong>first-principles calculator</strong> built entirely from established,
         credentialed expert standards and publicly verified data. Every number it produces can be
@@ -846,7 +877,7 @@
         </div>
       </div>
       <div class="stat-row">
-        <div class="stat-num">45<span style="font-size:14px;font-weight:400"> min</span></div>
+        <div class="stat-num">45<span style="font-size:14px;font-weight:400;font-family:var(--ui)"> min</span></div>
         <div>
           <div class="stat-desc">Escape window (VHFHSZ)</div>
           <div class="stat-source">NIST Technical Note 2135 — Camp Fire</div>
@@ -864,9 +895,11 @@
 </section>
 
 <!-- ── THE PRINCIPLE ────────────────────────────────────────────── -->
-<section class="principle-block" id="principle">
+<section id="principle" class="bg-linen">
   <div class="container">
-    <h2>The Principle</h2>
+    <div class="eyebrow-flanked">The Principle</div>
+    <h2>One rule. <em>Applied at city scale.</em></h2>
+    <div class="rule"></div>
     <p class="section-lead">One rule governs fire marshal occupancy limits in every occupied building in California. JOSH applies the same rule to the roads those buildings depend on.</p>
     <div class="principle-inner">
       <div>
@@ -874,13 +907,13 @@
           <p>"You cannot put more people behind an exit than the exit can handle in an emergency. Measure the exits. Count the people. Do the math."</p>
           <cite>— The same principle a fire marshal applies when posting a Maximum Occupancy sign, applied at city scale to evacuation roads.</cite>
         </blockquote>
-        <p style="font-size:14px;color:var(--gray-600);line-height:1.7;">
+        <p class="principle-body-inline">
           A fire marshal does not ask who is already in the nightclub before deciding whether 50 more
           people can safely enter. The question is whether those 50 people can get through the doors
           fast enough in an emergency. The answer depends on the doors and the 50 people. It does not
           depend on who else is in the room.
         </p>
-        <p style="font-size:14px;color:var(--gray-600);line-height:1.7;margin-top:12px;">
+        <p class="principle-body-inline" style="margin-top:14px;">
           A wildfire evacuation road is a door. A housing project is a group of people asking to drive
           through it. JOSH measures whether those people can get through in time. The road either has
           the capacity or it does not. That is a physical fact — measured in minutes, from published
@@ -888,7 +921,7 @@
         </p>
       </div>
       <div class="principle-body">
-        <p><strong style="color:var(--navy);">Why this principle is legally durable:</strong></p>
+        <p><strong>Why this principle is legally durable:</strong></p>
         <p>
           Fire marshal occupancy limits are the most litigation-tested life safety standards in
           American law. Courts have upheld them uniformly because they rest on a physical reality:
@@ -917,9 +950,11 @@
 </section>
 
 <!-- ── THREE PILLARS ────────────────────────────────────────────── -->
-<section class="pillars">
+<section>
   <div class="container">
-    <h2>Three Pillars of Defensibility</h2>
+    <div class="eyebrow-flanked">Three Pillars of Defensibility</div>
+    <h2>Built for <em>appellate courts</em> first.</h2>
+    <div class="rule"></div>
     <p class="section-lead">JOSH was designed for appellate courts before it was designed for planning departments. Every architectural decision traces back to one question: can we defend this in front of a judge who has never seen a traffic study?</p>
     <div class="pillar-grid">
       <div class="pillar-card">
@@ -939,22 +974,24 @@
         <span class="pillar-icon">🔍</span>
         <h3>Publicly Verifiable</h3>
         <p>Every number JOSH uses is available to the public, free of charge, from the agency that published it. A developer's engineer, a plaintiff's attorney, or a judge's clerk can pull the same source document and verify every input.</p>
-        <p style="margin-top:10px;">No proprietary model. No black-box weighting. No expert opinion that can be cross-examined. The data speaks for itself because it already has — in every state DOT, in every building department, in every fire marshal's office in the country.</p>
+        <p style="margin-top:12px;">No proprietary model. No black-box weighting. No expert opinion that can be cross-examined. The data speaks for itself because it already has — in every state DOT, in every building department, in every fire marshal's office in the country.</p>
       </div>
       <div class="pillar-card">
         <span class="pillar-icon">✏️</span>
         <h3>Hand-Auditable</h3>
         <p>Every determination JOSH produces comes with a plain-text audit trail. The full calculation — every input, every intermediate result, every threshold comparison — fits on one printed page.</p>
-        <p style="margin-top:10px;">A city attorney preparing for litigation can read the audit trail and explain every line to a judge without calling an expert witness. The calculation is four arithmetic operations. There is nothing to challenge that cannot be checked with a calculator in under ten minutes.</p>
+        <p style="margin-top:12px;">A city attorney preparing for litigation can read the audit trail and explain every line to a judge without calling an expert witness. The calculation is four arithmetic operations. There is nothing to challenge that cannot be checked with a calculator in under ten minutes.</p>
       </div>
     </div>
   </div>
 </section>
 
 <!-- ── FOUR-STEP METHODOLOGY ────────────────────────────────────── -->
-<section class="four-steps" id="methodology">
+<section id="methodology" class="bg-linen">
   <div class="container">
-    <h2>The Calculation: Four Steps, All Public Data</h2>
+    <div class="eyebrow-flanked">The Methodology</div>
+    <h2>Four steps. <em>All public data.</em></h2>
+    <div class="rule"></div>
     <p class="section-lead">One number: how many minutes does this project add to evacuation clearance time? Every step uses only published national standards or federal data. No step involves anyone's opinion.</p>
     <div class="steps-grid">
       <div class="step">
@@ -983,10 +1020,9 @@
       </div>
     </div>
 
-    <!-- Example calculation -->
     <div class="calc-example">
       <div>
-        <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:#8ea8cc;margin-bottom:12px;">Example: 45-unit project on a canyon road in a VHFHSZ zone</div>
+        <div class="calc-label">Example: 45-unit project on a canyon road in a VHFHSZ zone</div>
         <pre><strong>Step 1 — Project vehicles:</strong>   45 units × 2.5 veh/HH × 90% = <strong>101 vehicles</strong>
 <strong>Step 2 — Bottleneck capacity:</strong>  1,350 vph (two-lane, 30 mph) × 35% (VHFHSZ) = <strong>472 vph</strong>
 <strong>Step 3 — Egress penalty:</strong>       3-story building → <strong>0 min</strong> (below 4-story threshold)
@@ -995,7 +1031,7 @@
       </div>
       <div class="calc-result">
         <div class="result-num">12.8</div>
-        <div class="result-unit">minutes added to evacuation</div>
+        <div class="result-unit">minutes added</div>
         <div class="result-verdict">Exceeds threshold &rarr; Discretionary</div>
       </div>
     </div>
@@ -1003,9 +1039,11 @@
 </section>
 
 <!-- ── SOURCES TABLE ─────────────────────────────────────────────── -->
-<section class="sources">
+<section>
   <div class="container">
-    <h2>Where Every Number Comes From</h2>
+    <div class="eyebrow-flanked">Source Documentation</div>
+    <h2>Where every number <em>comes from.</em></h2>
+    <div class="rule"></div>
     <p class="section-lead">No input was chosen by the city, by California Stewardship, or by any consultant. Every value is traceable to a specific exhibit, table, or dataset published by a credentialed national authority.</p>
     <table class="sources-table">
       <thead>
@@ -1063,17 +1101,13 @@
           <td><span class="use-badge">Vehicle generation rate</span></td>
         </tr>
         <tr>
-          <td>
-            International Building Code (IBC)
-          </td>
+          <td>International Building Code (IBC)</td>
           <td>International Code Council</td>
           <td>Egress capacity and stairwell requirements for buildings ≥ 4 stories; minimum exit width standards</td>
           <td><span class="use-badge">Egress penalty (tall buildings)</span></td>
         </tr>
         <tr>
-          <td>
-            OpenStreetMap Road Network
-          </td>
+          <td>OpenStreetMap Road Network</td>
           <td>OpenStreetMap Foundation (public domain)</td>
           <td>Road geometry, classification, and connectivity for bottleneck routing within 0.5-mile project radius</td>
           <td><span class="use-badge">Route identification</span></td>
@@ -1084,9 +1118,11 @@
 </section>
 
 <!-- ── WHAT JOSH ADDS ────────────────────────────────────────────── -->
-<section class="what-josh-adds">
+<section class="bg-linen">
   <div class="container">
-    <h2>What the Software Adds</h2>
+    <div class="eyebrow-flanked">What the Software Adds</div>
+    <h2>Speed, consistency, <em>and a paper trail.</em></h2>
+    <div class="rule"></div>
     <p class="section-lead">JOSH does not add methodology. It adds speed, consistency, and an interface that makes near-instant insight available to planning staff, city attorneys, and council members alike.</p>
     <div class="adds-grid">
       <div class="adds-col">
@@ -1117,18 +1153,17 @@
 
           <div class="tier-row">
             <span class="badge badge-min">Ministerial</span>
-            <span style="font-size:13px;color:#aab8cc;">Ashby Small Infill — 10 units, 2 stories</span>
+            <span>Ashby Small Infill — 10 units, 2 stories</span>
           </div>
           <div class="tier-row">
             <span class="badge badge-cond">Conditional</span>
-            <span style="font-size:13px;color:#aab8cc;">Claremont Hills — 25 units, 3 stories</span>
+            <span>Claremont Hills — 25 units, 3 stories</span>
           </div>
           <div class="tier-row">
             <span class="badge badge-disc">Discretionary</span>
-            <span style="font-size:13px;color:#aab8cc;">Hills Gateway — 80 units, FHSZ Zone&nbsp;3</span>
+            <span>Hills Gateway — 80 units, FHSZ Zone&nbsp;3</span>
           </div>
 
-          <br>
           <div class="demo-btns">
             <a class="btn btn-primary" href="berkeley/demo_map.html">Open Interactive Map &rarr;</a>
             <a class="btn btn-secondary" href="berkeley/index.html">View All Projects</a>
@@ -1140,9 +1175,11 @@
 </section>
 
 <!-- ── ADOPTION PATHWAY ──────────────────────────────────────────── -->
-<section class="adoption" id="adoption">
+<section id="adoption">
   <div class="container">
-    <h2>Adoption Pathway</h2>
+    <div class="eyebrow-flanked">Adoption Pathway</div>
+    <h2>Three tiers. <em>Use today.</em></h2>
+    <div class="rule"></div>
     <p class="section-lead">Cities can adopt JOSH at three levels of formality. Each tier strengthens legal defensibility. Tier 1 requires no action — a city can use JOSH to support a safety finding in a staff report today under its existing General Plan.</p>
     <div class="tier-grid">
       <div class="tier-card">
@@ -1171,9 +1208,11 @@
 </section>
 
 <!-- ── DOCUMENT LIBRARY ──────────────────────────────────────────── -->
-<section class="library" id="documents">
+<section id="documents" class="bg-linen">
   <div class="container">
-    <h2>Document Library</h2>
+    <div class="eyebrow-flanked">Document Library</div>
+    <h2>Every audience. <em>Every document.</em></h2>
+    <div class="rule"></div>
     <p class="section-lead">Every document below is written for a specific audience. City attorneys reviewing for the first time should start with the plain-language explanation. Staff preparing council materials should start with the Legal Defensibility Memo.</p>
     <div class="doc-grid">
       <a class="doc-card" href="viewer.html?doc=docs/JOSH_Plain_English_For_Court.md">
@@ -1194,36 +1233,38 @@
       <a class="doc-card" href="viewer.html?doc=docs/JOSH_v3_Specification.md">
         <div class="doc-audience">Implementation &bull; Audit &bull; IT Staff</div>
         <h3>v3.4 System Specification</h3>
-        <p>Complete technical specification for the JOSH v3.4 ΔT Standard implementation. Covers all five standards (size gate, routing, hazard zone classification, ΔT calculation, SB 79 transit flag), data flows, scenario architecture, configuration parameters, and audit trail format. Source of truth for all code.</p>
+        <p>Complete technical specification for the JOSH v3.4 ΔT Standard implementation. Covers all five standards, data flows, scenario architecture, configuration parameters, and audit trail format. Source of truth for all code.</p>
       </a>
       <a class="doc-card" href="viewer.html?doc=docs/JOSH_City_Planner_Guide.md">
         <div class="doc-audience">Planning Staff &bull; Planning Directors</div>
         <h3>City Planner's Implementation Guide</h3>
-        <p>Workflow guide for planning staff using JOSH in daily project review. Covers which projects trigger the analysis, pre-application meeting guidance, how to write staff report findings for each determination tier, the four paths a developer can take to meet the standard, and staff-level responses to the seven most common developer objections.</p>
+        <p>Workflow guide for planning staff using JOSH in daily project review. Covers which projects trigger the analysis, pre-application meeting guidance, how to write staff report findings for each determination tier, the four paths a developer can take to meet the standard, and responses to the seven most common developer objections.</p>
       </a>
       <a class="doc-card" href="viewer.html?doc=docs/JOSH_City_Engineer_Guide.md">
         <div class="doc-audience">City Engineers &bull; Public Works Directors</div>
         <h3>City Engineer's Verification and Conditions Guide</h3>
-        <p>Technical reference for engineers verifying JOSH determinations and specifying road improvement conditions. Covers road classification and lane count verification against HCM 2022, step-by-step independent ΔT calculation, conditions of approval for road improvements (including required capacity arithmetic and bonding requirements), IFC §503 physical site access review, and when to flag a result before issuance.</p>
+        <p>Technical reference for engineers verifying JOSH determinations and specifying road improvement conditions. Covers road classification and lane count verification against HCM 2022, step-by-step independent ΔT calculation, conditions of approval for road improvements, and IFC §503 physical site access review.</p>
       </a>
       <a class="doc-card" href="viewer.html?doc=docs/JOSH_Fire_Chief_Guide.md">
         <div class="doc-audience">Fire Chiefs &bull; Fire Marshals</div>
         <h3>Fire Chief's Guide to the Evacuation Capacity Standard</h3>
-        <p>Explains how JOSH extends the fire marshal's occupancy limit principle — measure the exits, count the people, do the math — from buildings to the roads those buildings depend on for evacuation. Covers how NFPA 101, Cal Fire FHSZ maps, and NIST Camp Fire data are used, where fire department field knowledge strengthens the analysis, the fire chief's role at the council table, and how the ΔT finding supports evacuation planning and emergency management.</p>
+        <p>Explains how JOSH extends the fire marshal's occupancy limit principle — measure the exits, count the people, do the math — from buildings to the roads those buildings depend on for evacuation. Covers the fire chief's role at the council table and how the ΔT finding supports evacuation planning.</p>
       </a>
       <a class="doc-card" href="viewer.html?doc=docs/JOSH_IT_Guide.md">
         <div class="doc-audience">IT Directors &bull; GIS Analysts</div>
         <h3>IT Implementation Guide</h3>
-        <p>Technical deployment guide for city IT departments evaluating self-hosted JOSH implementation. Covers prerequisites, the two-repo architecture, day-to-day operation, data sources and security posture, output format, update and refresh cadence, and the division of responsibility between the city and California Stewardship. Includes guidance on working with California Stewardship for initial setup or ongoing support where a more structured engagement is appropriate.</p>
+        <p>Technical deployment guide for city IT departments evaluating self-hosted JOSH implementation. Covers prerequisites, the two-repo architecture, day-to-day operation, data sources and security posture, output format, update and refresh cadence, and the division of responsibility between the city and California Stewardship.</p>
       </a>
     </div>
   </div>
 </section>
 
 <!-- ── OPEN SOURCE SOFTWARE ─────────────────────────────────────── -->
-<section class="opensource" id="software">
+<section id="software">
   <div class="container">
-    <h2>Open Source Software</h2>
+    <div class="eyebrow-flanked">Open Source Software</div>
+    <h2>Arithmetic, not <em>artificial intelligence.</em></h2>
+    <div class="rule"></div>
     <p class="section-lead">JOSH is a Python command-line tool, not an AI system. Every determination it produces is the output of four arithmetic operations on published data. The code is open source under AGPL-3.0 so any city, engineer, or developer can inspect, verify, and run the calculation independently.</p>
     <div class="oss-grid">
       <div class="oss-body">
@@ -1252,10 +1293,10 @@
           <div class="oss-label">Technical Specifications</div>
           <div class="oss-row"><span class="oss-key">Language</span> Python 3.11+</div>
           <div class="oss-row"><span class="oss-key">License</span> AGPL-3.0-or-later</div>
-          <div class="oss-row"><span class="oss-key">GIS engine</span> GeoPandas · OSMnx · Shapely · PyProj</div>
+          <div class="oss-row"><span class="oss-key">GIS Engine</span> GeoPandas · OSMnx · Shapely · PyProj</div>
           <div class="oss-row"><span class="oss-key">Routing</span> NetworkX shortest-path (Dijkstra)</div>
-          <div class="oss-row"><span class="oss-key">Data cache</span> 90-day TTL in <code>data/{city}/</code></div>
-          <div class="oss-row"><span class="oss-key">Run time</span> ~30 seconds first run (data download); &lt;5 s cached</div>
+          <div class="oss-row"><span class="oss-key">Data Cache</span> 90-day TTL in <code style="font-family:monospace;font-size:12px;color:var(--ember)">data/{city}/</code></div>
+          <div class="oss-row"><span class="oss-key">Run Time</span> ~30 s first run (data download); &lt;5 s cached</div>
           <div class="oss-row"><span class="oss-key">Output</span> Interactive HTML map · Per-project brief · Plaintext audit trail · CSV route inventory</div>
           <div class="oss-btns">
             <a class="btn btn-primary" href="https://github.com/twgonzalez/josh" target="_blank" rel="noopener">View on GitHub &rarr;</a>
@@ -1273,7 +1314,7 @@
     <div>
       <div class="footer-brand">JOSH — Fire Evacuation Capacity Analysis System</div>
       <div class="footer-text">
-        Developed by the California Stewardship. JOSH is a Python CLI tool — an automation
+        Developed by California Stewardship. JOSH is a Python CLI tool — an automation
         layer over established national and state standards. The methodology is not proprietary —
         every input, every formula, and every threshold is traceable to a publicly available source.
         The software is open source under AGPL-3.0-or-later. The standards belong to the agencies
@@ -1283,13 +1324,10 @@
         discretion is applied. Any licensed engineer can independently verify any result using
         the same published sources.
         <br><br>
-        <a href="https://github.com/twgonzalez/josh" target="_blank" rel="noopener"
-           style="color:#8ea8cc;text-decoration:underline;">github.com/twgonzalez/josh</a>
+        <a href="https://github.com/twgonzalez/josh" target="_blank" rel="noopener">github.com/twgonzalez/josh</a>
         &nbsp;&mdash;&nbsp;AGPL-3.0-or-later
-        <br><br>
-        For more information, please email us at
-        <a href="mailto:info@californiastewardship.org"
-           style="color:#8ea8cc;text-decoration:underline;">info@californiastewardship.org</a>.
+        &nbsp;&mdash;&nbsp;
+        <a href="mailto:info@californiastewardship.org">info@californiastewardship.org</a>
       </div>
     </div>
     <div class="footer-citations">
