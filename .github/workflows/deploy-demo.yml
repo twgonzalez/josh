@@ -52,6 +52,8 @@ jobs:
           cp pages/index.html output/index.html
           cp pages/viewer.html output/viewer.html
           cp pages/mayors_presentation.html output/mayors_presentation.html
+          cp pages/seal.png output/seal.png
+          cp pages/seal-dark.png output/seal-dark.png
           cp -r static output/static
           mkdir -p output/docs
           cp docs/JOSH_Plain_English_For_Court.md output/docs/
