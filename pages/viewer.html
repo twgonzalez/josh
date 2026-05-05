@@ -11,114 +11,158 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>JOSH — Document Viewer</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;0,800;1,400;1,600&family=Cormorant+SC:wght@400;600;700&family=EB+Garamond:ital,wght@0,400;0,500;1,400&family=Source+Sans+3:wght@400;500;600;700&display=swap" rel="stylesheet">
   <script src="https://cdn.jsdelivr.net/npm/marked@12.0.0/marked.min.js"></script>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
     :root {
-      --navy:     #1a2b4a;
-      --navy-mid: #243a60;
-      --red:      #c0392b;
-      --red-dark: #a93226;
-      --white:    #ffffff;
-      --gray-100: #f8f9fa;
-      --gray-200: #e9ecef;
-      --gray-400: #ced4da;
-      --gray-600: #6c757d;
-      --gray-800: #343a40;
-      --text:     #212529;
-      --serif:    Georgia, "Times New Roman", serif;
-      --sans:     -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-      --mono:     "Menlo", "Consolas", "Courier New", monospace;
+      --hearth:    #1A2438;
+      --hearth-md: #243350;
+      --ember:     #C49A28;
+      --ember-lt:  #DBB84A;
+      --linen:     #F5EFE2;
+      --parchment: #EDE4CF;
+      --parchment-dk: #DFD3B4;
+      --walnut:    #3A2E1E;
+      --walnut-md: #5A4A32;
+      --walnut-lt: #8A7458;
+
+      --display: 'Playfair Display', Georgia, serif;
+      --sub:     'Cormorant SC', Georgia, serif;
+      --body:    'EB Garamond', Georgia, serif;
+      --ui:      'Source Sans 3', system-ui, sans-serif;
+      --mono:    "Menlo", "Consolas", "Courier New", monospace;
+
+      --border:       rgba(196,154,40,0.20);
+      --border-faint: rgba(196,154,40,0.12);
     }
 
     html { scroll-behavior: smooth; }
 
     body {
-      font-family: var(--sans);
-      background: var(--gray-100);
-      color: var(--text);
-      line-height: 1.65;
+      font-family: var(--body);
+      background: var(--linen);
+      color: var(--hearth);
+      line-height: 1.7;
+      font-size: 17px;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
     }
 
     /* ── HEADER ─────────────────────────────────────────────── */
     header {
-      background: var(--navy);
-      color: var(--white);
-      border-bottom: 4px solid var(--red);
+      background: var(--hearth);
+      border-bottom: 1px solid var(--border);
       position: sticky;
       top: 0;
       z-index: 100;
     }
     .header-inner {
-      max-width: 860px;
+      max-width: 1100px;
       margin: 0 auto;
-      padding: 14px 32px;
+      padding: 12px 32px;
       display: flex;
       align-items: center;
       gap: 20px;
     }
-    .back-link {
-      color: #8ea8cc;
-      text-decoration: none;
+
+    .wordmark { display: flex; align-items: center; gap: 10px; text-decoration: none; flex-shrink: 0; }
+    .wordmark-seal { width: 32px; height: 32px; object-fit: contain; }
+    .wordmark-text { line-height: 1.2; }
+    .wordmark-name {
+      font-family: var(--sub);
+      font-weight: 700;
       font-size: 13px;
-      font-weight: 500;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--linen);
+      display: block;
+      white-space: nowrap;
+    }
+    .wordmark-domain {
+      font-family: var(--ui);
+      font-weight: 700;
+      font-size: 11px;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: var(--ember);
+      display: block;
+      margin-top: 2px;
+    }
+
+    .header-divider {
+      width: 1px;
+      height: 20px;
+      background: rgba(196,154,40,0.20);
+      flex-shrink: 0;
+    }
+
+    .doc-breadcrumb {
+      font-family: var(--ui);
+      font-size: 13px;
+      color: rgba(245,239,226,0.45);
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      flex: 1;
+    }
+
+    .header-actions {
+      margin-left: auto;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex-shrink: 0;
+    }
+    .back-link {
+      font-family: var(--ui);
+      font-size: 12px;
+      font-weight: 600;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: rgba(245,239,226,0.55);
+      text-decoration: none;
       display: flex;
       align-items: center;
       gap: 6px;
       white-space: nowrap;
-      flex-shrink: 0;
       transition: color 0.15s;
     }
-    .back-link:hover { color: var(--white); }
-    .back-link svg { fill: currentColor; }
-    .header-divider {
-      width: 1px;
-      height: 18px;
-      background: #2e4a72;
-      flex-shrink: 0;
-    }
-    .doc-breadcrumb {
-      font-size: 12px;
-      color: #6a8ab0;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      white-space: nowrap;
-    }
-    .header-actions {
-      margin-left: auto;
-      display: flex;
-      gap: 12px;
-      flex-shrink: 0;
-    }
+    .back-link:hover { color: var(--ember); }
     .header-actions button {
       background: none;
-      border: 1px solid #2e4a72;
-      color: #8ea8cc;
+      border: 1px solid var(--border);
+      color: rgba(245,239,226,0.55);
       border-radius: 4px;
-      padding: 5px 12px;
+      padding: 6px 14px;
+      font-family: var(--ui);
       font-size: 12px;
       font-weight: 600;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
       cursor: pointer;
-      letter-spacing: 0.02em;
       transition: border-color 0.15s, color 0.15s;
     }
-    .header-actions button:hover { border-color: #8ea8cc; color: var(--white); }
+    .header-actions button:hover { border-color: var(--ember); color: var(--ember); }
 
     /* ── LOADING / ERROR ─────────────────────────────────────── */
     #loading, #error {
-      max-width: 860px;
+      max-width: 700px;
       margin: 80px auto;
       padding: 0 32px;
       text-align: center;
-      color: var(--gray-600);
-      font-size: 15px;
+      font-family: var(--ui);
+      font-size: 16px;
+      color: var(--walnut-lt);
     }
-    #error { color: var(--red); }
+    #error { color: var(--ember); }
     .spinner {
       width: 36px; height: 36px;
-      border: 3px solid var(--gray-200);
-      border-top-color: var(--navy);
+      border: 3px solid var(--parchment-dk);
+      border-top-color: var(--ember);
       border-radius: 50%;
       animation: spin 0.7s linear infinite;
       margin: 0 auto 16px;
@@ -129,128 +173,212 @@
     #doc-container { display: none; }
 
     .doc-meta {
-      background: var(--navy);
-      color: #8ea8cc;
-      border-bottom: 1px solid #2e4a72;
+      background: var(--hearth-md);
+      border-bottom: 1px solid var(--border);
     }
     .doc-meta-inner {
-      max-width: 860px;
+      max-width: 1100px;
       margin: 0 auto;
-      padding: 10px 32px;
-      font-size: 12px;
+      padding: 8px 32px;
+      font-family: var(--ui);
+      font-size: 13px;
       display: flex;
       gap: 20px;
       align-items: center;
+      color: rgba(245,239,226,0.45);
     }
     .doc-meta span { display: flex; align-items: center; gap: 5px; }
 
-    .doc-body {
-      max-width: 860px;
+    /* ── LAYOUT ──────────────────────────────────────────────── */
+    .doc-layout {
+      display: grid;
+      grid-template-columns: 1fr 220px;
+      gap: 0;
+      max-width: 1100px;
       margin: 0 auto;
-      padding: 48px 32px 80px;
     }
+
+    .doc-body {
+      padding: 48px 48px 80px 32px;
+    }
+
+    /* White paper surface for the article */
+    .doc-body article {
+      background: #ffffff;
+      border: 1px solid var(--parchment-dk);
+      border-radius: 4px;
+      padding: 52px 56px 64px;
+    }
+
+    /* ── TOC SIDEBAR ─────────────────────────────────────────── */
+    .toc-sidebar {
+      padding: 48px 0 80px 0;
+      position: sticky;
+      top: 56px;
+      height: fit-content;
+      max-height: calc(100vh - 72px);
+      overflow-y: auto;
+    }
+    .toc-label {
+      font-family: var(--ui);
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.14em;
+      color: var(--walnut-lt);
+      margin-bottom: 12px;
+    }
+    .toc-list { list-style: none; padding: 0; }
+    .toc-list li { margin-bottom: 2px; }
+    .toc-list a {
+      display: block;
+      font-family: var(--ui);
+      font-size: 13px;
+      color: var(--walnut-md);
+      text-decoration: none;
+      padding: 4px 8px;
+      border-left: 2px solid transparent;
+      line-height: 1.4;
+      transition: color 0.15s, border-color 0.15s;
+    }
+    .toc-list a:hover { color: var(--hearth); border-left-color: var(--parchment-dk); }
+    .toc-list a.active {
+      color: var(--hearth);
+      border-left-color: var(--ember);
+      font-weight: 600;
+    }
+    .toc-list .toc-h3 { padding-left: 18px; font-size: 12px; }
 
     /* ── MARKDOWN TYPOGRAPHY ─────────────────────────────────── */
     .md h1 {
-      font-family: var(--serif);
-      font-size: 30px;
+      font-family: var(--display);
+      font-size: 32px;
       font-weight: 700;
-      color: var(--navy);
-      line-height: 1.25;
-      margin-bottom: 8px;
-      padding-bottom: 16px;
-      border-bottom: 3px solid var(--red);
+      color: var(--hearth);
+      line-height: 1.15;
+      margin-bottom: 10px;
+      padding-bottom: 14px;
+      letter-spacing: -0.01em;
+      border-bottom: 1px solid;
+      border-image: linear-gradient(90deg, rgba(196,154,40,0.5) 0%, transparent 70%) 1;
     }
     .md h2 {
-      font-family: var(--serif);
-      font-size: 21px;
+      font-family: var(--display);
+      font-size: 24px;
       font-weight: 700;
-      color: var(--navy);
-      margin: 44px 0 12px;
-      padding-bottom: 8px;
-      border-bottom: 1px solid var(--gray-200);
+      color: var(--hearth);
+      margin: 48px 0 14px;
+      letter-spacing: -0.01em;
+      line-height: 1.2;
     }
     .md h3 {
-      font-size: 16px;
+      font-family: var(--ui);
+      font-size: 13px;
       font-weight: 700;
-      color: var(--navy);
-      margin: 28px 0 8px;
+      color: var(--hearth);
+      margin: 32px 0 10px;
       text-transform: uppercase;
-      letter-spacing: 0.04em;
+      letter-spacing: 0.1em;
     }
     .md h4 {
+      font-family: var(--ui);
       font-size: 14px;
-      font-weight: 700;
-      color: var(--gray-800);
-      margin: 20px 0 6px;
+      font-weight: 600;
+      color: var(--walnut-md);
+      margin: 20px 0 8px;
     }
     .md p {
-      font-size: 15px;
-      color: var(--gray-800);
-      margin-bottom: 16px;
+      font-family: var(--body);
+      font-size: 17px;
+      color: rgba(26,36,56,0.88);
+      margin-bottom: 18px;
       line-height: 1.75;
     }
-    .md > p:first-of-type {
-      font-size: 16px;
-      color: var(--text);
-    }
-    .md strong { color: var(--navy); }
-    .md em { font-style: italic; }
+    .md strong { color: var(--hearth); font-weight: 600; }
+    .md em { font-style: italic; color: var(--walnut-md); }
 
-    /* Horizontal rule */
     .md hr {
       border: none;
-      border-top: 2px solid var(--gray-200);
+      height: 1px;
+      background: linear-gradient(90deg, rgba(196,154,40,0.5) 0%, transparent 60%);
       margin: 40px 0;
     }
 
     /* Lists */
     .md ul, .md ol {
-      margin: 8px 0 16px 24px;
-      font-size: 15px;
-      color: var(--gray-800);
-      line-height: 1.75;
+      margin: 6px 0 18px 0;
+      padding: 0;
+      list-style: none;
     }
-    .md li { margin-bottom: 4px; }
+    .md ul li, .md ol li {
+      font-family: var(--body);
+      font-size: 17px;
+      color: rgba(26,36,56,0.88);
+      line-height: 1.75;
+      padding: 3px 0 3px 22px;
+      position: relative;
+    }
+    .md ul li::before {
+      content: "—";
+      position: absolute;
+      left: 0;
+      color: var(--ember);
+      font-family: var(--ui);
+      font-size: 13px;
+      top: 6px;
+    }
+    .md ol { counter-reset: md-ol; }
+    .md ol li { counter-increment: md-ol; padding-left: 28px; }
+    .md ol li::before {
+      content: counter(md-ol);
+      position: absolute;
+      left: 0;
+      font-family: var(--ui);
+      font-weight: 700;
+      font-size: 13px;
+      color: var(--ember);
+      top: 6px;
+    }
     .md li > p { margin-bottom: 4px; }
 
     /* Blockquotes */
     .md blockquote {
-      border-left: 4px solid var(--red);
-      margin: 24px 0;
-      padding: 16px 20px;
-      background: var(--gray-100);
-      border-radius: 0 6px 6px 0;
+      border-left: 4px solid var(--ember);
+      margin: 28px 0;
+      padding: 18px 22px;
+      background: var(--linen);
+      border-radius: 0 4px 4px 0;
     }
     .md blockquote p {
-      font-family: var(--serif);
-      font-size: 16px;
+      font-family: var(--display);
+      font-size: 18px;
       font-style: italic;
-      color: var(--navy);
+      color: var(--walnut-md);
       margin-bottom: 0;
-      line-height: 1.6;
+      line-height: 1.55;
     }
 
     /* Code */
     .md code {
       font-family: var(--mono);
-      font-size: 13px;
-      background: var(--gray-200);
-      color: var(--navy);
-      padding: 2px 5px;
+      font-size: 14px;
+      background: var(--parchment);
+      color: var(--walnut);
+      padding: 2px 6px;
       border-radius: 3px;
     }
     .md pre {
-      background: var(--navy);
+      background: var(--hearth-md);
       border-radius: 6px;
-      padding: 20px 22px;
-      margin: 16px 0;
+      padding: 22px 24px;
+      margin: 18px 0;
       overflow-x: auto;
+      border: 1px solid var(--border);
     }
     .md pre code {
       background: none;
-      color: #c8d8f0;
-      font-size: 13px;
+      color: rgba(245,239,226,0.80);
+      font-size: 14px;
       padding: 0;
       line-height: 1.7;
     }
@@ -259,125 +387,77 @@
     .md table {
       width: 100%;
       border-collapse: collapse;
-      font-size: 14px;
-      margin: 20px 0;
-      border: 1px solid var(--gray-200);
-      border-radius: 6px;
+      font-size: 15px;
+      margin: 24px 0;
+      border: 1px solid var(--parchment-dk);
+      border-radius: 4px;
       overflow: hidden;
     }
-    .md thead tr { background: var(--navy); color: var(--white); }
+    .md thead tr { background: var(--hearth); color: var(--linen); }
     .md thead th {
-      padding: 10px 14px;
+      padding: 11px 16px;
       text-align: left;
-      font-size: 11px;
+      font-family: var(--ui);
+      font-size: 12px;
       font-weight: 700;
-      letter-spacing: 0.06em;
+      letter-spacing: 0.1em;
       text-transform: uppercase;
+      color: var(--ember);
     }
-    .md tbody tr { border-top: 1px solid var(--gray-200); }
-    .md tbody tr:hover { background: var(--gray-100); }
-    .md tbody td { padding: 10px 14px; vertical-align: top; }
+    .md tbody tr { border-top: 1px solid var(--parchment-dk); }
+    .md tbody tr:hover { background: var(--linen); }
+    .md tbody td { padding: 11px 16px; vertical-align: top; }
 
     /* Links */
     .md a {
-      color: #1a56a0;
-      text-decoration: none;
-      border-bottom: 1px solid #1a56a044;
-      transition: border-color 0.15s, color 0.15s;
+      color: var(--ember);
+      text-decoration: underline;
+      text-underline-offset: 3px;
+      text-decoration-color: rgba(196,154,40,0.35);
+      transition: text-decoration-color 0.15s;
     }
-    .md a:hover { color: var(--red); border-color: var(--red); }
+    .md a:hover { text-decoration-color: var(--ember); }
 
     /* ── AUDIT TRAIL (plain-text .txt files) ────────────────── */
-    /* Use .md pre.audit-pre to beat the .md pre navy background rule */
     .md pre.audit-pre {
       font-family: var(--mono);
-      font-size: 12.5px;
+      font-size: 14px;
       line-height: 1.65;
-      color: var(--gray-800);
-      background: var(--gray-100);
-      border: 1px solid var(--gray-200);
-      border-left: 4px solid var(--navy);
-      border-radius: 0 6px 6px 0;
-      padding: 24px 28px;
+      color: var(--walnut-md);
+      background: #ffffff;
+      border: 1px solid var(--parchment-dk);
+      border-left: 4px solid var(--ember);
+      border-radius: 0 4px 4px 0;
+      padding: 28px 32px;
       white-space: pre-wrap;
       word-break: break-word;
       overflow-x: auto;
     }
 
-    /* ── TOC SIDEBAR (desktop) ───────────────────────────────── */
-    .doc-layout {
-      display: grid;
-      grid-template-columns: 1fr 220px;
-      gap: 0;
-      max-width: 1100px;
-      margin: 0 auto;
-    }
-    .toc-sidebar {
-      padding: 48px 0 80px 32px;
-      position: sticky;
-      top: 60px;
-      height: fit-content;
-      max-height: calc(100vh - 80px);
-      overflow-y: auto;
-    }
-    .toc-label {
-      font-size: 10px;
-      font-weight: 700;
-      text-transform: uppercase;
-      letter-spacing: 0.1em;
-      color: var(--gray-600);
-      margin-bottom: 10px;
-    }
-    .toc-list {
-      list-style: none;
-      padding: 0;
-    }
-    .toc-list li { margin-bottom: 2px; }
-    .toc-list a {
-      display: block;
-      font-size: 12px;
-      color: var(--gray-600);
-      text-decoration: none;
-      padding: 4px 8px;
-      border-radius: 4px;
-      line-height: 1.4;
-      border-left: 2px solid transparent;
-      transition: color 0.15s, background 0.15s;
-    }
-    .toc-list a:hover {
-      color: var(--navy);
-      background: var(--gray-200);
-    }
-    .toc-list a.active {
-      color: var(--navy);
-      border-left-color: var(--red);
-      background: var(--gray-100);
-      font-weight: 600;
-    }
-    .toc-list .toc-h3 { padding-left: 18px; }
-
     /* ── FOOTER ─────────────────────────────────────────────── */
     footer {
-      background: var(--navy);
-      color: #8ea8cc;
-      border-top: 4px solid var(--red);
-      padding: 20px 0;
+      background: var(--hearth-md);
+      color: rgba(245,239,226,0.40);
+      border-top: 1px solid var(--border);
+      padding: 24px 0;
     }
     .footer-inner {
-      max-width: 860px;
+      max-width: 1100px;
       margin: 0 auto;
       padding: 0 32px;
       display: flex;
       justify-content: space-between;
       align-items: center;
       gap: 16px;
-      font-size: 12px;
+      font-family: var(--ui);
+      font-size: 13px;
     }
     .footer-inner a {
-      color: #8ea8cc;
+      color: rgba(245,239,226,0.55);
       text-decoration: none;
+      transition: color 0.15s;
     }
-    .footer-inner a:hover { color: var(--white); }
+    .footer-inner a:hover { color: var(--ember); }
 
     /* ── PRINT COVER (screen: hidden) ──────────────────────────── */
     .print-cover { display: none; }
@@ -389,101 +469,78 @@
         margin: 0.85in 1in 0.8in;
       }
 
-      /* Hide all screen chrome */
       header, footer, .doc-meta, .toc-sidebar { display: none !important; }
 
-      /* Org kicker that replaces the nav header */
       .print-cover {
         display: block;
         margin-bottom: 20pt;
         padding-bottom: 10pt;
-        border-bottom: 1.5pt solid var(--red);
+        border-bottom: 1pt solid #C49A28;
         -webkit-print-color-adjust: exact;
         print-color-adjust: exact;
       }
       .print-cover-org {
+        font-family: 'Source Sans 3', sans-serif;
         font-size: 8pt;
         font-weight: 700;
         text-transform: uppercase;
         letter-spacing: 0.1em;
-        color: var(--gray-600);
+        color: #5A4A32;
       }
       .print-cover-sys {
+        font-family: 'Source Sans 3', sans-serif;
         font-size: 8pt;
-        color: var(--gray-600);
+        color: #8A7458;
         margin-top: 2pt;
       }
 
-      /* Layout */
       .doc-layout { display: block; }
-      .doc-body   { max-width: 100%; padding: 0; margin: 0; }
-      body        { background: white; }
+      .doc-body { max-width: 100%; padding: 0; margin: 0; }
+      .doc-body article { border: none; padding: 0; background: white; }
+      body { background: white; }
 
-      /* Typography — print rhythm (10.5–11pt) */
       .md h1 {
         font-size: 22pt;
         line-height: 1.2;
-        border-bottom: none;   /* print-cover carries the red rule */
+        border-bottom: none;
         padding-bottom: 0;
         margin-bottom: 6pt;
-        -webkit-print-color-adjust: exact;
-        print-color-adjust: exact;
+        color: #1A2438;
       }
-      .md h2 { font-size: 13pt; margin-top: 24pt; margin-bottom: 6pt; }
-      .md h3 { font-size: 11pt; margin-top: 16pt; margin-bottom: 4pt; }
-      .md p, .md li { font-size: 10.5pt; line-height: 1.65; margin-bottom: 8pt; }
+      .md h2 { font-size: 13pt; margin-top: 24pt; margin-bottom: 6pt; color: #1A2438; }
+      .md h3 { font-size: 9pt; margin-top: 16pt; margin-bottom: 4pt; color: #1A2438; }
+      .md p, .md li { font-size: 10.5pt; line-height: 1.65; margin-bottom: 8pt; color: #1A2438; }
       .md table { font-size: 9.5pt; }
+      .md ul li::before, .md ol li::before { color: #C49A28; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
 
-      /* Page-break control */
       h2, h3 { break-after: avoid; page-break-after: avoid; }
       table, pre, blockquote { break-inside: avoid; page-break-inside: avoid; }
 
-      /* Code — light background for print (saves ink, reads cleanly B&W) */
       .md pre {
         background: #f4f6f8 !important;
-        border: 0.5pt solid #ccc !important;
-        border-left: 2.5pt solid var(--navy) !important;
+        border: 0.5pt solid #DFD3B4 !important;
+        border-left: 2.5pt solid #1A2438 !important;
         border-radius: 0;
         -webkit-print-color-adjust: exact;
         print-color-adjust: exact;
       }
-      .md pre code {
-        color: #1a2b4a !important;
-        font-size: 8.5pt;
-      }
-      .md code {
-        background: #f0f0f0 !important;
-        color: var(--navy) !important;
-        -webkit-print-color-adjust: exact;
-        print-color-adjust: exact;
-      }
-
-      /* Tables — preserve navy header */
-      .md thead tr {
-        -webkit-print-color-adjust: exact;
-        print-color-adjust: exact;
-      }
+      .md pre code { color: #1A2438 !important; font-size: 8.5pt; }
+      .md code { background: #EDE4CF !important; color: #3A2E1E !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+      .md thead tr { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
       .md tbody tr:hover { background: none; }
-
-      /* Blockquotes */
-      .md blockquote {
-        -webkit-print-color-adjust: exact;
-        print-color-adjust: exact;
-      }
-
-      /* Links — plain black, no underline decoration */
-      .md a { color: var(--text) !important; border-bottom: none !important; }
-
-      /* HR */
-      .md hr { margin: 18pt 0; }
+      .md blockquote { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+      .md a { color: #1A2438 !important; text-decoration: none !important; }
+      .md hr { border-top: 0.5pt solid #DFD3B4; margin: 18pt 0; }
     }
 
     /* ── RESPONSIVE ─────────────────────────────────────────── */
     @media (max-width: 900px) {
       .doc-layout { grid-template-columns: 1fr; }
       .toc-sidebar { display: none; }
-      .doc-body { padding: 32px 20px 60px; }
+      .doc-body { padding: 24px 16px 60px; }
+      .doc-body article { padding: 32px 24px 48px; }
       .header-inner { padding: 12px 20px; }
+      .wordmark-name { display: none; }
     }
   </style>
 </head>
@@ -491,13 +548,20 @@
 
 <header>
   <div class="header-inner">
-    <a class="back-link" href="index.html">
-      <svg width="14" height="14" viewBox="0 0 14 14"><path d="M8.5 2L4 7l4.5 5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" fill="none"/></svg>
-      JOSH Home
+    <a href="index.html" class="wordmark" aria-label="California Stewardship Alliance — home">
+      <img src="seal.png" alt="" class="wordmark-seal" loading="eager" decoding="async">
+      <div class="wordmark-text">
+        <span class="wordmark-name">California Stewardship Alliance</span>
+        <span class="wordmark-domain">californiastewardship.org</span>
+      </div>
     </a>
     <div class="header-divider"></div>
     <div class="doc-breadcrumb" id="breadcrumb">Loading…</div>
     <div class="header-actions">
+      <a class="back-link" href="index.html">
+        <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M8.5 2L4 7l4.5 5"/></svg>
+        All Documents
+      </a>
       <button onclick="window.print()">Print / PDF</button>
     </div>
   </div>
@@ -514,17 +578,18 @@
   <div class="doc-meta">
     <div class="doc-meta-inner">
       <span id="meta-title"></span>
-      <span id="meta-file" style="margin-left:auto;opacity:0.7;font-family:monospace;font-size:11px"></span>
+      <span id="meta-file" style="margin-left:auto;opacity:0.7;font-family:monospace;font-size:12px"></span>
     </div>
   </div>
 
   <div class="doc-layout">
     <div class="doc-body">
-      <div class="print-cover">
-        <div class="print-cover-org">California Stewardship</div>
-        <div class="print-cover-sys">JOSH Evacuation Capacity Standard</div>
-      </div>
-      <article class="md" id="md-content"></article>
+      <article class="md" id="md-content">
+        <div class="print-cover">
+          <div class="print-cover-org">California Stewardship Alliance</div>
+          <div class="print-cover-sys">JOSH — Fire Evacuation Capacity Analysis System</div>
+        </div>
+      </article>
     </div>
     <aside class="toc-sidebar" id="toc-sidebar">
       <div class="toc-label">Contents</div>
@@ -535,7 +600,7 @@
 
 <footer>
   <div class="footer-inner">
-    <span>JOSH — Fire Evacuation Capacity Analysis System &nbsp;&bull;&nbsp; California Stewardship</span>
+    <span>JOSH — Fire Evacuation Capacity Analysis System &nbsp;&bull;&nbsp; California Stewardship Alliance</span>
     <a href="index.html">← Return to overview</a>
   </div>
 </footer>
