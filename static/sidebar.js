@@ -153,7 +153,7 @@
       in_fire_zone:      !!(r.in_fire_zone   || r.hazard_zone && r.hazard_zone !== 'non_fhsz'),
       project_vehicles:  parseFloat((r.project_vehicles || 0).toFixed(1)),
       egress_minutes:    parseFloat((r.egress_minutes   || 0).toFixed(1)),
-      delta_t_threshold: parseFloat((r.delta_t_threshold|| 0).toFixed(4)),
+      delta_t_threshold: parseFloat((r.delta_t_threshold || (r.paths && r.paths[0] ? r.paths[0].threshold_minutes : 0) || 0).toFixed(4)),
       paths,
     };
   }
@@ -251,6 +251,14 @@
   const FHSZ_LEVEL = { vhfhsz: 3, high_fhsz: 2, moderate_fhsz: 1, non_fhsz: 0 };
   const FHSZ_DEG   = { vhfhsz: 0.35, high_fhsz: 0.50, moderate_fhsz: 0.75, non_fhsz: 1.00 };
 
+  // Returns the ΔT threshold for a hazard zone from live params.
+  // Used as fallback when result.delta_t_threshold is 0 (pre-fix stored results).
+  function _dtThreshold(hazard_zone) {
+    const pr = _params();
+    if (!pr || !pr.safe_egress_window) return 0;
+    return (pr.safe_egress_window[hazard_zone || 'non_fhsz'] || 0) * (pr.max_project_share || 0.05);
+  }
+
   function _buildBriefInput(project) {
     const result    = project.result || {};
     const pr        = _params();
@@ -271,7 +279,7 @@
       : `JOSH-${year}-${lat < 0 ? 'n' : ''}${latAbs}-${lng < 0 ? 'n' : ''}${lngAbs}`;
 
     const enrichedPaths = (result.paths || []).map(function (p) {
-      const thrMin  = +(result.delta_t_threshold || 0);
+      const thrMin  = +(result.delta_t_threshold || 0) || _dtThreshold(hz);
       const safeWin = thrMin > 0 && maxShare > 0 ? thrMin / maxShare : 0;
       return {
         path_id:                       p.bottleneck_osmid || '',
@@ -404,7 +412,7 @@
     var maxShare  = +(params.max_project_share || 0.05);
     var pv        = +(result.project_vehicles  || 0);
     var ep        = +(result.egress_minutes    || 0);
-    var thr       = +(result.delta_t_threshold || 0);
+    var thr       = +(result.delta_t_threshold || 0) || _dtThreshold(hz);
     var safeWin   = (maxShare > 0 && thr > 0) ? thr / maxShare : 0;
     var paths     = result.paths || [];
     var tier      = (result.tier || '').toUpperCase().trim();
@@ -1599,7 +1607,7 @@
           const ok       = !path.flagged;
           const dColor   = ok ? '#27ae60' : '#e74c3c';
           const dIcon    = ok ? '\u2713' : '\u25b2';
-          const thrLabel = !ok ? '> ' + (r.delta_t_threshold || 0).toFixed(2) + ' min max' : '';
+          const thrLabel = !ok ? '> ' + (r.delta_t_threshold || _dtThreshold(r.hazard_zone)).toFixed(2) + ' min max' : '';
           html += '<div style="margin-bottom:8px;padding:8px 10px;background:#fafafa;border-radius:6px;' +
                   'border-left:3px solid ' + dColor + ';">' +
             '<div style="display:flex;align-items:baseline;gap:6px;margin-bottom:' + (thrLabel || path.bottleneck_name ? '4px' : '0') + ';">' +
