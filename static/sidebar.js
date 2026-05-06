@@ -1118,8 +1118,6 @@
         _routeLayers.push(homeMarker);
       }
     }
-    const tier  = project.result.tier || '';
-    const color = TIER_COLOR[tier] || '#555';
     const bkMap = _jd().graph ? (function () {
       const m = new Map();
       (_jd().graph.edges || []).forEach(e => m.set(String(e.osmid), e));
@@ -1127,8 +1125,10 @@
     }()) : new Map();
 
     (project.result.paths || []).forEach(path => {
-      const coords = path.path_coords || path.coordinates || [];
+      const coords   = path.path_coords || path.coordinates || [];
       if (coords.length < 2) return;
+      const ok       = !path.flagged;
+      const pathColor = ok ? '#27ae60' : '#e74c3c';
       // AntPath for full route.
       // The leaflet-ant-path plugin exposes L.antPath() and L.polyline.antPath()
       // as aliases.  Guard against both in case only one form is available.
@@ -1137,9 +1137,8 @@
         : null;
       if (_antPathFn) {
         const ap = _antPathFn(coords, {
-          color, weight: 3, opacity: 0.8, delay: 1200, dashArray: [10, 20],
+          color: pathColor, weight: 3, opacity: 0.8, delay: 1200, dashArray: [10, 20],
         });
-        const ok  = !path.flagged;
         const tip = 'Route ' + (path.route_id || '?') + '  ·  ' +
                     (+(path.delta_t || 0)).toFixed(2) + ' min ' + (ok ? '✓' : '▲');
         ap.bindTooltip(tip, { sticky: true });
@@ -1149,7 +1148,7 @@
       // Thick bottleneck segment overlay
       const bkEdge = bkMap.get(String(path.bottleneck_osmid || ''));
       if (bkEdge && bkEdge.geom && bkEdge.geom.length >= 2 && typeof window.L !== 'undefined') {
-        const bl = window.L.polyline(bkEdge.geom, { color, weight: 6, opacity: 0.9 });
+        const bl = window.L.polyline(bkEdge.geom, { color: pathColor, weight: 6, opacity: 0.9 });
         const bnTip = 'Route ' + (path.route_id || '?') + ' bottleneck' +
                       (path.bottleneck_name ? ': ' + _formatBottleneck(path) : '');
         bl.bindTooltip(bnTip, { sticky: true });
