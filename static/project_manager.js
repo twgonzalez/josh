@@ -429,7 +429,7 @@
         fhsz_desc:                 FDESC[hz] || hz,
         fhsz_level:                FLVL[hz]  || 0,
         hazard_zone:               hz,
-        mobilization_rate:         +(params.mobilization_rate || 0.90),
+        behavioral_mobilization:   +(params.behavioral_mobilization || 0.90),
         hazard_degradation_factor: degFactor,
         serving_route_count:       result.serving_paths_count || 0,
         route_radius_miles:        0.5,

@@ -301,8 +301,8 @@ def _apply_baseline_demand(gdf: gpd.GeoDataFrame, config: dict) -> gpd.GeoDataFr
     """
     method      = config.get("evacuation_demand", {}).get("method", "catchment")
     peak_factor = config.get("aadt_peak_hour_factor", 0.10)
-    vpu         = config.get("vehicles_per_unit", 2.5)
-    mob         = config.get("mobilization_rate", 0.90)  # v3.4: NFPA 101, constant
+    vpu         = config.get("vehicles_per_unit", 1.9)
+    mob         = config.get("behavioral_mobilization", 0.90)  # FHWA: mandatory evac compliance rate, constant
     aadt_col    = "aadt" if "aadt" in gdf.columns else None
     has_catchment = "catchment_units" in gdf.columns
 
@@ -364,7 +364,7 @@ def _apply_buffer_demand(
     res_mob    = demand_cfg.get("resident_mobilization", 0.57)
     emp_mob    = demand_cfg.get("employee_mobilization_day", 1.00)
     stu_mob    = demand_cfg.get("student_mobilization_day", 1.00)
-    vpu        = demand_cfg.get("vehicles_per_unit", config.get("vehicles_per_unit", 2.5))
+    vpu        = demand_cfg.get("vehicles_per_unit", config.get("vehicles_per_unit", 1.9))
     emp_occ    = demand_cfg.get("employee_vehicle_occupancy", 1.0)
 
     logger.info(

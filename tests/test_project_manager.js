@@ -50,7 +50,7 @@ global.window = {
     parameters: {
       max_project_share:  0.05,
       unit_threshold:     15,
-      mobilization_rate:  0.90,
+      behavioral_mobilization: 0.90,
       safe_egress_window: { vhfhsz: 45, high_fhsz: 90, moderate_fhsz: 120, non_fhsz: 120 },
     },
     graph: {

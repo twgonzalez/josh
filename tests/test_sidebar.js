@@ -44,7 +44,7 @@ global.window = {
       parameters_version:  '4.0',
       unit_threshold:      15,
       max_project_share:   0.05,
-      mobilization_rate:   0.90,
+      behavioral_mobilization: 0.90,
       safe_egress_window:  { vhfhsz: 45, high_fhsz: 90, moderate_fhsz: 120, non_fhsz: 120 },
     },
     projects: [
@@ -62,7 +62,7 @@ global.window = {
           tier:              'MINISTERIAL',
           hazard_zone:       'non_fhsz',
           in_fire_zone:      false,
-          project_vehicles:  22.5,
+          project_vehicles:  17.1,
           egress_minutes:    0,
           delta_t_threshold: 6.0,
           paths: [
@@ -119,7 +119,7 @@ function fakeResult(overrides) {
     tier:              'MINISTERIAL WITH STANDARD CONDITIONS',
     hazard_zone:       'high_fhsz',
     in_fire_zone:      true,
-    project_vehicles:  112.5,
+    project_vehicles:  85.5,
     egress_minutes:    0,
     delta_t_threshold: 4.5,
     paths: [
@@ -326,7 +326,7 @@ test('S8: _buildBriefInput maps result fields to BriefInput v1 schema', () => {
   assert.equal(bi.analysis.unit_threshold,       15);
   assert.equal(bi.analysis.fhsz_flagged,         true);
   assert.equal(bi.analysis.hazard_zone,          'high_fhsz');
-  assert.ok(   bi.analysis.mobilization_rate > 0);
+  assert.ok(   bi.analysis.behavioral_mobilization > 0);
   assert.ok(   bi.analysis.serving_route_count >= 0);
 
   // result sub-object
@@ -390,7 +390,7 @@ test('S11: empty paths list stored and round-trips correctly (no-routes-found st
     tier:              'MINISTERIAL',
     hazard_zone:       'non_fhsz',
     in_fire_zone:      false,
-    project_vehicles:  112.5,
+    project_vehicles:  85.5,
     egress_minutes:    0,
     delta_t_threshold: 6.0,
     paths:             [],

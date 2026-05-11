@@ -336,7 +336,7 @@
         fhsz_desc:                 FHSZ_DESC[hz]  || hz,
         fhsz_level:                FHSZ_LEVEL[hz] || 0,
         hazard_zone:               hz,
-        mobilization_rate:         +(pr.mobilization_rate || 0.90),
+        behavioral_mobilization:   +(pr.behavioral_mobilization || 0.90),
         hazard_degradation_factor: degFactor,
         serving_route_count:       (result.paths || []).length,
         route_radius_miles:        0.5,
@@ -407,8 +407,8 @@
   function _buildAuditText(project, result, params) {
     var hz        = result.hazard_zone  || 'non_fhsz';
     var ut        = +(params.unit_threshold    || 15);
-    var vpu       = +(params.vehicles_per_unit || 2.5);
-    var mob       = +(params.mobilization_rate || 0.90);
+    var vpu       = +(params.vehicles_per_unit || 1.9);
+    var mob       = +(params.behavioral_mobilization || 0.90);
     var maxShare  = +(params.max_project_share || 0.05);
     var pv        = +(result.project_vehicles  || 0);
     var ep        = +(result.egress_minutes    || 0);
@@ -621,9 +621,9 @@
     L.push('  PARAMETERS APPLIED');
     L.push('  ' + sep38);
     L.push('  Hazard Zone:        ' + hz);
-    L.push('  Mobilization Rate:  ' + mob.toFixed(2) +
-           ' (NFPA 101 design basis -- constant; ~10% zero-vehicle HHs per Census ACS B25044)');
-    L.push('  Vehicles per Unit:  2.5 (U.S. Census ACS B25044)');
+    L.push('  Behavioral Mobilization: ' + mob.toFixed(2) +
+           ' (FHWA Emergency Transportation Operations -- mandatory evacuation compliance rate)');
+    L.push('  Vehicles per Unit:  1.9 (U.S. Census ACS B25044, CA statewide all-HH average)');
     L.push('  Egress Penalty:     ' + ep.toFixed(1) + ' min (NFPA 101/IBC -- ' +
            (project.stories || 0) + ' stories)');
     L.push('  Safe Egress Window: ' + safeWin.toFixed(0) + ' min (' + hz + ', per NIST TN 2135)');

@@ -850,13 +850,13 @@
         mechanically applies.
       </p>
       <p>
-        That distinction is the foundation of <strong>appellate survivability</strong>.
+        That distinction is what makes JOSH <strong>constitutionally sound</strong>: the city is not exercising discretion. It is implementing the law.
       </p>
     </div>
     <div class="hero-card" aria-hidden="true">
       <div class="card-label">Key Parameters &amp; Sources</div>
       <div class="stat-row">
-        <div class="stat-num">2.5</div>
+        <div class="stat-num">1.9</div>
         <div>
           <div class="stat-desc">Vehicles per household</div>
           <div class="stat-source">U.S. Census ACS Table B25044</div>
@@ -952,10 +952,10 @@
 <!-- ── THREE PILLARS ────────────────────────────────────────────── -->
 <section>
   <div class="container">
-    <div class="eyebrow-flanked">Three Pillars of Defensibility</div>
-    <h2>Built for <em>appellate courts</em> first.</h2>
+    <div class="eyebrow-flanked">Three Constitutional Foundations</div>
+    <h2>Grounded in <em>constitutional authority</em>.</h2>
     <div class="rule"></div>
-    <p class="section-lead">JOSH was designed for appellate courts before it was designed for planning departments. Every architectural decision traces back to one question: can we defend this in front of a judge who has never seen a traffic study?</p>
+    <p class="section-lead">JOSH implements what the California Legislature enacted in AB 747 and what the Housing Accountability Act expressly preserves. Every architectural decision traces to one principle: every input, every threshold, every output derives from the published standards the legislature intended cities to use — not from city discretion.</p>
     <div class="pillar-grid">
       <div class="pillar-card">
         <span class="pillar-icon">📐</span>
@@ -980,7 +980,7 @@
         <span class="pillar-icon">✏️</span>
         <h3>Hand-Auditable</h3>
         <p>Every determination JOSH produces comes with a plain-text audit trail. The full calculation — every input, every intermediate result, every threshold comparison — fits on one printed page.</p>
-        <p style="margin-top:12px;">A city attorney preparing for litigation can read the audit trail and explain every line to a judge without calling an expert witness. The calculation is four arithmetic operations. There is nothing to challenge that cannot be checked with a calculator in under ten minutes.</p>
+        <p style="margin-top:12px;">Any party — the developer, the city attorney, the court — can read the audit trail and verify every line without calling an expert witness. The calculation is four arithmetic operations. The city is not asking anyone to trust a model; it is showing its work, because the work is the law.</p>
       </div>
     </div>
   </div>
@@ -997,8 +997,8 @@
       <div class="step">
         <div class="step-num">1</div>
         <h4>Count the Cars</h4>
-        <p>Multiply the project's housing units by vehicles per household (Census ACS), then apply the 90% mobilization rate from NFPA 101 — the same design basis used to size stairwells in every building in the country. NFPA 101 assumes 100% occupant evacuation; the 10% reduction accounts for zero-vehicle households measured directly by Census.</p>
-        <p class="step-source">Sources: U.S. Census ACS B25044 &bull; NFPA 101 Life Safety Code</p>
+        <p>Multiply the project's housing units by 1.9 vehicles per household (Census ACS B25044, CA statewide all-household average — already includes zero-vehicle households), then apply the 90% behavioral mobilization factor from FHWA Emergency Transportation Operations — accounting for the share of households that successfully evacuate during an emergency.</p>
+        <p class="step-source">Sources: U.S. Census ACS B25044 &bull; FHWA Emergency Transportation Operations</p>
       </div>
       <div class="step">
         <div class="step-num">2</div>
@@ -1023,14 +1023,14 @@
     <div class="calc-example">
       <div>
         <div class="calc-label">Example: 45-unit project on a canyon road in a VHFHSZ zone</div>
-        <pre><strong>Step 1 — Project vehicles:</strong>   45 units × 2.5 veh/HH × 90% = <strong>101 vehicles</strong>
+        <pre><strong>Step 1 — Project vehicles:</strong>   45 units × 1.9 veh/HH × 90% = <strong>77 vehicles</strong>
 <strong>Step 2 — Bottleneck capacity:</strong>  1,350 vph (two-lane, 30 mph) × 35% (VHFHSZ) = <strong>472 vph</strong>
 <strong>Step 3 — Egress penalty:</strong>       3-story building → <strong>0 min</strong> (below 4-story threshold)
-<strong>Step 4 — ΔT:</strong>                  (101 ÷ 472) × 60 + 0 = <strong>12.8 minutes</strong>
+<strong>Step 4 — ΔT:</strong>                  (77 ÷ 472) × 60 + 0 = <strong>9.8 minutes</strong>
 <strong>Threshold (VHFHSZ):</strong>           45 min × 5% = <strong>2.25 minutes</strong></pre>
       </div>
       <div class="calc-result">
-        <div class="result-num">12.8</div>
+        <div class="result-num">9.8</div>
         <div class="result-unit">minutes added</div>
         <div class="result-verdict">Exceeds threshold &rarr; Discretionary</div>
       </div>
@@ -1097,7 +1097,7 @@
             <div class="publisher">Tables B25001, B25044</div>
           </td>
           <td>U.S. Census Bureau<br><span class="publisher">U.S. Department of Commerce</span></td>
-          <td>Vehicles per household (2.5 California average); zero-vehicle household rate (basis for 10% non-mobilizing share)</td>
+          <td>Vehicles per household (1.9 California statewide all-household average, ACS B25044); behavioral mobilization factor basis (FHWA)</td>
           <td><span class="use-badge">Vehicle generation rate</span></td>
         </tr>
         <tr>
@@ -1180,14 +1180,14 @@
     <div class="eyebrow-flanked">Adoption Pathway</div>
     <h2>Three tiers. <em>Use today.</em></h2>
     <div class="rule"></div>
-    <p class="section-lead">Cities can adopt JOSH at three levels of formality. Each tier strengthens legal defensibility. Tier 1 requires no action — a city can use JOSH to support a safety finding in a staff report today under its existing General Plan.</p>
+    <p class="section-lead">Cities can adopt JOSH at three levels of formality. Each tier more fully implements AB 747 and the HAA public safety exception. Tier 1 requires no action — a city can use JOSH to support a safety finding in a staff report today under its existing General Plan.</p>
     <div class="tier-grid">
       <div class="tier-card">
         <div class="tier-num">1</div>
         <div class="tier-action">Use today — no council action required</div>
         <h3>Staff Report Finding</h3>
         <p>A planner runs JOSH and cites the ΔT result in a staff report as evidentiary support for a safety finding under the Housing Accountability Act (Gov. Code §65589.5(j)(1)). The calculation is substantive evidence of a quantifiable, direct, unavoidable safety impact grounded in objective written standards.</p>
-        <p class="tier-note">Best for: immediate use while council adoption is pending. Defensibility is strong but not as strong as Tier 2.</p>
+        <p class="tier-note">Best for: immediate use while council adoption is pending. Constitutionally grounded from day one; Tier 2 deepens the legislative record.</p>
       </div>
       <div class="tier-card">
         <div class="tier-num">2</div>
@@ -1201,7 +1201,7 @@
         <div class="tier-action">General plan cycle — Safety Element</div>
         <h3>Safety Element Amendment</h3>
         <p>The ΔT standard is incorporated into the city's Safety Element as required by AB 747 (Gov. Code §65302.15). This is the highest level of adoption — a General Plan policy carries the full weight of legislative enactment and cannot be challenged as ad hoc or pretextual. Typically done as part of a scheduled General Plan update.</p>
-        <p class="tier-note">Strongest legal protection. Required by AB 747 for the next Safety Element update cycle.</p>
+        <p class="tier-note">The fullest implementation of AB 747 — the standard enacted into the General Plan, exactly as the legislature required.</p>
       </div>
     </div>
   </div>

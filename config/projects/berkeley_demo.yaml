@@ -21,7 +21,7 @@
 #   non_fhsz:      120 min × 5% = 6.00 min
 #
 # Core metric: ΔT = (project_vehicles / bottleneck_effective_capacity) × 60 + egress_penalty
-#   project_vehicles = units × 2.5 vpu × 0.90  (NFPA 101 constant — not zone-dependent)
+#   project_vehicles = units × 1.9 vpu × 0.90  (behavioral_mobilization, FHWA — not zone-dependent)
 #   effective_capacity = hcm_capacity × hazard_degradation_factor(fhsz_zone)
 #   egress_penalty = 0 for < 4 stories; min(stories × 1.5, 12) for ≥ 4 stories
 #
@@ -59,10 +59,10 @@ projects:
   # 2 — Mid-rise downtown: at threshold, bottleneck on local street → DISCRETIONARY
   #     3 stories → no egress penalty (below 4-story NFPA 101 threshold).
   #     v4.0: non-FHSZ threshold = 120 min × 5% = 6.0 min.
-  #     With 0.90 mob: 85 × 2.5 × 0.90 = 191.25 vehicles.
+  #     With 0.90 mob: 85 × 1.9 × 0.90 = 145.35 vehicles.
   #     Binding bottleneck: Adeline Street (multilane, 25 mph, 1 lane → 1,900 vph effective).
-  #     Tipping point: floor(6.0 × 1900 / 135) = 84 → 85 units flips to DISCRETIONARY.
-  #     ΔT = (191.25 / 1900) × 60 = 6.04 min > 6.00 min threshold.
+  #     Tipping point: floor(6.0 × 1900 / 60 / 1.71) ≈ 111 → at 85 units ΔT = (145.35/1900)×60 = 4.59 min
+  #     NOTE: At 1.9 vpu this project may now be CONDITIONAL — expected_tier may need updating after re-run.
   # -----------------------------------------------------------
   - name: "Downtown Mid-Rise"
     address: "Shattuck Ave & Center St, Downtown Berkeley"
@@ -72,12 +72,11 @@ projects:
     stories: 3
     description: >
       85-unit, 3-story project on Shattuck Ave. Exceeds the 15-unit threshold.
-      Non-FHSZ → no road degradation. Mobilization rate 0.90 (NFPA 101 design basis)
-      → 191.25 project vehicles. No egress penalty (3 stories < 4-story threshold).
+      Non-FHSZ → no road degradation. Behavioral mobilization 0.90 (FHWA)
+      × 1.9 vpu (ACS B25044) → 145.35 project vehicles. No egress penalty (3 stories < 4-story threshold).
       Binding bottleneck: Adeline Street (multilane, 25 mph, 1 lane → 1,900 vph effective).
-      ΔT = (191.25 / 1900) × 60 = 6.04 min > 6.00 min threshold → DISCRETIONARY.
-      Tipping point: 84 units → ΔT = 5.97 min (within threshold); 85 units → 6.04 min (over).
-      Demonstrates that even in non-FHSZ downtown, large projects can exceed threshold via
+      ΔT = (145.35 / 1900) × 60 = 4.59 min. Non-FHSZ threshold: 6.00 min.
+      Demonstrates that even in non-FHSZ downtown, large projects can approach threshold via
       road network capacity constraints on evacuation route collectors.
     expected_tier: "DISCRETIONARY"
 
@@ -119,8 +118,8 @@ projects:
 
   # -----------------------------------------------------------
   # 5 — Claremont Hills: NOT in FHSZ, hillside road, SMALL project → MINISTERIAL WITH STANDARD CONDITIONS
-  #     25 units × 2.5 × 0.90 = 56.25 vehicles.
-  #     56.25 / ~904 vph bottleneck × 60 ≈ 3.7 min — below 6.0-min non-FHSZ threshold.
+  #     25 units × 1.9 × 0.90 = 42.75 vehicles.
+  #     42.75 / ~904 vph bottleneck × 60 ≈ 2.8 min — below 6.0-min non-FHSZ threshold.
   #     Shows that smaller projects on constrained roads still pass.
   # -----------------------------------------------------------
   - name: "Claremont Hills Terrace"
@@ -130,9 +129,9 @@ projects:
     units: 25
     stories: 3
     description: >
-      25-unit hillside project NOT in a mapped FHSZ zone. Mobilization rate 0.90
-      (NFPA 101 design basis, constant) → 56.25 project vehicles. No road capacity
-      degradation (non-FHSZ). Ridge Road bottleneck (~904 vph) → ΔT ≈ 3.7 min.
+      25-unit hillside project NOT in a mapped FHSZ zone. Behavioral mobilization 0.90
+      (FHWA) × 1.9 vpu (ACS B25044) → 42.75 project vehicles. No road capacity
+      degradation (non-FHSZ). Ridge Road bottleneck (~904 vph) → ΔT ≈ 2.8 min.
       Non-FHSZ threshold: 120 min × 5% = 6.0 min. ΔT within threshold.
       MINISTERIAL WITH STANDARD CONDITIONS: size threshold met, pre-adopted conditions apply automatically.
       Compare with Project 2 (75 units, downtown) which exceeds threshold despite
@@ -151,8 +150,8 @@ projects:
     units: 75
     stories: 6
     description: >
-      75-unit, 6-story project in North Berkeley (NOT in FHSZ). Mobilization rate 0.90
-      (NFPA 101 constant) → 168.75 project vehicles. Building egress penalty: 6 stories
+      75-unit, 6-story project in North Berkeley (NOT in FHSZ). Behavioral mobilization 0.90
+      (FHWA) × 1.9 vpu (ACS B25044) → 128.25 project vehicles. Building egress penalty: 6 stories
       × 1.5 min/story = 9.0 min (NFPA 101). Cedar Street bottleneck (~1125 vph):
       vehicle ΔT + 9.0 min egress → max ΔT ~18.0 min > 6.0-min threshold → DISCRETIONARY.
       Mitigation: reduce stories to ≤3 (eliminates egress penalty, ΔT ≈ 9.0 min — still

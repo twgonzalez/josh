@@ -72,13 +72,13 @@ The system draws a buffer of a city-adopted radius around the project and inters
 > *What is the project's peak-hour vehicle load?*
 
 ```
-project_vph = dwelling_units × vehicles_per_unit × peak_hour_mobilization
-            = dwelling_units × 2.5 × 0.57
+project_vph = dwelling_units × vehicles_per_unit × behavioral_mobilization
+            = dwelling_units × 1.9 × 0.90
 ```
 
 Both factors come from external published sources:
-- **2.5 vehicles/unit** — U.S. Census American Community Survey
-- **0.57 mobilization rate** — KLD Engineering TR-1381, Berkeley AB 747 Study (March 2024, Figure 12)[^1]
+- **1.9 vehicles/unit** — U.S. Census American Community Survey, Table B25044 (CA statewide all-HH average)
+- **0.90 behavioral mobilization** — FHWA Emergency Transportation Operations (mandatory evacuation compliance rate)
 
 **What the mobilization rate measures:** Not everyone evacuates the moment an order is issued — people take time to become aware, gather belongings, and get into their cars. Evacuation demand builds gradually, peaks, then tapers as most people have already left. The mobilization rate is the fraction of housing units generating vehicle trips during the *single worst hour* of the evacuation — the peak of that demand curve. A rate of 0.57 means 57 out of every 100 housing units are actively generating a trip simultaneously at that peak. Using 100% would be unrealistically conservative; using the empirically measured peak is the technically correct approach. A **higher** rate produces more vehicles per project and a stricter standard; a **lower** rate produces fewer vehicles and a more permissive standard.
 
@@ -170,7 +170,7 @@ Fire zone location is recorded as a **severity modifier** (it affects required c
 
 | Step | Standard | Parameter | Value | Source |
 |------|----------|-----------|-------|--------|
-| Step 2 | Standard 1 | Unit threshold | 15 dwelling units | ITE de minimis (15 units × 2.5 × 0.57 = 21.4 peak-hour trips); SB 330 (Gov. Code §65905.5) statutory scale anchor |
+| Step 2 | Standard 1 | Unit threshold | 15 dwelling units | ITE de minimis (15 units × 1.9 × 0.90 = 25.65 peak-hour trips); SB 330 (Gov. Code §65905.5) statutory scale anchor |
 | Step 3 | Standard 2 | Route type | `is_evacuation_route == True` | Network analysis: all city block group centroids → city exits |
 | Step 3 | Standard 2 | Search radius | 0.5 miles | City-adopted objective standard |
 | Step 1 | Standard 3 | Project in FHSZ | GIS point-in-polygon | CAL FIRE FHSZ, HAZ_CLASS ≥ 2 — activates surge multiplier in Standard 4 |
@@ -230,8 +230,8 @@ Every step is arithmetic against a city-adopted threshold. Step 1 queries a poly
 ### "The parameters are arbitrary."
 No parameter was invented for this system:
 - **0.95** — Exact LOS E/F boundary in HCM 2022, cited in Caltrans guidance and federal transportation planning.
-- **15 units** — The minimum size at which peak-hour load (`15 × 2.5 × 0.57 = 21.4 vph`) exceeds the ITE Trip Generation Handbook de minimis of 10–15 peak-hour trips commonly applied in California traffic studies — the point at which a project's contribution is statistically distinguishable from background traffic variation. Statutory anchor: California's Housing Crisis Act (SB 330, Gov. Code §65905.5) applies heightened review protections to projects of 10+ units, establishing legislative recognition that 10+ unit projects have material scale; 15 is the first integer above the ITE de minimis that falls squarely within that class. Projects below 15 units — including all SB 9 duplexes and most ADUs — receive ministerial approval without analysis.
-- **2.5 vehicles/unit** — U.S. Census ACS, the standard source for all trip generation studies.
+- **15 units** — The minimum size at which peak-hour load (`15 × 1.9 × 0.90 = 25.65 vph`) exceeds the ITE Trip Generation Handbook de minimis of 10–15 peak-hour trips commonly applied in California traffic studies — the point at which a project's contribution is statistically distinguishable from background traffic variation. Statutory anchor: California's Housing Crisis Act (SB 330, Gov. Code §65905.5) applies heightened review protections to projects of 10+ units, establishing legislative recognition that 10+ unit projects have material scale; 15 is the first integer above the ITE de minimis that falls squarely within that class. Projects below 15 units — including all SB 9 duplexes and most ADUs — receive ministerial approval without analysis.
+- **1.9 vehicles/unit** — U.S. Census ACS Table B25044, California statewide all-household average (includes zero-vehicle households).
 - **0.57 mobilization rate** — The fraction of housing units generating vehicle trips simultaneously during the peak hour of evacuation, measured from observed traffic data during actual California wildfire evacuations. Source: KLD Engineering TR-1381, Berkeley AB 747 Study, March 2024, Figure 12. Other cities adopt their own factor using four documented sourcing options; the OPR AB 747 state guidance range is 0.40–0.75.[^1]
 - **0.25-mile radius** — KLD Engineering quarter-mile buffer methodology (same study).
 
@@ -291,7 +291,7 @@ This system generates the audit trail for steps 3 and 4. Steps 1 and 2 are the c
 |----------|--------------------|
 | Highway Capacity Manual, 7th Ed. (HCM 2022) | `capacity_vph` by road type; `vc_threshold = 0.95` (exact LOS E/F boundary) |
 | KLD Engineering TR-1381, Berkeley AB 747 Study (March 2024) | `peak_hour_mobilization = 0.57`; `buffer_radius = 0.25 mi`; `employee_mobilization_day = 1.00` |
-| U.S. Census ACS Table B25001 | Housing unit base; `vehicles_per_unit = 2.5` |
+| U.S. Census ACS Table B25001 | Housing unit base; `vehicles_per_unit = 1.9` |
 | U.S. Census LEHD LODES8 | Employee demand base |
 | CAL FIRE FHSZ dataset (OSFM) | Scenario A applicability gate; fire zone severity modifier |
 
@@ -305,7 +305,7 @@ All parameters live in `config/parameters.yaml` or `config/cities/{city}.yaml`. 
 |-----------|---------|------------|--------|------------|
 | Unit threshold | 15 units | `determination_tiers.discretionary.unit_threshold` | ITE de minimis (21.4 vph); SB 330 (Gov. Code §65905.5) scale anchor | City council |
 | V/C threshold | 0.95 | `determination_tiers.discretionary.vc_threshold` | HCM 2022 exact LOS E/F boundary | City council |
-| Vehicles per unit | 2.5 | `vehicles_per_unit` | U.S. Census ACS | U.S. Census (city inherits) |
+| Vehicles per unit | 1.9 | `vehicles_per_unit` | U.S. Census ACS B25044 (CA statewide) | U.S. Census (city inherits) |
 | Peak-hour mobilization | 0.57 | `peak_hour_mobilization` | KLD Engineering AB 747 study | City council |
 | AADT peak-hour factor | 0.10 | `aadt_peak_hour_factor` | Standard traffic engineering practice | City council |
 | Evacuation route radius | 0.5 mi | `evacuation_route_radius_miles` | City-adopted standard | City council |

@@ -440,14 +440,14 @@ const WhatIfEngine = (() => {
   // ── ΔT calculation ────────────────────────────────────────────────────────────
   // Mirrors: agents/scenarios/base.py compute_delta_t()
   // All constants read from _params — no hardcoded values here.
-  //   project_vehicles = units × vehicles_per_unit × mobilization_rate
+  //   project_vehicles = units × vehicles_per_unit × behavioral_mobilization
   //   egress_minutes   = 0 if stories < threshold; else min(stories × mps, max_min)
   //   ΔT               = (project_vehicles / bottleneck_eff_cap_vph) × 60 + egress_minutes
   //   threshold        = safe_egress_window[hazard_zone] × max_project_share
 
   function computeDeltaT(servingPaths, units, stories, hazardZone) {
     const p = _params;
-    const projectVehicles = units * p.vehicles_per_unit * p.mobilization_rate;
+    const projectVehicles = units * p.vehicles_per_unit * p.behavioral_mobilization;
 
     const ep = p.egress_penalty;
     const egressMinutes =

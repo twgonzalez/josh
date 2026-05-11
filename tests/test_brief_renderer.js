@@ -39,8 +39,8 @@ function makeProject(overrides) {
 function makeParameters(overrides) {
   return Object.assign({
     unit_threshold:     15,
-    vehicles_per_unit:  2.5,
-    mobilization_rate:  0.90,
+    vehicles_per_unit:       1.9,
+    behavioral_mobilization: 0.90,
     hazard_degradation: { vhfhsz: 0.35, high_fhsz: 0.50, moderate_fhsz: 0.75, non_fhsz: 1.00 },
     safe_egress_window: { vhfhsz: 45, high_fhsz: 90, moderate_fhsz: 120, non_fhsz: 120 },
     max_project_share:  0.05,
@@ -101,7 +101,7 @@ function makeAnalysis(applicabilityMet, fhszFlagged, overrides) {
     fhsz_desc:                 fhszFlagged ? 'Very High Fire Hazard Severity Zone' : 'Not in FHSZ',
     fhsz_level:                fhszFlagged ? 3 : 0,
     hazard_zone:               fhszFlagged ? 'vhfhsz' : 'non_fhsz',
-    mobilization_rate:         0.90,
+    behavioral_mobilization:   0.90,
     hazard_degradation_factor: fhszFlagged ? 0.35 : 1.00,
     serving_route_count:       applicabilityMet ? 2 : 0,
     route_radius_miles:        0.5,

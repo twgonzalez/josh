@@ -93,7 +93,7 @@ Corrections are not made on a project-specific basis. A correction that applies 
 The JOSH audit trail contains every value needed to reproduce the ΔT result independently. The calculation is five arithmetic operations:
 
 ```
-project_vehicles     = units × 2.5 × 0.90
+project_vehicles     = units × 1.9 × 0.90
 bottleneck_capacity  = HCM_base_capacity × degradation_factor
 delta_T_road         = (project_vehicles ÷ bottleneck_capacity) × 60
 egress_penalty       = 0 if stories < 4; min(stories × 1.5, 12) if stories ≥ 4
@@ -102,20 +102,22 @@ egress_penalty       = 0 if stories < 4; min(stories × 1.5, 12) if stories ≥ 
 
 A five-row spreadsheet is sufficient. The audit trail states the unit count, the bottleneck road type, the posted speed, the FHSZ zone, and the story count. Cross-reference each against the classification tables above. If the hand calculation matches the audit trail result within rounding, the output is verified.
 
+**What the two demand parameters represent.** The 1.9 factor is the Census ACS B25044 California statewide average vehicles per housing unit across *all* occupied households, including zero-vehicle households. Those households contribute zero vehicles to the numerator of that average, so they are already reflected in the 1.9 figure — no additional adjustment for zero-car households is applied. The 0.90 factor is the FHWA behavioral mobilization rate: the fraction of vehicle-owning households that reach the road during a mandatory evacuation, accounting for residents away from home, delayed mobilization, and shadow non-compliance. The two parameters cover separate concerns — vehicle ownership and evacuation behavior — and their product, 1.71 effective vehicles per unit, is the design demand rate. If a city overrides `vehicles_per_unit` with local ACS B25044 data to reflect a higher or lower vehicle ownership rate, `behavioral_mobilization` should not also be adjusted to account for zero-car households. Each parameter has one job.
+
 ### Example verification
 
 A 60-unit, 5-story project on a two-lane, 30 mph road in a VHFHSZ zone:
 
 ```
-project_vehicles     = 60 × 2.5 × 0.90                     = 135 vehicles
+project_vehicles     = 60 × 1.9 × 0.90                     = 102.6 vehicles
 HCM base capacity    = 1,350 pc/h (two-lane, 30 mph)
 degradation factor   = 0.35 (VHFHSZ)
 bottleneck_capacity  = 1,350 × 0.35                         = 472.5 vph
-delta_T_road         = (135 ÷ 472.5) × 60                   = 17.1 minutes
+delta_T_road         = (102.6 ÷ 472.5) × 60                 = 13.0 minutes
 egress_penalty       = min(5 × 1.5, 12)                     = 7.5 minutes
-ΔT                   = 17.1 + 7.5                           = 24.6 minutes
+ΔT                   = 13.0 + 7.5                           = 20.5 minutes
 Threshold (VHFHSZ)   = 45 × 0.05                            = 2.25 minutes
-Result               = DISCRETIONARY (24.6 > 2.25)
+Result               = DISCRETIONARY (20.5 > 2.25)
 ```
 
 If the JOSH audit trail shows a materially different result and the inputs are consistent, contact the JOSH support contact to investigate. Rounding differences of less than 0.1 minutes are expected and do not require a correction.
@@ -137,22 +139,22 @@ required_capacity = (project_vehicles ÷ threshold_minutes) × 60
 For the example above:
 
 ```
-required_capacity = (135 ÷ 2.25) × 60 = 3,600 vph
+required_capacity = (102.6 ÷ 2.25) × 60 = 2,736 vph
 ```
 
-The existing effective capacity is 472.5 vph (1,350 × 0.35). The gap is 3,127.5 vph. That gap cannot be closed by a road improvement alone at a 35% fire-condition degradation factor — the base capacity required to deliver 3,600 effective vph in a VHFHSZ zone would be 3,600 ÷ 0.35 = 10,286 pc/h, which exceeds freeway capacity. In this case, the road improvement path is not viable and the developer's only options are a unit reduction or a second independent egress route.
+The existing effective capacity is 472.5 vph (1,350 × 0.35). The gap is 2,263.5 vph. That gap cannot be closed by a road improvement alone at a 35% fire-condition degradation factor — the base capacity required to deliver 2,736 effective vph in a VHFHSZ zone would be 2,736 ÷ 0.35 = 7,817 pc/h, which exceeds freeway capacity. In this case, the road improvement path is not viable and the developer's only options are a unit reduction or a second independent egress route.
 
 For a more constrained example — a 20-unit project in a VHFHSZ zone with ΔT = 4.0 minutes:
 
 ```
-project_vehicles     = 20 × 2.5 × 0.90          = 45 vehicles
+project_vehicles     = 20 × 1.9 × 0.90          = 34.2 vehicles
 threshold            = 2.25 minutes
-required_capacity    = (45 ÷ 2.25) × 60         = 1,200 vph
+required_capacity    = (34.2 ÷ 2.25) × 60       = 912 vph
 existing capacity    = 472.5 vph (1,350 × 0.35)
-required base cap    = 1,200 ÷ 0.35             = 3,429 pc/h
+required base cap    = 912 ÷ 0.35               = 2,606 pc/h
 ```
 
-A two-lane road cannot achieve 3,429 pc/h base capacity at any speed. But a multilane road (1,900 pc/h × 2 lanes = 3,800 pc/h base) would deliver 3,800 × 0.35 = 1,330 vph effective — above the 1,200 vph required. So widening the bottleneck from a two-lane to a four-lane cross-section would bring the project within the threshold.
+A two-lane road cannot achieve 2,606 pc/h base capacity at any speed. But a multilane road (1,900 pc/h × 2 lanes = 3,800 pc/h base) would deliver 3,800 × 0.35 = 1,330 vph effective — above the 912 vph required. So widening the bottleneck from a two-lane to a four-lane cross-section would bring the project within the threshold.
 
 ### Specifying the improvement
 

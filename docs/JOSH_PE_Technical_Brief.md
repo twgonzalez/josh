@@ -1,7 +1,7 @@
 # JOSH — Technical Brief for Professional Engineer Review
 
-**System:** JOSH Fire Evacuation Capacity Analysis System v3.4
-**Version:** March 2026 (updated for v3.4 — regional-network exit nodes, travel-time routing)
+**System:** JOSH Fire Evacuation Capacity Analysis System v3.4.1
+**Version:** May 2026 (updated for v3.4.1 — ACS B25044 1.9 vpu, FHWA behavioral mobilization)
 **Audience:** Licensed professional engineers evaluating methodology veracity
 **Purpose:** Demonstrate that the system's outputs are derived entirely from published national standards and federal data; that the software is an automation layer, not a new methodology
 
@@ -9,7 +9,7 @@
 
 ## 1. What This System Does
 
-JOSH (v3.4) computes a single number — **ΔT, in minutes** — for each proposed residential development: the additional evacuation clearance time that the project's vehicles would impose on the most constrained serving road segment. That number is compared to a threshold derived from published fire timeline data. If ΔT exceeds the threshold, the project triggers discretionary review; if not, it is ministerial.
+JOSH (v3.4.1) computes a single number — **ΔT, in minutes** — for each proposed residential development: the additional evacuation clearance time that the project's vehicles would impose on the most constrained serving road segment. That number is compared to a threshold derived from published fire timeline data. If ΔT exceeds the threshold, the project triggers discretionary review; if not, it is ministerial.
 
 No engineering judgment is required at any step. Every input is drawn from a published, authoritative source. Every calculation is arithmetic.
 
@@ -48,17 +48,15 @@ The count of proposed dwelling units. This is a project input — it is the numb
 
 ### 3.2 Vehicles per Unit
 
-Default: **2.5 vehicles per dwelling unit**, sourced from U.S. Census Bureau American Community Survey 5-Year Estimates, Table B25044 (vehicles available by tenure), city average. This is a federal statistical dataset produced by a Congressionally-mandated enumeration. It can be overridden by a city's own ACS-derived figure.
+Default: **1.9 vehicles per dwelling unit**, sourced from U.S. Census Bureau American Community Survey 5-Year Estimates, Table B25044 (vehicles available by tenure), California statewide all-household average. This is a federal statistical dataset produced by a Congressionally-mandated enumeration. It can be overridden by a city's own ACS-derived figure.
 
-### 3.3 Mobilization Rate — 0.90 (Constant)
+### 3.3 Behavioral Mobilization Rate — 0.90 (Constant)
 
-**Source: NFPA 101 Life Safety Code, full-evacuation design basis.**
+**Source: FHWA Emergency Transportation Operations — mandatory evacuation compliance rate for residential areas under imminent fire threat.**
 
-NFPA 101 designs building egress for 100% occupant evacuation. Fire marshals do not size stairwells based on observed partial-evacuation behavior in past fires. They size them for the case that requires everyone to get out, because that is the case exits must handle. This standard applies the same design principle to the roads those buildings depend on.
+FHWA documents that approximately 90% of households in a mandatory evacuation zone will generate a vehicle trip during the critical evacuation window. This is an empirically measured compliance rate, not a design assumption. It accounts for residents not home, shadow non-compliance, and households sharing vehicles. It does NOT account for vehicle non-ownership — that is already embedded in the `vehicles_per_unit` figure (the all-household ACS average, which includes zero-vehicle households).
 
-The rate is 0.90 rather than 1.00 to account for approximately 10% of households with zero vehicles, as measured by Census ACS B25044. The 10% zero-vehicle adjustment is a federal data observation, not a policy choice.
-
-**The mobilization rate does not vary by fire hazard zone.** In v3.4, FHSZ affects only road capacity (the denominator). Mobilization is constant because the demand a project generates on a road — the number of vehicles that must pass through the bottleneck — does not change based on which side of a FHSZ boundary the project site falls on.
+**The mobilization rate does not vary by fire hazard zone.** In v3.4.1, FHSZ affects only road capacity (the denominator). Mobilization is constant because the demand a project generates on a road — the number of vehicles that must pass through the bottleneck — does not change based on which side of a FHSZ boundary the project site falls on.
 
 ---
 

@@ -67,8 +67,8 @@ Both use HCM 2022. The tables are identical:
 | Approach | KLD | JOSH |
 |---|---|---|
 | Source | ACS vehicles-by-BG in ¼-mile buffer | Census ACS B25044 |
-| Unit rate | ACS aggregate vehicle count | 2.5 vpu × 0.90 mobilization |
-| Mobilization basis | Not explicitly stated | NFPA 101 (100% occupant evacuation) |
+| Unit rate | ACS aggregate vehicle count | 1.9 vpu × 0.90 behavioral mobilization |
+| Mobilization basis | Not explicitly stated | FHWA Emergency Transportation Operations |
 | Pass-through traffic | Caltrans HPMS AADT subtracted | Not modeled |
 | Tourist vehicles | Excluded | Excluded |
 | Transit | Not considered | Not modeled |

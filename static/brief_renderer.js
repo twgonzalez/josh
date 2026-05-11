@@ -650,7 +650,7 @@
     var fhszFlagged = an.fhsz_flagged !== undefined ? an.fhsz_flagged : (hazardZone !== 'non_fhsz');
     var fhszDesc    = an.fhsz_desc  || (fhszFlagged ? hzLabel : 'Not in FHSZ');
     var fhszLevel   = +(an.fhsz_level || 0);
-    var mobRate     = +(an.mobilization_rate || p.mobilization_rate || 0.90);
+    var mobRate     = +(an.behavioral_mobilization || p.behavioral_mobilization || 0.90);
     var degFactor   = +(an.hazard_degradation_factor || (p.hazard_degradation||{})[hazardZone] || DEG_FACTOR[hazardZone] || 1.00);
 
     var s3Chip, s3ChipCls, s3BadgeColor, s3Detail;
@@ -789,7 +789,7 @@
         mergedTableHtml = derivBlock +
           "<div style='font-size:11px;color:#6c757d;margin-bottom:4px;'>" +
           egresNote + "Project vehicles: <strong>" + _f(projVph,0) + "</strong>" +
-          " (units &times; 2.5 vpu &times; 0.90 NFPA 101 constant)." +
+          " (units &times; 1.9 vpu &times; 0.90 FHWA behavioral mobilization)." +
           " Effective capacity = HCM raw &times; " + _f(degFactor,2) + " hazard degradation.</div>" +
           "<table class='route-table'><thead><tr>" +
           "<th>Path</th><th>Bottleneck Segment</th><th>FHSZ Zone</th>" +
@@ -1007,8 +1007,8 @@
     var hzLabel     = _zl(hazardZone);
     var fhszDesc    = an.fhsz_desc || (hazardZone !== 'non_fhsz' ? hzLabel : 'Not in FHSZ');
     var ut          = +(p.unit_threshold || 15);
-    var vpu         = +(p.vehicles_per_unit || 2.5);
-    var mobRate     = +(p.mobilization_rate || 0.90);
+    var vpu         = +(p.vehicles_per_unit || 1.9);
+    var mobRate     = +(p.behavioral_mobilization || 0.90);
     var maxShare    = +(p.max_project_share || 0.05);
     var egCfg       = p.egress_penalty || {};
     var egrThr      = +(egCfg.threshold_stories || 4);

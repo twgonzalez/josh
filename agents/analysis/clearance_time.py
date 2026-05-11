@@ -13,7 +13,7 @@ Formula:
     clearance_time_minutes = (total_vehicles / total_exit_capacity_vph) * 60
 
 where:
-    total_vehicles = sum(block_group.housing_units) * vehicles_per_unit * mobilization_rate
+    total_vehicles = sum(block_group.housing_units) * vehicles_per_unit * behavioral_mobilization
     total_exit_capacity_vph = sum of unique exit segment effective_capacity_vph
                                (deduplicated by exit_segment_osmid)
 
@@ -24,7 +24,7 @@ safe egress window.
 Source references:
     - NIST TN 2135 (Camp Fire clearance timeline)
     - HCM 2022 (capacity methodology)
-    - NFPA 101 (mobilization rate design basis)
+    - FHWA Emergency Transportation Operations (behavioral_mobilization design basis)
 """
 
 from __future__ import annotations
@@ -62,7 +62,7 @@ class ZoneClearance:
     zone: str                           # "vhfhsz" | "high_fhsz" | "moderate_fhsz" | "non_fhsz"
     zone_label: str                     # Human-readable label
     housing_units: float                # Housing units in this zone (area-weighted)
-    total_vehicles: float               # housing_units * vpu * mobilization_rate
+    total_vehicles: float               # housing_units * vpu * behavioral_mobilization
     exit_capacity_vph: float            # sum of unique exit effective_capacity_vph serving zone
     clearance_time_minutes: float       # total_vehicles / exit_capacity_vph * 60 (inf if no exits)
     safe_egress_window_minutes: float   # from config
@@ -110,8 +110,8 @@ def compute_clearance_time(
     -------
     ClearanceResult
     """
-    vpu = float(config.get("vehicles_per_unit", 2.5))
-    mob = float(config.get("mobilization_rate", 0.90))
+    vpu = float(config.get("vehicles_per_unit", 1.9))
+    mob = float(config.get("behavioral_mobilization", 0.90))
     safe_windows = config.get("safe_egress_window", {})
 
     notes: list[str] = []

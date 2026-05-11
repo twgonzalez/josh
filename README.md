@@ -52,7 +52,7 @@ Standard 1 — Size gate:       units ≥ 15
 Standard 2 — Route ID:        buffer 0.5 mi → identify serving evacuation paths
 Standard 3 — Hazard zone:     GIS point-in-polygon → CAL FIRE FHSZ
 Standard 4 — ΔT test:         ΔT = (project_vehicles / bottleneck_capacity) × 60 + egress_penalty
-                               project_vehicles = units × 2.5 vpu × 0.90 (NFPA 101, constant)
+                               project_vehicles = units × 1.9 vpu × 0.90 (FHWA, constant)
                                threshold: VHFHSZ=2.25 min, High=4.50 min, Mod/Non=6.00 min
 Standard 5 — SB 79 transit:   informational flag only
 

@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-05-06T13:12:31.264166+00:00",
+  "generated_at": "2026-05-11T02:43:06.016009+00:00",
   "parameters_version": "4.0",
   "vectors": [
     {
@@ -27,38 +27,38 @@
         "stories": 3
       },
       "expected": {
-        "tier": "DISCRETIONARY",
+        "tier": "MINISTERIAL WITH STANDARD CONDITIONS",
         "hazard_zone": "non_fhsz",
-        "project_vehicles": 191.2,
+        "project_vehicles": 145.3,
         "serving_paths_count": 5,
         "paths": [
           {
             "bottleneck_osmid": "1000718782",
-            "delta_t_minutes": 6.04,
+            "delta_t_minutes": 4.59,
             "threshold_minutes": 6.0,
-            "flagged": true
+            "flagged": false
           },
           {
             "bottleneck_osmid": "25738782",
-            "delta_t_minutes": 3.02,
+            "delta_t_minutes": 2.29,
             "threshold_minutes": 6.0,
             "flagged": false
           },
           {
             "bottleneck_osmid": "6320410",
-            "delta_t_minutes": 5.1,
+            "delta_t_minutes": 3.88,
             "threshold_minutes": 6.0,
             "flagged": false
           },
           {
             "bottleneck_osmid": "6321559",
-            "delta_t_minutes": 5.1,
+            "delta_t_minutes": 3.88,
             "threshold_minutes": 6.0,
             "flagged": false
           },
           {
             "bottleneck_osmid": "9577895",
-            "delta_t_minutes": 5.1,
+            "delta_t_minutes": 3.88,
             "threshold_minutes": 6.0,
             "flagged": false
           }
@@ -76,12 +76,12 @@
       "expected": {
         "tier": "DISCRETIONARY",
         "hazard_zone": "vhfhsz",
-        "project_vehicles": 180.0,
+        "project_vehicles": 136.8,
         "serving_paths_count": 1,
         "paths": [
           {
             "bottleneck_osmid": "6375810",
-            "delta_t_minutes": 27.43,
+            "delta_t_minutes": 20.85,
             "threshold_minutes": 2.25,
             "flagged": true
           }
@@ -115,12 +115,12 @@
       "expected": {
         "tier": "MINISTERIAL WITH STANDARD CONDITIONS",
         "hazard_zone": "non_fhsz",
-        "project_vehicles": 56.2,
+        "project_vehicles": 42.8,
         "serving_paths_count": 1,
         "paths": [
           {
             "bottleneck_osmid": "23089172",
-            "delta_t_minutes": 3.0,
+            "delta_t_minutes": 2.28,
             "threshold_minutes": 6.0,
             "flagged": false
           }
@@ -138,12 +138,12 @@
       "expected": {
         "tier": "DISCRETIONARY",
         "hazard_zone": "non_fhsz",
-        "project_vehicles": 168.8,
+        "project_vehicles": 128.2,
         "serving_paths_count": 1,
         "paths": [
           {
             "bottleneck_osmid": "6393514",
-            "delta_t_minutes": 18.0,
+            "delta_t_minutes": 15.84,
             "threshold_minutes": 6.0,
             "flagged": true
           }

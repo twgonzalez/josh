@@ -885,7 +885,7 @@ def _print_demo_summary(projects: list, config: dict):
         color   = _TIER_COLOR.get(det, "white")
         std1    = "[green]✓[/green]" if p.meets_size_threshold else "[dim]✗[/dim]"
         hz      = getattr(p, "hazard_zone", "non_fhsz")
-        mob     = getattr(p, "mobilization_rate", 0.0)
+        mob     = getattr(p, "behavioral_mobilization", 0.0)
         max_dt  = p.max_delta_t() if hasattr(p, "max_delta_t") else 0.0
         n_flagged = p.flagged_path_count() if hasattr(p, "flagged_path_count") else 0
         fzone   = (f"[red]{hz[:8]}[/red]" if p.in_fire_zone else f"[dim]{hz[:8]}[/dim]")

@@ -526,8 +526,8 @@ def _build_legal_authority_section() -> str:
 
 
 def _build_methodology_section(config: dict) -> str:
-    vpu = config.get("vehicles_per_unit", 2.5)
-    mob = config.get("mobilization_rate", 0.90)
+    vpu = config.get("vehicles_per_unit", 1.9)
+    mob = config.get("behavioral_mobilization", 0.90)
     safe_windows = config.get("safe_egress_window", {})
     deg = config.get("hazard_degradation", {}).get("factors", {})
 

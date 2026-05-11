@@ -222,8 +222,8 @@ class WildlandScenario(EvacuationScenario):
         project.fire_zone_level = fire_zone_detail.get("zone_level", 0)
         project.hazard_zone     = fire_zone_detail.get("hazard_zone", "non_fhsz")
 
-        # Mobilization is constant (NFPA 101 design basis) — not FHSZ-dependent
-        project.mobilization_rate = self.config.get("mobilization_rate", 0.90)
+        # Behavioral mobilization is constant (FHWA) — not FHSZ-dependent
+        project.behavioral_mobilization = self.config.get("behavioral_mobilization", 0.90)
 
         return True, {
             "result":                    True,
@@ -232,15 +232,15 @@ class WildlandScenario(EvacuationScenario):
             "std3_zone_level":           project.fire_zone_level,
             "std3_zone_desc":            fire_zone_detail.get("zone_description", "Not in FHSZ"),
             "std3_hazard_zone":          project.hazard_zone,
-            "std3_mobilization_rate":    project.mobilization_rate,
+            "std3_behavioral_mobilization": project.behavioral_mobilization,
             "fire_zone_severity_modifier": fire_zone_detail,
             "note": (
                 f"FHSZ Zone {project.fire_zone_level} ({project.hazard_zone}) — "
                 f"road capacity degradation applied; mobilization unaffected. "
-                f"Mobilization rate {project.mobilization_rate:.2f} (NFPA 101 design basis, constant)."
+                f"Behavioral mobilization {project.behavioral_mobilization:.2f} (FHWA, constant)."
                 if fire_zone_result else
                 f"Not in FHSZ (hazard_zone=non_fhsz) — no road degradation. "
-                f"Mobilization rate {project.mobilization_rate:.2f} (NFPA 101 design basis, constant)."
+                f"Behavioral mobilization {project.behavioral_mobilization:.2f} (FHWA, constant)."
             ),
         }
 
@@ -358,7 +358,7 @@ class WildlandScenario(EvacuationScenario):
         max_dt    = step5.get("max_delta_t_minutes", 0.0)
         threshold = step5.get("threshold_minutes", 0.0)
         hz        = step5.get("hazard_zone", "non_fhsz")
-        mob       = step5.get("mobilization_rate", 0.90)
+        mob       = step5.get("behavioral_mobilization", 0.90)
         n_paths   = sum(1 for r in step5.get("path_results", []) if r.get("flagged"))
         fire_note = (
             f"FHSZ Zone {project.fire_zone_level} ({hz}) — road capacity degradation applied. "
@@ -370,7 +370,7 @@ class WildlandScenario(EvacuationScenario):
             f"{n_paths} serving path(s) exceed the ΔT threshold of {threshold:.2f} min "
             f"(max ΔT: {max_dt:.1f} min). "
             f"{fire_note}"
-            f"Mobilization: {mob:.2f} (NFPA 101 design basis, constant). "
+            f"Behavioral mobilization: {mob:.2f} (FHWA, constant). "
             f"Discretionary review required. Legal basis: {self.legal_basis}."
         )
 
@@ -379,7 +379,7 @@ class WildlandScenario(EvacuationScenario):
         max_dt    = step5.get("max_delta_t_minutes", 0.0)
         threshold = step5.get("threshold_minutes", 0.0)
         hz        = step5.get("hazard_zone", "non_fhsz")
-        mob       = step5.get("mobilization_rate", 0.90)
+        mob       = step5.get("behavioral_mobilization", 0.90)
         fire_note = (
             f"FHSZ Zone {project.fire_zone_level} ({hz}) — road capacity degradation applied. "
             if project.in_fire_zone else
@@ -390,7 +390,7 @@ class WildlandScenario(EvacuationScenario):
             f"has {n_paths} serving path(s). "
             f"Max ΔT {max_dt:.1f} min within threshold ({threshold:.2f} min). "
             f"{fire_note}"
-            f"Mobilization: {mob:.2f} (NFPA 101 design basis, constant). "
+            f"Behavioral mobilization: {mob:.2f} (FHWA, constant). "
             f"Ministerial approval with standard conditions applied automatically. "
             f"Legal basis: {self.legal_basis}."
         )
@@ -985,7 +985,7 @@ def check_fire_zone(
     Standard 3 (FHSZ Modifier): Is the project site in FHSZ Zone 2 or 3?
 
     Returns (in_trigger_zone: bool, detail: dict).
-    detail["hazard_zone"] contains the canonical zone key for mobilization_rate lookup.
+    detail["hazard_zone"] contains the canonical zone key for capacity degradation lookup.
 
     HAZ_CLASS mapping:
       3 → "vhfhsz" (Very High)
@@ -995,7 +995,7 @@ def check_fire_zone(
 
     in_trigger_zone is True for HAZ_CLASS >= 2 (High and Very High).
     Moderate FHSZ (HAZ_CLASS=1) sets hazard_zone="moderate_fhsz" but returns False
-    (does not trigger FHSZ status; mobilization_rate applied via hazard_zone lookup).
+    (does not trigger FHSZ status; behavioral_mobilization is constant across all zones).
     Discretion: Zero — binary spatial result.
     """
     lat, lon = location
@@ -1008,7 +1008,7 @@ def check_fire_zone(
         "input_lon":   lon,
         "method":      "GIS point-in-polygon (shapely/geopandas sjoin)",
         "data_source": "CAL FIRE FHSZ",
-        "role":        "Sets hazard_zone for mobilization_rate and ΔT threshold lookup",
+        "role":        "Sets hazard_zone for capacity degradation and ΔT threshold lookup",
     }
 
     if fhsz_gdf.empty:

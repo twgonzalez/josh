@@ -49,12 +49,13 @@ crs: "EPSG:4326"   # WGS84 for storage
 analysis_crs: "EPSG:26910"  # UTM Zone 10N for distance calculations (meters)
 
 # City-specific parameter overrides (leave empty to use parameters.yaml defaults).
-# v4.0: Mobilization is constant 0.90 (NFPA 101 design basis) — not tiered by zone.
-# Override vehicles_per_unit here if city ACS B25044 data differs from 2.5 default.
+# v3.4.1: behavioral_mobilization (0.90, FHWA) and vehicles_per_unit (1.9, ACS B25044)
+# are the two vehicle-demand parameters; override either with local evidence.
 overrides: {}
 # Example overrides:
-#   unit_threshold: 10   # lower than default (15) when city network is more constrained
-#   vehicles_per_unit: 2.3  # if city-specific ACS differs from 2.5 default
+#   unit_threshold: 10          # lower than default (15) when city network is more constrained
+#   vehicles_per_unit: 1.7      # if city-specific ACS B25044 differs from 1.9 CA statewide
+#   behavioral_mobilization: 0.85  # if local evacuation compliance data supports lower rate
 
 # Safe egress window overrides (uncomment to override global defaults in parameters.yaml)
 # Use only if city has commissioned fire behavior study with specific timelines
@@ -101,4 +102,4 @@ notes: >
   Berkeley Hills in FHSZ Zones 2-3. First city analyzed for MVP validation.
   Compare v/c ratios against published Berkeley Fire Evacuation Capacity Study.
   Target accuracy: within 10% of published values for primary evacuation routes.
-  v4.0: Mobilization is constant 0.90 (NFPA 101). FHSZ affects road capacity only.
+  v3.4.1: vehicles_per_unit=1.9 (ACS B25044 CA statewide), behavioral_mobilization=0.90 (FHWA).

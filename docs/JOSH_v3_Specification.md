@@ -129,7 +129,7 @@ The 0.90 factor accounts for approximately 10% of households with zero vehicles,
 
 ### 3.3 Hazard-Aware Capacity Degradation — HCM Composite Factors
 
-**This is the only place the FHSZ designation affects the project-level determination.** It adjusts the road's capacity. It does not adjust the project's vehicle generation (which is constant at `units × 2.5 × 0.90`).
+**This is the only place the FHSZ designation affects the project-level determination.** It adjusts the road's capacity. It does not adjust the project's vehicle generation (which is constant at `units × 1.9 × 0.90`).
 
 A road segment physically located within a fire hazard zone will not operate at full HCM capacity during the wildfire that triggers the evacuation. The degradation factors are composites of published HCM capacity adjustment factors for conditions that are documented consequences of Cal Fire FHSZ designations.
 
@@ -158,7 +158,7 @@ effective_capacity_vph = hcm_capacity_vph × lanes × hazard_degradation(fhsz_zo
 
 Source: Census ACS 5-Year, Table B25044.
 
-Default: 2.5. Overridden by city-specific ACS data when available.
+Default: 1.9 (CA statewide all-HH average, ACS B25044). Overridden by city-specific ACS data when available.
 
 ### 3.5 Building Egress Penalty
 
@@ -429,7 +429,7 @@ When snapping additional egress lat/lon to the graph, if the nearest node is con
 def determine(project, serving_routes, fhsz_gdf, entitled_ledger, config):
     # ── INPUTS ──
     hazard_zone = get_fhsz_zone(project.location, fhsz_gdf)
-    mobilization = config.get('mobilization_rate', 0.90)  # NFPA 101 design basis, constant
+    mobilization = config.get('behavioral_mobilization', 0.90)  # FHWA Emergency Transportation Operations, constant
     vehicles_per_unit = config['vehicles_per_unit']
     # threshold derived at runtime (not a static config value)
     safe_window = config['safe_egress_window'][hazard_zone]
@@ -491,7 +491,7 @@ def determine(project, serving_routes, fhsz_gdf, entitled_ledger, config):
         'project_units': project.units,
         'project_stories': project.stories,
         'hazard_zone': hazard_zone,
-        'mobilization_rate': mobilization,
+        'behavioral_mobilization': mobilization,
         'route_results': route_results,
         'capacity_exceeded': capacity_exceeded,
         'legal_basis': get_legal_basis(tier, hazard_zone),
@@ -562,13 +562,13 @@ PROJECT
   Hazard Zone: VHFHSZ (Cal Fire designation)
 
 PARAMETERS APPLIED
-  Mobilization rate:   0.90 (NFPA 101 design basis, constant)
-  Vehicles/unit:       2.5 (Census ACS B25044)
+  Behavioral mobilization: 0.90 (FHWA Emergency Transportation Operations, constant)
+  Vehicles/unit:       1.9 (Census ACS B25044, CA statewide)
   Egress penalty:      0 min (below 4-story threshold)
   Safe egress window:  45 min (VHFHSZ, per NIST TN 2135)
   Max project share:   5%
   ΔT threshold:        2.25 min (45 × 5%)
-  Project vehicles:    101.3
+  Project vehicles:    76.95
 
 SERVING ROUTE ANALYSIS
   Route 1: Quail Gardens Dr → Leucadia Blvd exit
@@ -627,13 +627,13 @@ PROJECT
   SB 79 Flag:  Yes (within 0.5 mi of Coaster station)
 
 PARAMETERS APPLIED
-  Mobilization rate:   0.90 (NFPA 101 design basis, constant)
-  Vehicles/unit:       2.5
+  Behavioral mobilization: 0.90 (FHWA Emergency Transportation Operations, constant)
+  Vehicles/unit:       1.9 (Census ACS B25044, CA statewide)
   Egress penalty:      10.5 min (7 stories × 1.5 min/story)
   Safe egress window:  120 min (Non-FHSZ, FEMA standard)
   Max project share:   5%
   ΔT threshold:        6.0 min (120 × 5%)
-  Project vehicles:    450.0
+  Project vehicles:    342.0
 
 SERVING ROUTE ANALYSIS
   Route 1: Vulcan Ave → Leucadia Blvd
@@ -713,10 +713,10 @@ hcm_capacity:
     35: 1575
     40: 1700
 
-# Mobilization rate — constant for all projects, all zones
-# Source: NFPA 101 design basis (100% evacuation)
-# Adjusted for ~10% zero-vehicle HHs (Census ACS B25044)
-mobilization_rate: 0.90
+# Behavioral mobilization — constant for all projects, all zones
+# Source: FHWA Emergency Transportation Operations (mandatory evacuation compliance rate)
+# vehicles_per_unit already includes zero-vehicle HHs via ACS B25044 all-HH average
+behavioral_mobilization: 0.90
 
 # Hazard-aware road capacity degradation
 # Source: HCM composite — visibility (Exhibit 10-15) + incident (Exhibit 10-17)
@@ -754,7 +754,7 @@ max_project_share: 0.05  # 5% — standard engineering significance threshold
 unit_threshold: 15
 
 # Vehicles per housing unit
-vehicles_per_unit: 2.5    # Census ACS B25044 default; overridden per city
+vehicles_per_unit: 1.9    # Census ACS B25044 CA statewide all-HH average; overridden per city
 
 # Building egress penalty (NFPA 101 / IBC)
 egress_penalty:
@@ -956,13 +956,13 @@ The system must produce correct results for these test cases:
 
 | Scenario | Vehicles | Road | ΔT | Threshold | Expected Result |
 |---|---|---|---|---|---|
-| 15 units, 4-lane arterial, non-FHSZ | 15×2.5×0.90=33.75 | 3,800 vph | 0.5 min | 6.0 min | CONDITIONAL MINISTERIAL |
-| 45 units, 2-lane canyon, VHFHSZ (472 vph degraded) | 45×2.5×0.90=101.3 | 472 vph | 12.9 min | 2.25 min | DISCRETIONARY |
-| 200-unit 7-story, 2-lane collector, non-FHSZ | 200×2.5×0.90=450 | 1,350 vph | 20.0+10.5=30.5 min | 6.0 min | DISCRETIONARY |
-| 75 units, 5-story, non-FHSZ, 2-lane 20 mph (Berkeley hills) | 75×2.5×0.90=168.75 | 1,125 vph | 9.0+7.5=16.5 min | 6.0 min | **DISCRETIONARY** (regression test) |
+| 15 units, 4-lane arterial, non-FHSZ | 15×1.9×0.90=25.65 | 3,800 vph | 0.4 min | 6.0 min | CONDITIONAL MINISTERIAL |
+| 45 units, 2-lane canyon, VHFHSZ (472 vph degraded) | 45×1.9×0.90=76.95 | 472 vph | 9.8 min | 2.25 min | DISCRETIONARY |
+| 200-unit 7-story, 2-lane collector, non-FHSZ | 200×1.9×0.90=342 | 1,350 vph | 15.2+10.5=25.7 min | 6.0 min | DISCRETIONARY |
+| 75 units, 5-story, non-FHSZ, 2-lane 20 mph (Berkeley hills) | 75×1.9×0.90=128.25 | 1,125 vph | 6.85+7.5=14.35 min | 6.0 min | **DISCRETIONARY** (regression test) |
 | 50 units in zone where all routes already at LOS F | — | bottleneck_capacity_vph | computed | zone threshold | DISCRETIONARY (no baseline precondition) |
 
-**Berkeley 75-unit regression test:** Under v3.1 (mobilization 0.25 for non-FHSZ), this project generated only 47 vehicles → ΔT 2.5 min → CONDITIONAL MINISTERIAL. But 75 units on a 2-lane 20 mph road in the Berkeley hills, at end of single-access corridor, cannot safely evacuate. Under v3.4 (mobilization 0.90), the project generates 168.75 vehicles → ΔT 16.5 min → DISCRETIONARY. This is the correct result.
+**Berkeley 75-unit regression test:** Under v3.1 (mobilization 0.25 for non-FHSZ), this project generated only 47 vehicles → ΔT 2.5 min → CONDITIONAL MINISTERIAL. But 75 units on a 2-lane 20 mph road in the Berkeley hills, at end of single-access corridor, cannot safely evacuate. Under v3.4.1 (behavioral_mobilization 0.90, FHWA; vpu 1.9, ACS B25044), the project generates 128.25 vehicles → ΔT 14.35 min → DISCRETIONARY. This is the correct result.
 
 The last scenario is the v2.0 regression test: ΔT references only the project's vehicles and the road's physical capacity. The baseline state (already at LOS F) is irrelevant. The project is evaluated.
 

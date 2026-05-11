@@ -40,7 +40,7 @@ There are four steps. Each step uses only public data or published national stan
 
 ### Step 1: Count the Cars
 
-Every home has cars. The U.S. Census tells us how many — on average, about 2.5 vehicles per household in California.
+Every home has cars. The U.S. Census tells us how many — on average, about 1.9 vehicles per household in California.
 
 When a building needs to be evacuated, nearly everyone leaves. The National Fire Protection Association's Life Safety Code (NFPA 101) — the same standard used to size stairwells, corridors, and emergency exits in every building in the country — is designed for 100% occupant evacuation. Fire marshals do not size exits assuming only some people will try to leave. They size exits for everyone.
 
@@ -49,7 +49,7 @@ This standard applies the same principle. We assume 90% of the project's househo
 So for a proposed project of 45 homes:
 
 ```
-45 homes × 2.5 vehicles × 90% = 101 vehicles
+45 homes × 1.9 vehicles × 90% = 77 vehicles
 ```
 
 That is how many cars this project puts on the road during an evacuation. The number is the same regardless of where the project is located. The project's people are the project's people. What changes by location is the road — how big is the door they need to fit through.

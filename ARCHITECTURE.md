@@ -31,8 +31,8 @@ this synchronously on parse — no fetch calls, no CORS issues, works from `file
   "parameters": {
     "parameters_version": "3.4",
     "unit_threshold": 15,
-    "mobilization_rate": 0.90,
-    "vehicles_per_unit": 2.5,
+    "behavioral_mobilization": 0.90,
+    "vehicles_per_unit": 1.9,
     "safe_egress_window": {"vhfhsz": 45, "high_fhsz": 90, "moderate_fhsz": 120, "non_fhsz": 120},
     "max_project_share": 0.05,
     "hazard_degradation": {"vhfhsz": 0.35, "high_fhsz": 0.5, "moderate_fhsz": 0.75, "non_fhsz": 1.0},

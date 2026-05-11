@@ -179,7 +179,7 @@ def evaluate_project(
             "description": (
                 "Each scenario applies: (1) applicability check, (2) scale gate, "
                 "(3) route identification (EvacuationPath objects with bottleneck tracking), "
-                "(4) demand calculation (mobilization rate 0.90 × vpu × units — NFPA 101 design basis), "
+                "(4) demand calculation (behavioral_mobilization 0.90 × vpu × units — FHWA constant), "
                 "(5) ΔT test (project_vehicles / bottleneck_effective_capacity × 60 + egress). "
                 "FHSZ affects road capacity degradation only — not mobilization. "
                 "Most restrictive tier across all applicable scenarios is the final determination."
@@ -355,8 +355,8 @@ def generate_audit_trail(
             if "note" in fz:
                 lines.append(f"  Note: {fz['note']}")
             lines.append(
-                f"  Mobilization Rate: {s1.get('std3_mobilization_rate', 0.90):.2f} "
-                f"(NFPA 101 design basis — constant; Census ACS B25044 zero-vehicle adjustment)"
+                f"  Behavioral Mobilization: {s1.get('std3_behavioral_mobilization', 0.90):.2f} "
+                f"(FHWA Emergency Transportation Operations — mandatory evacuation compliance rate)"
             )
 
         # Step 2
@@ -414,7 +414,7 @@ def generate_audit_trail(
                 "  " + "-" * 38,
                 f"  Formula: {s4.get('formula', '')}",
                 f"  Hazard Zone: {s4.get('hazard_zone', 'non_fhsz')}",
-                f"  Mobilization Rate: {s4.get('mobilization_rate', 0.90):.2f} (NFPA 101 design basis, constant)",
+                f"  Behavioral Mobilization: {s4.get('behavioral_mobilization', 0.90):.2f} (FHWA Emergency Transportation Operations, constant)",
                 f"  Project vehicles (peak hour): {s4.get('project_vehicles_peak_hour', 0):.1f} vph",
                 f"  Source (vehicles/unit): {s4.get('source_vehicles_per_unit', '')}",
                 f"  Source (mobilization): {s4.get('source_mobilization', '')}",
@@ -437,7 +437,7 @@ def generate_audit_trail(
                 "  " + "-" * 38,
                 f"  Method: {s5.get('method', '')}",
                 f"  Hazard Zone: {s5.get('hazard_zone', 'non_fhsz')}",
-                f"  Mobilization Rate: {s5.get('mobilization_rate', 0.90):.2f} (NFPA 101 design basis, constant)",
+                f"  Behavioral Mobilization: {s5.get('behavioral_mobilization', 0.90):.2f} (FHWA Emergency Transportation Operations, constant)",
                 f"  Project Vehicles: {s5.get('project_vehicles', 0):.1f} vph",
                 f"  Egress Penalty: {s5.get('egress_minutes', 0):.1f} min "
                 f"(NFPA 101/IBC; applies to buildings >= 4 stories)",
@@ -576,9 +576,9 @@ def generate_audit_trail(
         "  PARAMETERS APPLIED",
         "  " + "-" * 38,
         f"  Hazard Zone:        {hz}",
-        f"  Mobilization Rate:  {getattr(project, 'mobilization_rate', 0.90):.2f} "
-        f"(NFPA 101 design basis — constant; ~10% zero-vehicle HHs per Census ACS B25044)",
-        f"  Vehicles per Unit:  2.5 (U.S. Census ACS B25044)",
+        f"  Behavioral Mobilization: {getattr(project, 'behavioral_mobilization', 0.90):.2f} "
+        f"(FHWA Emergency Transportation Operations — mandatory evacuation compliance rate)",
+        f"  Vehicles per Unit:  1.9 (U.S. Census ACS B25044, CA statewide all-HH average)",
         f"  Egress Penalty:     {getattr(project, 'egress_minutes', 0.0):.1f} min "
         f"(NFPA 101/IBC — {getattr(project, 'stories', 0)} stories)",
         f"  Safe Egress Window: {_safe_win} min ({hz}, per NIST TN 2135)",

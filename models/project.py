@@ -54,7 +54,7 @@ class Project:
     search_radius_miles: float = 0.5
 
     # Standard 4 results (ΔT capacity test)
-    mobilization_rate: float = 0.0        # mob rate applied (from hazard_zone lookup)
+    behavioral_mobilization: float = 0.0  # FHWA behavioral mobilization applied
     project_vehicles_peak_hour: float = 0.0  # dwelling_units × vpu × mob
     egress_minutes: float = 0.0           # NFPA 101 building egress penalty
     delta_t_results: list = field(default_factory=list)  # per-path ΔT audit dicts
@@ -97,7 +97,7 @@ class Project:
             "hazard_zone":              self.hazard_zone,
             "meets_size_threshold":     self.meets_size_threshold,
             "serving_routes_count":     len(self.serving_route_ids),
-            "mobilization_rate":        self.mobilization_rate,
+            "behavioral_mobilization":  self.behavioral_mobilization,
             "project_vehicles_peak_hour": round(self.project_vehicles_peak_hour, 1),
             "egress_minutes":           round(self.egress_minutes, 1),
             "max_delta_t_minutes":      round(self.max_delta_t(), 2),

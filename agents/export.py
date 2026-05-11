@@ -364,7 +364,7 @@ _JS_IDENTIFY_SERVING_PATHS = """\
 # ── ΔT calculation ────────────────────────────────────────────────────────────
 # Mirrors: agents/scenarios/base.py compute_delta_t()
 # Algorithm constants: ALL read from _params at runtime — no hardcoded values.
-#   project_vehicles = units × vehicles_per_unit × mobilization_rate  (NFPA 101 constant)
+#   project_vehicles = units × vehicles_per_unit × behavioral_mobilization  (FHWA constant)
 #   egress_minutes   = 0 if stories < threshold; else min(stories × mps, max_min)
 #   ΔT per path      = (project_vehicles / bottleneck_eff_cap_vph) × 60 + egress_minutes
 #   threshold        = safe_egress_window[hazard_zone] × max_project_share
@@ -373,14 +373,14 @@ _JS_COMPUTE_DELTA_T = """\
   // ── ΔT calculation ────────────────────────────────────────────────────────────
   // Mirrors: agents/scenarios/base.py compute_delta_t()
   // All constants read from _params — no hardcoded values here.
-  //   project_vehicles = units × vehicles_per_unit × mobilization_rate
+  //   project_vehicles = units × vehicles_per_unit × behavioral_mobilization
   //   egress_minutes   = 0 if stories < threshold; else min(stories × mps, max_min)
   //   ΔT               = (project_vehicles / bottleneck_eff_cap_vph) × 60 + egress_minutes
   //   threshold        = safe_egress_window[hazard_zone] × max_project_share
 
   function computeDeltaT(servingPaths, units, stories, hazardZone) {
     const p = _params;
-    const projectVehicles = units * p.vehicles_per_unit * p.mobilization_rate;
+    const projectVehicles = units * p.vehicles_per_unit * p.behavioral_mobilization;
 
     const ep = p.egress_penalty;
     const egressMinutes =
@@ -679,8 +679,8 @@ def export_parameters_json(config: dict, city_config: dict, output_dir: Path) ->
     params = {
         "parameters_version": _PARAMETERS_VERSION,
         "unit_threshold": int(config.get("unit_threshold", 15)),
-        "mobilization_rate": float(config.get("mobilization_rate", 0.90)),
-        "vehicles_per_unit": float(config.get("vehicles_per_unit", 2.5)),
+        "behavioral_mobilization": float(config.get("behavioral_mobilization", 0.90)),
+        "vehicles_per_unit": float(config.get("vehicles_per_unit", 1.9)),
         "serving_route_radius_miles": float(evac_cfg.get("serving_route_radius_miles", 0.5)),
         "max_path_length_ratio": float(evac_cfg.get("max_path_length_ratio", 2.0)),
         "hazard_degradation": {

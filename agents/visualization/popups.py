@@ -310,7 +310,7 @@ def _build_route_delta_t_popup(
         thr      = delta_t_result["threshold_minutes"]
         pveh     = delta_t_result.get("project_vehicles", 0)
         egr      = delta_t_result.get("egress_minutes", 0)
-        mob      = delta_t_result.get("mobilization_rate", 0.90)
+        mob      = delta_t_result.get("behavioral_mobilization", 0.90)
         hz       = delta_t_result.get("hazard_zone", "non_fhsz")
         safe_win = delta_t_result.get("safe_egress_window_minutes", 120.0)
         max_shr  = delta_t_result.get("max_project_share", 0.05)

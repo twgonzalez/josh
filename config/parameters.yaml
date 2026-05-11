@@ -7,7 +7,7 @@ parameters_version: "4.0"
 
 # ============================================================
 # Project Size Threshold
-# Basis: 15 units × 2.5 vpu × 0.90 mob = 33.75 vph — measurable on any road type.
+# Basis: 15 units × 1.9 vpu × 0.90 mob = 25.65 vph — measurable on any road type.
 # Statutory anchor: SB 330 (Gov. Code §65905.5) — heightened protections at 10+ units;
 #   15 is the first integer above ITE de minimis that falls in the SB 330 project class.
 # This is an administrative proportionality threshold, NOT a safety threshold.
@@ -16,25 +16,24 @@ parameters_version: "4.0"
 unit_threshold: 15
 
 # ============================================================
-# Mobilization Rate — constant for all projects, all zones
-# Source: NFPA 101 (Life Safety Code) design basis.
+# Behavioral Mobilization Rate — constant for all projects, all zones
+# Source: FHWA Emergency Transportation Operations — mandatory evacuation
+# compliance rate for residential areas under imminent fire threat.
 #
-# NFPA 101 designs building exits for 100% occupant evacuation. Fire marshals
-# do not size exits for partial evacuation. This standard applies the same
-# principle to the roads serving those buildings.
-#
-# The 0.90 factor accounts for approximately 10% of households with zero
-# vehicles, as measured by Census ACS Table B25044.
+# Represents the fraction of a project's vehicles that reach the road
+# during an evacuation (accounts for residents not home, shadow non-compliance,
+# households that share one vehicle). Does NOT represent vehicle non-ownership —
+# that is already embedded in vehicles_per_unit (the all-household ACS average).
 #
 # FHSZ affects the road (through the hazard degradation factor below).
 # It does not affect mobilization. The project's residents are the project's
 # residents regardless of where the project is located.
 # ============================================================
 
-mobilization_rate: 0.90
-# Source: NFPA 101 design basis (100% evacuation), adjusted for
-# ~10% zero-vehicle households per Census ACS B25044.
-# Cities may override with city-specific zero-vehicle rate from B25044.
+behavioral_mobilization: 0.90
+# Source: FHWA Emergency Transportation Operations — mandatory evacuation compliance rate.
+# Cities may override with documented local evidence (evacuation plan compliance
+# data, local fire history study, or licensed transportation engineer study).
 
 # ============================================================
 # Hazard-Aware Road Capacity Degradation
@@ -119,10 +118,14 @@ max_project_share: 0.05  # 5% — standard engineering significance threshold
 # ============================================================
 # Vehicles Per Housing Unit
 # Source: Census ACS 5-Year, Table B25044 (vehicles available by tenure)
-# Override per city in config/cities/{city}.yaml if local ACS data differs.
+# California statewide all-household average, including zero-vehicle households.
+# This is the weighted average across all occupied housing units — zero-vehicle
+# households are already reflected in this figure. Do NOT apply a separate
+# vehicle-ownership multiplier; that would double-deduct the zero-vehicle population.
+# Override per city in config/cities/{city}.yaml with local ACS B25044 data.
 # ============================================================
 
-vehicles_per_unit: 2.5
+vehicles_per_unit: 1.9
 
 # ============================================================
 # Building Egress Penalty
@@ -316,7 +319,7 @@ demand:
   employee_mobilization_day: 1.00
   employee_mobilization_night: 0.10
   student_mobilization_day: 1.00
-  vehicles_per_unit: 2.5
+  vehicles_per_unit: 1.9  # mirrors global vehicles_per_unit (ACS B25044 CA statewide)
   employee_vehicle_occupancy: 1.0
   scenario: "maximum"
 

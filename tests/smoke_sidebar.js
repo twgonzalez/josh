@@ -178,13 +178,13 @@ describe('Smoke: Berkeley demo map', { timeout: 90_000 }, () => {
           analysis: {
             applicability_met: true, dwelling_units: 50, unit_threshold: 15,
             fhsz_flagged: false, fhsz_desc: 'Not in FHSZ', fhsz_level: 0,
-            hazard_zone: 'non_fhsz', mobilization_rate: 0.90,
+            hazard_zone: 'non_fhsz', behavioral_mobilization: 0.90,
             hazard_degradation_factor: 1.00, serving_route_count: 2,
             route_radius_miles: 0.5, routes_trigger_analysis: true,
             delta_t_triggered: false, egress_minutes: 0,
           },
           result: {
-            tier: 'MINISTERIAL', hazard_zone: 'non_fhsz', project_vehicles: 112.5,
+            tier: 'MINISTERIAL', hazard_zone: 'non_fhsz', project_vehicles: 85.5,
             max_delta_t_minutes: 3.2, threshold_minutes: 6.0,
             safe_egress_window_minutes: 120, max_project_share: 0.05,
             serving_paths_count: 2, egress_minutes: 0,

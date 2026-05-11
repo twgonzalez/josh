@@ -172,24 +172,25 @@ class EvacuationScenario(ABC):
         """
         Step 4: How many peak-hour vehicles does the project generate?
 
-        Formula: dwelling_units × vehicles_per_unit × mobilization_rate
-        Source: Census ACS (vpu) + NFPA 101 design basis (mob rate constant 0.90).
+        Formula: dwelling_units × vehicles_per_unit × behavioral_mobilization
+        Source: Census ACS (vpu) + FHWA Emergency Transportation Operations (mob rate constant 0.90).
         """
-        vpu         = self.config.get("vehicles_per_unit", 2.5)
-        mob         = self.config.get("mobilization_rate", 0.90)  # NFPA 101 design basis, constant
+        vpu         = self.config.get("vehicles_per_unit", 1.9)
+        mob         = self.config.get("behavioral_mobilization", 0.90)  # FHWA, constant
         hazard_zone = getattr(project, "hazard_zone", "non_fhsz")
 
         project_vph = project.dwelling_units * vpu * mob
 
         mob_citation = (
-            "NFPA 101 (Life Safety Code) design basis — 100% occupant evacuation; "
-            "adjusted 0.90 for ~10% zero-vehicle households (Census ACS B25044)."
+            "FHWA Emergency Transportation Operations — mandatory evacuation compliance "
+            "rate for residential areas (0.90). vehicles_per_unit already reflects "
+            "zero-vehicle households via ACS B25044 all-household average."
         )
 
         return project_vph, {
             "vehicles_per_unit":          vpu,
             "hazard_zone":                hazard_zone,
-            "mobilization_rate":          mob,
+            "behavioral_mobilization":    mob,
             "formula":                    f"{project.dwelling_units} × {vpu} × {mob:.2f}",
             "project_vehicles_peak_hour": round(project_vph, 1),
             "source_vehicles_per_unit":   "U.S. Census ACS B25044",
@@ -207,7 +208,7 @@ class EvacuationScenario(ABC):
 
         ΔT = (project_vehicles / bottleneck_effective_capacity_vph) × 60 + egress_minutes
 
-        project_vehicles = units × vpu × mobilization_rate(hazard_zone)
+        project_vehicles = units × vpu × behavioral_mobilization
         egress_minutes   = 0 for buildings < threshold_stories;
                            stories × min_per_story (capped) for taller buildings.
 
@@ -222,8 +223,8 @@ class EvacuationScenario(ABC):
             (triggered: bool, delta_t_results: list[dict], detail: dict)
         """
         hazard_zone      = getattr(project, "hazard_zone", "non_fhsz")
-        mob              = config.get("mobilization_rate", 0.90)  # NFPA 101 design basis, constant
-        vpu              = config.get("vehicles_per_unit", 2.5)
+        mob              = config.get("behavioral_mobilization", 0.90)  # FHWA, constant
+        vpu              = config.get("vehicles_per_unit", 1.9)
         project_vehicles = project.dwelling_units * vpu * mob
 
         # Building egress penalty (NFPA 101 / IBC)
@@ -299,7 +300,7 @@ class EvacuationScenario(ABC):
                 "max_project_share":             max_project_share,
                 "threshold_minutes":             round(max_minutes, 4),
                 "hazard_zone":                   hazard_zone,
-                "mobilization_rate":             mob,
+                "behavioral_mobilization":       mob,
                 "flagged":                       flagged,
             })
 
@@ -307,7 +308,7 @@ class EvacuationScenario(ABC):
 
         detail = {
             "hazard_zone":                hazard_zone,
-            "mobilization_rate":          mob,
+            "behavioral_mobilization":    mob,
             "project_vehicles":           round(project_vehicles, 1),
             "egress_minutes":             round(egress_minutes, 1),
             "safe_egress_window_minutes": safe_window,

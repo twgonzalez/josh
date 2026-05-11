@@ -202,8 +202,8 @@ parameters_version: "4.0"
 
 unit_threshold: 15           # Size gate — integer comparison, ITE de minimis / SB 330
 
-mobilization_rate: 0.90      # NFPA 101 design basis (100% evacuation), adjusted for
-                             # ~10% zero-vehicle households (Census ACS B25044)
+behavioral_mobilization: 0.90  # FHWA Emergency Transportation Operations — mandatory
+                               # evacuation compliance rate (constant, all zones)
 
 hazard_degradation:
   factors:
@@ -221,7 +221,7 @@ safe_egress_window:
 max_project_share: 0.05      # The single policy value the city adopts by resolution.
                              # All thresholds computed at runtime: window × 0.05
 
-vehicles_per_unit: 2.5       # Census ACS Table B25044 — California statewide average
+vehicles_per_unit: 1.9       # Census ACS Table B25044 — California statewide all-HH average
 
 egress_penalty:
   threshold_stories: 4       # NFPA 101 high-rise threshold
@@ -243,6 +243,14 @@ hcm_capacity:
 ```
 
 City-specific overrides — a different `vehicles_per_unit` from local ACS data, for instance — go in the city config file, not here. The global parameters file is shared by all cities and is not edited per project.
+
+**How to override `vehicles_per_unit` and `behavioral_mobilization` correctly.** These two parameters cover separate concerns and should be adjusted independently:
+
+- `vehicles_per_unit` captures the vehicle *ownership* dimension. The default 1.9 is the Census ACS B25044 California statewide all-household average, which already includes zero-vehicle households (they reduce the average by contributing zero vehicles). Override this with the city's own ACS B25044 figure if the local rate differs materially from the statewide average. Cities with high transit ridership typically have lower local averages.
+
+- `behavioral_mobilization` captures the evacuation *compliance* dimension — the fraction of households that reach the road during a mandatory evacuation. The default 0.90 is the FHWA Emergency Transportation Operations compliance rate. Override this only with documented local evidence: an adopted evacuation plan with a modeled compliance rate, a post-event study, or a licensed transportation engineer's finding.
+
+Do not adjust both parameters to account for the same population. Zero-vehicle households are already reflected in `vehicles_per_unit`; if you lower `vehicles_per_unit` to reflect local zero-car rates, do not also lower `behavioral_mobilization` to further account for them. That would undercount demand by applying the same deduction twice.
 
 ------
 
@@ -271,7 +279,7 @@ fhsz_fallback_api: "https://services7.arcgis.com/.../FeatureServer/0"
 # City-specific parameter overrides (optional — leave empty for defaults)
 overrides: {}
 # overrides:
-#   vehicles_per_unit: 2.3   # if local Census B25044 differs from 2.5
+#   vehicles_per_unit: 1.7   # if local Census B25044 differs from 1.9 statewide
 #   unit_threshold: 10       # if city adopts a lower size gate by resolution
 ```
 
