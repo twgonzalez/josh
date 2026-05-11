@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-05-11T02:43:06.016009+00:00",
+  "generated_at": "2026-05-11T03:26:16.769840+00:00",
   "parameters_version": "4.0",
   "vectors": [
     {
@@ -23,42 +23,42 @@
       "input": {
         "lat": 37.8695,
         "lon": -122.2685,
-        "units": 85,
+        "units": 120,
         "stories": 3
       },
       "expected": {
-        "tier": "MINISTERIAL WITH STANDARD CONDITIONS",
+        "tier": "DISCRETIONARY",
         "hazard_zone": "non_fhsz",
-        "project_vehicles": 145.3,
+        "project_vehicles": 205.2,
         "serving_paths_count": 5,
         "paths": [
           {
             "bottleneck_osmid": "1000718782",
-            "delta_t_minutes": 4.59,
+            "delta_t_minutes": 6.48,
             "threshold_minutes": 6.0,
-            "flagged": false
+            "flagged": true
           },
           {
             "bottleneck_osmid": "25738782",
-            "delta_t_minutes": 2.29,
+            "delta_t_minutes": 3.24,
             "threshold_minutes": 6.0,
             "flagged": false
           },
           {
             "bottleneck_osmid": "6320410",
-            "delta_t_minutes": 3.88,
+            "delta_t_minutes": 5.47,
             "threshold_minutes": 6.0,
             "flagged": false
           },
           {
             "bottleneck_osmid": "6321559",
-            "delta_t_minutes": 3.88,
+            "delta_t_minutes": 5.47,
             "threshold_minutes": 6.0,
             "flagged": false
           },
           {
             "bottleneck_osmid": "9577895",
-            "delta_t_minutes": 3.88,
+            "delta_t_minutes": 5.47,
             "threshold_minutes": 6.0,
             "flagged": false
           }
