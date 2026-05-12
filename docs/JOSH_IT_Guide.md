@@ -43,9 +43,9 @@ uv run python build.py demo \
   --projects config/projects/berkeley_demo.yaml
 
 # Open the result
-open output/berkeley/demo_map.html   # macOS
-# or: start output/berkeley/demo_map.html  (Windows)
-# or: xdg-open output/berkeley/demo_map.html  (Linux)
+open output/berkeley/analysis_map.html   # macOS
+# or: start output/berkeley/analysis_map.html  (Windows)
+# or: xdg-open output/berkeley/analysis_map.html  (Linux)
 ```
 
 The output is a single self-contained HTML file. It works from the file system — no web server required. Open it in any browser and it is fully functional: interactive map, project sidebar, determination briefs, downloadable audit trails, what-if analysis panel.
@@ -165,7 +165,7 @@ uv run python build.py demo \
 
 Reads the project inventory, runs Dijkstra routing from each project site to the network boundary, computes ΔT and egress penalty, assigns determination tier, generates the Folium map with all layers and animated route traces, embeds the full JOSH_DATA bundle and browser client, and writes:
 
-- `output/{city}/demo_map.html` — the self-contained determination map
+- `output/{city}/analysis_map.html` — the self-contained determination map
 
 `analyze` must run before `demo`. After that, adding a new project only requires updating the projects YAML and re-running `demo` — the capacity analysis does not need to repeat.
 
@@ -357,6 +357,11 @@ road_overrides:
     width_ft: 18
     access_type: "dead_end"
     reason: "Clark Ave — below IFC §503 minimum width (City Engineering Survey 2024-03)"
+
+  - osmid: "12345678"
+    capacity_vph: 800
+    reason: "Field count shows 800 vph peak throughput — HCM formula overestimates due to signal interference at Oak/Main"
+    source: "Caltrans TMC count 2024-08-15 (PE stamp: J. Smith PE #12345)"
 ```
 
 Supported override fields:

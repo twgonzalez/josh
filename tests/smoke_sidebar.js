@@ -6,7 +6,7 @@
 /**
  * Smoke tests for the JOSH demo map (Berkeley) — Playwright + node:test.
  *
- * Opens output/berkeley/demo_map.html as file:// in headless Chromium and
+ * Opens output/berkeley/analysis_map.html as file:// in headless Chromium and
  * exercises the full client-side stack end-to-end:
  *
  *   SMOKE_1:  sidebar div renders with JOSH header + city name
@@ -51,7 +51,7 @@
  *   npm install                          (installs playwright)
  *   npx playwright install chromium      (downloads headless Chrome)
  *   uv run python build.py demo --city Berkeley --data-dir <path>
- *     → output/berkeley/demo_map.html must exist
+ *     → output/berkeley/analysis_map.html must exist
  *
  * Run:
  *   node --test tests/smoke_sidebar.js
@@ -67,7 +67,7 @@ const path     = require('path');
 const fs       = require('fs');
 
 // ── Target file ───────────────────────────────────────────────────────────────
-const DEMO_MAP = path.resolve(__dirname, '..', 'output', 'berkeley', 'demo_map.html');
+const DEMO_MAP = path.resolve(__dirname, '..', 'output', 'berkeley', 'analysis_map.html');
 const FILE_URL = 'file://' + DEMO_MAP;
 
 // ── Shared browser + page (launched once, closed after all tests) ─────────────
@@ -860,7 +860,7 @@ describe('Smoke: Berkeley demo map', { timeout: 90_000 }, () => {
     assert.deepEqual(
       report.failures, [],
       `${report.failures.length} of ${report.total} pipeline projects have ` +
-      `an unresolvable folium_fg_name — stale demo_map.html build? ` +
+      `an unresolvable folium_fg_name — stale analysis_map.html build? ` +
       `Rebuild with: uv run python build.py demo --city <city>  (or ` +
       `JOSH_DIR=... uv run python acquire.py run --city <city>):\n` +
       JSON.stringify(report.failures, null, 2));

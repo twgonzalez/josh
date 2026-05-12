@@ -2,16 +2,16 @@
 
 ## Why this architecture exists
 
-At 50+ cities, the original monolithic `demo_map.html` (~9 MB) approach breaks down.
+At 50+ cities, the original monolithic `analysis_map.html` (~9 MB) approach breaks down.
 Every visualization update (UI change, bug fix, new engine feature) required rebuilding and
 redistributing all city maps. The split architecture separates:
 
 - **Shared rendering code** → CDN-hosted `app.js` (update once, all cities update automatically)
-- **City-specific data** → inlined `window.JOSH_DATA` in each city's `demo_map.html`
+- **City-specific data** → inlined `window.JOSH_DATA` in each city's `analysis_map.html`
 
 ## Components
 
-### `window.JOSH_DATA` (inlined in `demo_map.html`)
+### `window.JOSH_DATA` (inlined in `analysis_map.html`)
 
 Per-city data inlined as a `<script>` block before the CDN `<script src>` tag. `app.js` reads
 this synchronously on parse — no fetch calls, no CORS issues, works from `file://`.
@@ -76,7 +76,7 @@ the CI workflow (`cp -r static output/static`).
 
 ```
 static/v1/app.js on disk?
-  YES → inline it into demo_map.html    — fully self-contained, works file:// offline
+  YES → inline it into analysis_map.html    — fully self-contained, works file:// offline
   NO  → <script src="{CDN_URL}" defer>  — loads from GitHub Pages, requires internet
 ```
 
@@ -142,13 +142,13 @@ demo --city X
   ├─ evaluate_project() for each project in {city}_demo.yaml
   ├─ create_determination_brief_v3() per project → output/{city}/brief_v3_*.html
   ├─ export_test_vectors()   → output/{city}/test_vectors.json
-  ├─ create_demo_map() [Folium] → output/{city}/demo_map.html  (base map)
+  ├─ create_analysis_map() [Folium] → output/{city}/analysis_map.html  (base map)
   ├─ export_app_js()
   │    ├─ export_whatif_engine_js() → static/whatif_engine.js (refreshed)
   │    └─ concat sections    → static/v1/app.js  ← shared, committed to repo
   └─ _inject_josh_data_bundle()
        ├─ reads graph.json, parameters.json, fhsz GeoJSON, brief HTML files
-       └─ inlines window.JOSH_DATA + <script src CDN> → demo_map.html
+       └─ inlines window.JOSH_DATA + <script src CDN> → analysis_map.html
 ```
 
 ## What Requires a Full Python Rebuild
@@ -172,7 +172,7 @@ class of visualization updates that require per-city rebuilds.
 
 ## Offline Use
 
-When `static/v1/app.js` is present at build time (all normal local builds), `demo_map.html`
+When `static/v1/app.js` is present at build time (all normal local builds), `analysis_map.html`
 is **fully self-contained** — `app.js` is inlined and the map works from `file://` with no
 internet required (beyond the CartoDB tile background and Leaflet, which were always CDN-loaded).
 

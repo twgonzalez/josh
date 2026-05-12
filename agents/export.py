@@ -1012,7 +1012,7 @@ def export_app_js() -> Path:
          (reads window.JOSH_DATA.briefs; no per-city data baked in)
 
     All city-specific data (graph, parameters, fhsz, briefs) is read at runtime
-    from window.JOSH_DATA, which is inlined into demo_map.html by
+    from window.JOSH_DATA, which is inlined into analysis_map.html by
     _inject_josh_data_bundle() before the <script src="...app.js"> tag.
 
     Called by demo command before _inject_josh_data_bundle().
@@ -1052,7 +1052,7 @@ def export_app_js() -> Path:
   if (d.schema_version !== 1) {
     console.warn(
       'JOSH app.js v1: schema_version mismatch (got ' + d.schema_version + '). ' +
-      'Regenerate demo_map.html with a matching version of app.js.'
+      'Regenerate analysis_map.html with a matching version of app.js.'
     );
   }
 })();

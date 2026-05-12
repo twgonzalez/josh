@@ -25,7 +25,7 @@ All standards are objective and algorithmic. No discretion. No professional judg
 
 > **[Project home page →](https://twgonzalez.github.io/josh/)**
 >
-> **[Berkeley interactive demo →](https://twgonzalez.github.io/josh/berkeley/demo_map.html)**
+> **[Berkeley interactive demo →](https://twgonzalez.github.io/josh/berkeley/analysis_map.html)**
 
 The home page covers the methodology, legal framework, adoption pathway, and document library. The demo map evaluates six representative Berkeley projects across different FHSZ zones, unit counts, and building heights — each popup shows the full A/B/C criteria breakdown and per-route ΔT values.
 
@@ -73,7 +73,7 @@ cd josh
 uv sync
 ```
 
-The live Berkeley demo is already included — open `output/berkeley/demo_map.html` directly,
+The live Berkeley demo is already included — open `output/berkeley/analysis_map.html` directly,
 no commands required.
 
 To run analysis for your own city, assemble a data directory (see [Data Requirements](#data-requirements) below), then:
@@ -90,7 +90,7 @@ uv run python build.py evaluate --city "Encinitas" --lat 33.04 --lon -117.29 --u
 uv run python build.py demo --city "Encinitas" \
   --data-dir /path/to/data/encinitas \
   --projects /path/to/your/projects.yaml
-# → output/encinitas/demo_map.html
+# → output/encinitas/analysis_map.html
 ```
 
 ---
@@ -99,7 +99,7 @@ uv run python build.py demo --city "Encinitas" \
 
 | File | Description |
 |------|-------------|
-| `output/{city}/demo_map.html` | Interactive multi-project comparison map (primary stakeholder UX) |
+| `output/{city}/analysis_map.html` | Interactive multi-project comparison map (primary stakeholder UX) |
 | `output/{city}/brief_v3_*.html` | Per-project determination brief (A/B/C criteria, ΔT per path) |
 | `output/{city}/determination_*.txt` | Plaintext audit trail (legal compliance, AB 1600 nexus) |
 | `output/{city}/routes.csv` | Full evacuation route inventory with capacity and LOS data |

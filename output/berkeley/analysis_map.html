@@ -723,7 +723,7 @@ window.JOSH_DATA = {"schema_version":1,"app_js_version":"v1","city_name":"Berkel
   if (d.schema_version !== 1) {
     console.warn(
       'JOSH app.js v1: schema_version mismatch (got ' + d.schema_version + '). ' +
-      'Regenerate demo_map.html with a matching version of app.js.'
+      'Regenerate analysis_map.html with a matching version of app.js.'
     );
   }
 })();
@@ -3608,7 +3608,7 @@ if (typeof module !== "undefined" && module.exports) {
   }
 
   // Build a Leaflet L.marker using the same AwesomeMarkers icon Folium bakes
-  // into demo_map.html for pipeline projects.  Used for browser projects
+  // into analysis_map.html for pipeline projects.  Used for browser projects
   // (created via + New, reloaded from localStorage, or opened from a .json
   // file) — they have no folium_fg_name, so without this runtime marker no
   // home icon would render on the map when they're selected.

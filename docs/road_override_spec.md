@@ -311,7 +311,7 @@ function downloadYAML() {
 
 | Library | Version | Size | Purpose |
 |---------|---------|------|---------|
-| Leaflet | 1.9.3 | ~40 KB | Map rendering (already used in demo_map.html) |
+| Leaflet | 1.9.3 | ~40 KB | Map rendering (already used in analysis_map.html) |
 | js-yaml | 4.1.0 | ~50 KB | Client-side YAML parse for "Load existing YAML" |
 
 ---

@@ -6,7 +6,7 @@
 """
 Demo map: multi-project comparison interactive Folium map.
 
-Entry point: create_demo_map()
+Entry point: create_analysis_map()
 
 Standard 5 (local density) support:
   - Pass `audits` list from evaluate_project() to include Std 5 tier in
@@ -215,7 +215,7 @@ def _inject_popup_binders(
 # Entry point
 # ---------------------------------------------------------------------------
 
-def create_demo_map(
+def create_analysis_map(
     projects: list,
     roads_gdf: gpd.GeoDataFrame,
     fhsz_gdf: gpd.GeoDataFrame,
@@ -812,7 +812,7 @@ def _inject_whatif_bundle(
     fhsz_gdf: gpd.GeoDataFrame,
 ) -> None:
     """
-    Read the saved demo_map.html, inject the what-if JS engine + data bundle,
+    Read the saved analysis_map.html, inject the what-if JS engine + data bundle,
     and write the file back.  All three data sources are inlined as JS globals
     so the file remains standalone (no fetch() calls, works from file://).
 
@@ -1134,7 +1134,7 @@ def _inject_josh_data_bundle(
     projects_data: list | None = None,
 ) -> None:
     """
-    Inject window.JOSH_DATA (graph, parameters, fhsz, briefs) into demo_map.html,
+    Inject window.JOSH_DATA (graph, parameters, fhsz, briefs) into analysis_map.html,
     then load app.js using whichever strategy is available:
 
       • If static/v1/app.js exists on disk (normal local build) → inline it.

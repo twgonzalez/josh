@@ -356,7 +356,7 @@ def evaluate(city: str, lat: float, lon: float, units: int, stories: int,
     "--projects", "projects_file", default=None,
     help="Path to projects YAML (required when --data-dir is set)",
 )
-@click.option("--output", "output_name", default="demo_map", show_default=True,
+@click.option("--output", "output_name", default="analysis_map", show_default=True,
               help="Output filename stem (no extension)")
 @click.option(
     "--data-dir", "data_dir_str", default=None,
@@ -383,7 +383,7 @@ def demo(city: str, state: str, projects_file: str | None, output_name: str,
     """
     import geopandas as gpd
     from agents.objective_standards import evaluate_project
-    from agents.visualization import create_demo_map
+    from agents.visualization import create_analysis_map
     from models.project import Project
 
     city_slug = city.lower().replace(" ", "_")
@@ -539,7 +539,7 @@ def demo(city: str, state: str, projects_file: str | None, output_name: str,
     map_path = output_dir / f"{output_name}.html"
     graph_json_path = output_dir / "graph.json"
     params_json_path = output_dir / "parameters.json"
-    create_demo_map(
+    create_analysis_map(
         projects=evaluated,
         roads_gdf=roads_gdf,
         fhsz_gdf=fhsz_gdf,

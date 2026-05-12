@@ -18,7 +18,7 @@
   if (d.schema_version !== 1) {
     console.warn(
       'JOSH app.js v1: schema_version mismatch (got ' + d.schema_version + '). ' +
-      'Regenerate demo_map.html with a matching version of app.js.'
+      'Regenerate analysis_map.html with a matching version of app.js.'
     );
   }
 })();

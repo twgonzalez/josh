@@ -1077,7 +1077,7 @@
   }
 
   // Build a Leaflet L.marker using the same AwesomeMarkers icon Folium bakes
-  // into demo_map.html for pipeline projects.  Used for browser projects
+  // into analysis_map.html for pipeline projects.  Used for browser projects
   // (created via + New, reloaded from localStorage, or opened from a .json
   // file) — they have no folium_fg_name, so without this runtime marker no
   // home icon would render on the map when they're selected.
