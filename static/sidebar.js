@@ -141,6 +141,9 @@
       bottleneck_speed:          +(p.bottleneck_speed || 0),
       effective_capacity_vph:    parseFloat((p.bottleneckEffCapVph || p.effective_capacity_vph || 0).toFixed(1)),
       hazard_degradation_factor: parseFloat((p.hazard_degradation_factor || 1.0).toFixed(4)),
+      cap_src:                   p.bottleneck_cap_src     || p.cap_src     || 'hcm',
+      cap_reason:                p.bottleneck_cap_reason  || p.cap_reason  || null,
+      cap_source_doc:            p.bottleneck_cap_source_doc || p.cap_source_doc || null,
       bottleneck_cross_street_a: p.bottleneck_cross_street_a || '',
       bottleneck_cross_street_b: p.bottleneck_cross_street_b || '',
       bottleneck_distance_mi:    +(p.bottleneck_distance_mi || 0),
@@ -292,6 +295,9 @@
         bottleneck_road_type:          p.bottleneck_road_type || null,
         bottleneck_speed_mph:          p.bottleneck_speed   || null,
         bottleneck_lanes:              p.bottleneck_lanes   || null,
+        bottleneck_cap_src:            p.cap_src        || 'hcm',
+        bottleneck_cap_reason:         p.cap_reason     || null,
+        bottleneck_cap_source_doc:     p.cap_source_doc || null,
         bottleneck_cross_street_a:     p.bottleneck_cross_street_a || '',
         bottleneck_cross_street_b:     p.bottleneck_cross_street_b || '',
         bottleneck_distance_mi:        +(p.bottleneck_distance_mi || 0),
@@ -596,9 +602,19 @@
         if (p.bottleneck_lanes) roadInfo += '  |  Lanes: ' + p.bottleneck_lanes;
         roadInfo += '  |  HAZ_CLASS: ' + hazCls + ' (' + zone + ')';
         L.push(roadInfo);
-        // HCM capacity derivation
-        L.push('      HCM cap: ' + hcmCap + ' vph  x degradation ' + deg.toFixed(2) +
-               ' (' + zone + ')  = eff cap ' + effCap.toFixed(0) + ' vph');
+        // Capacity source line
+        if (p.cap_src === 'city_override') {
+          var rawCap = deg > 0 ? (effCap / deg).toFixed(0) : effCap.toFixed(0);
+          L.push('      Capacity: ' + rawCap + ' vph  [city-provided]');
+          if (p.cap_source_doc) L.push('      Source:   ' + p.cap_source_doc);
+          if (p.cap_reason)     L.push('      Reason:   ' + p.cap_reason);
+          L.push('      Effective cap: ' + effCap.toFixed(0) + ' vph' +
+                 '  (' + rawCap + ' vph city-provided x ' + deg.toFixed(2) +
+                 ' ' + zone + ' degradation)');
+        } else {
+          L.push('      HCM cap: ' + hcmCap + ' vph  x degradation ' + deg.toFixed(2) +
+                 ' (' + zone + ')  = eff cap ' + effCap.toFixed(0) + ' vph');
+        }
         // dT formula
         L.push('      dT = (' + pv.toFixed(1) + ' vph / ' + effCap.toFixed(0) +
                ' vph) x 60 + ' + ep.toFixed(1) + ' min egress = ' + dt.toFixed(2) + ' min' +

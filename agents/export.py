@@ -351,6 +351,9 @@ _JS_IDENTIFY_SERVING_PATHS = """\
         bottleneck_lanes:          c.bottleneck.lanes        ?? 0,
         bottleneck_speed:          c.bottleneck.speed_mph   ?? 0,
         hazard_degradation_factor: c.bottleneck.haz_deg     ?? 1.0,
+        bottleneck_cap_src:        c.bottleneck.cap_src     ?? 'hcm',
+        bottleneck_cap_reason:     c.bottleneck.cap_reason  ?? null,
+        bottleneck_cap_source_doc: c.bottleneck.cap_source_doc ?? null,
         cost_s:                    c.cost_s,
         path_edges:                c.path_edges,
         path_coords:               c.path_coords,
@@ -402,6 +405,9 @@ _JS_COMPUTE_DELTA_T = """\
         bottleneck_lanes:          path.bottleneck_lanes          ?? 0,
         bottleneck_speed:          path.bottleneck_speed          ?? 0,
         hazard_degradation_factor: path.hazard_degradation_factor ?? 1.0,
+        bottleneck_cap_src:        path.bottleneck_cap_src        ?? 'hcm',
+        bottleneck_cap_reason:     path.bottleneck_cap_reason     ?? null,
+        bottleneck_cap_source_doc: path.bottleneck_cap_source_doc ?? null,
         delta_t_minutes:           delta_t,
         threshold_minutes:         threshold,
         flagged:                   delta_t > threshold,
@@ -525,7 +531,10 @@ def export_graph_json(
     Node format:  {"id": int, "lon": float, "lat": float}
     Edge format:  {"u": int, "v": int, "osmid": str, "len_m": float,
                    "speed_mph": float, "eff_cap_vph": float,
-                   "fhsz_zone": str, "haz_deg": float}
+                   "fhsz_zone": str, "haz_deg": float,
+                   "cap_src": str,        # "hcm" | "city_override"
+                   "cap_reason": str|null, # city-provided override reason (null if HCM)
+                   "cap_source_doc": str|null} # city source doc citation (null if HCM)
 
     Speed is resolved from config["speed_defaults"][highway_type] — identical to the
     travel_time_s computation in wildland.py.  eff_cap_vph and fhsz_zone are joined
@@ -557,6 +566,9 @@ def export_graph_json(
     osmid_to_name: dict[str, str | None] = {}
     osmid_to_road_type: dict[str, str | None] = {}
     osmid_to_lanes: dict[str, int | None] = {}
+    osmid_to_cap_src: dict[str, str] = {}
+    osmid_to_cap_reason: dict[str, str | None] = {}
+    osmid_to_cap_source_doc: dict[str, str | None] = {}
 
     for _, row in roads_gdf.iterrows():
         oid = row.get("osmid")
@@ -569,6 +581,9 @@ def export_graph_json(
         road_type = row.get("road_type") or None
         lc = row.get("lane_count")
         lanes = int(lc) if lc is not None and str(lc) not in ("", "nan") else None
+        cap_src = str(row.get("capacity_source", "hcm"))
+        cap_reason = row.get("capacity_override_reason") or None
+        cap_source_doc = row.get("capacity_override_source_doc") or None
         for o in (oid if isinstance(oid, list) else [oid]):
             key = str(o)
             if eff > osmid_to_eff_cap.get(key, -1):
@@ -578,6 +593,9 @@ def export_graph_json(
                 osmid_to_name[key] = road_name
                 osmid_to_road_type[key] = road_type
                 osmid_to_lanes[key] = lanes
+                osmid_to_cap_src[key] = cap_src
+                osmid_to_cap_reason[key] = cap_reason
+                osmid_to_cap_source_doc[key] = cap_source_doc
 
     # ── Nodes ─────────────────────────────────────────────────────────────────
     nodes: list[dict] = []
@@ -633,6 +651,9 @@ def export_graph_json(
             "name": osmid_to_name.get(osmid_str),
             "road_type": osmid_to_road_type.get(osmid_str),
             "lanes": osmid_to_lanes.get(osmid_str),
+            "cap_src": osmid_to_cap_src.get(osmid_str, "hcm"),
+            "cap_reason": osmid_to_cap_reason.get(osmid_str),
+            "cap_source_doc": osmid_to_cap_source_doc.get(osmid_str),
             "geom": geom_coords,  # [[lat,lon],...] or null — full road curve for AntPath
         })
 

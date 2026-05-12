@@ -83,6 +83,71 @@ Stale osmid entries (road removed from OSM) log a WARNING and are skipped — no
 
 ---
 
+## Direct Capacity Override (`capacity_vph`)
+
+`capacity_vph` is the **output** of HCM, not an input. It can be overridden directly when
+a PE-stamped field count or agency traffic study establishes a bottleneck capacity that the
+HCM formula cannot reproduce (e.g., unmodeled signal phasing, weave sections, incident
+management).
+
+### How it works
+
+The override is applied in a second pass **after** HCM computes its values, before FHSZ
+hazard degradation is applied:
+
+```
+1. _apply_hcm_capacity()       — compute capacity_vph from HCM 2022
+2. _apply_capacity_overrides() — overwrite capacity_vph for flagged segments [NEW]
+3. _apply_hazard_degradation() — effective_capacity_vph = capacity_vph × fhsz_factor
+```
+
+FHSZ hazard degradation still applies automatically on top of any city-provided capacity.
+The city specifies raw segment capacity; FHSZ physics still apply. If the city count
+already reflects degraded conditions, document this in `reason`.
+
+### YAML format
+
+Add a `capacity_vph` key to any `osmid`-keyed entry in `road_overrides:`. `reason` and
+`source` are **required** — no `capacity_vph` entry is valid without both:
+
+```yaml
+road_overrides:
+  - osmid: "987654321"
+    capacity_vph: 800
+    reason: >
+      Bottleneck confirmed at 800 vph by Caltrans peak-hour count (2024-08-15).
+      HCM formula overestimates due to unmodeled signal interference at this
+      intersection.
+    source: "Caltrans TMC count report 2024-08-15 (PE stamp: J. Smith, PE #12345)"
+```
+
+`capacity_vph` is only valid with `osmid:` (not `name:`). Direct capacity overrides require
+exact segment identification; name-based matching is too imprecise for PE-documented values.
+
+`lane_count` and `speed_limit` may coexist with `capacity_vph` in one entry. They feed
+demand estimation and display; `capacity_vph` takes precedence for bottleneck calculations.
+
+### Audit trail
+
+The determination report labels the bottleneck as `[city-provided]` and cites the source
+document in place of the HCM formula breakdown:
+
+```
+Capacity: 800 vph  [city-provided]
+Source:   Caltrans TMC count report 2024-08-15 (PE stamp: J. Smith, PE #12345)
+Reason:   Bottleneck confirmed at 800 vph by peak-hour count...
+Effective cap: 280 vph  (800 vph city-provided x 0.35 vhfhsz degradation)
+```
+
+### What it does NOT do
+
+- Does not bypass FHSZ degradation (`effective_capacity_vph` = city value × hazard factor)
+- Does not appear in the what-if panel (browser projects use HCM only; capacity override
+  is a published-output-only feature requiring PE documentation)
+- Does not affect the road editor UI (road editor is for HCM inputs)
+
+---
+
 ## Override Application: `agents/capacity_analysis.py`
 
 ### New function `_apply_road_overrides()`

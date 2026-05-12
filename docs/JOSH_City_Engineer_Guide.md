@@ -86,6 +86,28 @@ Flag the error to the planning department with a written description of the disc
 
 Corrections are not made on a project-specific basis. A correction that applies only to one project's analysis is not a data correction — it is a discretionary adjustment, which the standard does not permit.
 
+### Setting road capacity directly (`capacity_vph`)
+
+In some cases, adjusting HCM inputs (lane count, speed limit, road type) is not sufficient to reflect actual road conditions. When a PE-stamped field count or a Caltrans TMC report establishes a bottleneck capacity that the HCM formula cannot reproduce — for example, because of unmodeled signal phasing, weave sections, or incident management — the city engineer may set `capacity_vph` directly in the road override file.
+
+**When to use.** Use `capacity_vph` when you have a PE-stamped traffic study or agency count report that documents the actual peak-hour throughput on the bottleneck segment and that throughput differs materially from the HCM formula result. The standard example is a Caltrans TMC count showing sustained throughput below the HCM two-lane capacity due to a signalized intersection upstream of the segment.
+
+**How to use.** Add `capacity_vph`, `reason`, and `source` to the segment's override entry in the city road override YAML, keyed by the OSM way ID (`osmid`). Both `reason` and `source` are required — an entry without them is invalid and will be skipped with a logged warning. Cite the PE stamp, report date, and agency in the `source` field:
+
+```yaml
+road_overrides:
+  - osmid: "987654321"
+    capacity_vph: 800
+    reason: >
+      Bottleneck confirmed at 800 vph by Caltrans peak-hour count (2024-08-15).
+      HCM formula overestimates due to unmodeled signal interference.
+    source: "Caltrans TMC count report 2024-08-15 (PE stamp: J. Smith, PE #12345)"
+```
+
+**What it does NOT do.** `capacity_vph` does not bypass FHSZ hazard degradation. The city-provided capacity is still multiplied by the FHSZ degradation factor to yield effective capacity. If the field count was conducted under fire-weather conditions and already reflects degraded throughput, document this in the `reason` field so the record is clear — but the degradation factor still applies.
+
+**Audit trail.** The determination report will show `[city-provided]` in place of the HCM formula breakdown for that bottleneck, and will cite the source document. This is the authoritative record that a PE-verified value was used in place of the HCM formula.
+
 ------
 
 ## Verifying the ΔT Calculation by Hand

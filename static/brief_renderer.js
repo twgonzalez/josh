@@ -740,19 +740,26 @@
           var margin = dt - thr;
           var isCtrl = (pid === controllingId);
 
-          // HCM subtitle for bottleneck cell
-          var bRt  = rr.bottleneck_road_type  || '';
-          var bSpd = +(rr.bottleneck_speed_mph  || 0);
-          var bLns = +(rr.bottleneck_lanes       || 0);
-          var bHcm = +(rr.bottleneck_hcm_capacity_vph || 0);
-          var bDeg = +(rr.bottleneck_hazard_degradation || degFactor);
+          // Capacity subtitle for bottleneck cell
+          var bRt   = rr.bottleneck_road_type  || '';
+          var bSpd  = +(rr.bottleneck_speed_mph  || 0);
+          var bLns  = +(rr.bottleneck_lanes       || 0);
+          var bHcm  = +(rr.bottleneck_hcm_capacity_vph || 0);
+          var bDeg  = +(rr.bottleneck_hazard_degradation || degFactor);
+          var bCapSrc = rr.bottleneck_cap_src || 'hcm';
           var rtParts = [];
           if (RT_ABBR[bRt]) rtParts.push(RT_ABBR[bRt]);
           if (bSpd) rtParts.push(bSpd + '\u202fmph');
           if (bLns) rtParts.push(bLns + '\u202fln');
-          var hcmStr = bHcm ? 'HCM\u202f' + _comma(bHcm) + '\u202f\u00d7\u202f' + _f(bDeg,2) + '\u202f=\u202f' + _comma(effCap) + '\u202fvph' : '';
+          var capStr;
+          if (bCapSrc === 'city_override') {
+            var rawCap = bDeg > 0 ? Math.round(effCap / bDeg) : effCap;
+            capStr = _comma(rawCap) + '\u202fvph\u202f[city-provided]\u202f\u00d7\u202f' + _f(bDeg,2) + '\u202f=\u202f' + _comma(effCap) + '\u202fvph';
+          } else {
+            capStr = bHcm ? 'HCM\u202f' + _comma(bHcm) + '\u202f\u00d7\u202f' + _f(bDeg,2) + '\u202f=\u202f' + _comma(effCap) + '\u202fvph' : '';
+          }
           var subtitleParts = [rtParts.join(' \u00b7 ')];
-          if (hcmStr) subtitleParts.push(hcmStr);
+          if (capStr) subtitleParts.push(capStr);
           var bnSubtitle = subtitleParts.filter(Boolean).join('  \u2192  ');
           var bnameCell = bnSubtitle
             ? _esc(bname) + '<br><span style="font-size:9px;color:#868e96;font-weight:normal">' + _esc(bnSubtitle) + '</span>'

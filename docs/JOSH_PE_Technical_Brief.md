@@ -84,6 +84,8 @@ The HCM is the national standard for traffic operations analysis, used by every 
 
 Road classification and lane count are drawn from OpenStreetMap, cross-referenced against Caltrans AADT where available. Lane count and speed limit are the only site-specific inputs to the capacity table.
 
+**Direct capacity override.** When a PE-stamped field count or agency traffic study (e.g., a Caltrans TMC report) establishes a bottleneck throughput that the HCM formula cannot reproduce, the city engineer may set `capacity_vph` directly in the city road override file for the affected segment. The override is applied after HCM computes its values and before FHSZ degradation is applied — `effective_capacity_vph` = city-provided capacity × FHSZ degradation factor. The degradation factor is not bypassed; it remains a statutory application of state FHSZ findings. Overridden segments appear in the determination report with a `[city-provided]` label and full source attribution (PE stamp, report date, agency) in place of the HCM formula breakdown.
+
 ### 4.2 Hazard Degradation Factors
 
 **Source: HCM Exhibits 10-15 (visibility impairment) and 10-17 (incident and lane blockage capacity adjustments); validated against NIST Technical Notes 2135, 2252, and 2262 (Camp Fire investigation).**

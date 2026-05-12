@@ -23,9 +23,10 @@ Key outputs per road segment:
 
 Also returns a list of EvacuationPath objects capturing per-path bottleneck data.
 
-Pipeline order (v3.0):
+Pipeline order (v3.0+):
   1. HCM capacity per segment
-  2. Hazard degradation → effective_capacity_vph (NEW in v3.0)
+  2a. Direct capacity overrides (post-HCM, city-provided values)
+  2b. Hazard degradation → effective_capacity_vph (NEW in v3.0)
   3. Identify evacuation routes + bottleneck tracking (MODIFIED: uses effective_capacity)
   4. Apply baseline demand (catchment or fallback)
   5. v/c ratio and LOS (informational)
@@ -40,11 +41,14 @@ import networkx as nx
 import numpy as np
 import osmnx as ox
 import pandas as pd
+import yaml
 from shapely.geometry import Point
 
 from models.evacuation_path import EvacuationPath
 
 logger = logging.getLogger(__name__)
+
+_REPO_ROOT = Path(__file__).resolve().parent.parent
 
 # Zone label → canonical hazard_zone key (matches hazard_degradation keys in parameters.yaml)
 _HAZ_CLASS_TO_ZONE = {
@@ -88,7 +92,10 @@ def analyze_capacity(
     # Step 1: HCM Capacity
     roads_gdf = _apply_hcm_capacity(roads_gdf, config)
 
-    # Step 2: Hazard Degradation (NEW in v3.0)
+    # Step 2a: Direct capacity overrides (post-HCM) — city-provided values
+    roads_gdf = _apply_capacity_overrides(roads_gdf, city_config, data_dir)
+
+    # Step 2b: Hazard Degradation (NEW in v3.0)
     roads_gdf = _apply_hazard_degradation(roads_gdf, fhsz_gdf, config, analysis_crs)
 
     # Resolve exit highway types: city config overrides global default.
@@ -208,7 +215,99 @@ def calculate_hcm_capacity(
 
 
 # ---------------------------------------------------------------------------
-# Step 2: Hazard-Aware Capacity Degradation (NEW in v3.0)
+# Step 2a: Direct Capacity Overrides (post-HCM)
+# ---------------------------------------------------------------------------
+
+def _apply_capacity_overrides(
+    roads_gdf: gpd.GeoDataFrame,
+    city_config: dict,
+    data_dir: Optional[Path],
+) -> gpd.GeoDataFrame:
+    """
+    Apply direct capacity_vph overrides from the city road override YAML.
+
+    Called after _apply_hcm_capacity() so it overwrites HCM results for
+    specifically flagged segments. Sets capacity_source column:
+      'hcm'           — derived from HCM 2022 formula (default)
+      'city_override' — set directly by city engineer
+
+    Requires 'reason' and 'source' fields alongside any capacity_vph entry.
+    FHSZ hazard degradation still applies on top of city-provided values.
+    """
+    roads_gdf = roads_gdf.copy()
+    roads_gdf["capacity_source"] = "hcm"
+    roads_gdf["capacity_override_reason"] = None
+    roads_gdf["capacity_override_source_doc"] = None
+
+    if data_dir is None:
+        return roads_gdf
+
+    city_slug = Path(data_dir).name
+    override_path = _REPO_ROOT / "config" / "private" / "cities" / f"{city_slug}_road_overrides.yaml"
+    if not override_path.exists():
+        return roads_gdf
+
+    with open(override_path) as f:
+        override_data = yaml.safe_load(f)
+
+    entries = (override_data or {}).get("road_overrides", []) or []
+
+    # Build osmid → DataFrame index lookup
+    osmid_to_idx: dict[str, int] = {}
+    for idx, row in roads_gdf.iterrows():
+        oid = row.get("osmid")
+        if oid is None:
+            continue
+        for o in (oid if isinstance(oid, list) else [oid]):
+            osmid_to_idx[str(o)] = idx
+
+    applied = 0
+    for entry in entries:
+        if not isinstance(entry, dict) or "capacity_vph" not in entry:
+            continue
+
+        osmid_key = str(entry.get("osmid", "")).strip()
+        if not osmid_key:
+            logger.warning(
+                "capacity_override: entry with capacity_vph missing osmid — skipped. "
+                "Use osmid (not name) for direct capacity overrides."
+            )
+            continue
+
+        reason = (entry.get("reason") or "").strip()
+        source = (entry.get("source") or "").strip()
+        if not reason or not source:
+            logger.warning(
+                f"capacity_override: osmid {osmid_key!r} — "
+                f"'reason' and 'source' are required for capacity_vph overrides; skipping."
+            )
+            continue
+
+        if osmid_key not in osmid_to_idx:
+            logger.warning(
+                f"capacity_override: osmid {osmid_key!r} not found in roads_gdf "
+                f"(stale override entry — road may have been removed from OSM)."
+            )
+            continue
+
+        idx = osmid_to_idx[osmid_key]
+        roads_gdf.at[idx, "capacity_vph"] = float(entry["capacity_vph"])
+        roads_gdf.at[idx, "capacity_source"] = "city_override"
+        roads_gdf.at[idx, "capacity_override_reason"] = reason
+        roads_gdf.at[idx, "capacity_override_source_doc"] = source
+        applied += 1
+
+    if applied:
+        logger.info(
+            f"Capacity overrides: {applied} segment(s) — capacity_vph set from city data "
+            f"({override_path.name})"
+        )
+
+    return roads_gdf
+
+
+# ---------------------------------------------------------------------------
+# Step 2b: Hazard-Aware Capacity Degradation (NEW in v3.0)
 # ---------------------------------------------------------------------------
 
 def _apply_hazard_degradation(

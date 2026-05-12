@@ -359,6 +359,15 @@ road_overrides:
     reason: "Clark Ave — below IFC §503 minimum width (City Engineering Survey 2024-03)"
 ```
 
+Supported override fields:
+
+- `highway` — reclassify OSM highway tag; re-derives road type and lane count
+- `lanes` — correct lane count (HCM input)
+- `speed` — correct speed limit in mph (HCM input)
+- `width_ft` — physical road width in feet (stored for future Standard 6 / IFC §503 analysis)
+- `access_type` — `dead_end` | `single_access` | `one_way` | `two_way`
+- `capacity_vph` — sets bottleneck capacity directly (post-HCM), in vehicles per hour. Requires `reason` and `source`. Use only when a PE-stamped field count or agency traffic study supersedes the HCM formula for a specific segment. `effective_capacity_vph` = `capacity_vph` × FHSZ degradation factor still applies.
+
 **FHSZ polygons (`fhsz.geojson`)**
 
 Cal Fire's standard API (`egis.fire.ca.gov`) returns State Responsibility Area zones only. Most incorporated California cities are Local Responsibility Area (LRA) and get zero features from the standard endpoint. LRA FHSZ data must come from an alternative source: a county GIS FeatureServer, a locally adopted ordinance GeoJSON, or the Cal Fire FRAP statewide shapefile clipped to the city boundary. Getting this right matters — a project whose site FHSZ zone is misidentified receives the wrong threshold.
