@@ -207,7 +207,10 @@
       background: #ffffff;
       border: 1px solid var(--parchment-dk);
       border-radius: 4px;
-      padding: 52px 56px 64px;
+      padding: 52px 80px 64px;
+      max-width: 780px;
+      margin-left: auto;
+      margin-right: auto;
     }
 
     /* ── TOC SIDEBAR ─────────────────────────────────────────── */
@@ -462,41 +465,112 @@
     /* ── PRINT COVER (screen: hidden) ──────────────────────────── */
     .print-cover { display: none; }
 
+    /* ── PRINT RUNNING HEADER (screen: hidden) ──────────────── */
+    #print-running-header { display: none; }
+
     /* ── PRINT ───────────────────────────────────────────────── */
     @media print {
       @page {
         size: letter;
+        /* 0.85in top margin comfortably clears the ~0.5in running header
+           which is fixed at top: 0 within the paper's margin area */
         margin: 0.85in 1in 0.8in;
+      }
+
+      /* Running header — position: fixed in print places this at top: 0
+         of the paper (within the @page margin area), repeating on every page */
+      #print-running-header {
+        display: block !important;
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+      }
+      .prh-inner {
+        background: #1A2438;
+        padding: 7pt 1in 6pt;
+        display: flex;
+        align-items: baseline;
+        justify-content: space-between;
+        gap: 12pt;
+      }
+      .prh-brand {
+        font-family: 'Source Sans 3', sans-serif;
+        font-size: 7pt;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.12em;
+        color: #C49A28;
+        white-space: nowrap;
+        flex-shrink: 0;
+      }
+      .prh-dot {
+        font-weight: 400;
+        color: rgba(196,154,40,0.45);
+        margin: 0 4pt;
+      }
+      .prh-sys {
+        font-family: 'Source Sans 3', sans-serif;
+        font-size: 7pt;
+        font-weight: 400;
+        text-transform: none;
+        letter-spacing: 0;
+        color: rgba(245,239,226,0.45);
+      }
+      .prh-title {
+        font-family: 'Source Sans 3', sans-serif;
+        font-size: 7.5pt;
+        color: rgba(245,239,226,0.70);
+        text-align: right;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        max-width: 50%;
+      }
+      .prh-rule {
+        height: 1.5pt;
+        background: linear-gradient(90deg, #C49A28 0%, rgba(196,154,40,0.2) 100%);
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
       }
 
       header, footer, .doc-meta, .toc-sidebar { display: none !important; }
 
+      /* Page-1 branded block above the document content */
       .print-cover {
         display: block;
         margin-bottom: 20pt;
         padding-bottom: 10pt;
-        border-bottom: 1pt solid #C49A28;
+        border-bottom: 1pt solid rgba(196,154,40,0.4);
         -webkit-print-color-adjust: exact;
         print-color-adjust: exact;
       }
       .print-cover-org {
         font-family: 'Source Sans 3', sans-serif;
-        font-size: 8pt;
+        font-size: 8.5pt;
         font-weight: 700;
         text-transform: uppercase;
-        letter-spacing: 0.1em;
-        color: #5A4A32;
+        letter-spacing: 0.12em;
+        color: #1A2438;
       }
       .print-cover-sys {
         font-family: 'Source Sans 3', sans-serif;
         font-size: 8pt;
-        color: #8A7458;
+        color: #5A4A32;
         margin-top: 2pt;
+      }
+      .print-cover-date {
+        font-family: 'Source Sans 3', sans-serif;
+        font-size: 7.5pt;
+        color: #8A7458;
+        margin-top: 6pt;
       }
 
       .doc-layout { display: block; }
       .doc-body { max-width: 100%; padding: 0; margin: 0; }
-      .doc-body article { border: none; padding: 0; background: white; }
+      .doc-body article { border: none; padding: 0; background: white; max-width: 100%; margin: 0; }
       body { background: white; }
 
       .md h1 {
@@ -546,6 +620,19 @@
 </head>
 <body>
 
+<!-- Print-only running header — position:fixed repeats on every printed page -->
+<div id="print-running-header" aria-hidden="true">
+  <div class="prh-inner">
+    <div class="prh-brand">
+      California Stewardship Alliance
+      <span class="prh-dot">·</span>
+      <span class="prh-sys">JOSH — Fire Evacuation Capacity Analysis System</span>
+    </div>
+    <div class="prh-title" id="prh-doc-title"></div>
+  </div>
+  <div class="prh-rule"></div>
+</div>
+
 <header>
   <div class="header-inner">
     <a href="index.html" class="wordmark" aria-label="California Stewardship Alliance — home">
@@ -584,12 +671,13 @@
 
   <div class="doc-layout">
     <div class="doc-body">
-      <article class="md" id="md-content">
-        <div class="print-cover">
-          <div class="print-cover-org">California Stewardship Alliance</div>
-          <div class="print-cover-sys">JOSH — Fire Evacuation Capacity Analysis System</div>
-        </div>
-      </article>
+      <!-- Page-1 branded block; lives outside article so innerHTML render doesn't clobber it -->
+      <div class="print-cover">
+        <div class="print-cover-org">California Stewardship Alliance</div>
+        <div class="print-cover-sys">JOSH — Fire Evacuation Capacity Analysis System</div>
+        <div class="print-cover-date" id="print-cover-date"></div>
+      </div>
+      <article class="md" id="md-content"></article>
     </div>
     <aside class="toc-sidebar" id="toc-sidebar">
       <div class="toc-label">Contents</div>
@@ -641,6 +729,14 @@
     .then(md => render(md, filename))
     .catch(err => showError(`Could not load <strong>${docPath}</strong>.<br><small>${err.message}</small>`));
 
+  function setPrintMeta(title) {
+    const dateStr = new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+    const prhTitle = document.getElementById('prh-doc-title');
+    const coverDate = document.getElementById('print-cover-date');
+    if (prhTitle)   prhTitle.textContent  = title;
+    if (coverDate)  coverDate.textContent = dateStr;
+  }
+
   function render(mdText, filename) {
     const isTxt = /\.txt$/i.test(filename);
     const content = document.getElementById('md-content');
@@ -660,6 +756,7 @@
 
       document.getElementById('meta-title').textContent = title;
       document.title = title + ' — JOSH';
+      setPrintMeta(title);
       document.getElementById('toc-sidebar').style.display = 'none';
 
       // Show immediately — no TOC needed
@@ -685,9 +782,11 @@
     if (h1) {
       document.getElementById('meta-title').textContent = h1.textContent;
       document.title = h1.textContent + ' — JOSH';
+      setPrintMeta(h1.textContent);
     } else {
-      document.getElementById('meta-title').textContent =
-        filename.replace(/\.md$/i, '').replace(/[-_]/g, ' ');
+      const fallbackTitle = filename.replace(/\.md$/i, '').replace(/[-_]/g, ' ');
+      document.getElementById('meta-title').textContent = fallbackTitle;
+      setPrintMeta(fallbackTitle);
     }
 
     // ── Slug headings for TOC links ──────────────────────────
