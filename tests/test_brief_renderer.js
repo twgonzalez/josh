@@ -416,6 +416,34 @@ test('T12 — cross-street bottleneck: no cross streets falls back to name only'
   assert.ok(!html.includes('Unnamed road'), 'no unnamed road when name is present');
 });
 
+test('T14 — city-provided capacity: [city-provided] label shown, HCM formula absent', function() {
+  // When bottleneck_cap_src === 'city_override', the route table cell must show
+  // [city-provided] and cite the source doc instead of the HCM formula breakdown.
+  var path1 = makePath({
+    bottleneck_hcm_capacity_vph:   0,       // not used for city_override
+    bottleneck_eff_cap_vph:        280,     // 800 × 0.35
+    bottleneck_hazard_degradation: 0.35,
+    bottleneck_cap_src:            'city_override',
+    bottleneck_cap_source_doc:     'Caltrans TMC count 2024-08-15 (PE stamp: J. Smith PE #12345)',
+    bottleneck_cap_reason:         'Field count shows 800 vph peak throughput',
+    delta_t_minutes:               8.50,
+    flagged:                       true,
+  });
+  var an  = makeAnalysis(true, true, { delta_t_triggered: true });
+  var inp = makeInput('DISCRETIONARY', [path1], null, an);
+
+  var html = BR.render(inp);
+
+  // [city-provided] label must appear in the bottleneck cell subtitle
+  assert.ok(html.includes('[city-provided]'), 'route table cell must contain [city-provided]');
+  // Raw capacity (800 = 280 / 0.35) must appear
+  assert.ok(html.includes('800'), 'raw city-provided capacity (800 vph) must appear');
+  // HCM cell formula (HCM + narrow non-breaking space + number) must NOT appear
+  // Note: 'HCM' appears in prose/methodology sections — we check for the cell-specific
+  // pattern 'HCM ' which only appears in the bottleneck formula display.
+  assert.ok(!html.includes('HCM '), 'HCM cell formula must not appear for city_override path');
+});
+
 test('T13 — cross-street bottleneck: unnamed road with cross streets', function() {
   var path1 = makePath({
     bottleneck_name:             '',

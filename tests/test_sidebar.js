@@ -649,6 +649,50 @@ test('S25: _wireFormListeners wires all four form input ids (not just units/stor
   assert.ok(body.includes("'josh-sb-f-stories'"), "_wireFormListeners must wire 'josh-sb-f-stories'");
 });
 
+test('S27: _buildAuditText renders [city-provided] branch for cap_src=city_override', () => {
+  // Verify the city-provided label, source doc, and reason appear in the audit trail
+  // text, and that the HCM formula line is NOT rendered for that path.
+  setup();
+  const p = freshProject({ name: 'City Override Test', units: 50, stories: 3 });
+  p.result = fakeResult({
+    hazard_zone:       'vhfhsz',
+    in_fire_zone:      true,
+    delta_t_threshold: 2.25,
+    paths: [
+      {
+        route_id:                  'A',
+        delta_t:                   4.8,
+        flagged:                   true,
+        bottleneck_osmid:          '77777',
+        bottleneck_name:           'Wildcat Canyon Rd',
+        bottleneck_road_type:      'two_lane',
+        bottleneck_lanes:          2,
+        bottleneck_speed:          25,
+        effective_capacity_vph:    280,   // 800 × 0.35
+        hazard_degradation_factor: 0.35,
+        cap_src:                   'city_override',
+        cap_source_doc:            'Caltrans TMC count 2024-08-15 (PE stamp: J. Smith PE #12345)',
+        cap_reason:                'Field count shows 800 vph peak; HCM overestimates signal interference',
+        path_coords:               [[37.88, -122.25], [37.89, -122.26]],
+      },
+    ],
+  });
+
+  const bi = sb._buildBriefInput(p);
+  const auditText = bi.audit_text;
+
+  // [city-provided] label must appear
+  assert.ok(auditText.includes('[city-provided]'), 'audit trail must contain [city-provided]');
+  // Source doc must appear
+  assert.ok(auditText.includes('Caltrans TMC count 2024-08-15'), 'source doc must appear in audit trail');
+  // Reason must appear
+  assert.ok(auditText.includes('Field count shows 800 vph'), 'reason must appear in audit trail');
+  // HCM formula line must NOT appear for this path
+  assert.ok(!auditText.includes('HCM cap:'), 'HCM cap: must not appear for city_override path');
+  // Effective capacity with degradation note must appear
+  assert.ok(auditText.includes('city-provided') && auditText.includes('0.35'), 'degradation factor must appear');
+});
+
 test('S26: incremental updateProject calls survive a serialize/deserialize round-trip', () => {
   // Simulates the real-world flow: user types name, then address, then changes
   // units, each triggering an updateProject. Final state must have all fields.
