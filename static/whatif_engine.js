@@ -363,7 +363,9 @@ const WhatIfEngine = (() => {
   // ── Serving path identification ───────────────────────────────────────────────
   // Mirrors: agents/scenarios/wildland.py identify_routes()
   // Routes to ALL exit nodes (no radius filter on exits — matches Python).
-  // max_path_length_ratio filter, bottleneck = argmin(eff_cap_vph), dedup by osmid.
+  // max_path_length_ratio filter + per-path bottleneck = argmin(eff_cap_vph).
+  // All viable routes returned — no per-bottleneck deduplication (user controls
+  // visibility via sidebar toggles).
 
   /**
    * Identify EvacuationPath objects for a project at (lat, lon).
@@ -391,53 +393,38 @@ const WhatIfEngine = (() => {
     const maxAllowed = minCost * maxRatio;
     const filtered  = candidates.filter(c => c.cost_s <= maxAllowed);
 
-    // Bottleneck = edge with minimum eff_cap_vph.
-    // Dedup: per unique bottleneck osmid, keep the path with highest bottleneck cap.
-    const bottleneckMap = new Map(); // osmid → best candidate
-    for (const cand of filtered) {
-      if (cand.path_edges.length === 0) continue;
+    // Identify bottleneck per path (no dedup — all viable routes are returned).
+    return filtered.map((cand, i) => {
+      if (cand.path_edges.length === 0) return null;
       let bn = cand.path_edges[0];
       for (const e of cand.path_edges) {
         if (e.eff_cap_vph < bn.eff_cap_vph) bn = e;
       }
-      const existing = bottleneckMap.get(bn.osmid);
-      if (!existing || bn.eff_cap_vph > existing.bottleneck.eff_cap_vph) {
-        bottleneckMap.set(bn.osmid, {
-          exitNode:       cand.exitNode,
-          cost_s:         cand.cost_s,
-          path_edges:     cand.path_edges,
-          path_coords:    cand.path_coords ?? [],
-          bottleneck:     bn,
-          bottleneck_idx: cand.path_edges.indexOf(bn),
-        });
-      }
-    }
-
-    return Array.from(bottleneckMap.values()).map((c, i) => {
-      const bi = c.bottleneck_idx;
-      const bnCoords = (bi >= 0 && bi < c.path_coords.length - 1)
-        ? [c.path_coords[bi], c.path_coords[bi + 1]]
+      const path_coords = cand.path_coords ?? [];
+      const bi = cand.path_edges.indexOf(bn);
+      const bnCoords = (bi >= 0 && bi < path_coords.length - 1)
+        ? [path_coords[bi], path_coords[bi + 1]]
         : [];
       return {
-        pathId:                    `project_origin_${c.exitNode}_${i}`,
-        exitNodeId:                c.exitNode,
-        bottleneckOsmid:           c.bottleneck.osmid,
-        bottleneckEffCapVph:       c.bottleneck.eff_cap_vph,
-        bottleneckFhszZone:        c.bottleneck.fhsz_zone,
-        bottleneck_name:           c.bottleneck.name        ?? '',
-        bottleneck_road_type:      c.bottleneck.road_type   ?? '',
-        bottleneck_lanes:          c.bottleneck.lanes        ?? 0,
-        bottleneck_speed:          c.bottleneck.speed_mph   ?? 0,
-        hazard_degradation_factor: c.bottleneck.haz_deg     ?? 1.0,
-        bottleneck_cap_src:        c.bottleneck.cap_src     ?? 'hcm',
-        bottleneck_cap_reason:     c.bottleneck.cap_reason  ?? null,
-        bottleneck_cap_source_doc: c.bottleneck.cap_source_doc ?? null,
-        cost_s:                    c.cost_s,
-        path_edges:                c.path_edges,
-        path_coords:               c.path_coords,
+        pathId:                    `project_origin_${cand.exitNode}_${i}`,
+        exitNodeId:                cand.exitNode,
+        bottleneckOsmid:           bn.osmid,
+        bottleneckEffCapVph:       bn.eff_cap_vph,
+        bottleneckFhszZone:        bn.fhsz_zone,
+        bottleneck_name:           bn.name        ?? '',
+        bottleneck_road_type:      bn.road_type   ?? '',
+        bottleneck_lanes:          bn.lanes        ?? 0,
+        bottleneck_speed:          bn.speed_mph   ?? 0,
+        hazard_degradation_factor: bn.haz_deg     ?? 1.0,
+        bottleneck_cap_src:        bn.cap_src     ?? 'hcm',
+        bottleneck_cap_reason:     bn.cap_reason  ?? null,
+        bottleneck_cap_source_doc: bn.cap_source_doc ?? null,
+        cost_s:                    cand.cost_s,
+        path_edges:                cand.path_edges,
+        path_coords:               path_coords,
         bottleneck_coords:         bnCoords,
       };
-    });
+    }).filter(Boolean);
   }
 
   // ── ΔT calculation ────────────────────────────────────────────────────────────
@@ -464,6 +451,7 @@ const WhatIfEngine = (() => {
       const delta_t = (projectVehicles / path.bottleneckEffCapVph) * 60 + egressMinutes;
       return {
         pathId:                    path.pathId,
+        cost_s:                    path.cost_s ?? 0,
         bottleneckOsmid:           path.bottleneckOsmid,
         bottleneckFhszZone:        path.bottleneckFhszZone,
         bottleneckEffCapVph:       path.bottleneckEffCapVph,

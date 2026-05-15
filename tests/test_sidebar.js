@@ -714,3 +714,92 @@ test('S26: incremental updateProject calls survive a serialize/deserialize round
   assert.equal(p2.units,   99);
   assert.equal(p2.stories, 7);
 });
+
+// ── v4.12 (all-viable-routes) — route toggle state machine ──────────────────
+
+function _projectWithPaths() {
+  const result = {
+    tier:              'DISCRETIONARY',
+    hazard_zone:       'non_fhsz',
+    in_fire_zone:      false,
+    project_vehicles:  205.2,
+    egress_minutes:    0,
+    delta_t_threshold: 6.0,
+    paths: [
+      { path_id: 'P1', route_id: 'A', cost_s: 120, delta_t: 6.48, flagged: true,  bottleneck_osmid: '1', bottleneck_name: 'Adeline St',  path_coords: [[37.87,-122.27]] },
+      { path_id: 'P2', route_id: 'B', cost_s: 200, delta_t: 4.59, flagged: false, bottleneck_osmid: '2', bottleneck_name: 'University Ave', path_coords: [[37.87,-122.27]] },
+      { path_id: 'P3', route_id: 'C', cost_s: 300, delta_t: 3.24, flagged: false, bottleneck_osmid: '3', bottleneck_name: 'Shattuck Ave',   path_coords: [[37.87,-122.27]] },
+    ],
+  };
+  return freshProject({ result });
+}
+
+test('S28: _normalizeResult preserves path_id and cost_s from engine output', () => {
+  setup();
+  const engineOut = {
+    tier:        'DISCRETIONARY',
+    hazard_zone: 'non_fhsz',
+    paths: [
+      { pathId: 'project_origin_1_0', cost_s: 145.6, bottleneckOsmid: '99', delta_t_minutes: 6.48, flagged: true,  bottleneckEffCapVph: 1900, bottleneck_name: 'X', path_coords: [] },
+      { pathId: 'project_origin_2_0', cost_s: 200.1, bottleneckOsmid: '88', delta_t_minutes: 4.50, flagged: false, bottleneckEffCapVph: 1900, bottleneck_name: 'Y', path_coords: [] },
+    ],
+  };
+  const n = sb._normalizeResult(engineOut);
+  assert.equal(n.paths.length, 2);
+  assert.equal(n.paths[0].path_id, 'project_origin_1_0', 'path_id preserved from pathId');
+  assert.equal(n.paths[0].cost_s,  145.6,                'cost_s preserved');
+  assert.equal(n.paths[1].path_id, 'project_origin_2_0');
+});
+
+test('S29: _visiblePaths returns ALL paths when no toggle entry exists (default-on)', () => {
+  setup();
+  const p     = _projectWithPaths();
+  const paths = p.result.paths;
+  const visible = sb._visiblePaths(p.id, paths);
+  assert.equal(visible.length, paths.length, 'all paths visible by default');
+});
+
+test('S30: _toggleRoute seeds full Set on first call, then flips one off', () => {
+  setup();
+  const p     = _projectWithPaths();
+  const paths = p.result.paths;
+
+  // First toggle on P2 → P2 hidden; P1 and P3 still visible.
+  sb._toggleRoute(p.id, 'P2');
+  const visible1 = sb._visiblePaths(p.id, paths).map(x => x.path_id);
+  assert.deepEqual(visible1, ['P1', 'P3'], 'P2 hidden after first toggle');
+
+  // Toggle P2 again → restored.
+  sb._toggleRoute(p.id, 'P2');
+  const visible2 = sb._visiblePaths(p.id, paths).map(x => x.path_id);
+  assert.deepEqual(visible2, ['P1', 'P2', 'P3'], 'P2 restored after second toggle');
+});
+
+test('S31: route toggles do not change p.result.paths — display-only safeguard', () => {
+  // Determination uses ALL routes; toggles must never mutate the underlying data.
+  // If a future change leaks toggle state into result.paths the legal safeguard
+  // ("Determination uses all N routes") becomes a lie — this test prevents that.
+  setup();
+  const p     = _projectWithPaths();
+  const originalCount = p.result.paths.length;
+  const originalIds   = p.result.paths.map(x => x.path_id).join(',');
+  sb._toggleRoute(p.id, 'P1');
+  sb._toggleRoute(p.id, 'P2');
+  const after = sb.getProject(p.id);
+  assert.equal(after.result.paths.length, originalCount, 'result.paths length unchanged');
+  assert.equal(after.result.paths.map(x => x.path_id).join(','), originalIds, 'result.paths content unchanged');
+});
+
+test('S32: _buildBriefInput threads path_id and cost_s through to BriefInput', () => {
+  // The brief renderer sorts by cost_s; if _buildBriefInput drops these fields
+  // the brief table reverts to "Path: <bottleneck_osmid>" (collisions when
+  // multiple paths share a bottleneck) and unsorted order.
+  setup();
+  const p  = _projectWithPaths();
+  const bi = sb._buildBriefInput(p);
+  assert.equal(bi.result.paths.length, 3);
+  assert.equal(bi.result.paths[0].path_id, 'P1', 'path_id forwarded');
+  assert.equal(bi.result.paths[0].cost_s, 120,   'cost_s forwarded');
+  assert.equal(bi.result.paths[2].path_id, 'P3');
+  assert.equal(bi.result.paths[2].cost_s, 300);
+});

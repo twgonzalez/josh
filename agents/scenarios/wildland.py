@@ -320,17 +320,16 @@ class WildlandScenario(EvacuationScenario):
                 enriched = _identify_and_enrich(
                     filtered, segment_index, gctx.G, proj_x, proj_y,
                 )
-                deduped = _dedup_by_label(enriched)
                 project_paths.extend(
-                    _build_evac_paths(deduped, segment_index, origin, gctx)
+                    _build_evac_paths(enriched, segment_index, origin, gctx)
                 )
 
             logger.info(
                 f"  Project-origin Dijkstra (travel-time weight): {len(project_paths)} "
-                f"unique-bottleneck paths for {project.project_name} "
+                f"viable paths for {project.project_name} "
                 f"({len(origins)} egress origin(s); "
                 f"ratio ≤{max_path_ratio:.1f}× fastest exit, "
-                f"from {len(gctx.exit_nodes)} exits)"
+                f"from {len(gctx.exit_nodes)} exits; no bottleneck dedup)"
             )
 
         # Phase 4: Fallback to population paths
@@ -764,12 +763,6 @@ def _identify_and_enrich(
                 G, bn_u, bn_v, proj_x, proj_y,
             )
 
-        dedup_key = (
-            (bn_name, cross_a, cross_b)
-            if (bn_name or cross_a or cross_b)
-            else (bottleneck_osmid,)
-        )
-
         result.append(CandidateWithBottleneck(
             travel_time_s=cand.travel_time_s,
             exit_node_id=cand.exit_node_id,
@@ -785,24 +778,8 @@ def _identify_and_enrich(
             cross_street_b=cross_b,
             distance_mi=dist_mi,
             bearing=bearing,
-            dedup_key=dedup_key,
         ))
     return result
-
-
-def _dedup_by_label(
-    candidates: list[CandidateWithBottleneck],
-) -> list[CandidateWithBottleneck]:
-    """Keep only the fastest-travel-time path per dedup_key."""
-    seen: dict[tuple, float] = {}
-    best: dict[tuple, CandidateWithBottleneck] = {}
-    for cand in candidates:
-        prior_tt = seen.get(cand.dedup_key)
-        if prior_tt is not None and cand.travel_time_s >= prior_tt:
-            continue
-        seen[cand.dedup_key] = cand.travel_time_s
-        best[cand.dedup_key] = cand
-    return list(best.values())
 
 
 def _build_evac_paths(
@@ -820,6 +797,7 @@ def _build_evac_paths(
             path_id=path_id,
             origin_block_group=origin.label,
             exit_segment_osmid=cand.exit_osmid,
+            travel_time_s=cand.travel_time_s,
             bottleneck_osmid=cand.bottleneck_osmid,
             bottleneck_name=cand.bottleneck_name,
             bottleneck_fhsz_zone=bn_info.fhsz_zone if bn_info else "non_fhsz",

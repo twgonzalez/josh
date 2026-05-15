@@ -78,6 +78,10 @@ JOSH uses public data to classify road segments, and that data is not always acc
 
 **Coordination with the city engineer on IFC §503 corrections.** When your apparatus access surveys identify roads below the IFC §503 minimum width, that data should be routed to the city engineer for entry into the road override system. Width data stored there becomes available for the physical site access analysis (Standard 6) that JOSH is developing as a companion to the ΔT calculation.
 
+**Reviewing the route list — every viable route shown.** As of v4.12, JOSH maps *every viable evacuation route* between a project and the regional road network — not a curated subset. The interactive map's sidebar shows the full list of routes sorted by exit travel time (fastest first), and each route has a toggle to hide it from the map for readability. Hiding a route on the map does *not* hide it from the determination — the ΔT calculation always uses every viable route, and a persistent "Determination uses all N routes" note is shown whenever any route is toggled off.
+
+If a route in the list is wrong because the underlying road data is wrong — a road that's actually one-way, an access classification that doesn't reflect a gate, a width that overstates the physical lane — the fix is to correct the road data in `josh-pipeline/cities/{city}_road_overrides.yaml`, not to hide the route. Once the override is committed and the city is rebuilt, all future analyses for that city use the corrected road. This is the mechanism for encoding department field knowledge about specific roads.
+
 ------
 
 ## Your Role at the Council Table

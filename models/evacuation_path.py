@@ -44,6 +44,12 @@ class EvacuationPath:
     bottleneck_distance_mi: float = 0.0   # distance from project site to bottleneck midpoint
     bottleneck_bearing: str = ""           # compass direction from project: "N","NE","E", etc.
 
+    # Travel time from project origin to exit (seconds, Dijkstra-weighted by speed-limit).
+    # Used to sort routes by speed (User Equilibrium "fastest first") in the sidebar
+    # toggle list and brief renderer.  0.0 for population-fallback paths where no
+    # project-origin Dijkstra was run.
+    travel_time_s: float = 0.0
+
     # Catchment demand at bottleneck (informational)
     catchment_units: float = 0.0    # housing units whose path passes through bottleneck
     baseline_demand_vph: float = 0.0  # catchment_units × vpu × 0.57 (informational)
@@ -63,6 +69,7 @@ class EvacuationPath:
             "path_id":                        self.path_id,
             "origin_block_group":             self.origin_block_group,
             "exit_segment_osmid":             self.exit_segment_osmid,
+            "travel_time_s":                  round(self.travel_time_s, 2),
             "bottleneck_osmid":               self.bottleneck_osmid,
             "bottleneck_name":                self.bottleneck_name,
             "bottleneck_fhsz_zone":           self.bottleneck_fhsz_zone,

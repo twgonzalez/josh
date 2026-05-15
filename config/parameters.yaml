@@ -257,12 +257,15 @@ width_speed_inference:
 
 evacuation:
   serving_route_radius_miles: 0.5   # Standard 2 search radius
-  max_path_length_ratio: 2.0        # v4.0: only include exit paths within 2× the fastest-exit travel time.
-                                    # Dijkstra is weighted by travel time (length / speed_limit) — faster
-                                    # roads are preferred over shorter-but-slower roads. Rational evacuees
-                                    # take the fastest route to safety; paths more than 2× the fastest
-                                    # exit time are routes that would never be chosen when faster
-                                    # alternatives exist (legally defensible route-choice bound).
+  max_path_length_ratio: 3.5        # v4.12 (all-viable-routes): include all exit paths within 3.5× the
+                                    # fastest-exit travel time. Dijkstra is weighted by travel time
+                                    # (length / speed_limit) — faster roads are preferred over shorter-but-slower
+                                    # roads. Under User Equilibrium assignment, rational evacuees take the
+                                    # fastest route to safety; paths more than 3.5× the fastest exit time are
+                                    # routes no evacuee would rationally choose when faster alternatives exist.
+                                    # The 3.5 default surfaces all viable divergent routes (no per-bottleneck
+                                    # deduplication) — the user controls which routes are visible on the map
+                                    # via per-route toggles in the sidebar.
                                     # Edge weight formula: travel_time_s = length_m / (speed_mph × 0.44704)
 
   # Regional network exit node filter (v4.0)

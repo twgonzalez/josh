@@ -7,8 +7,6 @@
 
 Tests the pure functions that were extracted from identify_routes():
 - _filter_by_travel_time: travel-time ratio filter
-- _dedup_by_label: label-based bottleneck dedup
-- _identify_and_enrich: bottleneck ID + cross-street enrichment
 - SegmentIndex: single-object road attribute lookup
 """
 import sys
@@ -23,9 +21,9 @@ import geopandas as gpd
 import pandas as pd
 from shapely.geometry import LineString
 
-from agents.scenarios.routing import RawCandidate, CandidateWithBottleneck
+from agents.scenarios.routing import RawCandidate
 from agents.scenarios.segment_index import SegmentIndex, SegmentInfo
-from agents.scenarios.wildland import _filter_by_travel_time, _dedup_by_label
+from agents.scenarios.wildland import _filter_by_travel_time
 
 
 def _make_raw(travel_time_s=100.0, exit_node=1, osmids=None, exit_osmid="100"):
@@ -38,34 +36,6 @@ def _make_raw(travel_time_s=100.0, exit_node=1, osmids=None, exit_osmid="100"):
         path_length_m=500.0,
         path_wgs84_coords=[[37.0, -122.0], [37.1, -122.1]],
         osmid_to_uv={"100": (1, 2), "200": (2, 3), "300": (3, 4)},
-    )
-
-
-def _make_enriched(
-    travel_time_s=100.0,
-    bn_name="Main St",
-    cross_a="1st Ave",
-    cross_b="2nd Ave",
-    dedup_key=None,
-):
-    """Helper: build a CandidateWithBottleneck."""
-    key = dedup_key or (bn_name, cross_a, cross_b)
-    return CandidateWithBottleneck(
-        travel_time_s=travel_time_s,
-        exit_node_id=1,
-        path_osmids=["100", "200"],
-        exit_osmid="200",
-        path_length_m=400.0,
-        path_wgs84_coords=[[37.0, -122.0]],
-        osmid_to_uv={"100": (1, 2), "200": (2, 3)},
-        bottleneck_osmid="100",
-        bottleneck_eff_cap=900.0,
-        bottleneck_name=bn_name,
-        cross_street_a=cross_a,
-        cross_street_b=cross_b,
-        distance_mi=0.3,
-        bearing="NE",
-        dedup_key=key,
     )
 
 
@@ -93,42 +63,6 @@ class TestFilterByTravelTime(unittest.TestCase):
         c2 = _make_raw(travel_time_s=200.0, exit_node=2)  # exactly 2.0×
         result = _filter_by_travel_time([c1, c2], 2.0)
         self.assertEqual(len(result), 2)
-
-
-class TestDedupByLabel(unittest.TestCase):
-    """Tests for _dedup_by_label."""
-
-    def test_collapses_same_label(self):
-        """Three candidates with same (name, cross_a, cross_b) → 1 output."""
-        c1 = _make_enriched(travel_time_s=120.0)
-        c2 = _make_enriched(travel_time_s=100.0)  # fastest
-        c3 = _make_enriched(travel_time_s=150.0)
-        result = _dedup_by_label([c1, c2, c3])
-        self.assertEqual(len(result), 1)
-        self.assertEqual(result[0].travel_time_s, 100.0)
-
-    def test_keeps_distinct_labels(self):
-        """Three candidates with different names → 3 outputs."""
-        c1 = _make_enriched(bn_name="Main St", dedup_key=("Main St", "1st", "2nd"))
-        c2 = _make_enriched(bn_name="Oak Ave", dedup_key=("Oak Ave", "3rd", "4th"))
-        c3 = _make_enriched(bn_name="Elm Dr", dedup_key=("Elm Dr", "5th", "6th"))
-        result = _dedup_by_label([c1, c2, c3])
-        self.assertEqual(len(result), 3)
-
-    def test_empty_input(self):
-        self.assertEqual(_dedup_by_label([]), [])
-
-    def test_fastest_wins_per_group(self):
-        """Two groups: each keeps only fastest."""
-        c1 = _make_enriched(travel_time_s=200.0, bn_name="A", dedup_key=("A", "", ""))
-        c2 = _make_enriched(travel_time_s=100.0, bn_name="A", dedup_key=("A", "", ""))
-        c3 = _make_enriched(travel_time_s=300.0, bn_name="B", dedup_key=("B", "", ""))
-        c4 = _make_enriched(travel_time_s=150.0, bn_name="B", dedup_key=("B", "", ""))
-        result = _dedup_by_label([c1, c2, c3, c4])
-        self.assertEqual(len(result), 2)
-        by_name = {r.bottleneck_name: r.travel_time_s for r in result}
-        self.assertEqual(by_name["A"], 100.0)
-        self.assertEqual(by_name["B"], 150.0)
 
 
 class TestSegmentIndex(unittest.TestCase):

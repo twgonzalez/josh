@@ -272,10 +272,18 @@ class EvacuationScenario(ABC):
             if flagged:
                 triggered = True
 
+            # Travel time (s) from project origin to exit — used by the sidebar/brief
+            # to sort routes "fastest exit first" under User Equilibrium semantics.
+            travel_time_s = (
+                float(path.travel_time_s) if isinstance(path, EvacuationPath)
+                else float(path.get("travel_time_s", 0.0))
+            )
+
             results.append({
                 "path_id":                       path_id,
                 "origin_block_group":            getattr(path, "origin_block_group", ""),
                 "exit_segment_osmid":            getattr(path, "exit_segment_osmid", ""),
+                "travel_time_s":                 round(travel_time_s, 2),
                 "path_segment_count":            len(getattr(path, "path_osmids", [])),
                 "path_osmids":                   list(getattr(path, "path_osmids", [])),
                 "path_wgs84_coords":             list(getattr(path, "path_wgs84_coords", [])),

@@ -49,9 +49,6 @@ class CandidateWithBottleneck:
     distance_mi: float = 0.0
     bearing: str = ""
 
-    # Dedup key
-    dedup_key: tuple = ()
-
 
 @dataclass
 class EgressOrigin:

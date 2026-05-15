@@ -108,6 +108,22 @@ Each component of the ΔT calculation traces to a specific published standard:
 
 Every standard listed above (a) is written, (b) is published, (c) is objective, (d) is identified (specific exhibits and tables are cited), and (e) existed before any specific application is filed.
 
+### 3.6 Route Selection Methodology
+
+JOSH evaluates **every viable evacuation route** between the project site and the regional road network — defined as any Dijkstra shortest-path with travel time within `max_path_length_ratio` (default 3.5) of the fastest exit. The determination flags `DISCRETIONARY` if any of those routes exceeds the ΔT threshold.
+
+**User Equilibrium, not System Optimum.** The viable-routes methodology adopts the traffic-engineering concept of *User Equilibrium* — drivers self-select the fastest available route based on real-time conditions and local knowledge. The alternative, *System Optimum* assignment, assumes a central authority directs vehicles to prescribed routes and has the operational capacity to enforce that assignment at every decision point. The Camp Fire (Paradise, CA, 2018) — the canonical event behind JOSH's `safe_egress_window` parameters (NIST TN 2135) — demonstrated that prescribed routes were rendered irrelevant within minutes:
+
+- Fire behavior outpaced the fire department's ability to staff intersections.
+- Residents simultaneously self-evacuated via every available arterial.
+- Casualties occurred on routes the department would not have prescribed, because those were the routes residents could see and reach.
+
+Adopting System Optimum as the JOSH default would require the city to demonstrate, in every determination, that the fire department has the operational capacity to enforce route assignment at scale. That assumption is unverifiable, and importing it into an objective standards methodology would inject discretion — defeating the HAA's requirement for "objective, identified written standards." User Equilibrium makes no such operational assumption: it simply asks which routes a rational evacuee could realistically choose.
+
+**No deduplication; the user controls display.** Earlier versions of JOSH deduplicated routes by bottleneck osmid for display brevity. The deduplication step has been removed (v4.12 "all-viable-routes"). Every viable route is returned by the engine, listed in the determination brief, and used in the ΔT determination. The sidebar's per-route toggle list lets reviewers hide routes on the interactive map for clarity; the determination always uses the full set, and a persistent "Determination uses all N routes" footer is shown whenever any route is hidden.
+
+**Monotonically conservative.** Because the determination flags `DISCRETIONARY` if any route exceeds the threshold, surfacing additional routes can only increase the chance that a flagged route is found. The methodology never masks a hazard by hiding routes from review.
+
 ------
 
 ## 4. Three Tiers of Adoption — and Why Resolution Is Recommended

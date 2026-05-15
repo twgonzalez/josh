@@ -63,6 +63,24 @@
   let _restoreBanner   = false; // whether to show session-restore banner
   let _dirtyIds        = new Set(); // ids of projects with unsaved changes (have handle, written ≠ memory)
 
+  // v4.12 (all-viable-routes): per-project route visibility toggles.
+  // Map<projectId, Set<pathId>> — pathIds present in the set are visible on the map.
+  // Absence of an entry for a project = all routes ON (default state).
+  // The Set is initialised the first time the user toggles a route; switching
+  // projects clears the prior entry so each project starts fresh.
+  const _routeToggles  = new Map();
+
+  // ── Route toggle helpers ─────────────────────────────────────────────────────
+  // _pathId/_visiblePaths centralise the snake_case/camelCase normalisation and
+  // the "all-on by default" semantics so _drawRoutes and _renderDetail stay in lock-step.
+  function _pathId(path) { return path && (path.path_id || path.pathId) || ''; }
+
+  function _visiblePaths(projectId, paths) {
+    const set = _routeToggles.get(projectId);
+    if (!set) return paths.slice();                         // no entry → all visible
+    return paths.filter(p => set.has(_pathId(p)));
+  }
+
   // ── localStorage auto-save (browser-created projects) ────────────────────────
   // Invisible per-session persistence for projects drawn in the browser.
   // Pipeline seeds come from JOSH_DATA every init and are not written here.
@@ -131,7 +149,9 @@
   function _normalizeResult(r) {
     if (!r) return null;
     const paths = (r.paths || []).map((p, idx) => ({
+      path_id:                   String(p.pathId || p.path_id || ('route_' + (idx + 1))),
       route_id:                  String.fromCharCode(65 + idx),
+      cost_s:                    parseFloat((+(p.cost_s || 0)).toFixed(2)),
       delta_t:                   parseFloat((p.delta_t_minutes || 0).toFixed(3)),
       flagged:                   !!p.flagged,
       bottleneck_osmid:          String(p.bottleneckOsmid || p.bottleneck_osmid || ''),
@@ -281,11 +301,14 @@
       ? `JOSH-${year}-${slug}-${lat < 0 ? 'n' : ''}${latAbs}-${lng < 0 ? 'n' : ''}${lngAbs}`
       : `JOSH-${year}-${lat < 0 ? 'n' : ''}${latAbs}-${lng < 0 ? 'n' : ''}${lngAbs}`;
 
-    const enrichedPaths = (result.paths || []).map(function (p) {
+    const enrichedPaths = (result.paths || []).map(function (p, idx) {
       const thrMin  = +(result.delta_t_threshold || 0) || _dtThreshold(hz);
       const safeWin = thrMin > 0 && maxShare > 0 ? thrMin / maxShare : 0;
       return {
-        path_id:                       p.bottleneck_osmid || '',
+        // path_id must be unique per route (post-dedup-removal multiple paths can
+        // share a bottleneck osmid); fall back to a positional id only as last resort.
+        path_id:                       String(p.path_id || p.pathId || ('route_' + (idx + 1))),
+        cost_s:                        +(p.cost_s || 0),
         bottleneck_osmid:              p.bottleneck_osmid || '',
         bottleneck_name:               p.bottleneck_name  || null,
         bottleneck_fhsz_zone:          hz,
@@ -1140,11 +1163,24 @@
       return m;
     }()) : new Map();
 
-    (project.result.paths || []).forEach(path => {
+    // v4.12 (all-viable-routes): sort by exit travel time (fastest first), then
+    // filter to toggled-on paths. The rendered array index drives the opacity/weight
+    // hierarchy below, which matches the sidebar's sort so visual emphasis tracks
+    // the route most evacuees would pick first.
+    const allPaths = (project.result.paths || []).slice().sort(
+      (a, b) => (+(a.cost_s || 0)) - (+(b.cost_s || 0))
+    );
+    const visiblePaths = _visiblePaths(id, allPaths);
+
+    visiblePaths.forEach((path, idx) => {
       const coords   = path.path_coords || path.coordinates || [];
       if (coords.length < 2) return;
       const ok       = !path.flagged;
       const pathColor = ok ? '#27ae60' : '#e74c3c';
+      // Opacity/weight hierarchy by list position (fastest = brightest).
+      // Bottleneck overlay matches the parent route's opacity.
+      const weight  = idx === 0 ? 4    : idx === 1 ? 3    : 2;
+      const opacity = idx === 0 ? 0.85 : idx === 1 ? 0.60 : 0.35;
       // AntPath for full route.
       // The leaflet-ant-path plugin exposes L.antPath() and L.polyline.antPath()
       // as aliases.  Guard against both in case only one form is available.
@@ -1153,9 +1189,9 @@
         : null;
       if (_antPathFn) {
         const ap = _antPathFn(coords, {
-          color: pathColor, weight: 3, opacity: 0.8, delay: 1200, dashArray: [10, 20],
+          color: pathColor, weight: weight, opacity: opacity, delay: 1200, dashArray: [10, 20],
         });
-        const tip = 'Route ' + (path.route_id || '?') + '  ·  ' +
+        const tip = 'Route ' + (path.route_id || (idx + 1)) + '  ·  ' +
                     (+(path.delta_t || 0)).toFixed(2) + ' min ' + (ok ? '✓' : '▲');
         ap.bindTooltip(tip, { sticky: true });
         ap.addTo(map);
@@ -1164,8 +1200,8 @@
       // Thick bottleneck segment overlay
       const bkEdge = bkMap.get(String(path.bottleneck_osmid || ''));
       if (bkEdge && bkEdge.geom && bkEdge.geom.length >= 2 && typeof window.L !== 'undefined') {
-        const bl = window.L.polyline(bkEdge.geom, { color: pathColor, weight: 6, opacity: 0.9 });
-        const bnTip = 'Route ' + (path.route_id || '?') + ' bottleneck' +
+        const bl = window.L.polyline(bkEdge.geom, { color: pathColor, weight: weight + 3, opacity: opacity });
+        const bnTip = 'Route ' + (path.route_id || (idx + 1)) + ' bottleneck' +
                       (path.bottleneck_name ? ': ' + _formatBottleneck(path) : '');
         bl.bindTooltip(bnTip, { sticky: true });
         bl.addTo(map);
@@ -1175,9 +1211,10 @@
 
     // Pan to fit routes — include the project's own coordinates so the home
     // marker is always inside the viewport, not clipped by route-only bounds.
+    // Fit to visible (toggled-on) routes so hidden routes don't widen the viewport.
     if (_routeLayers.length > 0) {
       try {
-        const allCoords = (project.result.paths || []).flatMap(p => p.path_coords || p.coordinates || []);
+        const allCoords = visiblePaths.flatMap(p => p.path_coords || p.coordinates || []);
         if (project.lat != null && project.lng != null) {
           allCoords.push([project.lat, project.lng]);
         }
@@ -1326,8 +1363,12 @@
   // ── Selection ────────────────────────────────────────────────────────────────
   function selectProject(id) {
     if (_formMode) cancelForm();
+    // Reset the previously-selected project's route toggles so each project
+    // starts with all routes visible. Toggle state is per-session, not persisted.
+    if (_selectedId && _selectedId !== id) _routeToggles.delete(_selectedId);
     if (_selectedId === id) {
       // Click selected row again → deselect
+      _routeToggles.delete(_selectedId);
       _selectedId = null;
       _clearRoutes();
     } else {
@@ -1613,23 +1654,55 @@
                 r.egress_minutes.toFixed(1) + ' min egress penalty</div>';
       }
 
-      // Routes
+      // Routes \u2014 v4.12 (all-viable-routes): toggle list, sorted by exit travel time.
+      // All routes start visible; clicking the eye icon hides a route from the map
+      // (the determination still uses ALL routes \u2014 toggles are display only).
       if ((r.paths || []).length === 0) {
         html += '<div style="font-size:12px;color:#e74c3c;margin-bottom:8px;">' +
                 'No evacuation routes found near this location.</div>';
       } else {
-        (r.paths || []).forEach(path => {
+        const sortedPaths = (r.paths || []).slice().sort(
+          (a, b) => (+(a.cost_s || 0)) - (+(b.cost_s || 0))
+        );
+        const toggleSet = _routeToggles.get(_selectedId);
+        const totalCount = sortedPaths.length;
+        let visibleCount = 0;
+
+        html += '<div style="font-size:10px;color:#888;text-transform:uppercase;letter-spacing:0.04em;' +
+                'margin-bottom:6px;">Evacuation Routes (' + totalCount + ')</div>';
+
+        sortedPaths.forEach((path, idx) => {
+          const pid      = _pathId(path) || ('route_' + (idx + 1));
+          const isOn     = !toggleSet || toggleSet.has(pid);
+          if (isOn) visibleCount++;
           const ok       = !path.flagged;
           const dColor   = ok ? '#27ae60' : '#e74c3c';
           const dIcon    = ok ? '\u2713' : '\u25b2';
           const thrLabel = !ok ? '> ' + (r.delta_t_threshold || _dtThreshold(r.hazard_zone)).toFixed(2) + ' min max' : '';
-          html += '<div style="margin-bottom:8px;padding:8px 10px;background:#fafafa;border-radius:6px;' +
-                  'border-left:3px solid ' + dColor + ';">' +
-            '<div style="display:flex;align-items:baseline;gap:6px;margin-bottom:' + (thrLabel || path.bottleneck_name ? '4px' : '0') + ';">' +
-              '<span style="font-size:11px;font-weight:600;color:#555;text-transform:uppercase;letter-spacing:0.04em;">Route ' + _esc(path.route_id) + '</span>' +
-              '<span style="font-size:20px;font-weight:700;color:' + dColor + ';line-height:1;">' + path.delta_t.toFixed(2) + '</span>' +
-              '<span style="font-size:11px;font-weight:600;color:' + dColor + ';">min ' + dIcon + '</span>' +
-            '</div>';
+          const exitMin  = (+(path.cost_s || 0)) / 60;
+          const cardOpacity = isOn ? '1' : '0.4';
+          // Eye icon: \u25cf = visible, \u25cb = hidden. Outlined circle keeps the layout stable
+          // regardless of platform emoji rendering.
+          const eyeIcon  = isOn
+            ? '<span style="color:' + dColor + ';font-size:13px;line-height:1;">\u25cf</span>'
+            : '<span style="color:#aaa;font-size:13px;line-height:1;">\u25cb</span>';
+          const eyeTitle = isOn ? 'Hide this route on map' : 'Show this route on map';
+
+          html += '<div style="margin-bottom:6px;padding:8px 10px;background:#fafafa;border-radius:6px;' +
+                  'border-left:3px solid ' + dColor + ';opacity:' + cardOpacity + ';' +
+                  'display:flex;gap:8px;align-items:flex-start;">' +
+            '<div style="flex:1;min-width:0;">' +
+              '<div style="display:flex;align-items:baseline;gap:8px;margin-bottom:2px;">' +
+                '<span style="font-size:11px;font-weight:600;color:#555;text-transform:uppercase;' +
+                  'letter-spacing:0.04em;">Route ' + (idx + 1) + '</span>' +
+                '<span style="font-size:11px;color:#888;">' + exitMin.toFixed(1) + ' min exit</span>' +
+              '</div>' +
+              '<div style="display:flex;align-items:baseline;gap:4px;margin-bottom:' +
+                (thrLabel || path.bottleneck_name ? '4px' : '0') + ';">' +
+                '<span style="font-size:18px;font-weight:700;color:' + dColor + ';line-height:1;">\u0394T ' +
+                  (+(path.delta_t || 0)).toFixed(2) + '</span>' +
+                '<span style="font-size:11px;font-weight:600;color:' + dColor + ';">min ' + dIcon + '</span>' +
+              '</div>';
           if (thrLabel) {
             html += '<div style="display:inline-block;font-size:10px;font-weight:700;color:#c0392b;' +
                     'background:#fde8e8;border:1px solid #f5c0c0;border-radius:3px;' +
@@ -1640,8 +1713,26 @@
             html += '<div style="font-size:11px;color:#777;">' +
                     'Bottleneck: ' + _esc(bnDesc) + '</div>';
           }
-          html += '</div>';
+          html += '</div>' +     // /flex-1 inner column
+            '<button onclick="joshSidebar_toggleRoute(\'' + _esc(_selectedId) + '\',\'' + _esc(pid) + '\')" ' +
+              'title="' + eyeTitle + '" ' +
+              'style="flex-shrink:0;background:none;border:1px solid #ddd;border-radius:4px;' +
+                'padding:4px 7px;cursor:pointer;align-self:flex-start;">' +
+              eyeIcon +
+            '</button>' +
+            '</div>';
         });
+
+        // Legal safeguard: when any route is toggled off, surface the fact that
+        // the determination still considers every route.  This must never be hidden.
+        if (visibleCount < totalCount) {
+          html += '<div style="font-size:11px;color:#555;margin:6px 0 10px;padding:6px 10px;' +
+                  'background:#f0f4f8;border:1px solid #d6e0eb;border-radius:4px;line-height:1.4;">' +
+                  'Showing <strong>' + visibleCount + '</strong> of <strong>' + totalCount + '</strong> routes' +
+                  '<br><span style="color:#777;">Determination uses all ' + totalCount + ' routes.</span></div>';
+        } else {
+          html += '<div style="height:6px;"></div>';
+        }
       }
 
       // View Report button
@@ -1815,6 +1906,22 @@
     window.joshSidebar_exportYaml     = () => exportYaml();
     window.joshSidebar_doRestore      = () => _doSessionRestore();
     window.joshSidebar_dismissRestore = () => _dismissRestore();
+    // v4.12 (all-viable-routes): per-route map visibility toggle.
+    // First toggle for a project seeds the Set with every path id, then flips the
+    // requested one — keeps "absent entry = all on" invariant after explicit interaction.
+    window.joshSidebar_toggleRoute    = (projectId, pathId) => {
+      if (!_routeToggles.has(projectId)) {
+        const proj = _projects.find(p => p.id === projectId);
+        const allIds = new Set(((proj && proj.result && proj.result.paths) || [])
+          .map(p => _pathId(p)).filter(Boolean));
+        _routeToggles.set(projectId, allIds);
+      }
+      const set = _routeToggles.get(projectId);
+      if (set.has(pathId)) set.delete(pathId);
+      else                  set.add(pathId);
+      _drawRoutes(projectId);
+      _render();
+    };
   }
 
   // ── DOMContentLoaded — inject sidebar div ─────────────────────────────────────
@@ -1870,6 +1977,7 @@
         _deleteConfirmId = null;
         _restoreBanner   = false;
         _dirtyIds        = new Set();
+        _routeToggles.clear();
         // Clear localStorage for this city to avoid test cross-pollination.
         try {
           const store = (typeof localStorage !== 'undefined') ? localStorage : null;
@@ -1886,6 +1994,21 @@
       _markDirty,
       _markClean,
       _getDirtyIds()  { return _dirtyIds; },
+      // v4.12 (all-viable-routes): route toggle test hooks
+      _pathId,
+      _visiblePaths,
+      _routeToggles,
+      _toggleRoute(projectId, pathId) {
+        if (!_routeToggles.has(projectId)) {
+          const proj = _projects.find(p => p.id === projectId);
+          const allIds = new Set(((proj && proj.result && proj.result.paths) || [])
+            .map(p => _pathId(p)).filter(Boolean));
+          _routeToggles.set(projectId, allIds);
+        }
+        const set = _routeToggles.get(projectId);
+        if (set.has(pathId)) set.delete(pathId);
+        else                  set.add(pathId);
+      },
     };
   }
 

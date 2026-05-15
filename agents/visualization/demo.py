@@ -1076,7 +1076,9 @@ def _build_josh_data_projects(
         paths_out = []
         for idx, p in enumerate(paths_raw):
             paths_out.append({
+                "path_id":                   str(p.get("path_id", "") or f"proj_seed_{idx}"),
                 "route_id":                  route_labels[idx] if idx < len(route_labels) else str(idx),
+                "cost_s":                    round(float(p.get("travel_time_s", 0)), 2),
                 "delta_t":                   round(float(p.get("delta_t_minutes", 0)), 2),
                 "flagged":                   bool(p.get("flagged", False)),
                 "bottleneck_osmid":          str(p.get("bottleneck_osmid", "")),

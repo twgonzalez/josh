@@ -206,30 +206,69 @@ test('T3 — DISCRETIONARY: single flagged path renders controlling finding', fu
   assert.ok(html.includes('Appeal Rights'), 'Appeal Rights section header');
 });
 
-// ── Test 4: Discretionary with multiple paths (omitted-paths notice) ───────────
+// ── Test 4: All viable routes rendered (v4.12 — no truncation; summary line) ──
 
-test('T4 — DISCRETIONARY: paths beyond display limit shows omission notice', function() {
-  // 1 flagged + 6 within-threshold paths → 5 within-threshold omitted (only 3 near-threshold shown)
-  var flaggedPath = makePath({ path_id: 'P1', delta_t_minutes: 8.50, flagged: true });
-  // Near-threshold paths (> 70% of 2.25 = 1.575)
-  var nearPaths = [1,2,3].map(function(i) {
-    return makePath({ path_id: 'P'+(i+1), delta_t_minutes: 1.80, flagged: false });
-  });
-  // Far-under-threshold paths — will be omitted
-  var farPaths = [4,5,6,7].map(function(i) {
-    return makePath({ path_id: 'P'+(i+4), delta_t_minutes: 0.30, flagged: false });
-  });
-  var allPaths = [flaggedPath].concat(nearPaths).concat(farPaths);
-  var an       = makeAnalysis(true, true, { delta_t_triggered: true });
-  var inp      = makeInput('DISCRETIONARY', allPaths, null, an, {
-    result: makeResult('DISCRETIONARY', allPaths),
+test('T4 — DISCRETIONARY: all viable routes rendered in C with summary line', function() {
+  // v4.12 (all-viable-routes): the brief is a legal document — every viable route
+  // must appear in the table, sorted by exit travel time ascending, with a summary
+  // line at the top.  No truncation, no "omitted for brevity" footer.
+  var routes = [];
+  for (var i = 0; i < 8; i++) {
+    routes.push(makePath({
+      path_id:                 'P' + (i + 1),
+      bottleneck_osmid:        '90000' + i,
+      bottleneck_name:         i === 0 ? 'Grizzly Peak Blvd' : 'Other Rd ' + i,
+      cost_s:                  120 + i * 30,  // 2.0, 2.5, 3.0, ... min (ascending input)
+      delta_t_minutes:         i === 0 ? 8.50 : 1.20 + i * 0.10,
+      flagged:                 i === 0,
+    }));
+  }
+  // Shuffle to a non-sorted input order — the brief renderer must sort internally.
+  var shuffled = [routes[3], routes[0], routes[7], routes[2], routes[5], routes[1], routes[6], routes[4]];
+
+  var an  = makeAnalysis(true, true, { delta_t_triggered: true, serving_route_count: 8 });
+  var inp = makeInput('DISCRETIONARY', shuffled, null, an, {
+    result: makeResult('DISCRETIONARY', shuffled),
   });
 
   var html = BR.render(inp);
 
   assert.ok(html.includes('DISCRETIONARY<br>REVIEW REQUIRED'), 'tier label');
-  assert.ok(html.includes('additional path(s) within threshold'), 'omission notice');
-  assert.ok(html.includes('omitted for brevity'), 'omission reason text');
+  // Summary line at top of Criterion C
+  assert.ok(/8\s+routes evaluated/.test(html), 'summary line with route count');
+  assert.ok(html.includes('worst-case'), 'summary line mentions worst-case');
+  assert.ok(html.includes('Grizzly Peak Blvd'), 'controlling bottleneck name in summary');
+  // No truncation footer
+  assert.ok(!html.includes('omitted for brevity'),  'no omission footer');
+  assert.ok(!html.includes('additional path(s)'),   'no additional-paths footer');
+  // Every path id renders as a table row
+  for (var i = 0; i < 8; i++) {
+    assert.ok(html.includes('>P' + (i + 1) + '<'), 'path P' + (i + 1) + ' appears in table');
+  }
+  // Exit (min) column header added
+  assert.ok(html.includes('Exit (min)'), 'Exit (min) column header');
+});
+
+// ── Test 4b: Sort order — fastest exit first ─────────────────────────────────
+
+test('T4b — Criterion C route table is sorted by cost_s ascending (fastest first)', function() {
+  var p1 = makePath({ path_id: 'SLOW',  cost_s: 600, delta_t_minutes: 1.5, flagged: false });
+  var p2 = makePath({ path_id: 'FAST',  cost_s: 120, delta_t_minutes: 2.0, flagged: false });
+  var p3 = makePath({ path_id: 'MID',   cost_s: 300, delta_t_minutes: 8.5, flagged: true });
+  var an = makeAnalysis(true, true, { delta_t_triggered: true });
+  var inp = makeInput('DISCRETIONARY', [p1, p2, p3], null, an, {
+    result: makeResult('DISCRETIONARY', [p1, p2, p3]),
+  });
+
+  var html = BR.render(inp);
+
+  // Pull the order of path ids out of the route table.  Each id is rendered inside
+  // a <td> as ">{id}<", and the ones above belong to that table only.
+  var ids   = ['FAST', 'MID', 'SLOW'];
+  var pos   = ids.map(function(id) { return html.indexOf('>' + id + '<'); });
+  assert.ok(pos.every(function(p) { return p > 0; }), 'all ids present');
+  assert.ok(pos[0] < pos[1] && pos[1] < pos[2],
+    'rows sort fastest exit first: FAST < MID < SLOW (positions: ' + pos.join(', ') + ')');
 });
 
 // ── Test 5: What-If banner ─────────────────────────────────────────────────────

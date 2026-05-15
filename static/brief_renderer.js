@@ -718,17 +718,29 @@
         : '';
 
       if (paths.length) {
-        var flaggedPaths  = paths.filter(function(p) { return p.flagged; });
-        var nearPaths     = paths.filter(function(p) { return !p.flagged && +(p.delta_t_minutes||0) > maxThreshold * 0.70; }).slice(0,3);
-        var displayPaths  = flaggedPaths.concat(nearPaths);
-        var nOmitted      = paths.length - displayPaths.length;
+        // v4.12 (all-viable-routes): the brief is a legal document — list every viable
+        // route, no truncation.  Sort by exit travel time (fastest first) so the table
+        // order matches the sidebar's "User Equilibrium" ordering.
+        var sortedPaths   = paths.slice().sort(function(a, b) {
+          return (+(a.cost_s || 0)) - (+(b.cost_s || 0));
+        });
+        var displayPaths  = sortedPaths;
 
-        // Find controlling path (highest ΔT)
-        var controllingId = null;
-        if (paths.length) {
-          var wPath = paths.reduce(function(a, b) { return +(b.delta_t_minutes||0) > +(a.delta_t_minutes||0) ? b : a; });
-          controllingId = wPath.path_id;
-        }
+        // Controlling path = highest ΔT (the binding constraint for the determination)
+        var controllingPath = paths.reduce(function(a, b) {
+          return +(b.delta_t_minutes||0) > +(a.delta_t_minutes||0) ? b : a;
+        });
+        var controllingId   = controllingPath.path_id;
+        var controllingBnNm = _fmtBn(controllingPath);
+        var controllingDt   = +(controllingPath.delta_t_minutes || 0);
+
+        // Summary line — single-glance answer to "how bad is this?"
+        var summaryLine = '<div style="font-size:12px; margin-bottom:6px; color:#212529;">' +
+          '<strong>' + paths.length + ' route' + (paths.length === 1 ? '' : 's') + ' evaluated</strong>; ' +
+          'worst-case &Delta;T = <strong style="color:' +
+            (controllingPath.flagged ? '#c0392b' : '#27ae60') + '">' +
+            _f(controllingDt, 2) + ' min</strong> on ' +
+          '<em>' + _esc(controllingBnNm) + '</em>.</div>';
 
         var tableRows = displayPaths.map(function(rr) {
           var pid    = rr.path_id || '\u2014';
@@ -775,12 +787,14 @@
           else if (isCtrl)     statusHtml = '<span class="chip-controlling" style="background:#495057;">WORST</span>';
           else                 statusHtml = "<span style='color:#27ae60'>&#10003; within</span>";
 
+          var costMin = (+(rr.cost_s || 0)) / 60;
           var rowCls = isCtrl ? 'row-controlling' : '';
           return "<tr class='" + rowCls + "'>" +
             "<td style='font-size:10px;color:#868e96'>" + _esc(pid) + "</td>" +
             "<td>" + bnameCell + "</td>" +
             "<td style='font-size:10px'>" + _esc(hzLabel) + "</td>" +
             "<td style='font-weight:600'>" + _comma(effCap) + "</td>" +
+            "<td style='color:#495057'>" + (costMin > 0 ? _f(costMin,1) : '\u2014') + "</td>" +
             "<td style='font-weight:700;color:" + dtColor + "'>" + _f(dt,2) + "</td>" +
             "<td style='color:#868e96'>" + _f(thr,2) + "</td>" +
             "<td style='font-weight:600;color:" + marginColor + "'>" + marginStr + "</td>" +
@@ -788,19 +802,16 @@
             "</tr>";
         }).join('');
 
-        if (nOmitted > 0) {
-          tableRows += "<tr><td colspan='8' style='color:#868e96;font-style:italic'>" +
-            nOmitted + " additional path(s) within threshold \u2014 omitted for brevity. See full audit trail.</td></tr>";
-        }
-
         mergedTableHtml = derivBlock +
+          summaryLine +
           "<div style='font-size:11px;color:#6c757d;margin-bottom:4px;'>" +
           egresNote + "Project vehicles: <strong>" + _f(projVph,0) + "</strong>" +
           " (units &times; 1.9 vpu &times; 0.90 FHWA behavioral mobilization)." +
-          " Effective capacity = HCM raw &times; " + _f(degFactor,2) + " hazard degradation.</div>" +
+          " Effective capacity = HCM raw &times; " + _f(degFactor,2) + " hazard degradation." +
+          " Routes sorted fastest exit first (User Equilibrium ordering).</div>" +
           "<table class='route-table'><thead><tr>" +
           "<th>Path</th><th>Bottleneck Segment</th><th>FHSZ Zone</th>" +
-          "<th>Eff. Cap (vph)</th><th>&#916;T (min)</th><th>Threshold</th>" +
+          "<th>Eff. Cap (vph)</th><th>Exit (min)</th><th>&#916;T (min)</th><th>Threshold</th>" +
           "<th>Margin</th><th>Result</th></tr></thead><tbody>" + tableRows + "</tbody></table>";
       } else {
         mergedTableHtml = derivBlock +
