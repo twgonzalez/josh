@@ -4,7 +4,7 @@
   "behavioral_mobilization": 0.9,
   "vehicles_per_unit": 1.9,
   "serving_route_radius_miles": 0.5,
-  "max_path_length_ratio": 2.0,
+  "max_path_length_ratio": 3.5,
   "hazard_degradation": {
     "vhfhsz": 0.35,
     "high_fhsz": 0.5,

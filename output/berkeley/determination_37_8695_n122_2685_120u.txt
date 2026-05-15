@@ -2,7 +2,7 @@
 FIRE EVACUATION CAPACITY ANALYSIS  -  PROJECT DETERMINATION
 JOSH v4.0 (dT Standard  -  Constant Mobilization, NFPA 101)
 ======================================================================
-Date:           2026-05-10T20:26:14.520586
+Date:           2026-05-15T13:56:48.307299
 Project:        Downtown Mid-Rise
 Address:        Shattuck Ave & Center St, Downtown Berkeley
 APN:            Not provided
@@ -40,17 +40,22 @@ SCENARIO: WILDLAND_AB747
   --------------------------------------
   Method: Project-origin Dijkstra (v4.0, travel-time weight)  -  fastest path from project site to each regional-network exit node (motorway/trunk/primary at city boundary); weight=length/speed_limit (seconds) per speed_defaults config; 112 nodes within 0.5 mi network zone; respects road barriers (I-5, rail, etc.)
   Radius: 0.5 miles (804.7 m)
-  Serving route segments found: 61
-  Serving EvacuationPaths identified: 5
+  Serving route segments found: 72
+  Serving EvacuationPaths identified: 13
+    - Eastshore Freeway: eff_cap=11250 vph, fhsz=non_fhsz, deg=1.00, vc=0.500 (informational)
     - 6321559: eff_cap=2250 vph, fhsz=non_fhsz, deg=1.00, vc=0.500 (informational)
     - 9577895: eff_cap=2250 vph, fhsz=non_fhsz, deg=1.00, vc=0.764 (informational)
     - 510151009: eff_cap=2250 vph, fhsz=non_fhsz, deg=1.00, vc=0.764 (informational)
+    - 6325835: eff_cap=2250 vph, fhsz=non_fhsz, deg=1.00, vc=0.500 (informational)
+    - 167999975: eff_cap=4500 vph, fhsz=non_fhsz, deg=1.00, vc=0.500 (informational)
     - 6322298: eff_cap=2250 vph, fhsz=non_fhsz, deg=1.00, vc=0.500 (informational)
     - University Avenue: eff_cap=5700 vph, fhsz=non_fhsz, deg=1.00, vc=0.400 (informational)
     - Ashby Avenue: eff_cap=7600 vph, fhsz=non_fhsz, deg=1.00, vc=3.095 (informational)
-    - San Pablo Avenue: eff_cap=3800 vph, fhsz=non_fhsz, deg=1.00, vc=0.887 (informational)
+    - San Pablo Avenue: eff_cap=3800 vph, fhsz=non_fhsz, deg=1.00, vc=0.280 (informational)
+    - 184365674: eff_cap=4500 vph, fhsz=non_fhsz, deg=1.00, vc=0.500 (informational)
     - Shattuck Avenue: eff_cap=3800 vph, fhsz=non_fhsz, deg=1.00, vc=0.353 (informational)
     - Adeline Street: eff_cap=3800 vph, fhsz=non_fhsz, deg=1.00, vc=0.719 (informational)
+    - 9570486: eff_cap=4500 vph, fhsz=non_fhsz, deg=1.00, vc=0.500 (informational)
     - 6320410: eff_cap=2250 vph, fhsz=non_fhsz, deg=1.00, vc=4.388 (informational)
 
   STEP 4  -  DEMAND CALCULATION
@@ -72,7 +77,7 @@ SCENARIO: WILDLAND_AB747
   Safe Egress Window: 120 min (non_fhsz, NIST TN 2135)
   Max Project Share:  5%
   dT Threshold:       6.00 min (120 min window x 5%, NIST TN 2135)
-  Paths Evaluated: 5
+  Paths Evaluated: 13
   Max dT: 6.48 min
   Triggered: YES  -  DISCRETIONARY
 
@@ -83,11 +88,41 @@ SCENARIO: WILDLAND_AB747
       HCM cap: 3800 vph  x degradation 1.00 (non_fhsz)  = eff cap 3800 vph
       dT = (205.2 vph / 3800 vph) x 60 + 0.0 min egress = 3.24 min  (threshold: 6.00 min (120 min x 5%))
 
+    Path proj_259581502_2644106915  |  origin BG: project_origin  |  36 segments
+    Bottleneck: Adeline Street (Shattuck Avenue to Ward Street), 0.7 mi S *** dT EXCEEDS THRESHOLD  -  DISCRETIONARY ***
+      Road: Multi-lane highway  |  Speed: 25 mph  |  Lanes: 1  |  HAZ_CLASS: 0 (non_fhsz)
+      HCM cap: 1900 vph  x degradation 1.00 (non_fhsz)  = eff cap 1900 vph
+      dT = (205.2 vph / 1900 vph) x 60 + 0.0 min egress = 6.48 min  (threshold: 6.00 min (120 min x 5%))
+
     Path proj_259581502_2644106917  |  origin BG: project_origin  |  35 segments
     Bottleneck: Adeline Street (Shattuck Avenue to Ward Street), 0.7 mi S *** dT EXCEEDS THRESHOLD  -  DISCRETIONARY ***
       Road: Multi-lane highway  |  Speed: 25 mph  |  Lanes: 1  |  HAZ_CLASS: 0 (non_fhsz)
       HCM cap: 1900 vph  x degradation 1.00 (non_fhsz)  = eff cap 1900 vph
       dT = (205.2 vph / 1900 vph) x 60 + 0.0 min egress = 6.48 min  (threshold: 6.00 min (120 min x 5%))
+
+    Path proj_259581502_52982359  |  origin BG: project_origin  |  31 segments
+    Bottleneck: Unnamed road at University Avenue, 2.0 mi W [within threshold]
+      Road: Freeway  |  Speed: 45 mph  |  Lanes: 1  |  HAZ_CLASS: 0 (non_fhsz)
+      HCM cap: 2250 vph  x degradation 1.00 (non_fhsz)  = eff cap 2250 vph
+      dT = (205.2 vph / 2250 vph) x 60 + 0.0 min egress = 5.47 min  (threshold: 6.00 min (120 min x 5%))
+
+    Path proj_259581502_35833153  |  origin BG: project_origin  |  26 segments
+    Bottleneck: University Avenue (Milvia Street to Bonita Avenue), 0.2 mi NW [within threshold]
+      Road: Multi-lane highway  |  Speed: 25 mph  |  Lanes: 2  |  HAZ_CLASS: 0 (non_fhsz)
+      HCM cap: 3800 vph  x degradation 1.00 (non_fhsz)  = eff cap 3800 vph
+      dT = (205.2 vph / 3800 vph) x 60 + 0.0 min egress = 3.24 min  (threshold: 6.00 min (120 min x 5%))
+
+    Path proj_259581502_86276581  |  origin BG: project_origin  |  27 segments
+    Bottleneck: University Avenue (Milvia Street to Bonita Avenue), 0.2 mi NW [within threshold]
+      Road: Multi-lane highway  |  Speed: 25 mph  |  Lanes: 2  |  HAZ_CLASS: 0 (non_fhsz)
+      HCM cap: 3800 vph  x degradation 1.00 (non_fhsz)  = eff cap 3800 vph
+      dT = (205.2 vph / 3800 vph) x 60 + 0.0 min egress = 3.24 min  (threshold: 6.00 min (120 min x 5%))
+
+    Path proj_259581502_52982363  |  origin BG: project_origin  |  30 segments
+    Bottleneck: Unnamed road at University Avenue, 2.0 mi W [within threshold]
+      Road: Freeway  |  Speed: 45 mph  |  Lanes: 1  |  HAZ_CLASS: 0 (non_fhsz)
+      HCM cap: 2250 vph  x degradation 1.00 (non_fhsz)  = eff cap 2250 vph
+      dT = (205.2 vph / 2250 vph) x 60 + 0.0 min egress = 5.47 min  (threshold: 6.00 min (120 min x 5%))
 
     Path proj_259581502_53013480  |  origin BG: project_origin  |  29 segments
     Bottleneck: Unnamed road at University Avenue, 2.0 mi W [within threshold]
@@ -101,15 +136,33 @@ SCENARIO: WILDLAND_AB747
       HCM cap: 2250 vph  x degradation 1.00 (non_fhsz)  = eff cap 2250 vph
       dT = (205.2 vph / 2250 vph) x 60 + 0.0 min egress = 5.47 min  (threshold: 6.00 min (120 min x 5%))
 
+    Path proj_259581502_53011243  |  origin BG: project_origin  |  40 segments
+    Bottleneck: Adeline Street (Shattuck Avenue to Ward Street), 0.7 mi S *** dT EXCEEDS THRESHOLD  -  DISCRETIONARY ***
+      Road: Multi-lane highway  |  Speed: 25 mph  |  Lanes: 1  |  HAZ_CLASS: 0 (non_fhsz)
+      HCM cap: 1900 vph  x degradation 1.00 (non_fhsz)  = eff cap 1900 vph
+      dT = (205.2 vph / 1900 vph) x 60 + 0.0 min egress = 6.48 min  (threshold: 6.00 min (120 min x 5%))
+
+    Path proj_259581502_1635557750  |  origin BG: project_origin  |  28 segments
+    Bottleneck: University Avenue (Milvia Street to Bonita Avenue), 0.2 mi NW [within threshold]
+      Road: Multi-lane highway  |  Speed: 25 mph  |  Lanes: 2  |  HAZ_CLASS: 0 (non_fhsz)
+      HCM cap: 3800 vph  x degradation 1.00 (non_fhsz)  = eff cap 3800 vph
+      dT = (205.2 vph / 3800 vph) x 60 + 0.0 min egress = 3.24 min  (threshold: 6.00 min (120 min x 5%))
+
     Path proj_259581502_1541561262  |  origin BG: project_origin  |  27 segments
     Bottleneck: Unnamed road at Eastshore Freeway, 1.9 mi W [within threshold]
       Road: Freeway  |  Speed: 45 mph  |  Lanes: 1  |  HAZ_CLASS: 0 (non_fhsz)
       HCM cap: 2250 vph  x degradation 1.00 (non_fhsz)  = eff cap 2250 vph
       dT = (205.2 vph / 2250 vph) x 60 + 0.0 min egress = 5.47 min  (threshold: 6.00 min (120 min x 5%))
 
+    Path proj_259581502_1895821107  |  origin BG: project_origin  |  39 segments
+    Bottleneck: Adeline Street (Shattuck Avenue to Ward Street), 0.7 mi S *** dT EXCEEDS THRESHOLD  -  DISCRETIONARY ***
+      Road: Multi-lane highway  |  Speed: 25 mph  |  Lanes: 1  |  HAZ_CLASS: 0 (non_fhsz)
+      HCM cap: 1900 vph  x degradation 1.00 (non_fhsz)  = eff cap 1900 vph
+      dT = (205.2 vph / 1900 vph) x 60 + 0.0 min egress = 6.48 min  (threshold: 6.00 min (120 min x 5%))
+
 
   -> Scenario Tier: DISCRETIONARY
-  Reason: Project meets the 15-unit applicability threshold and 1 serving path(s) exceed the dT threshold of 6.00 min (max dT: 6.5 min). Not in FHSZ (hazard_zone=non_fhsz)  -  no road degradation. Behavioral mobilization: 0.90 (FHWA, constant). Discretionary review required. Legal basis: AB 747 (California Government Code Sec.65302.15)  -  General Plan Safety Element mandatory update for evacuation route capacity analysis; HCM 2022 (Highway Capacity Manual, 7th Edition)  -  effective capacity with hazard degradation; NFPA 101 (Life Safety Code)  -  0.90 mobilization design basis (100% occupant evacuation, adjusted for ~10% zero-vehicle households per Census ACS B25044); NIST TN 2135 (Maranghides et al.)  -  safe egress windows by hazard zone.
+  Reason: Project meets the 15-unit applicability threshold and 4 serving path(s) exceed the dT threshold of 6.00 min (max dT: 6.5 min). Not in FHSZ (hazard_zone=non_fhsz)  -  no road degradation. Behavioral mobilization: 0.90 (FHWA, constant). Discretionary review required. Legal basis: AB 747 (California Government Code Sec.65302.15)  -  General Plan Safety Element mandatory update for evacuation route capacity analysis; HCM 2022 (Highway Capacity Manual, 7th Edition)  -  effective capacity with hazard degradation; NFPA 101 (Life Safety Code)  -  0.90 mobilization design basis (100% occupant evacuation, adjusted for ~10% zero-vehicle households per Census ACS B25044); NIST TN 2135 (Maranghides et al.)  -  safe egress windows by hazard zone.
 
 ======================================================================
 SCENARIO: SB79_TRANSIT
@@ -124,7 +177,7 @@ FINAL DETERMINATION
 ======================================================================
   RESULT: DISCRETIONARY REVIEW REQUIRED
 
-  Project meets the 15-unit applicability threshold and 1 serving path(s) exceed the dT threshold of 6.00 min (max dT: 6.5 min). Not in FHSZ (hazard_zone=non_fhsz)  -  no road degradation. Behavioral mobilization: 0.90 (FHWA, constant). Discretionary review required. Legal basis: AB 747 (California Government Code Sec.65302.15)  -  General Plan Safety Element mandatory update for evacuation route capacity analysis; HCM 2022 (Highway Capacity Manual, 7th Edition)  -  effective capacity with hazard degradation; NFPA 101 (Life Safety Code)  -  0.90 mobilization design basis (100% occupant evacuation, adjusted for ~10% zero-vehicle households per Census ACS B25044); NIST TN 2135 (Maranghides et al.)  -  safe egress windows by hazard zone.
+  Project meets the 15-unit applicability threshold and 4 serving path(s) exceed the dT threshold of 6.00 min (max dT: 6.5 min). Not in FHSZ (hazard_zone=non_fhsz)  -  no road degradation. Behavioral mobilization: 0.90 (FHWA, constant). Discretionary review required. Legal basis: AB 747 (California Government Code Sec.65302.15)  -  General Plan Safety Element mandatory update for evacuation route capacity analysis; HCM 2022 (Highway Capacity Manual, 7th Edition)  -  effective capacity with hazard degradation; NFPA 101 (Life Safety Code)  -  0.90 mobilization design basis (100% occupant evacuation, adjusted for ~10% zero-vehicle households per Census ACS B25044); NIST TN 2135 (Maranghides et al.)  -  safe egress windows by hazard zone.
 
   PARAMETERS APPLIED
   --------------------------------------
