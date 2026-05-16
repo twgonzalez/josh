@@ -6,10 +6,56 @@
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
       integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="">
 <style>
-  * { box-sizing: border-box; }
-  html, body { margin: 0; padding: 0; height: 100%; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; color: #222; }
+  /* ──────────────────────────────────────────────────────────────────────────
+     Production design tokens (extracted from static/sidebar.js +
+     static/brief_renderer.js). Do not introduce new colors / fonts here —
+     extend the token set at the top instead and reference from rules below.
+     ────────────────────────────────────────────────────────────────────────── */
+  :root {
+    --josh-font: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    --josh-navy: #1c4a6e;
+    --josh-red:  #c0392b;
+    --josh-orange: #d67c00;
+    --josh-green:  #27ae60;
+    --josh-text:   #212529;
+    --josh-muted:  #868e96;
+    --josh-bg:     #f8f9fa;
+    --josh-surface: #fff;
+    --josh-border: #dee2e6;
+    --josh-border-light: #e9ecef;
+    --josh-border-divider: #f0f0f0;
+    --josh-stat-bg: #f5f7fa;       /* sidebar stat-mini cards */
 
-  /* ====== Banner ====== */
+    /* tier palette (matches TIER_COLOR / TIER_BG / TIER_BORDER in brief_renderer.js) */
+    --tier-disc-bg: #fdf2f2; --tier-disc-bd: #e8b4b0; --tier-disc-fg: #c0392b;
+    --tier-mws-bg:  #fffbf0; --tier-mws-bd:  #f5d49a; --tier-mws-fg:  #d67c00;
+    --tier-min-bg:  #f0faf4; --tier-min-bd:  #a8d5b8; --tier-min-fg:  #27ae60;
+
+    /* result chips (matches .chip-* in brief_renderer.js _buildScreenCss) */
+    --chip-pass-bg: #e8f5e9; --chip-pass-fg: #27ae60;
+    --chip-fail-bg: #fdf2f2; --chip-fail-fg: #c0392b;
+    --chip-trig-bg: #fff3cd; --chip-trig-fg: #856404;
+    --chip-na-bg:   #f1f3f5; --chip-na-fg:   #868e96;
+    --chip-info-bg: #e7f1ff; --chip-info-fg: #1a56db;
+
+    --radius-sm: 4px;
+    --radius-md: 6px;
+    --radius-lg: 8px;
+    --radius-pill: 20px;
+    --shadow-card: 0 1px 2px rgba(0,0,0,0.04);
+  }
+
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0; padding: 0; height: 100%;
+    font-family: var(--josh-font);
+    color: var(--josh-text);
+    font-size: 14px;
+    line-height: 1.55;
+    background: var(--josh-bg);
+  }
+
+  /* ====== Banner (draft-review notice) ====== */
   .banner {
     background: #fff7c2;
     border-bottom: 1px solid #d6c66a;
@@ -19,7 +65,11 @@
     color: #4a3a00;
   }
   .banner b { color: #2c2300; }
-  .banner code { background: #ede1a3; padding: 1px 5px; border-radius: 3px; font-size: 12px; }
+  .banner code {
+    background: #ede1a3; padding: 1px 5px;
+    border-radius: 3px; font-size: 12px;
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  }
 
   /* ====== Layout ====== */
   .app {
@@ -27,37 +77,59 @@
     height: calc(100vh - 60px);
     min-height: 600px;
   }
-  #map { flex: 1; }
+  #map { flex: 1; background: #e8eef2; }
   .sidebar {
     width: 360px;
-    border-left: 1px solid #d8d8d8;
-    background: #fafafa;
+    border-left: 1px solid var(--josh-border);
+    background: var(--josh-bg);
     overflow-y: auto;
     padding: 0;
   }
 
+  /* Navy header bar at top of sidebar (matches production sidebar.js
+     _renderHeader: bg #1c4a6e, color #fff, padding 12px 14px). */
+  .sidebar-header {
+    background: var(--josh-navy);
+    color: #fff;
+    padding: 14px 16px;
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+  }
+  .sidebar-header .sub {
+    display: block;
+    font-size: 11px;
+    font-weight: 400;
+    text-transform: none;
+    letter-spacing: 0;
+    color: rgba(255,255,255,0.75);
+    margin-top: 2px;
+  }
+
   /* ====== Sidebar panels ====== */
   .panel {
-    border-bottom: 1px solid #e0e0e0;
-    background: #fff;
+    border-bottom: 1px solid var(--josh-border);
+    background: var(--josh-surface);
   }
   .panel-header {
-    padding: 12px 14px;
-    font-weight: 600;
-    font-size: 13px;
-    letter-spacing: 0.02em;
+    padding: 10px 16px;
+    font-weight: 700;
+    font-size: 11px;
+    letter-spacing: 0.08em;
     text-transform: uppercase;
-    color: #444;
+    color: var(--josh-muted);
     cursor: pointer;
     display: flex;
     justify-content: space-between;
     align-items: center;
     user-select: none;
-    background: #f5f5f5;
+    background: var(--josh-bg);
+    border-bottom: 1px solid var(--josh-border-light);
   }
-  .panel-header .caret { transition: transform 0.15s; font-size: 11px; color: #888; }
+  .panel-header .caret { transition: transform 0.15s; font-size: 10px; color: var(--josh-muted); }
   .panel.collapsed .panel-header .caret { transform: rotate(-90deg); }
-  .panel-body { padding: 10px 14px 14px; }
+  .panel-body { padding: 12px 16px 14px; background: var(--josh-surface); }
   .panel.collapsed .panel-body { display: none; }
 
   /* ====== Panel A: hazard layers ====== */
@@ -78,13 +150,15 @@
     border-radius: 3px;
     flex-shrink: 0;
   }
-  .hazard-row label { flex: 1; cursor: pointer; text-transform: capitalize; }
+  .hazard-row label { flex: 1; cursor: pointer; text-transform: capitalize; color: var(--josh-text); }
   .hazard-row .info {
     font-size: 11px;
-    color: #888;
+    color: var(--josh-muted);
     margin-left: 4px;
     cursor: help;
   }
+  /* Hazard swatches — LOCKED palette per docs/multihazard_first_principles.md §7.2.
+     Do not change these without updating that doc and the status doc. */
   .swatch-wildfire { background: #d62728; opacity: 0.55; }
   .swatch-flood    { background: #1f77b4; opacity: 0.55; }
   .swatch-tsunami  { background: #17becf; opacity: 0.55; }
@@ -95,44 +169,74 @@
     background: repeating-linear-gradient(45deg, #d8d8d8 0 4px, #7f7f7f 4px 6px);
     opacity: 0.85;
   }
+  /* "Info only" pill on earthquake row — matches production chip-scope */
   .info-pill {
     font-size: 10px;
-    color: #555;
-    background: #ececec;
-    padding: 1px 5px;
-    border-radius: 8px;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: var(--chip-info-fg);
+    background: var(--chip-info-bg);
+    padding: 2px 7px;
+    border-radius: var(--radius-pill);
     margin-left: 4px;
   }
 
   /* ====== Panel B: project selector + detail ====== */
   .project-select {
     width: 100%;
-    padding: 8px 10px;
-    font-size: 14px;
-    border: 1px solid #bbb;
-    border-radius: 4px;
-    background: #fff;
+    padding: 6px 8px;
+    font-size: 13px;
+    font-family: var(--josh-font);
+    border: 1px solid #ccc;
+    border-radius: var(--radius-sm);
+    background: var(--josh-surface);
     margin-bottom: 12px;
     font-weight: 500;
     cursor: pointer;
+    color: var(--josh-text);
   }
-  .project-select:focus { outline: 2px solid #2c7fb8; outline-offset: -1px; }
+  .project-select:focus {
+    outline: 0;
+    border-color: var(--josh-navy);
+    box-shadow: 0 0 0 2px rgba(28,74,110,0.18);
+  }
   .project-detail .pd-header { margin-bottom: 8px; }
-  .project-detail .pd-name { font-weight: 600; font-size: 14px; margin-bottom: 2px; }
-  .project-detail .pd-addr { font-size: 12px; color: #666; margin-bottom: 2px; }
-  .project-detail .pd-meta { font-size: 11px; color: #888; margin-bottom: 8px; }
+  .project-detail .pd-name { font-weight: 700; font-size: 14px; color: var(--josh-text); margin-bottom: 2px; }
+  .project-detail .pd-addr { font-size: 12px; color: var(--josh-muted); margin-bottom: 2px; }
+  .project-detail .pd-meta {
+    font-size: 10px; font-weight: 700; letter-spacing: 0.08em;
+    text-transform: uppercase; color: var(--josh-muted); margin-bottom: 10px;
+  }
+  /* Sidebar stat-mini cards (analogous to production sidebar.js stat boxes:
+     bg #f5f7fa, 6px radius, big num 22px/700 in navy). */
+  .pd-stat-row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 12px; }
+  .pd-stat {
+    background: var(--josh-stat-bg);
+    border-radius: var(--radius-md);
+    padding: 8px 10px;
+    text-align: center;
+  }
+  .pd-stat .big {
+    font-size: 22px; font-weight: 700; line-height: 1.1;
+    color: var(--josh-navy);
+  }
+  .pd-stat .lbl {
+    font-size: 9px; font-weight: 700; letter-spacing: 0.08em;
+    text-transform: uppercase; color: var(--josh-muted); margin-top: 3px;
+  }
   .project-detail .pd-section {
     margin-top: 14px;
     padding-top: 10px;
-    border-top: 1px solid #eee;
+    border-top: 1px solid var(--josh-border-light);
   }
   .project-detail .pd-section-label {
     font-size: 10px;
     text-transform: uppercase;
-    letter-spacing: 0.05em;
-    color: #888;
+    letter-spacing: 0.08em;
+    color: var(--josh-muted);
     margin-bottom: 6px;
-    font-weight: 600;
+    font-weight: 700;
   }
   .project-detail .pd-hazard-list {
     list-style: none;
@@ -141,72 +245,88 @@
     font-size: 12px;
   }
   .project-detail .pd-hazard-list li {
-    padding: 4px 0;
+    padding: 5px 0;
     display: flex;
     align-items: center;
     gap: 6px;
+    border-bottom: 1px solid var(--josh-border-divider);
   }
+  .project-detail .pd-hazard-list li:last-child { border-bottom: 0; }
   .project-detail .pd-hazard-list .dot {
     display: inline-block; width: 8px; height: 8px; border-radius: 50%;
     flex-shrink: 0;
   }
-  .project-detail .pd-hazard-list .hz-info { color: #888; font-style: italic; }
-  .project-detail .pd-hazard-list .hz-ctrl { font-weight: 600; }
-  /* Bootstrap 5 .btn-primary equivalents (production uses BS 5.2.2) */
+  .project-detail .pd-hazard-list .hz-info { color: var(--josh-muted); font-style: italic; }
+  .project-detail .pd-hazard-list .hz-ctrl { font-weight: 700; }
+  /* "Open Brief" button — matches production sidebar.js _buttonStyle
+     (system-ui, 12px, 4px radius, 5px 10px padding) but full-width with navy fill */
   .project-detail .pd-open-brief {
     margin-top: 14px;
-    padding: 0.375rem 0.75rem;
-    background: #0d6efd;
+    padding: 8px 14px;
+    background: var(--josh-navy);
     color: #fff;
-    border: 1px solid #0d6efd;
-    border-radius: 0.375rem;
-    font-size: 14px;
-    line-height: 1.5;
+    border: 1px solid var(--josh-navy);
+    border-radius: var(--radius-sm);
+    font-size: 12px;
+    font-family: var(--josh-font);
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    line-height: 1.4;
     cursor: pointer;
-    font-weight: 400;
     width: 100%;
-    transition: background-color 0.15s, border-color 0.15s, box-shadow 0.15s;
+    transition: background-color 0.12s, box-shadow 0.12s;
   }
-  .project-detail .pd-open-brief:hover  { background: #0b5ed7; border-color: #0a58ca; }
-  .project-detail .pd-open-brief:focus  { outline: 0; box-shadow: 0 0 0 0.25rem rgba(13,110,253,0.5); }
-  .project-detail .pd-open-brief:active { background: #0a58ca; border-color: #0a53be; }
-  /* Tier colors match production TIER_COLOR (analysis_map.html:1416):
-     DISCRETIONARY #c0392b  ·  MINISTERIAL_WITH_STANDARD_CONDITIONS #d67c00  ·  MINISTERIAL #27ae60 */
+  .project-detail .pd-open-brief:hover  { background: #15405e; border-color: #15405e; }
+  .project-detail .pd-open-brief:focus  { outline: 0; box-shadow: 0 0 0 2px rgba(28,74,110,0.35); }
+  .project-detail .pd-open-brief:active { background: #11334c; border-color: #11334c; }
+
+  /* Tier line — uses production tier palette exactly (brief_renderer.js TIER_*).
+     Pattern: filled tier-bg surface with matching left border and tier-fg text. */
   .tier-line {
     font-size: 13px;
-    font-weight: 600;
-    padding: 8px 10px;
-    border-radius: 4px;
-    margin: 6px 0 10px;
-    background: #fdecea;
-    border-left: 4px solid #c0392b;
-    color: #7a1c12;
+    font-weight: 700;
+    padding: 10px 12px;
+    border-radius: var(--radius-sm);
+    margin: 6px 0 12px;
+    background: var(--tier-disc-bg);
+    border-left: 4px solid var(--tier-disc-fg);
+    color: var(--tier-disc-fg);
+    letter-spacing: 0.02em;
   }
-  .tier-line .driven { font-weight: 400; font-size: 11px; color: #8a3a30; display: block; margin-top: 2px; }
-  .tier-line.mws         { background: #fff4e3; border-left-color: #d67c00; color: #6e3e00; }
-  .tier-line.mws .driven { color: #8a5400; }
-  .tier-line.ministerial         { background: #e8f5e9; border-left-color: #27ae60; color: #1b5e20; }
-  .tier-line.ministerial .driven { color: #2e7d32; }
+  .tier-line .driven {
+    font-weight: 400; font-size: 11px;
+    color: var(--josh-text); opacity: 0.75;
+    display: block; margin-top: 2px;
+    letter-spacing: 0;
+  }
+  .tier-line.mws                 { background: var(--tier-mws-bg); border-left-color: var(--tier-mws-fg); color: var(--tier-mws-fg); }
+  .tier-line.ministerial         { background: var(--tier-min-bg); border-left-color: var(--tier-min-fg); color: var(--tier-min-fg); }
 
-  /* ====== ΔT bar chart ====== */
+  /* ====== ΔT bar chart ======
+     Uses production chip-pass / chip-fail colors (--chip-pass-fg / --chip-fail-fg)
+     for the bar fills so the chart reads consistently with the standard rows in
+     the brief modal. */
   .dt-chart { margin-top: 4px; }
   .dt-row {
     display: flex;
     align-items: center;
-    margin-bottom: 4px;
+    margin-bottom: 6px;
     font-size: 11px;
   }
   .dt-label {
     width: 60px;
     flex-shrink: 0;
     text-transform: capitalize;
-    color: #444;
+    color: var(--josh-text);
+    font-weight: 500;
   }
   .dt-bar-track {
     flex: 1;
     height: 14px;
-    background: #f0f0f0;
-    border-radius: 2px;
+    background: var(--josh-stat-bg);
+    border: 1px solid var(--josh-border-light);
+    border-radius: 3px;
     position: relative;
     overflow: visible;
   }
@@ -215,10 +335,10 @@
     content: '';
     position: absolute;
     left: 33.3%;
-    top: -2px;
-    bottom: -2px;
+    top: -3px;
+    bottom: -3px;
     width: 1px;
-    border-left: 1px dashed #888;
+    border-left: 1px dashed var(--josh-muted);
   }
   .dt-bar-track::after {
     content: '1.0×';
@@ -226,7 +346,7 @@
     left: 33.3%;
     top: 14px;
     font-size: 9px;
-    color: #888;
+    color: var(--josh-muted);
     transform: translateX(-50%);
   }
   .dt-bar {
@@ -234,19 +354,21 @@
     border-radius: 2px;
     transition: width 0.2s;
   }
-  .dt-bar.pass { background: #4caf50; }
-  .dt-bar.fail { background: #e53935; }
-  .dt-bar.controls { outline: 2px solid #000; outline-offset: -1px; }
+  .dt-bar.pass { background: var(--chip-pass-fg); }
+  .dt-bar.fail { background: var(--chip-fail-fg); }
+  .dt-bar.controls { outline: 2px solid var(--josh-text); outline-offset: -1px; }
   .dt-value {
     width: 80px;
     margin-left: 8px;
     font-size: 11px;
-    color: #555;
+    color: var(--josh-muted);
     text-align: right;
   }
-  .dt-value.fail { color: #b22; font-weight: 600; }
-  .dt-row.na .dt-bar-track { background: #f7f7f7; }
-  .dt-row.na .dt-label, .dt-row.na .dt-value { color: #aaa; font-style: italic; }
+  .dt-value.fail { color: var(--chip-fail-fg); font-weight: 700; }
+  .dt-row.na .dt-bar-track { background: var(--josh-stat-bg); opacity: 0.6; }
+  .dt-row.na .dt-label, .dt-row.na .dt-value {
+    color: var(--josh-muted); font-style: italic;
+  }
 
   /* ====== Panel C: scenario selector ====== */
   #panel-c { display: none; }
@@ -254,76 +376,77 @@
   .scenario-radio {
     display: flex;
     align-items: center;
-    padding: 6px 0;
-    font-size: 13px;
+    padding: 5px 0;
+    font-size: 12px;
     cursor: pointer;
+    color: var(--josh-text);
   }
-  .scenario-radio input { margin-right: 8px; }
+  .scenario-radio input { margin-right: 8px; accent-color: var(--josh-navy); }
+  /* "controlling" badge — matches production chip-controlling
+     (red solid bg, white uppercase tracked text, 20px radius) */
   .scenario-radio .badge {
-    font-size: 10px;
-    background: #ffeb3b;
-    color: #5a4500;
-    padding: 1px 5px;
-    border-radius: 8px;
-    margin-left: auto;
-  }
-  .scenario-caption {
-    margin-top: 8px;
-    padding: 8px 10px;
-    background: #f0f7ff;
-    border-left: 3px solid #2c7fb8;
-    font-size: 11px;
-    color: #355;
-    line-height: 1.4;
-  }
-
-  /* ====== Popup ====== */
-  .popup-content { font-size: 13px; line-height: 1.4; min-width: 280px; }
-  .popup-content h3 { margin: 0 0 2px; font-size: 14px; }
-  .popup-content .addr { color: #666; font-size: 12px; margin-bottom: 2px; }
-  .popup-content .meta { color: #888; font-size: 11px; margin-bottom: 8px; }
-  .popup-content table {
-    width: 100%;
-    border-collapse: collapse;
-    margin: 6px 0 8px;
-    font-size: 12px;
-  }
-  .popup-content table th {
-    text-align: left;
-    font-weight: 600;
-    color: #555;
-    padding: 3px 4px;
-    border-bottom: 1px solid #ddd;
-    font-size: 11px;
+    font-size: 9px;
+    font-weight: 800;
+    letter-spacing: 0.08em;
     text-transform: uppercase;
-  }
-  .popup-content table td { padding: 3px 4px; border-bottom: 1px solid #f0f0f0; }
-  .popup-content tr.controls td { background: #fff9d6; font-weight: 600; }
-  .popup-content tr.info td { color: #777; font-style: italic; font-size: 11px; }
-  .popup-content .tier {
-    margin-top: 8px;
-    padding: 6px 8px;
-    background: #fff3e6;
-    border-left: 3px solid #e68a2e;
-    font-weight: 600;
-    font-size: 12px;
-    color: #803d00;
-  }
-  .popup-content .tier .driven { font-weight: 400; color: #6a5500; }
-  .popup-content button.open-brief {
-    margin-top: 10px;
-    padding: 6px 12px;
-    background: #2c7fb8;
+    background: var(--josh-red);
     color: #fff;
-    border: none;
-    border-radius: 4px;
-    font-size: 12px;
-    cursor: pointer;
-    font-weight: 600;
+    padding: 2px 7px;
+    border-radius: var(--radius-pill);
+    margin-left: auto;
+    white-space: nowrap;
   }
-  .popup-content button.open-brief:hover { background: #1e6a9c; }
+  /* Detail block under the radios — matches production .detail-block
+     (bg #f8f9fa, border-left 3px #dee2e6, 5px radius) */
+  .scenario-caption {
+    margin-top: 10px;
+    padding: 10px 12px;
+    background: var(--josh-bg);
+    border-left: 3px solid var(--josh-border);
+    border-radius: 5px;
+    font-size: 11px;
+    color: var(--josh-text);
+    line-height: 1.5;
+  }
 
-  /* Bootstrap 5 modal equivalents (production uses BS 5.2.2) */
+  /* ====== Popup (retained from earlier brief — current UX uses sidebar inspector,
+     not marker popups. Kept here so the styles are available if any UX surface
+     still needs a popup, e.g. tooltip on marker hover.) ====== */
+  .popup-content { font-size: 13px; line-height: 1.45; min-width: 280px; font-family: var(--josh-font); color: var(--josh-text); }
+  .popup-content h3 { margin: 0 0 2px; font-size: 14px; color: var(--josh-navy); }
+  .popup-content .addr { color: var(--josh-muted); font-size: 12px; margin-bottom: 2px; }
+  .popup-content .meta { color: var(--josh-muted); font-size: 11px; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.06em; }
+  .popup-content table { width: 100%; border-collapse: collapse; margin: 6px 0 8px; font-size: 12px; }
+  .popup-content table th {
+    text-align: left; font-weight: 700; color: var(--josh-muted);
+    padding: 4px 6px; border-bottom: 1px solid var(--josh-border);
+    font-size: 10px; text-transform: uppercase; letter-spacing: 0.06em;
+    background: var(--josh-bg);
+  }
+  .popup-content table td { padding: 4px 6px; border-bottom: 1px solid var(--josh-border-divider); }
+  .popup-content tr.controls td { background: var(--tier-disc-bg); font-weight: 700; }
+  .popup-content tr.info td { color: var(--josh-muted); font-style: italic; font-size: 11px; }
+  .popup-content .tier {
+    margin-top: 8px; padding: 8px 10px;
+    background: var(--tier-disc-bg);
+    border-left: 4px solid var(--tier-disc-fg);
+    border-radius: var(--radius-sm);
+    font-weight: 700; font-size: 12px; color: var(--tier-disc-fg);
+  }
+  .popup-content .tier .driven { font-weight: 400; color: var(--josh-text); opacity: 0.7; }
+  .popup-content button.open-brief {
+    margin-top: 10px; padding: 6px 12px;
+    background: var(--josh-navy); color: #fff;
+    border: none; border-radius: var(--radius-sm);
+    font-size: 11px; font-weight: 700; letter-spacing: 0.05em;
+    text-transform: uppercase; font-family: var(--josh-font);
+    cursor: pointer;
+  }
+  .popup-content button.open-brief:hover { background: #15405e; }
+
+  /* ====== Modal (mirrors production brief look: navy header bar, red
+     uppercase section labels with bottom border, stat-card body, chip-style
+     pass/fail, tier-colored determination card). ====== */
   .modal-overlay {
     position: fixed;
     inset: 0;
@@ -333,134 +456,186 @@
     justify-content: center;
     z-index: 1055;
     overflow-y: auto;
-    padding: 1.75rem 1rem;
+    padding: 28px 16px;
   }
   .modal-overlay.visible { display: flex; }
   .modal {
-    background: #fff;
-    border: 1px solid rgba(0,0,0,0.2);
-    border-radius: 0.5rem;
+    background: var(--josh-surface);
+    border: 1px solid var(--josh-border);
+    border-radius: var(--radius-lg);
     max-width: 880px;
     width: 100%;
-    padding: 1rem 1rem 1.25rem;
-    box-shadow: 0 0.5rem 1rem rgba(0,0,0,0.15);
+    padding: 0;                          /* header bar bleeds to edge */
+    box-shadow: 0 12px 32px rgba(0,0,0,0.18);
     position: relative;
+    overflow: hidden;
+    font-family: var(--josh-font);
+    color: var(--josh-text);
   }
-  .modal h2 { padding: 0 0.5rem; }
-  .modal .modal-sub { padding: 0 0.5rem; }
-  .modal h3, .modal .determination, .modal .exclusion, .modal table,
-  .modal .pd-section, .modal p { margin-left: 0.5rem; margin-right: 0.5rem; }
-  /* Bootstrap btn-close uses a CSS-masked SVG X */
+  /* Navy header bar — matches brief_renderer.js .brief-header
+     (bg #1c4a6e, color #fff, 28px 36px padding). */
+  .modal-header {
+    background: var(--josh-navy);
+    color: #fff;
+    padding: 22px 28px 18px;
+  }
+  .modal-header h2 {
+    margin: 0;
+    font-size: 22px;
+    font-weight: 700;
+    letter-spacing: 0.01em;
+    color: #fff;
+  }
+  .modal-header .modal-sub {
+    margin-top: 4px;
+    font-size: 12px;
+    color: rgba(255,255,255,0.78);
+    letter-spacing: 0.04em;
+  }
+  .modal-body { padding: 18px 28px 26px; }
   .modal-close {
     position: absolute;
-    top: 0.875rem;
-    right: 0.875rem;
-    width: 1em;
-    height: 1em;
-    padding: 0.25em;
-    box-sizing: content-box;
-    background: transparent url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='%23000'%3E%3Cpath d='M.293.293a1 1 0 0 1 1.414 0L8 6.586 14.293.293a1 1 0 1 1 1.414 1.414L9.414 8l6.293 6.293a1 1 0 0 1-1.414 1.414L8 9.414l-6.293 6.293a1 1 0 0 1-1.414-1.414L6.586 8 .293 1.707a1 1 0 0 1 0-1.414z'/%3E%3C/svg%3E") center/1em auto no-repeat;
-    border: 0;
-    border-radius: 0.375rem;
-    opacity: 0.5;
-    cursor: pointer;
-    color: transparent;
-    font-size: 0;
-  }
-  .modal-close:hover { opacity: 0.75; }
-  .modal-close:focus { outline: 0; box-shadow: 0 0 0 0.25rem rgba(13,110,253,0.25); opacity: 1; }
-  .modal h2 { margin: 0 0 4px; font-size: 20px; }
-  .modal .modal-sub { color: #666; font-size: 13px; margin-bottom: 18px; }
-  .modal h3 {
-    font-size: 14px;
-    text-transform: uppercase;
-    letter-spacing: 0.04em;
-    color: #2c7fb8;
-    margin: 22px 0 8px;
-    padding-bottom: 4px;
-    border-bottom: 1px solid #e0e0e0;
-  }
-  .modal h3 .section-letter {
-    display: inline-block;
-    background: #2c7fb8;
+    top: 18px;
+    right: 20px;
+    width: 26px; height: 26px;
+    background: rgba(255,255,255,0.18);
     color: #fff;
-    width: 22px;
-    height: 22px;
-    line-height: 22px;
-    text-align: center;
+    border: 0;
     border-radius: 50%;
-    margin-right: 8px;
-    font-size: 12px;
+    font-size: 16px;
+    line-height: 1;
+    cursor: pointer;
+    transition: background 0.12s;
   }
+  .modal-close:hover { background: rgba(255,255,255,0.32); }
+  .modal-close:focus { outline: 0; box-shadow: 0 0 0 2px rgba(255,255,255,0.45); }
+
+  /* Section labels (A / B / C / D) — matches brief_renderer.js h2.section-label:
+     11px / 700 / uppercase / letter-spacing 1.4px / color #c0392b /
+     bottom-border 2px #e9ecef. */
+  .modal h3 {
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    color: var(--josh-red);
+    margin: 28px 0 12px;
+    padding-bottom: 8px;
+    border-bottom: 2px solid var(--josh-border-light);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .modal h3:first-child { margin-top: 4px; }
+  /* Criteria badge — matches .criteria-badge in brief_renderer.js
+     (26x26 / 4px radius / 12px-800 / white text). Color set inline per letter. */
+  .modal h3 .section-letter {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 26px; height: 26px;
+    background: var(--josh-red);
+    color: #fff;
+    border-radius: var(--radius-sm);
+    font-size: 12px;
+    font-weight: 800;
+    letter-spacing: 0;
+    flex-shrink: 0;
+  }
+  /* Tables — match brief_renderer.js .route-table look:
+     #dee2e6 borders, #f8f9fa header bg, 11–13px font. */
   .modal table {
     width: 100%;
     border-collapse: collapse;
     margin-top: 6px;
-    font-size: 13px;
+    font-size: 12px;
+    border: 1px solid var(--josh-border);
+    border-radius: var(--radius-md);
+    overflow: hidden;
   }
   .modal table th {
     text-align: left;
-    background: #f5f5f5;
-    padding: 8px 10px;
-    font-weight: 600;
-    border-bottom: 2px solid #ddd;
-    font-size: 12px;
+    background: var(--josh-bg);
+    padding: 9px 12px;
+    font-weight: 700;
+    border-bottom: 1px solid var(--josh-border);
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--josh-muted);
   }
-  .modal table td { padding: 8px 10px; border-bottom: 1px solid #eee; }
+  .modal table td {
+    padding: 9px 12px;
+    border-bottom: 1px solid var(--josh-border-light);
+  }
+  .modal table tr:last-child td { border-bottom: 0; }
+  /* Controlling row — emphasized with tier-DISC bg + left accent */
   .modal table tr.controls td {
-    background: #fffbe0;
-    font-weight: 600;
-    border-left: 3px solid #e68a2e;
+    background: var(--tier-disc-bg);
+    font-weight: 700;
   }
-  .modal table tr.controls td:first-child { border-left: 3px solid #e68a2e; }
-  .modal .pass-pill {
-    background: #e8f5e9;
-    color: #2e7d32;
-    padding: 2px 8px;
-    border-radius: 10px;
-    font-size: 11px;
-    font-weight: 600;
+  .modal table tr.controls td:first-child {
+    box-shadow: inset 3px 0 0 var(--tier-disc-fg);
   }
-  .modal .fail-pill {
-    background: #ffebee;
-    color: #c62828;
-    padding: 2px 8px;
-    border-radius: 10px;
-    font-size: 11px;
-    font-weight: 600;
+  /* Pass / fail chips — match brief_renderer.js .chip-pass / .chip-fail
+     (pill shape, 20px radius, uppercase tracked) */
+  .modal .pass-pill, .modal .fail-pill {
+    display: inline-block;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    padding: 3px 10px;
+    border-radius: var(--radius-pill);
+    white-space: nowrap;
   }
+  .modal .pass-pill { background: var(--chip-pass-bg); color: var(--chip-pass-fg); }
+  .modal .fail-pill { background: var(--chip-fail-bg); color: var(--chip-fail-fg); }
+
+  /* Determination card — adopts tier-pill / stat-card pattern from
+     brief_renderer.js .tier-pill (tier-bg surface, tier-bd border, tier-fg text). */
   .modal .determination {
-    margin-top: 24px;
-    padding: 14px 18px;
-    background: #fdecea;
-    border-left: 5px solid #c0392b;
+    margin-top: 28px;
+    padding: 16px 20px;
+    background: var(--tier-disc-bg);
+    border: 2px solid var(--tier-disc-bd);
+    border-radius: var(--radius-lg);
     font-size: 15px;
-    font-weight: 600;
-    color: #7a1c12;
+    font-weight: 700;
+    color: var(--tier-disc-fg);
+    line-height: 1.45;
   }
   .modal .determination .reason {
     display: block;
     font-weight: 400;
-    font-size: 13px;
-    color: #8a3a30;
-    margin-top: 4px;
+    font-size: 12px;
+    color: var(--josh-text);
+    opacity: 0.78;
+    margin-top: 6px;
   }
-  .modal .determination.mws         { background: #fff4e3; border-left-color: #d67c00; color: #6e3e00; }
-  .modal .determination.mws .reason { color: #8a5400; }
-  .modal .determination.ministerial { background: #e8f5e9; border-left-color: #27ae60; color: #1b5e20; }
-  .modal .determination.ministerial .reason { color: #2e7d32; }
-  .modal .exclusion {
-    background: #f7f7f7;
-    border-left: 3px solid #aaa;
-    padding: 10px 14px;
-    font-size: 13px;
-    line-height: 1.5;
-    color: #555;
-  }
-  .modal .exclusion strong { color: #333; }
-  .modal .exclusion .citation { font-size: 11px; color: #888; display: block; margin-top: 4px; }
+  .modal .determination.mws         { background: var(--tier-mws-bg); border-color: var(--tier-mws-bd); color: var(--tier-mws-fg); }
+  .modal .determination.ministerial { background: var(--tier-min-bg); border-color: var(--tier-min-bd); color: var(--tier-min-fg); }
 
-  /* Teardrop project pin (visual match for Leaflet.awesome-markers used in production) */
+  /* Exclusion (informational hazards) — matches .detail-block pattern
+     (bg #f8f9fa, border-left 3px #dee2e6, 5px radius). */
+  .modal .exclusion {
+    background: var(--josh-bg);
+    border-left: 3px solid var(--josh-border);
+    padding: 12px 16px;
+    border-radius: 5px;
+    font-size: 12px;
+    line-height: 1.55;
+    color: var(--josh-text);
+    margin-top: 6px;
+  }
+  .modal .exclusion strong { color: var(--josh-navy); }
+  .modal .exclusion .citation {
+    font-size: 11px;
+    color: var(--josh-muted);
+    display: block;
+    margin-top: 6px;
+  }
+
+  /* Teardrop project pin — visual approximation of Leaflet.awesome-markers
+     (the actual production marker library). Color set inline per project tier. */
   .josh-pin-wrapper { background: transparent; border: 0; }
   .josh-pin {
     width: 30px;
@@ -486,7 +661,7 @@
     left: 7px;
   }
   .josh-pin.selected {
-    box-shadow: 0 0 0 3px rgba(13,110,253,0.55), 0 2px 4px rgba(0,0,0,0.4);
+    box-shadow: 0 0 0 3px rgba(28,74,110,0.55), 0 2px 4px rgba(0,0,0,0.4);
   }
 </style>
 </head>
@@ -518,6 +693,12 @@
 <div class="app">
   <div id="map"></div>
   <div class="sidebar">
+
+    <!-- Navy header bar — matches production sidebar.js _renderHeader -->
+    <div class="sidebar-header">
+      Multi-Hazard Analysis
+      <span class="sub">Demoville (faked) · v4.12 methodology</span>
+    </div>
 
     <!-- Panel A -->
     <div class="panel collapsed" id="panel-a">
@@ -913,7 +1094,7 @@ function renderProjectDetail(p) {
       </li>`;
     }
     if (!hr.applicable) {
-      return `<li style="color:#aaa;font-style:italic">
+      return `<li style="color:#868e96;font-style:italic">
         <span class="dot" style="background:${meta.color};opacity:0.4"></span>
         ${meta.name} — not applicable
       </li>`;
@@ -922,7 +1103,7 @@ function renderProjectDetail(p) {
     const icon = hr.controls ? '⚠' : (fails ? '⚠' : '✓');
     return `<li class="${hr.controls ? 'hz-ctrl' : ''}">
       <span class="dot" style="background:${meta.color}"></span>
-      ${meta.name} — ΔT ${hr.delta_t_min.toFixed(1)} / ${hr.threshold_min.toFixed(2)} min ${icon}${hr.controls ? ' <span style="color:#888;font-weight:400">(controlling)</span>' : ''}
+      ${meta.name} — ΔT ${hr.delta_t_min.toFixed(1)} / ${hr.threshold_min.toFixed(2)} min ${icon}${hr.controls ? ' <span style="color:#868e96;font-weight:400">(controlling)</span>' : ''}
     </li>`;
   }).join('');
 
@@ -1072,7 +1253,7 @@ function buildScenarioPanel(p) {
       <input type="radio" name="scenario-${p.id}" value="${hr.hazard}" ${checked}
              onchange="onScenarioChange('${hr.hazard}')">
       <span style="display:inline-block;width:10px;height:10px;background:${HAZARDS[hr.hazard].color};border-radius:50%;margin-right:6px"></span>
-      ${HAZARDS[hr.hazard].name} <span style="color:#888;font-size:11px;margin-left:4px">(${hr.zone})</span>
+      ${HAZARDS[hr.hazard].name} <span style="color:#868e96;font-size:11px;margin-left:4px">(${hr.zone})</span>
       ${isCtrl ? '<span class="badge">controlling</span>' : ''}
     </label>`;
   }).join('');
@@ -1120,7 +1301,7 @@ function openBrief(pid) {
     .filter(h => !h.informational)
     .map(h => {
       if (!h.applicable) {
-        return `<tr><td>${HAZARDS[h.hazard].name}</td><td colspan="4" style="color:#aaa;font-style:italic">not applicable in zone of record</td></tr>`;
+        return `<tr><td>${HAZARDS[h.hazard].name}</td><td colspan="4" style="color:#868e96;font-style:italic">not applicable in zone of record</td></tr>`;
       }
       return `<tr>
         <td>${HAZARDS[h.hazard].name}</td>
@@ -1144,7 +1325,7 @@ function openBrief(pid) {
     .filter(h => !h.informational)
     .map(h => {
       if (!h.applicable) {
-        return `<tr><td>${HAZARDS[h.hazard].name}</td><td colspan="6" style="color:#aaa;font-style:italic">not applicable</td></tr>`;
+        return `<tr><td>${HAZARDS[h.hazard].name}</td><td colspan="6" style="color:#868e96;font-style:italic">not applicable</td></tr>`;
       }
       const fails = h.delta_t_min > h.threshold_min;
       const ctrlCls = h.controls ? 'controls' : '';
@@ -1169,8 +1350,10 @@ function openBrief(pid) {
       </tr>
       ${evacRows}
     </table>
-    <p style="font-size:11px;color:#888;margin-top:6px">
-      Controlling hazard determines the tier. Most-restrictive-wins logic per JOSH §6.
+    <p style="font-size:11px;color:#868e96;margin-top:8px;letter-spacing:0.02em">
+      Controlling hazard determines the tier. Worst-case single hazard wins per
+      <code style="font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:10px;background:#f1f3f5;padding:1px 4px;border-radius:3px">multihazard_status.md</code>
+      locked decision #7.
     </p>
   `;
 
@@ -1208,14 +1391,18 @@ function openBrief(pid) {
   `;
 
   document.getElementById('brief-modal-body').innerHTML = `
-    <button class="modal-close" onclick="closeBrief()">&times;</button>
-    <h2>${p.name} — Objective Standards Brief</h2>
-    <div class="modal-sub">${p.address} · ${p.units} units · ${p.stories} stories · ${JOSH_DATA.city}</div>
-    ${sectionA}
-    ${sectionB}
-    ${sectionC}
-    ${sectionD}
-    ${determination}
+    <button class="modal-close" onclick="closeBrief()" aria-label="Close">&times;</button>
+    <div class="modal-header">
+      <h2>${p.name} — Objective Standards Brief</h2>
+      <div class="modal-sub">${p.address} · ${p.units} units · ${p.stories} stories · ${JOSH_DATA.city}</div>
+    </div>
+    <div class="modal-body">
+      ${sectionA}
+      ${sectionB}
+      ${sectionC}
+      ${sectionD}
+      ${determination}
+    </div>
   `;
   document.getElementById('brief-modal').classList.add('visible');
 }
