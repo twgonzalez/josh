@@ -4769,13 +4769,297 @@ if (typeof module !== "undefined" && module.exports) {
     height: calc(100vh - 54px) !important;
   }
 </style>
+<!-- ─────────────────────────────────────────────────────────────────────────
+     MULTI-HAZARD VISUAL MOCKUP — hardcoded sidebar contents.
+     Production sidebar.js renders into #josh-sidebar at runtime; the bridge
+     script's joshSidebar.init() call is neutralized below so this static HTML
+     stays put. ALL values are faked for the prototype. The real Phase 7 work
+     extends static/sidebar.js to produce this same structure dynamically.
+     ───────────────────────────────────────────────────────────────────────── -->
+<style id="mhz-mockup-css">
+  /* Mockup-only — composes on production tokens already present in the page */
+  .mhz-banner       { background:#fff7c2; border-bottom:1px solid #d6c66a; padding:8px 12px; font-size:11px; line-height:1.45; color:#4a3a00; flex-shrink:0; }
+  .mhz-banner b     { color:#2c2300; }
+  .mhz-sb-header    { background:#1c4a6e; color:#fff; padding:12px 14px; font-size:13px; font-weight:700; letter-spacing:0.04em; text-transform:uppercase; flex-shrink:0; }
+  .mhz-sb-header .sub { display:block; font-size:10px; font-weight:400; text-transform:none; letter-spacing:0; color:rgba(255,255,255,0.75); margin-top:2px; }
+  .mhz-sb-scroll    { flex:1; overflow-y:auto; }
+  .mhz-panel        { border-bottom:1px solid #dee2e6; background:#fff; }
+  .mhz-panel-head   { padding:10px 14px; font-weight:700; font-size:10px; letter-spacing:0.10em; text-transform:uppercase; color:#868e96; background:#f8f9fa; border-bottom:1px solid #e9ecef; display:flex; justify-content:space-between; cursor:pointer; user-select:none; }
+  .mhz-panel-body   { padding:10px 14px 12px; }
+  .mhz-hz-row       { display:flex; align-items:center; padding:5px 0; font-size:12px; color:#212529; }
+  .mhz-hz-row input { margin-right:8px; accent-color:#1c4a6e; }
+  .mhz-sw           { width:16px; height:16px; border-radius:3px; border:1px solid rgba(0,0,0,0.15); margin-right:8px; flex-shrink:0; }
+  .mhz-sw-wf        { background:#d62728; opacity:0.55; }
+  .mhz-sw-fl        { background:#1f77b4; opacity:0.55; }
+  .mhz-sw-eq        { background:repeating-linear-gradient(45deg, #d8d8d8 0 4px, #7f7f7f 4px 6px); opacity:0.85; }
+  .mhz-hz-row label { flex:1; cursor:pointer; }
+  .mhz-info-pill    { font-size:9px; font-weight:700; letter-spacing:0.06em; text-transform:uppercase; color:#1a56db; background:#e7f1ff; padding:2px 6px; border-radius:20px; margin-left:4px; }
+
+  .mhz-proj-select  { width:100%; padding:6px 8px; font-size:13px; font-family:inherit; border:1px solid #ccc; border-radius:4px; background:#fff; margin-bottom:12px; font-weight:500; color:#212529; }
+  .mhz-proj-name    { font-weight:700; font-size:14px; color:#212529; margin-bottom:2px; }
+  .mhz-proj-addr    { font-size:12px; color:#868e96; margin-bottom:2px; }
+  .mhz-proj-meta    { font-size:10px; font-weight:700; letter-spacing:0.08em; text-transform:uppercase; color:#868e96; margin-bottom:10px; }
+  .mhz-stat-row     { display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-bottom:12px; }
+  .mhz-stat         { background:#f5f7fa; border-radius:6px; padding:8px 10px; text-align:center; }
+  .mhz-stat .big    { font-size:22px; font-weight:700; line-height:1.1; color:#1c4a6e; }
+  .mhz-stat .lbl    { font-size:9px; font-weight:700; letter-spacing:0.08em; text-transform:uppercase; color:#868e96; margin-top:3px; }
+
+  .mhz-tier         { font-size:13px; font-weight:700; padding:10px 12px; border-radius:4px; margin:4px 0 14px; background:#fdf2f2; border-left:4px solid #c0392b; color:#c0392b; letter-spacing:0.02em; }
+  .mhz-tier .driven { display:block; font-weight:400; font-size:11px; color:#212529; opacity:0.75; margin-top:2px; letter-spacing:0; }
+
+  .mhz-section-h    { font-size:10px; font-weight:700; letter-spacing:0.08em; text-transform:uppercase; color:#868e96; margin:14px 0 6px; }
+  .mhz-dt-row       { display:flex; align-items:center; margin-bottom:8px; font-size:11px; }
+  .mhz-dt-label     { width:64px; flex-shrink:0; text-transform:capitalize; color:#212529; font-weight:500; }
+  .mhz-dt-track     { flex:1; height:12px; background:#fff; border:1px solid #dee2e6; border-radius:3px; position:relative; }
+  .mhz-dt-track::before { content:''; position:absolute; left:33.3%; top:-3px; bottom:-3px; width:1px; border-left:1px dashed #868e96; }
+  .mhz-dt-bar       { height:100%; border-radius:2px; }
+  .mhz-dt-bar.pass  { background:#27ae60; }
+  .mhz-dt-bar.fail  { background:#c0392b; }
+  .mhz-dt-bar.controls { outline:2px solid #212529; outline-offset:-1px; }
+  .mhz-dt-value     { width:88px; margin-left:8px; font-size:10px; color:#868e96; text-align:right; }
+  .mhz-dt-value.fail { color:#c0392b; font-weight:700; }
+  .mhz-dt-row.na .mhz-dt-track { opacity:0.45; }
+  .mhz-dt-row.na .mhz-dt-label,
+  .mhz-dt-row.na .mhz-dt-value { color:#868e96; font-style:italic; }
+
+  .mhz-scen         { margin-top:8px; padding:10px 12px; background:#fff; border:1px solid #e9ecef; border-radius:6px; }
+  .mhz-scen-row     { display:flex; align-items:center; padding:4px 0; font-size:12px; cursor:pointer; color:#212529; }
+  .mhz-scen-row input { margin-right:8px; accent-color:#1c4a6e; }
+  .mhz-scen-badge   { font-size:9px; font-weight:800; letter-spacing:0.06em; text-transform:uppercase; background:#c0392b; color:#fff; padding:2px 7px; border-radius:20px; margin-left:auto; }
+  .mhz-scen-cap     { margin-top:8px; padding:8px 10px; background:#f8f9fa; border-left:3px solid #dee2e6; border-radius:4px; font-size:11px; line-height:1.5; color:#212529; }
+
+  .mhz-hz-list      { list-style:none; padding:0; margin:0; font-size:12px; }
+  .mhz-hz-list li   { padding:5px 0; display:flex; align-items:center; gap:6px; border-bottom:1px solid #f0f0f0; }
+  .mhz-hz-list li:last-child { border-bottom:0; }
+  .mhz-hz-list .dot { display:inline-block; width:8px; height:8px; border-radius:50%; flex-shrink:0; }
+  .mhz-hz-list .hz-info { color:#868e96; font-style:italic; }
+  .mhz-hz-list .hz-ctrl { font-weight:700; }
+
+  .mhz-brief-btn    { margin-top:14px; padding:8px 14px; background:#1c4a6e; color:#fff; border:0; border-radius:4px; font-size:12px; font-family:inherit; font-weight:700; letter-spacing:0.04em; text-transform:uppercase; cursor:pointer; width:100%; }
+  .mhz-brief-btn:hover { background:#15405e; }
+
+  /* Brief modal */
+  .mhz-modal-overlay { position:fixed; inset:0; background:rgba(0,0,0,0.5); z-index:2000; display:none; align-items:flex-start; justify-content:center; padding:28px 16px; overflow-y:auto; font-family:system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif; color:#212529; }
+  .mhz-modal-overlay.open { display:flex; }
+  .mhz-modal        { background:#fff; border:1px solid #dee2e6; border-radius:8px; max-width:880px; width:100%; box-shadow:0 12px 32px rgba(0,0,0,0.18); position:relative; overflow:hidden; }
+  .mhz-modal-header { background:#1c4a6e; color:#fff; padding:22px 28px 18px; }
+  .mhz-modal-header h2 { margin:0; font-size:22px; font-weight:700; color:#fff; }
+  .mhz-modal-header .sub { margin-top:4px; font-size:12px; color:rgba(255,255,255,0.78); letter-spacing:0.04em; }
+  .mhz-modal-body   { padding:18px 28px 26px; font-size:14px; line-height:1.55; }
+  .mhz-modal-close  { position:absolute; top:18px; right:20px; width:26px; height:26px; background:rgba(255,255,255,0.18); color:#fff; border:0; border-radius:50%; font-size:16px; line-height:1; cursor:pointer; }
+  .mhz-modal-close:hover { background:rgba(255,255,255,0.32); }
+  .mhz-mlabel       { font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:0.12em; color:#c0392b; margin:24px 0 12px; padding-bottom:8px; border-bottom:2px solid #e9ecef; display:flex; align-items:center; gap:10px; }
+  .mhz-mlabel:first-of-type { margin-top:0; }
+  .mhz-mlabel .letter { display:inline-flex; align-items:center; justify-content:center; width:26px; height:26px; background:#c0392b; color:#fff; border-radius:4px; font-size:12px; font-weight:800; letter-spacing:0; }
+  .mhz-modal table  { width:100%; border-collapse:collapse; font-size:12px; border:1px solid #dee2e6; border-radius:6px; overflow:hidden; }
+  .mhz-modal th     { text-align:left; padding:9px 12px; font-weight:700; background:#f8f9fa; color:#868e96; font-size:10px; text-transform:uppercase; letter-spacing:0.06em; border-bottom:1px solid #dee2e6; }
+  .mhz-modal td     { padding:9px 12px; border-bottom:1px solid #e9ecef; }
+  .mhz-modal tr:last-child td { border-bottom:0; }
+  .mhz-modal tr.controls td { background:#fdf2f2; font-weight:700; }
+  .mhz-modal tr.controls td:first-child { box-shadow:inset 3px 0 0 #c0392b; }
+  .mhz-chip         { display:inline-block; font-size:10px; font-weight:700; letter-spacing:0.06em; text-transform:uppercase; padding:3px 10px; border-radius:20px; white-space:nowrap; }
+  .mhz-chip-pass    { background:#e8f5e9; color:#27ae60; }
+  .mhz-chip-fail    { background:#fdf2f2; color:#c0392b; }
+  .mhz-excl         { background:#f8f9fa; border-left:3px solid #dee2e6; padding:12px 16px; border-radius:5px; font-size:12px; line-height:1.55; color:#212529; }
+  .mhz-excl strong  { color:#1c4a6e; }
+  .mhz-excl .cite   { display:block; margin-top:6px; font-size:11px; color:#868e96; }
+  .mhz-det          { margin-top:24px; padding:16px 20px; background:#fdf2f2; border:2px solid #e8b4b0; border-radius:8px; font-size:15px; font-weight:700; color:#c0392b; line-height:1.45; }
+  .mhz-det .reason  { display:block; font-weight:400; font-size:12px; color:#212529; opacity:0.78; margin-top:6px; }
+</style>
+
 <div id="josh-sidebar" style="
   position:fixed;top:54px;left:0;width:320px;height:calc(100vh - 54px);
   background:#fff;box-shadow:2px 0 12px rgba(0,0,0,0.12);
   display:flex;flex-direction:column;overflow:hidden;
   font-family:system-ui,-apple-system,BlinkMacSystemFont,sans-serif;
   font-size:13px;z-index:1000;
-"></div>
+">
+  <div class="mhz-banner">
+    <b>Multi-hazard preview overlay.</b> Flood + earthquake hazards layered onto production Berkeley map.
+    Wildfire chrome &amp; data are real. Faked values for visual review.
+  </div>
+  <div class="mhz-sb-header">
+    Multi-Hazard Analysis
+    <span class="sub">Berkeley · v4.12 methodology</span>
+  </div>
+
+  <div class="mhz-sb-scroll">
+
+    <div class="mhz-panel">
+      <div class="mhz-panel-head">
+        <span>Hazard Layers</span><span>&#9662;</span>
+      </div>
+      <div class="mhz-panel-body">
+        <div class="mhz-hz-row">
+          <input type="checkbox" id="mhz-cb-wf" checked disabled>
+          <span class="mhz-sw mhz-sw-wf"></span>
+          <label for="mhz-cb-wf">Wildfire (FHSZ &mdash; production)</label>
+        </div>
+        <div class="mhz-hz-row">
+          <input type="checkbox" id="mhz-cb-fl" checked>
+          <span class="mhz-sw mhz-sw-fl"></span>
+          <label for="mhz-cb-fl">Flood (FEMA NFHL &mdash; faked)</label>
+        </div>
+        <div class="mhz-hz-row">
+          <input type="checkbox" id="mhz-cb-eq" checked>
+          <span class="mhz-sw mhz-sw-eq"></span>
+          <label for="mhz-cb-eq">Earthquake (CGS SHZ &mdash; faked)</label>
+          <span class="mhz-info-pill" title="Informational only &mdash; does not affect determination. Separate PE-stamped seismic site assessment required (PRC &sect;2690).">info only</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="mhz-panel">
+      <div class="mhz-panel-head">
+        <span>Project</span><span>&#9662;</span>
+      </div>
+      <div class="mhz-panel-body">
+        <select class="mhz-proj-select">
+          <option>Hillview Terrace Apartments (48 units)</option>
+          <option>Cedar Street Infill (120 units)</option>
+          <option>University Ave Mixed-Use (75 units)</option>
+          <option>Telegraph &amp; Bancroft (25 units)</option>
+        </select>
+
+        <div class="mhz-proj-name">Hillview Terrace Apartments</div>
+        <div class="mhz-proj-addr">1234 Foothill Blvd, Berkeley</div>
+        <div class="mhz-proj-meta">VHFHSZ &middot; 1 egress &middot; seeded by pipeline</div>
+
+        <div class="mhz-stat-row">
+          <div class="mhz-stat"><div class="big">48</div><div class="lbl">units</div></div>
+          <div class="mhz-stat"><div class="big">3</div><div class="lbl">stories</div></div>
+        </div>
+
+        <div class="mhz-tier">
+          DISCRETIONARY
+          <span class="driven">driven by Wildfire</span>
+        </div>
+
+        <div class="mhz-section-h">Per-Hazard &Delta;T</div>
+        <div class="mhz-dt-row">
+          <div class="mhz-dt-label">Wildfire</div>
+          <div class="mhz-dt-track"><div class="mhz-dt-bar fail controls" style="width:97%;"></div></div>
+          <div class="mhz-dt-value fail">11.8 / 2.25 min</div>
+        </div>
+        <div class="mhz-dt-row">
+          <div class="mhz-dt-label">Flood</div>
+          <div class="mhz-dt-track"><div class="mhz-dt-bar pass" style="width:4%;"></div></div>
+          <div class="mhz-dt-value">1.1 / 9.00 min</div>
+        </div>
+        <div class="mhz-dt-row na">
+          <div class="mhz-dt-label">Earthquake</div>
+          <div class="mhz-dt-track"></div>
+          <div class="mhz-dt-value">info only</div>
+        </div>
+
+        <div class="mhz-scen">
+          <div class="mhz-section-h" style="margin:0 0 6px;">Hazard Scenario</div>
+          <div class="mhz-scen-row">
+            <input type="radio" name="mhz-scen" id="mhz-scen-ctrl" checked>
+            <label for="mhz-scen-ctrl">Controlling (default)</label>
+            <span class="mhz-scen-badge">Wildfire</span>
+          </div>
+          <div class="mhz-scen-row">
+            <input type="radio" name="mhz-scen" id="mhz-scen-wf">
+            <label for="mhz-scen-wf">Wildfire</label>
+          </div>
+          <div class="mhz-scen-row">
+            <input type="radio" name="mhz-scen" id="mhz-scen-fl">
+            <label for="mhz-scen-fl">Flood</label>
+          </div>
+          <div class="mhz-scen-cap">
+            Showing controlling-hazard route. Switching scenario re-routes the AntPath through that hazard's degraded graph (e.g. flood drops edges whose nodes are below BFE + 0.5 ft).
+          </div>
+        </div>
+
+        <div class="mhz-section-h">Hazards Evaluated</div>
+        <ul class="mhz-hz-list">
+          <li>
+            <span class="dot" style="background:#d62728;"></span>
+            <span class="hz-ctrl">Wildfire</span>
+            <span style="color:#868e96;font-size:11px;margin-left:4px">(VHFHSZ)</span>
+            <span style="margin-left:auto;font-size:11px">11.8 min</span>
+            <span class="mhz-scen-badge" style="margin-left:6px">controls</span>
+          </li>
+          <li>
+            <span class="dot" style="background:#1f77b4;"></span>
+            Flood
+            <span style="color:#868e96;font-size:11px;margin-left:4px">(X unshaded)</span>
+            <span style="margin-left:auto;font-size:11px">1.1 min</span>
+          </li>
+          <li>
+            <span class="dot" style="background:#7f7f7f;"></span>
+            <span class="hz-info">Earthquake (liquefaction &mdash; informational, PE assessment required)</span>
+          </li>
+        </ul>
+
+        <button class="mhz-brief-btn" onclick="document.getElementById('mhz-brief-modal').classList.add('open');">Open Brief &rarr;</button>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- Brief modal -->
+<div class="mhz-modal-overlay" id="mhz-brief-modal" onclick="if(event.target===this) this.classList.remove('open');">
+  <div class="mhz-modal">
+    <button class="mhz-modal-close" onclick="document.getElementById('mhz-brief-modal').classList.remove('open');" aria-label="Close">&times;</button>
+    <div class="mhz-modal-header">
+      <h2>Hillview Terrace Apartments &mdash; Objective Standards Brief</h2>
+      <div class="sub">1234 Foothill Blvd, Berkeley &middot; 48 units &middot; 3 stories</div>
+    </div>
+    <div class="mhz-modal-body">
+
+      <h3 class="mhz-mlabel"><span class="letter">A</span>Applicability Threshold</h3>
+      <p style="margin:6px 0">Project size: <b>48 units</b>, <b>3 stories</b>. <b>48 &ge; 15</b> &mdash; Objective Standard 1 (Evacuation Clearance) <b>applies</b>.</p>
+
+      <h3 class="mhz-mlabel"><span class="letter">B</span>Site Parameters (per hazard)</h3>
+      <table>
+        <tr><th>Hazard</th><th>Zone</th><th>Degradation</th><th>Egress window</th><th>&Delta;T threshold</th></tr>
+        <tr><td>Wildfire</td><td>VHFHSZ</td><td>0.35</td><td>45 min</td><td>2.25 min</td></tr>
+        <tr><td>Flood</td><td>X (unshaded)</td><td>1.00</td><td>180 min</td><td>9.00 min</td></tr>
+      </table>
+
+      <h3 class="mhz-mlabel"><span class="letter">C</span>Evacuation Clearance Analysis (per hazard)</h3>
+      <table>
+        <tr><th>Hazard</th><th>Bottleneck</th><th>Eff. capacity</th><th>Project veh.</th><th>&Delta;T</th><th>Threshold</th><th>Result</th></tr>
+        <tr class="controls">
+          <td>Wildfire</td>
+          <td>Foothill Blvd at Marin Ave</td>
+          <td>551 vph</td>
+          <td>108</td>
+          <td>11.8 min</td>
+          <td>2.25 min</td>
+          <td><span class="mhz-chip mhz-chip-fail">FAIL (controls)</span></td>
+        </tr>
+        <tr>
+          <td>Flood</td>
+          <td>Foothill Blvd at Marin Ave</td>
+          <td>1,575 vph</td>
+          <td>108</td>
+          <td>1.1 min</td>
+          <td>9.00 min</td>
+          <td><span class="mhz-chip mhz-chip-pass">PASS</span></td>
+        </tr>
+      </table>
+      <p style="font-size:11px;color:#868e96;margin-top:8px">Controlling hazard determines the tier. Worst-case single hazard wins per <code style="font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:10px;background:#f1f3f5;padding:1px 4px;border-radius:3px">multihazard_status.md</code> locked decision #7.</p>
+
+      <h3 class="mhz-mlabel"><span class="letter">D</span>Hazards Excluded (informational only)</h3>
+      <div class="mhz-excl">
+        <strong>Earthquake:</strong>
+        Liquefaction zone (CGS SHZ). ShakeMap MMI 8. Separate PE-stamped seismic site assessment required under PRC &sect;2690. Not factored into tier determination per JOSH methodology v4.12.
+        <span class="cite">Precedent: City of Berkeley AB 747 report (KLD Engineering, 2024) treats earthquake as descriptive overlay only.</span>
+      </div>
+
+      <div class="mhz-det">
+        DISCRETIONARY (controlled by Wildfire)
+        <span class="reason">Wildfire &mdash; VHFHSZ: &Delta;T 11.8 min exceeds 2.25 min threshold. Controlling bottleneck: Foothill Blvd at Marin Ave.</span>
+      </div>
+
+    </div>
+  </div>
+</div>
+
 <script id="josh-sidebar-bridge">
 (function () {
   // Expose the Leaflet map as window._joshMap once it has initialised.
@@ -4806,7 +5090,7 @@ if (typeof module !== "undefined" && module.exports) {
       }
     })();
     // Initialise sidebar with JOSH_DATA.projects (pipeline seeds)
-    if (window.joshSidebar) window.joshSidebar.init();
+    if (window.joshSidebar) { /* disabled for mockup — sidebar pre-populated inline */ }
   });
 })();
 </script>
@@ -10713,774 +10997,5 @@ if (typeof module !== "undefined" && module.exports) {
             
 </script>
 
-
-<!-- ──────────────────────────────────────────────────────────────────────────
-     MULTI-HAZARD OVERLAY — Phase 7 prototype layered onto production map
-     ──────────────────────────────────────────────────────────────────────────
-     This block is appended to a copy of output/berkeley/analysis_map.html so
-     the prototype inherits ALL of production's Folium chrome, Leaflet plugins,
-     sidebar.js, brief_renderer.js, and design tokens automatically. The
-     overlay adds:
-        - faked multi-hazard fields on existing Berkeley projects
-        - hazard layer panel (top of #josh-sidebar)
-        - per-hazard ΔT bar chart in the project detail card
-        - hazard scenario radio (swaps the visible AntPath)
-        - L.geoJSON polygons for flood + earthquake-informational
-        - BriefRenderer.render() monkey-patched to append a multi-hazard
-          summary card to the existing wildfire brief
-
-     ALL VALUES IN window.JOSH_DATA.{applicable_hazards, hazard_polygons,
-     projects[].hazard_results} ARE FAKED for the prototype.
-────────────────────────────────────────────────────────────────────────── -->
-
-<style id="multihazard-overlay-css">
-  /* Overlay-only styles. Production tokens (font, colors, radii) live in the
-     CSS already loaded by analysis_map.html — these rules just compose them. */
-
-  /* Top-of-sidebar banner that tags this as a multi-hazard preview */
-  .mhz-banner {
-    background: #fff7c2;
-    border-bottom: 1px solid #d6c66a;
-    padding: 8px 12px;
-    font-size: 11px;
-    line-height: 1.45;
-    color: #4a3a00;
-  }
-  .mhz-banner b { color: #2c2300; }
-
-  /* Hazard layer panel — sits at the top of #josh-sidebar, above the
-     production project list. Uses the production muted-grey panel header
-     pattern (see static/sidebar.js _renderHeader / panel rules). */
-  .mhz-panel {
-    background: #fff;
-    border-bottom: 1px solid #dee2e6;
-  }
-  .mhz-panel-header {
-    padding: 10px 14px;
-    font-weight: 700;
-    font-size: 10px;
-    letter-spacing: 0.10em;
-    text-transform: uppercase;
-    color: #868e96;
-    background: #f8f9fa;
-    border-bottom: 1px solid #e9ecef;
-    cursor: pointer;
-    user-select: none;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-  }
-  .mhz-panel-header .mhz-caret { font-size: 10px; transition: transform 0.15s; }
-  .mhz-panel.mhz-collapsed .mhz-caret { transform: rotate(-90deg); }
-  .mhz-panel.mhz-collapsed .mhz-panel-body { display: none; }
-  .mhz-panel-body { padding: 8px 14px 10px; }
-
-  .mhz-hazard-row {
-    display: flex;
-    align-items: center;
-    padding: 4px 0;
-    font-size: 12px;
-    color: #212529;
-  }
-  .mhz-hazard-row input { margin-right: 8px; accent-color: #1c4a6e; }
-  .mhz-hazard-row .mhz-swatch {
-    width: 16px; height: 16px; border-radius: 3px;
-    border: 1px solid rgba(0,0,0,0.15);
-    margin-right: 8px;
-    flex-shrink: 0;
-  }
-  .mhz-sw-wildfire { background: #d62728; opacity: 0.55; }
-  .mhz-sw-flood    { background: #1f77b4; opacity: 0.55; }
-  .mhz-sw-eq       { background: repeating-linear-gradient(45deg, #d8d8d8 0 4px, #7f7f7f 4px 6px); opacity: 0.85; }
-  .mhz-hazard-row label { flex: 1; cursor: pointer; text-transform: capitalize; }
-  .mhz-info-pill {
-    font-size: 9px;
-    font-weight: 700;
-    letter-spacing: 0.06em;
-    text-transform: uppercase;
-    color: #1a56db;
-    background: #e7f1ff;
-    padding: 2px 6px;
-    border-radius: 20px;
-    margin-left: 4px;
-  }
-
-  /* Per-hazard ΔT bar chart — injected into project detail card */
-  .mhz-dt-wrap {
-    margin: 10px 0 4px;
-    padding: 10px 12px;
-    background: #f5f7fa;
-    border-radius: 6px;
-    border: 1px solid #e9ecef;
-  }
-  .mhz-dt-title {
-    font-size: 10px;
-    font-weight: 700;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-    color: #868e96;
-    margin-bottom: 8px;
-  }
-  .mhz-dt-row {
-    display: flex; align-items: center;
-    margin-bottom: 8px;
-    font-size: 11px;
-  }
-  .mhz-dt-row:last-child { margin-bottom: 4px; }
-  .mhz-dt-label { width: 64px; flex-shrink: 0; text-transform: capitalize; color: #212529; font-weight: 500; }
-  .mhz-dt-track {
-    flex: 1;
-    height: 12px;
-    background: #fff;
-    border: 1px solid #dee2e6;
-    border-radius: 3px;
-    position: relative;
-  }
-  .mhz-dt-track::before {
-    content: '';
-    position: absolute;
-    left: 33.3%;
-    top: -3px; bottom: -3px;
-    width: 1px;
-    border-left: 1px dashed #868e96;
-  }
-  .mhz-dt-bar { height: 100%; border-radius: 2px; transition: width 0.2s; }
-  .mhz-dt-bar.pass { background: #27ae60; }
-  .mhz-dt-bar.fail { background: #c0392b; }
-  .mhz-dt-bar.controls { outline: 2px solid #212529; outline-offset: -1px; }
-  .mhz-dt-value { width: 88px; margin-left: 8px; font-size: 10px; color: #868e96; text-align: right; }
-  .mhz-dt-value.fail { color: #c0392b; font-weight: 700; }
-  .mhz-dt-row.na .mhz-dt-track { opacity: 0.45; }
-  .mhz-dt-row.na .mhz-dt-label,
-  .mhz-dt-row.na .mhz-dt-value { color: #868e96; font-style: italic; }
-
-  /* Hazard scenario radio group — sits below the bar chart in the detail card */
-  .mhz-scenario-wrap {
-    margin: 10px 0 4px;
-    padding: 10px 12px;
-    background: #fff;
-    border: 1px solid #e9ecef;
-    border-radius: 6px;
-  }
-  .mhz-scenario-title {
-    font-size: 10px;
-    font-weight: 700;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-    color: #868e96;
-    margin-bottom: 6px;
-  }
-  .mhz-scenario-radio {
-    display: flex;
-    align-items: center;
-    padding: 4px 0;
-    font-size: 12px;
-    cursor: pointer;
-    color: #212529;
-  }
-  .mhz-scenario-radio input { margin-right: 8px; accent-color: #1c4a6e; }
-  .mhz-scenario-radio .mhz-controls-badge {
-    font-size: 9px;
-    font-weight: 800;
-    letter-spacing: 0.06em;
-    text-transform: uppercase;
-    background: #c0392b;
-    color: #fff;
-    padding: 2px 7px;
-    border-radius: 20px;
-    margin-left: auto;
-    white-space: nowrap;
-  }
-  .mhz-scenario-caption {
-    margin-top: 8px;
-    padding: 8px 10px;
-    background: #f8f9fa;
-    border-left: 3px solid #dee2e6;
-    border-radius: 4px;
-    font-size: 11px;
-    line-height: 1.5;
-    color: #212529;
-  }
-
-  /* Multi-hazard summary card appended to BriefRenderer output */
-  .mhz-brief-card {
-    margin: 32px 0 8px;
-    background: #fff;
-    border: 1px solid #dee2e6;
-    border-radius: 6px;
-    overflow: hidden;
-  }
-  .mhz-brief-card .mhz-brief-h {
-    font-size: 11px;
-    font-weight: 700;
-    letter-spacing: 0.12em;
-    text-transform: uppercase;
-    color: #c0392b;
-    padding: 14px 16px 8px;
-    border-bottom: 2px solid #e9ecef;
-    margin: 0;
-    display: flex; align-items: center; gap: 10px;
-  }
-  .mhz-brief-card .mhz-brief-letter {
-    display: inline-flex; align-items: center; justify-content: center;
-    width: 26px; height: 26px;
-    background: #c0392b; color: #fff;
-    border-radius: 4px;
-    font-size: 12px; font-weight: 800; letter-spacing: 0;
-  }
-  .mhz-brief-card .mhz-brief-body { padding: 14px 16px 16px; }
-  .mhz-brief-card table {
-    width: 100%; border-collapse: collapse; font-size: 12px;
-    border: 1px solid #dee2e6; border-radius: 6px;
-    overflow: hidden;
-  }
-  .mhz-brief-card table th {
-    text-align: left; padding: 9px 12px; font-weight: 700;
-    background: #f8f9fa; color: #868e96;
-    font-size: 10px; text-transform: uppercase; letter-spacing: 0.06em;
-    border-bottom: 1px solid #dee2e6;
-  }
-  .mhz-brief-card table td {
-    padding: 9px 12px; border-bottom: 1px solid #e9ecef;
-  }
-  .mhz-brief-card table tr:last-child td { border-bottom: 0; }
-  .mhz-brief-card table tr.controls td {
-    background: #fdf2f2; font-weight: 700;
-  }
-  .mhz-brief-card table tr.controls td:first-child {
-    box-shadow: inset 3px 0 0 #c0392b;
-  }
-  .mhz-brief-card .mhz-chip {
-    display: inline-block;
-    font-size: 10px; font-weight: 700; letter-spacing: 0.06em;
-    text-transform: uppercase;
-    padding: 3px 10px; border-radius: 20px; white-space: nowrap;
-  }
-  .mhz-brief-card .mhz-chip-pass { background: #e8f5e9; color: #27ae60; }
-  .mhz-brief-card .mhz-chip-fail { background: #fdf2f2; color: #c0392b; }
-  .mhz-brief-card .mhz-exclusion {
-    background: #f8f9fa;
-    border-left: 3px solid #dee2e6;
-    padding: 12px 16px;
-    border-radius: 5px;
-    font-size: 12px; line-height: 1.55;
-    color: #212529;
-    margin-top: 12px;
-  }
-  .mhz-brief-card .mhz-exclusion strong { color: #1c4a6e; }
-  .mhz-brief-card .mhz-exclusion .mhz-citation {
-    display: block; margin-top: 6px;
-    font-size: 11px; color: #868e96;
-  }
-  .mhz-brief-card .mhz-determination {
-    margin-top: 14px;
-    padding: 14px 18px;
-    background: #fdf2f2;
-    border: 2px solid #e8b4b0;
-    border-radius: 8px;
-    font-size: 14px; font-weight: 700; color: #c0392b;
-    line-height: 1.45;
-  }
-  .mhz-brief-card .mhz-determination .mhz-reason {
-    display: block; font-weight: 400; font-size: 12px;
-    color: #212529; opacity: 0.78;
-    margin-top: 6px;
-  }
-
-  /* Selected-marker hint when a project is active */
-  .mhz-selected-pin-hint {
-    box-shadow: 0 0 0 3px rgba(28,74,110,0.45) !important;
-  }
-</style>
-
-<script id="multihazard-overlay">
-(function () {
-  'use strict';
-
-  // ── 0. Wait for production to finish booting ─────────────────────────────
-  function ready(cond, cb, tries) {
-    tries = tries == null ? 80 : tries;
-    if (cond()) return cb();
-    if (tries <= 0) {
-      console.warn('[multihazard-overlay] timed out waiting for production to boot');
-      return;
-    }
-    setTimeout(function () { ready(cond, cb, tries - 1); }, 100);
-  }
-
-  ready(
-    function () {
-      return window.JOSH_DATA &&
-             window.BriefRenderer &&
-             typeof window.BriefRenderer.render === 'function' &&
-             document.getElementById('josh-sidebar') &&
-             findMap();
-    },
-    boot
-  );
-
-  function findMap() {
-    var keys = Object.keys(window);
-    for (var i = 0; i < keys.length; i++) {
-      var v = window[keys[i]];
-      if (v && typeof v.eachLayer === 'function' && typeof v.addLayer === 'function' && v._container) {
-        return v;
-      }
-    }
-    return null;
-  }
-
-  // ── 1. Fake multi-hazard fields layered onto JOSH_DATA ───────────────────
-  function augmentData() {
-    var D = window.JOSH_DATA;
-
-    D.applicable_hazards = ['wildfire', 'flood', 'earthquake'];
-
-    // Faked flood + earthquake polygons hand-drawn around Berkeley.
-    // Production would fetch FEMA NFHL S_FLD_HAZ_AR and CGS SHZ here.
-    D.hazard_polygons = {
-      flood: {
-        type: 'FeatureCollection',
-        features: [{
-          type: 'Feature',
-          properties: { zone: 'AE', name: 'Aquatic Park / Marina SFHA (faked)' },
-          geometry: {
-            type: 'Polygon',
-            coordinates: [[
-              [-122.318, 37.864],
-              [-122.305, 37.864],
-              [-122.302, 37.858],
-              [-122.310, 37.856],
-              [-122.318, 37.860],
-              [-122.318, 37.864]
-            ]]
-          }
-        }]
-      },
-      earthquake: {
-        type: 'FeatureCollection',
-        features: [{
-          type: 'Feature',
-          properties: { zone: 'liquefaction', name: 'West Berkeley flatlands liquefaction (faked CGS SHZ)' },
-          geometry: {
-            type: 'Polygon',
-            coordinates: [[
-              [-122.320, 37.890],
-              [-122.290, 37.890],
-              [-122.286, 37.860],
-              [-122.318, 37.858],
-              [-122.320, 37.890]
-            ]]
-          }
-        }]
-      }
-    };
-
-    // Augment each existing project with per-hazard results.
-    // For each project we mirror its production wildfire ΔT into the new
-    // schema, then add a flood result whose pass/fail is keyed off the
-    // project id (so the demo shows both controlling-wildfire and
-    // controlling-flood cases without inventing routes).
-    (D.projects || []).forEach(function (p, i) {
-      var wfDt   = (p.result && p.result.delta_t_minutes)        || 0;
-      var wfThr  = (p.result && p.result.threshold_minutes)      || 2.25;
-      var wfBn   = (p.result && p.result.bottleneck_label)       || 'unknown';
-      var wfZone = (p.result && (p.result.hazard_zone || p.result.fhsz_zone)) || 'vhfhsz';
-
-      // Even-indexed projects become flood-controlled (ΔT > threshold).
-      // Odd-indexed stay wildfire-controlled. Mix so reviewer sees both.
-      var floodFails = (i % 2 === 0);
-      var floodDt    = floodFails ? 14.2 : 1.1;
-      var floodThr   = 9.0;
-      var wfControls = !floodFails || (wfDt / wfThr > floodDt / floodThr);
-
-      p.hazard_results = [
-        {
-          hazard: 'wildfire',
-          zone: wfZone,
-          applicable: true,
-          delta_t_min: +wfDt,
-          threshold_min: +wfThr,
-          bottleneck: wfBn,
-          eff_cap_vph: 551,
-          project_vehicles: Math.round((p.units || 0) * 2.5 * 0.90),
-          degradation: 0.35,
-          safe_egress_window: 45,
-          controls: wfControls
-        },
-        {
-          hazard: 'flood',
-          zone: floodFails ? 'AE' : 'X (unshaded)',
-          applicable: floodFails,
-          delta_t_min: floodFails ? floodDt : null,
-          threshold_min: floodFails ? floodThr : null,
-          bottleneck: floodFails ? 'Aquatic Park Path at I-80 underpass (faked)' : null,
-          eff_cap_vph: floodFails ? 304 : null,
-          project_vehicles: Math.round((p.units || 0) * 2.5 * 0.90),
-          degradation: floodFails ? 0.20 : 1.00,
-          safe_egress_window: 180,
-          controls: !wfControls
-        },
-        {
-          hazard: 'earthquake',
-          zone: 'liquefaction',
-          applicable: false,
-          informational: true,
-          shakemap_mmi: 8,
-          note: 'PE-stamped seismic site assessment required (PRC §2690).'
-        }
-      ];
-      p.controlling_hazard = wfControls ? 'wildfire' : 'flood';
-    });
-  }
-
-  // ── 2. Hazard polygon layers, registered with the map ────────────────────
-  var _hazardLayers = {};
-  var _map;
-
-  var POLY_STYLE = {
-    wildfire:   null,                                              // already in production
-    flood:      { color: '#1f77b4', weight: 1, fillColor: '#1f77b4', fillOpacity: 0.30 },
-    earthquake: { color: '#7f7f7f', weight: 1, fillColor: '#7f7f7f', fillOpacity: 0.18, dashArray: '4,3' }
-  };
-
-  function buildHazardLayers() {
-    _map = findMap();
-    if (!_map) return;
-    var polys = window.JOSH_DATA.hazard_polygons || {};
-    ['flood', 'earthquake'].forEach(function (h) {
-      var fc = polys[h];
-      if (!fc) return;
-      var layer = L.geoJSON(fc, {
-        style: POLY_STYLE[h],
-        onEachFeature: function (f, lyr) {
-          lyr.bindTooltip(
-            '<b>' + (f.properties.name || h) + '</b><br>' +
-            '<span style="color:#868e96">Faked — ' + h + ' overlay</span>',
-            { sticky: true }
-          );
-        }
-      });
-      _hazardLayers[h] = layer;
-    });
-  }
-
-  // ── 3. Hazard layer panel injected at top of #josh-sidebar ───────────────
-  function injectHazardPanel() {
-    var sb = document.getElementById('josh-sidebar');
-    if (!sb) return;
-
-    // Banner that tags the whole page as a multi-hazard preview
-    var banner = document.createElement('div');
-    banner.className = 'mhz-banner';
-    banner.innerHTML =
-      '<b>Multi-hazard preview overlay.</b> Faked flood and earthquake data ' +
-      'layered onto production Berkeley map for UX review. Wildfire data + chrome ' +
-      'are real. See <code>docs/multihazard_first_principles.md</code> §7–8.';
-    sb.insertBefore(banner, sb.firstChild);
-
-    var panel = document.createElement('div');
-    panel.className = 'mhz-panel mhz-collapsed';
-    panel.id = 'mhz-layer-panel';
-    panel.innerHTML =
-      '<div class="mhz-panel-header" id="mhz-layer-toggle">' +
-      '  <span>Hazard Layers</span><span class="mhz-caret">▾</span>' +
-      '</div>' +
-      '<div class="mhz-panel-body">' +
-      '  <div class="mhz-hazard-row">' +
-      '    <input type="checkbox" id="mhz-cb-wildfire" checked disabled>' +
-      '    <span class="mhz-swatch mhz-sw-wildfire"></span>' +
-      '    <label for="mhz-cb-wildfire">Wildfire (FHSZ — production)</label>' +
-      '  </div>' +
-      '  <div class="mhz-hazard-row">' +
-      '    <input type="checkbox" id="mhz-cb-flood">' +
-      '    <span class="mhz-swatch mhz-sw-flood"></span>' +
-      '    <label for="mhz-cb-flood">Flood (FEMA NFHL — faked)</label>' +
-      '  </div>' +
-      '  <div class="mhz-hazard-row">' +
-      '    <input type="checkbox" id="mhz-cb-eq">' +
-      '    <span class="mhz-swatch mhz-sw-eq"></span>' +
-      '    <label for="mhz-cb-eq">Earthquake (CGS SHZ — faked)</label>' +
-      '    <span class="mhz-info-pill" title="Informational only — does not affect determination. Separate PE-stamped seismic site assessment required (PRC §2690).">info only</span>' +
-      '  </div>' +
-      '</div>';
-    sb.insertBefore(panel, banner.nextSibling);
-
-    document.getElementById('mhz-layer-toggle').addEventListener('click', function () {
-      panel.classList.toggle('mhz-collapsed');
-    });
-    document.getElementById('mhz-cb-flood').addEventListener('change', function (e) {
-      var l = _hazardLayers.flood;
-      if (!l) return;
-      if (e.target.checked) _map.addLayer(l); else _map.removeLayer(l);
-    });
-    document.getElementById('mhz-cb-eq').addEventListener('change', function (e) {
-      var l = _hazardLayers.earthquake;
-      if (!l) return;
-      if (e.target.checked) _map.addLayer(l); else _map.removeLayer(l);
-    });
-  }
-
-  // ── 4. Watch sidebar DOM for project-detail mounts and inject the ΔT
-  //      bar chart + hazard scenario radio underneath the existing tier card.
-  // ─────────────────────────────────────────────────────────────────────────
-  var HAZARD_LABELS = { wildfire: 'Wildfire', flood: 'Flood', earthquake: 'Earthquake' };
-
-  function findSelectedProject() {
-    var sb = document.getElementById('josh-sidebar');
-    if (!sb) return null;
-    // Production renders the selected project's name in an element we
-    // can match against window.JOSH_DATA.projects.
-    var projects = window.JOSH_DATA.projects || [];
-    for (var i = 0; i < projects.length; i++) {
-      var p = projects[i];
-      // Look for the project name appearing in a visible heading
-      var spans = sb.querySelectorAll('div, span, h2, h3, h4');
-      for (var j = 0; j < spans.length; j++) {
-        if (spans[j].textContent && spans[j].textContent.trim() === p.name &&
-            spans[j].offsetParent !== null) {
-          return p;
-        }
-      }
-    }
-    return null;
-  }
-
-  function renderDtBars(p) {
-    var rows = (p.hazard_results || [])
-      .filter(function (h) { return !h.informational; })
-      .map(function (h) {
-        if (!h.applicable) {
-          return '<div class="mhz-dt-row na">' +
-                 '  <div class="mhz-dt-label">' + HAZARD_LABELS[h.hazard] + '</div>' +
-                 '  <div class="mhz-dt-track"></div>' +
-                 '  <div class="mhz-dt-value">n/a</div>' +
-                 '</div>';
-        }
-        var ratio = h.delta_t_min / h.threshold_min;
-        var pct = Math.min(99, (ratio / 3) * 100);
-        var fails = h.delta_t_min > h.threshold_min;
-        var cls = (fails ? 'fail' : 'pass') + (h.controls ? ' controls' : '');
-        return '<div class="mhz-dt-row">' +
-               '  <div class="mhz-dt-label">' + HAZARD_LABELS[h.hazard] + '</div>' +
-               '  <div class="mhz-dt-track"><div class="mhz-dt-bar ' + cls + '" style="width:' + pct.toFixed(1) + '%"></div></div>' +
-               '  <div class="mhz-dt-value' + (fails ? ' fail' : '') + '">' +
-                    h.delta_t_min.toFixed(1) + ' / ' + h.threshold_min.toFixed(2) + ' min' +
-               '  </div>' +
-               '</div>';
-      }).join('');
-    return '<div class="mhz-dt-wrap" data-mhz="dt">' +
-           '  <div class="mhz-dt-title">Per-Hazard ΔT</div>' +
-           rows +
-           '</div>';
-  }
-
-  function renderScenarioRadios(p) {
-    var ctrlHz = p.controlling_hazard;
-    var applicable = (p.hazard_results || []).filter(function (h) { return h.applicable; });
-    var rows = '<div class="mhz-scenario-radio">' +
-               '  <input type="radio" name="mhz-scenario-' + p.id + '" id="mhz-scen-ctrl-' + p.id + '" value="controlling" checked>' +
-               '  <label for="mhz-scen-ctrl-' + p.id + '">Controlling (default)</label>' +
-               '  <span class="mhz-controls-badge">' + HAZARD_LABELS[ctrlHz] + '</span>' +
-               '</div>';
-    rows += applicable.map(function (h) {
-      var rid = 'mhz-scen-' + h.hazard + '-' + p.id;
-      return '<div class="mhz-scenario-radio">' +
-             '  <input type="radio" name="mhz-scenario-' + p.id + '" id="' + rid + '" value="' + h.hazard + '">' +
-             '  <label for="' + rid + '">' + HAZARD_LABELS[h.hazard] + '</label>' +
-             '</div>';
-    }).join('');
-    return '<div class="mhz-scenario-wrap" data-mhz="scenario">' +
-           '  <div class="mhz-scenario-title">Hazard Scenario</div>' +
-           rows +
-           '  <div class="mhz-scenario-caption" id="mhz-scenario-caption-' + p.id + '">' +
-           '    Showing controlling-hazard route. In production, switching scenario re-routes the AntPath through that hazard\'s degraded graph (e.g. flood scenarios drop edges whose nodes are below BFE + 0.5 ft).' +
-           '  </div>' +
-           '</div>';
-  }
-
-  function maybeInjectDetailExtras() {
-    var sb = document.getElementById('josh-sidebar');
-    if (!sb) return;
-    var p = findSelectedProject();
-    if (!p || !p.hazard_results) {
-      // No project selected — make sure no stale overlay is present
-      sb.querySelectorAll('[data-mhz="dt"], [data-mhz="scenario"]').forEach(function (el) { el.remove(); });
-      return;
-    }
-    if (sb.querySelector('[data-mhz="dt"][data-pid="' + p.id + '"]')) return;  // already injected
-
-    // Remove any previous project's overlay
-    sb.querySelectorAll('[data-mhz="dt"], [data-mhz="scenario"]').forEach(function (el) { el.remove(); });
-
-    // Find a good anchor — production puts the "Open Brief" button at the
-    // bottom of the detail card. Insert before it if we can find it; else
-    // append to the sidebar.
-    var anchor = null;
-    var buttons = sb.querySelectorAll('button');
-    for (var i = 0; i < buttons.length; i++) {
-      if (/brief/i.test(buttons[i].textContent || '')) { anchor = buttons[i]; break; }
-    }
-
-    var holder = document.createElement('div');
-    holder.innerHTML = renderDtBars(p) + renderScenarioRadios(p);
-    var nodes = Array.prototype.slice.call(holder.children);
-    nodes.forEach(function (n) { n.setAttribute('data-pid', p.id); });
-
-    if (anchor && anchor.parentNode) {
-      nodes.forEach(function (n) { anchor.parentNode.insertBefore(n, anchor); });
-    } else {
-      nodes.forEach(function (n) { sb.appendChild(n); });
-    }
-  }
-
-  function watchSidebar() {
-    var sb = document.getElementById('josh-sidebar');
-    if (!sb) return;
-    var obs = new MutationObserver(function () { maybeInjectDetailExtras(); });
-    obs.observe(sb, { childList: true, subtree: true, characterData: false });
-    // Initial pass
-    maybeInjectDetailExtras();
-  }
-
-  // ── 5. BriefRenderer monkey-patch — append a multi-hazard summary card ───
-  function monkeyPatchBrief() {
-    var original = window.BriefRenderer.render;
-    window.BriefRenderer.render = function (input) {
-      var html = original.call(this, input);
-      var p = findProjectFromBriefInput(input);
-      if (!p || !p.hazard_results) return html;
-      var card = buildMultiHazardCard(p);
-      // Insert card before the closing </main> if present, else before </body>
-      if (/<\/main>/i.test(html)) {
-        return html.replace(/<\/main>/i, card + '</main>');
-      } else if (/<\/body>/i.test(html)) {
-        return html.replace(/<\/body>/i, card + '</body>');
-      } else {
-        return html + card;
-      }
-    };
-  }
-
-  function findProjectFromBriefInput(input) {
-    if (!input) return null;
-    var pid = (input.project && input.project.id) || input.project_id || input.id;
-    var projects = window.JOSH_DATA.projects || [];
-    if (pid) {
-      var byId = projects.find(function (q) { return q.id === pid; });
-      if (byId) return byId;
-    }
-    // Fallback: match by lat/lon
-    var lat = (input.project && input.project.lat) || input.lat;
-    var lon = (input.project && (input.project.lng || input.project.lon)) || input.lng || input.lon;
-    if (lat != null && lon != null) {
-      return projects.find(function (q) {
-        return Math.abs((q.lat - lat)) < 1e-4 && Math.abs(((q.lng || q.lon) - lon)) < 1e-4;
-      });
-    }
-    return null;
-  }
-
-  function buildMultiHazardCard(p) {
-    var siteRows = (p.hazard_results || [])
-      .filter(function (h) { return !h.informational; })
-      .map(function (h) {
-        if (!h.applicable) {
-          return '<tr><td>' + HAZARD_LABELS[h.hazard] + '</td>' +
-                 '<td colspan="4" style="color:#868e96;font-style:italic">not applicable in zone of record</td></tr>';
-        }
-        return '<tr><td>' + HAZARD_LABELS[h.hazard] + '</td>' +
-               '<td>' + h.zone + '</td>' +
-               '<td>' + h.degradation.toFixed(2) + '</td>' +
-               '<td>' + h.safe_egress_window + ' min</td>' +
-               '<td>' + h.threshold_min.toFixed(2) + ' min</td></tr>';
-      }).join('');
-
-    var evacRows = (p.hazard_results || [])
-      .filter(function (h) { return !h.informational; })
-      .map(function (h) {
-        if (!h.applicable) {
-          return '<tr><td>' + HAZARD_LABELS[h.hazard] + '</td>' +
-                 '<td colspan="6" style="color:#868e96;font-style:italic">not applicable</td></tr>';
-        }
-        var fails = h.delta_t_min > h.threshold_min;
-        var pill = fails
-          ? '<span class="mhz-chip mhz-chip-fail">FAIL' + (h.controls ? ' (controls)' : '') + '</span>'
-          : '<span class="mhz-chip mhz-chip-pass">PASS</span>';
-        return '<tr class="' + (h.controls ? 'controls' : '') + '">' +
-               '  <td>' + HAZARD_LABELS[h.hazard] + '</td>' +
-               '  <td>' + h.bottleneck + '</td>' +
-               '  <td>' + h.eff_cap_vph + ' vph</td>' +
-               '  <td>' + h.project_vehicles + '</td>' +
-               '  <td>' + h.delta_t_min.toFixed(1) + ' min</td>' +
-               '  <td>' + h.threshold_min.toFixed(2) + ' min</td>' +
-               '  <td>' + pill + '</td>' +
-               '</tr>';
-      }).join('');
-
-    var excluded = (p.hazard_results || []).filter(function (h) { return h.informational; });
-    var sectionD = excluded.length
-      ? '<div class="mhz-exclusion">' +
-        excluded.map(function (h) {
-          return '<strong>' + HAZARD_LABELS[h.hazard] + ':</strong> ' +
-                 (h.zone === 'liquefaction' ? 'Liquefaction zone (CGS SHZ). ' : '') +
-                 (h.shakemap_mmi ? 'ShakeMap MMI ' + h.shakemap_mmi + '. ' : '') +
-                 'Separate PE-stamped seismic site assessment required under PRC §2690. ' +
-                 'Not factored into tier determination per JOSH methodology v4.12.' +
-                 '<span class="mhz-citation">Precedent: City of Berkeley AB 747 report ' +
-                 '(KLD Engineering, 2024) treats earthquake as descriptive overlay only.</span>';
-        }).join('') +
-        '</div>'
-      : '';
-
-    var ctrl = (p.hazard_results || []).find(function (h) { return h.controls; });
-    var determination = ctrl
-      ? '<div class="mhz-determination">' +
-        'DISCRETIONARY (controlled by ' + HAZARD_LABELS[ctrl.hazard] + ')' +
-        '<span class="mhz-reason">' +
-        HAZARD_LABELS[ctrl.hazard] + ' — ' + ctrl.zone + ': ΔT ' +
-        ctrl.delta_t_min.toFixed(1) + ' min exceeds ' + ctrl.threshold_min.toFixed(2) + ' min threshold. ' +
-        'Controlling bottleneck: ' + ctrl.bottleneck + '.' +
-        '</span>' +
-        '</div>'
-      : '';
-
-    return '<section class="mhz-brief-card">' +
-           '  <h2 class="mhz-brief-h"><span class="mhz-brief-letter">B</span>Site Parameters (per hazard)</h2>' +
-           '  <div class="mhz-brief-body">' +
-           '    <table>' +
-           '      <tr><th>Hazard</th><th>Zone</th><th>Degradation</th><th>Egress window</th><th>ΔT threshold</th></tr>' +
-                  siteRows +
-           '    </table>' +
-           '  </div>' +
-           '  <h2 class="mhz-brief-h"><span class="mhz-brief-letter">C</span>Evacuation Clearance Analysis (per hazard)</h2>' +
-           '  <div class="mhz-brief-body">' +
-           '    <table>' +
-           '      <tr><th>Hazard</th><th>Bottleneck</th><th>Eff. capacity</th><th>Project veh.</th><th>ΔT</th><th>Threshold</th><th>Result</th></tr>' +
-                  evacRows +
-           '    </table>' +
-           '    <p style="font-size:11px;color:#868e96;margin-top:8px">Controlling hazard determines the tier. Worst-case single hazard wins per locked decision #7.</p>' +
-           '  </div>' +
-           (excluded.length ? '  <h2 class="mhz-brief-h"><span class="mhz-brief-letter">D</span>Hazards Excluded (informational only)</h2><div class="mhz-brief-body">' + sectionD + '</div>' : '') +
-           '  <div class="mhz-brief-body">' + determination + '</div>' +
-           '</section>';
-  }
-
-  // ── 6. Boot sequence ─────────────────────────────────────────────────────
-  function boot() {
-    try {
-      augmentData();
-      buildHazardLayers();
-      injectHazardPanel();
-      monkeyPatchBrief();
-      watchSidebar();
-      console.info('[multihazard-overlay] ready. Faked hazards layered onto Berkeley map. ' +
-                   'See docs/multihazard_first_principles.md §7–8 for the spec this prototype represents.');
-    } catch (err) {
-      console.error('[multihazard-overlay] boot failed:', err);
-    }
-  }
-})();
-</script>
 
 </html>
