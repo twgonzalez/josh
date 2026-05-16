@@ -502,3 +502,57 @@ test('T13 — cross-street bottleneck: unnamed road with cross streets', functio
   assert.ok(html.includes('Unnamed road (Main St to Oak Ave)'), 'unnamed road with cross streets');
   assert.ok(html.includes('0.2 mi S'), 'distance+bearing for unnamed road');
 });
+
+// ── v4.13 (route-display-ux) — legal framing + neutral row colors ────────────
+
+test('T15 — Criterion C includes legal framing paragraph above route table', function() {
+  // The framing paragraph paraphrases §8.6 of the Legal Defensibility Memo
+  // and pre-empts the "use the green route" objection.  Must appear above
+  // the route table in every Criterion C render that has paths.
+  var p1 = makePath({ path_id: 'P1', cost_s: 200, delta_t_minutes: 8.5, flagged: true });
+  var p2 = makePath({ path_id: 'P2', cost_s: 300, delta_t_minutes: 1.5, flagged: false });
+  var an = makeAnalysis(true, true, { delta_t_triggered: true });
+  var inp = makeInput('DISCRETIONARY', [p1, p2], null, an, {
+    result: makeResult('DISCRETIONARY', [p1, p2]),
+  });
+
+  var html = BR.render(inp);
+
+  assert.ok(html.includes('About the route list'), 'legal framing heading present');
+  assert.ok(html.includes('User Equilibrium'), 'cites User Equilibrium methodology');
+  assert.ok(/controlling .*worst-case.* route/i.test(html), 'identifies controlling route');
+  assert.ok(html.includes('slower routes do not'), 'addresses "use the fast route" objection');
+  assert.ok(/§8\.6|&sect;8\.6/.test(html), 'cites memo §8.6');
+  // Framing must appear before the route table
+  var framingIdx = html.indexOf('About the route list');
+  var tableIdx   = html.indexOf('<table');
+  assert.ok(framingIdx > 0 && tableIdx > framingIdx, 'framing comes before route table');
+});
+
+test('T16 — non-controlling rows are neutral; only controlling row has pass/fail color', function() {
+  // v4.13: the determination is project-level.  Per-row pass/fail color on
+  // non-controlling rows wrongly implies route-level pass/fail and invites
+  // the alternative-route objection.  Only the CONTROLLING row carries the
+  // pass/fail color signal.
+  var ctrl = makePath({ path_id: 'CTRL', cost_s: 150, delta_t_minutes: 8.5, flagged: true });
+  var pass = makePath({ path_id: 'PASS', cost_s: 300, delta_t_minutes: 1.5, flagged: false });
+  var an   = makeAnalysis(true, true, { delta_t_triggered: true });
+  var inp  = makeInput('DISCRETIONARY', [ctrl, pass], null, an, {
+    result: makeResult('DISCRETIONARY', [ctrl, pass]),
+  });
+
+  var html = BR.render(inp);
+
+  // CONTROLLING badge appears in the table
+  assert.ok(html.includes('CONTROLLING'), 'CONTROLLING badge on controlling row');
+  // The "Result" status column header has been dropped (single CONTROLLING badge replaces it)
+  assert.ok(!/<th>\s*Result\s*<\/th>/i.test(html), '"Result" column header dropped');
+  // No per-row "EXCEEDS" or "within" status badge anywhere
+  assert.ok(!html.includes('&#9888; EXCEEDS'), 'no per-row EXCEEDS badge');
+  assert.ok(!html.includes('&#10003; within'), 'no per-row "within" badge');
+  // The non-controlling row's ΔT cell is colored neutral (#495057), not green
+  var passRowRe = /<tr[^>]*>\s*<td[^>]*>PASS<\/td>[\s\S]*?<\/tr>/;
+  var passRow = (html.match(passRowRe) || [''])[0];
+  assert.ok(passRow.includes('#495057'), 'non-controlling row uses neutral text color');
+  assert.ok(!passRow.includes('#27ae60'), 'non-controlling row does not use pass-green');
+});

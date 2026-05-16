@@ -456,7 +456,18 @@ Paths whose travel time exceeds 3.5× the fastest-exit travel time are excluded 
 
 **More routes = more conservative ΔT determination.** The ΔT determination flags `DISCRETIONARY` if *any* viable route exceeds the threshold. Returning more routes increases the chance that a flagged path is found; it never reduces it. Removing the dedup step is therefore monotonically conservative — it cannot mask a hazard.
 
-**User control over display, not over determination.** The sidebar (`static/sidebar.js`) shows the full viable set as a toggle list, sorted fastest-exit-first (User Equilibrium ordering). Hiding a route on the map does not exclude it from the determination — the "Determination uses all N routes" footer is a legal safeguard that must remain visible whenever any route is toggled off.
+**User control over display, not over determination.** The sidebar (`static/sidebar.js`) shows the full viable set as a sorted list (fastest-exit-first, matching User Equilibrium ordering). The map's default view shows only the controlling (worst-case) route — the binding evidence for the determination. A "Show all viable routes (N)" toggle in the sidebar route header reveals the other routes as thin context lines under the controlling route. Hiding any route does not exclude it from the determination — a persistent footer note ("Determination uses all N routes") is a legal safeguard that must remain visible whenever a route is hidden.
+
+### Display Conventions (v4.13)
+
+The visual design follows the "binding constraint + faint context" pattern used in adjacent safety-analysis disciplines (fault-tree, traffic-engineering studies, floodplain mapping). The default presentation is:
+
+- **Controlling route:** drawn in JOSH brand navy (`#1c4a6e`) at weight 5, opacity 0.95, with a wider gold (`#f59e0b`) halo underneath. Tagged with a "CONTROLLING ROUTE" badge in the sidebar.
+- **Context routes (when "Show all" is on):** drawn in the same navy at weight 2, opacity 0.45, no halo. Visible but subordinate.
+- **Project tier color** (red DISCRETIONARY, orange CONDITIONAL, green MINISTERIAL) appears on the determination banner and tier chip only — never on individual route lines. The determination is project-level; individual route lines do not carry pass/fail color.
+- **Brief renderer (`brief_renderer.js`):** Criterion C opens with a framing paragraph paraphrasing §8.6 of the Legal Defensibility Memo, followed by the full route table. The CONTROLLING row is highlighted with a gold badge. Non-controlling rows render in neutral text color (no per-row pass/fail color); the table omits a per-row "Result" status column because the CONTROLLING badge supplies all needed visual status.
+
+These conventions exist to align the visual presentation with the methodology's legal premise: routes are evidence of evacuee behavior under User Equilibrium, not a menu of options the developer can select between. Per-route pass/fail color would invite the alternative-route argument (which §8.6 dismantles formally); the unified-color design ensures the UI does not undermine the legal framework it sits within.
 
 ---
 

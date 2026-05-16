@@ -735,12 +735,30 @@
         var controllingDt   = +(controllingPath.delta_t_minutes || 0);
 
         // Summary line — single-glance answer to "how bad is this?"
+        // v4.13: ΔT color stays project-tier-aware (red when controlling is
+        // flagged; navy otherwise).  Color here describes the determination,
+        // not the individual route.
         var summaryLine = '<div style="font-size:12px; margin-bottom:6px; color:#212529;">' +
           '<strong>' + paths.length + ' route' + (paths.length === 1 ? '' : 's') + ' evaluated</strong>; ' +
-          'worst-case &Delta;T = <strong style="color:' +
-            (controllingPath.flagged ? '#c0392b' : '#27ae60') + '">' +
+          'controlling &Delta;T = <strong style="color:' +
+            (controllingPath.flagged ? '#c0392b' : '#1c4a6e') + '">' +
             _f(controllingDt, 2) + ' min</strong> on ' +
           '<em>' + _esc(controllingBnNm) + '</em>.</div>';
+
+        // v4.13 (route-display-ux): legal framing paragraph above the route
+        // table — paraphrases JOSH_Legal_Defensibility_Memo.md §8.6.  Pre-empts
+        // the "use the green route" objection in the same document where the
+        // route table appears as evidence.
+        var legalFraming = '<div style="font-size:11px;color:#465464;background:#eef2f7;' +
+          'border-left:3px solid #1c4a6e;padding:8px 10px;border-radius:0 4px 4px 0;' +
+          'margin-bottom:8px;line-height:1.45;">' +
+          '<strong style="color:#1c4a6e;">About the route list.</strong> ' +
+          'The routes listed below are paths evacuees may self-select during an ' +
+          'evacuation (User Equilibrium). The determination uses the ' +
+          '<strong>controlling (worst-case) route</strong> because some ' +
+          'evacuees will take it &mdash; slower routes do not "fix" faster ones. ' +
+          'See §3.6 and §8.6 of the Legal Defensibility Memo for the ' +
+          'full methodology.</div>';
 
         var tableRows = displayPaths.map(function(rr) {
           var pid    = rr.path_id || '\u2014';
@@ -777,32 +795,35 @@
             ? _esc(bname) + '<br><span style="font-size:9px;color:#868e96;font-weight:normal">' + _esc(bnSubtitle) + '</span>'
             : _esc(bname);
 
-          var dtColor     = flg ? '#c0392b' : '#212529';
-          var marginColor = flg ? '#c0392b' : '#27ae60';
+          // v4.13 (route-display-ux): only the CONTROLLING row carries
+          // pass/fail color.  Other rows are neutral \u2014 the determination is
+          // project-level, not route-level.
+          var dtColor     = isCtrl ? (flg ? '#c0392b' : '#1c4a6e') : '#495057';
+          var marginColor = isCtrl ? (flg ? '#c0392b' : '#27ae60') : '#6c757d';
           var marginStr   = flg ? '+' + _f(margin,2) : '\u2212' + _f(Math.abs(margin),2);
-
-          var statusHtml;
-          if (isCtrl && flg)  statusHtml = '<span class="chip-controlling">CONTROLLING</span>';
-          else if (flg)        statusHtml = "<span style='color:#c0392b;font-weight:700'>&#9888; EXCEEDS</span>";
-          else if (isCtrl)     statusHtml = '<span class="chip-controlling" style="background:#495057;">WORST</span>';
-          else                 statusHtml = "<span style='color:#27ae60'>&#10003; within</span>";
 
           var costMin = (+(rr.cost_s || 0)) / 60;
           var rowCls = isCtrl ? 'row-controlling' : '';
+          var pidCell = isCtrl
+            ? "<td style='font-size:10px;color:#868e96'>" + _esc(pid) + "<br>" +
+                "<span style='display:inline-block;font-size:9px;font-weight:700;" +
+                "background:#f59e0b;color:#fff;border-radius:3px;padding:1px 5px;" +
+                "letter-spacing:0.06em;margin-top:2px;'>CONTROLLING</span></td>"
+            : "<td style='font-size:10px;color:#868e96'>" + _esc(pid) + "</td>";
           return "<tr class='" + rowCls + "'>" +
-            "<td style='font-size:10px;color:#868e96'>" + _esc(pid) + "</td>" +
+            pidCell +
             "<td>" + bnameCell + "</td>" +
             "<td style='font-size:10px'>" + _esc(hzLabel) + "</td>" +
             "<td style='font-weight:600'>" + _comma(effCap) + "</td>" +
             "<td style='color:#495057'>" + (costMin > 0 ? _f(costMin,1) : '\u2014') + "</td>" +
-            "<td style='font-weight:700;color:" + dtColor + "'>" + _f(dt,2) + "</td>" +
+            "<td style='font-weight:" + (isCtrl ? '700' : '500') + ";color:" + dtColor + "'>" + _f(dt,2) + "</td>" +
             "<td style='color:#868e96'>" + _f(thr,2) + "</td>" +
-            "<td style='font-weight:600;color:" + marginColor + "'>" + marginStr + "</td>" +
-            "<td>" + statusHtml + "</td>" +
+            "<td style='font-weight:" + (isCtrl ? '600' : '500') + ";color:" + marginColor + "'>" + marginStr + "</td>" +
             "</tr>";
         }).join('');
 
         mergedTableHtml = derivBlock +
+          legalFraming +
           summaryLine +
           "<div style='font-size:11px;color:#6c757d;margin-bottom:4px;'>" +
           egresNote + "Project vehicles: <strong>" + _f(projVph,0) + "</strong>" +
@@ -812,7 +833,7 @@
           "<table class='route-table'><thead><tr>" +
           "<th>Path</th><th>Bottleneck Segment</th><th>FHSZ Zone</th>" +
           "<th>Eff. Cap (vph)</th><th>Exit (min)</th><th>&#916;T (min)</th><th>Threshold</th>" +
-          "<th>Margin</th><th>Result</th></tr></thead><tbody>" + tableRows + "</tbody></table>";
+          "<th>Margin</th></tr></thead><tbody>" + tableRows + "</tbody></table>";
       } else {
         mergedTableHtml = derivBlock +
           "<div style='color:#6c757d;'>" + routeCount +

@@ -70,6 +70,14 @@
   // projects clears the prior entry so each project starts fresh.
   const _routeToggles  = new Map();
 
+  // v4.13 (route-display-ux): per-project "show all viable routes" toggle.
+  // Map<projectId, boolean>. When absent or false, the map displays ONLY the
+  // controlling (worst-case) route — the binding evidence for the determination.
+  // When true, all viable routes draw as thin context lines with the controlling
+  // route still distinguished by weight + gold halo.  Per-route eye toggles only
+  // affect map rendering when this flag is true.  Switching projects resets.
+  const _showAllRoutes = new Map();
+
   // ── Route toggle helpers ─────────────────────────────────────────────────────
   // _pathId/_visiblePaths centralise the snake_case/camelCase normalisation and
   // the "all-on by default" semantics so _drawRoutes and _renderDetail stay in lock-step.
@@ -79,6 +87,19 @@
     const set = _routeToggles.get(projectId);
     if (!set) return paths.slice();                         // no entry → all visible
     return paths.filter(p => set.has(_pathId(p)));
+  }
+
+  // The "controlling" path is the one driving the determination — the path
+  // with the highest ΔT (or the only flagged path, when only one is flagged).
+  // This is the binding-evidence route under User Equilibrium semantics:
+  // some evacuees will take this route and face this delay; the project's
+  // contribution to that delay is what the standard measures.
+  // Returns null for empty input.
+  function _controllingPath(paths) {
+    if (!paths || paths.length === 0) return null;
+    return paths.reduce((a, b) => (
+      (+(b.delta_t || b.delta_t_minutes || 0)) > (+(a.delta_t || a.delta_t_minutes || 0)) ? b : a
+    ));
   }
 
   // ── localStorage auto-save (browser-created projects) ────────────────────────
@@ -1188,64 +1209,91 @@
       return m;
     }()) : new Map();
 
-    // v4.12 (all-viable-routes): sort by exit travel time (fastest first), then
-    // filter to toggled-on paths. The rendered array index drives the opacity/weight
-    // hierarchy below, which matches the sidebar's sort so visual emphasis tracks
-    // the route most evacuees would pick first.
-    const allPaths = (project.result.paths || []).slice().sort(
+    // v4.13 (route-display-ux): routes are evidence of evacuee behavior under
+    // User Equilibrium, not a menu of options.  Default view surfaces only the
+    // controlling (worst-case) route — the binding evidence for the
+    // determination.  "Show all viable routes" reveals the others as faint
+    // context lines.  Per-route color dropped: all routes draw in uniform
+    // JOSH navy; pass/fail color lives on the project tier banner only.
+    // See docs/JOSH_Legal_Defensibility_Memo.md §3.6, §8.6.
+    const NAVY       = '#1c4a6e';   // JOSH brand navy — uniform route color
+    const HALO_GOLD  = '#f59e0b';   // amber 500 — controlling-route attention halo
+    const allPaths   = (project.result.paths || []).slice().sort(
       (a, b) => (+(a.cost_s || 0)) - (+(b.cost_s || 0))
     );
-    const visiblePaths = _visiblePaths(id, allPaths);
+    const controllingPath = _controllingPath(allPaths);
+    const showAll         = _showAllRoutes.get(id) === true;
+    // When showAll: per-route toggles filter the context routes.  When !showAll:
+    // only the controlling route renders regardless of any per-route toggles.
+    const contextPaths = showAll
+      ? _visiblePaths(id, allPaths).filter(p => _pathId(p) !== _pathId(controllingPath))
+      : [];
 
-    visiblePaths.forEach((path, idx) => {
-      const coords   = path.path_coords || path.coordinates || [];
+    const _antPathFn = typeof window.L !== 'undefined'
+      ? (window.L.antPath || (window.L.polyline && window.L.polyline.antPath))
+      : null;
+
+    // ── Helper: draw one route + its bottleneck overlay ──
+    function _drawOneRoute(path, opts) {
+      const coords = path.path_coords || path.coordinates || [];
       if (coords.length < 2) return;
-      const ok       = !path.flagged;
-      const pathColor = ok ? '#27ae60' : '#e74c3c';
-      // Opacity/weight hierarchy by list position (fastest = brightest).
-      // v4.12 floor raised from 0.35→0.65 so tail routes remain visible when
-      // the citywide heatmap is in the background; weight gap widened so the
-      // top route still reads as the dominant route.
-      const weight  = idx === 0 ? 5    : idx === 1 ? 4    : 3;
-      const opacity = idx === 0 ? 0.95 : idx === 1 ? 0.80 : 0.65;
-      // AntPath for full route.
-      // The leaflet-ant-path plugin exposes L.antPath() and L.polyline.antPath()
-      // as aliases.  Guard against both in case only one form is available.
-      const _antPathFn = typeof window.L !== 'undefined'
-        ? (window.L.antPath || (window.L.polyline && window.L.polyline.antPath))
-        : null;
-      if (_antPathFn) {
-        const ap = _antPathFn(coords, {
-          color: pathColor, weight: weight, opacity: opacity, delay: 1200, dashArray: [10, 20],
+      // Halo (rendered first so it sits under the main line).
+      if (opts.halo && _antPathFn) {
+        const halo = window.L.polyline(coords, {
+          color: HALO_GOLD, weight: opts.haloWeight, opacity: 0.55,
           pane: 'joshRoutes',
         });
-        const tip = 'Route ' + (path.route_id || (idx + 1)) + '  ·  ' +
-                    (+(path.delta_t || 0)).toFixed(2) + ' min ' + (ok ? '✓' : '▲');
+        halo.addTo(map);
+        _routeLayers.push(halo);
+      }
+      // Main AntPath.
+      if (_antPathFn) {
+        const ap = _antPathFn(coords, {
+          color: NAVY, weight: opts.weight, opacity: opts.opacity,
+          delay: 1200, dashArray: [10, 20],
+          pane: 'joshRoutes',
+        });
+        const tip = (opts.label || 'Route') + '  ·  exit ' +
+                    ((+(path.cost_s || 0)) / 60).toFixed(1) + ' min  ·  ΔT ' +
+                    (+(path.delta_t || 0)).toFixed(2) + ' min';
         ap.bindTooltip(tip, { sticky: true });
         ap.addTo(map);
         _routeLayers.push(ap);
       }
-      // Thick bottleneck segment overlay
+      // Bottleneck segment overlay (same color, thicker).
       const bkEdge = bkMap.get(String(path.bottleneck_osmid || ''));
       if (bkEdge && bkEdge.geom && bkEdge.geom.length >= 2 && typeof window.L !== 'undefined') {
         const bl = window.L.polyline(bkEdge.geom, {
-          color: pathColor, weight: weight + 2, opacity: opacity,
+          color: NAVY, weight: opts.weight + 2, opacity: opts.opacity,
           pane: 'joshRoutes',
         });
-        const bnTip = 'Route ' + (path.route_id || (idx + 1)) + ' bottleneck' +
+        const bnTip = (opts.label || 'Route') + ' bottleneck' +
                       (path.bottleneck_name ? ': ' + _formatBottleneck(path) : '');
         bl.bindTooltip(bnTip, { sticky: true });
         bl.addTo(map);
         _routeLayers.push(bl);
       }
-    });
+    }
+
+    // Context routes first (so they render under the controlling route).
+    contextPaths.forEach(p => _drawOneRoute(p, {
+      weight: 2, opacity: 0.45, halo: false, label: 'Viable route',
+    }));
+
+    // Controlling route last — prominent (thick, full opacity, gold halo).
+    if (controllingPath) {
+      _drawOneRoute(controllingPath, {
+        weight: 5, opacity: 0.95, halo: true, haloWeight: 11,
+        label: 'Controlling route',
+      });
+    }
 
     // Pan to fit routes — include the project's own coordinates so the home
-    // marker is always inside the viewport, not clipped by route-only bounds.
-    // Fit to visible (toggled-on) routes so hidden routes don't widen the viewport.
+    // marker is always inside the viewport.  Fit to whatever's drawn.
     if (_routeLayers.length > 0) {
       try {
-        const allCoords = visiblePaths.flatMap(p => p.path_coords || p.coordinates || []);
+        const drawnPaths = controllingPath ? [controllingPath, ...contextPaths] : contextPaths;
+        const allCoords = drawnPaths.flatMap(p => p.path_coords || p.coordinates || []);
         if (project.lat != null && project.lng != null) {
           allCoords.push([project.lat, project.lng]);
         }
@@ -1394,12 +1442,17 @@
   // ── Selection ────────────────────────────────────────────────────────────────
   function selectProject(id) {
     if (_formMode) cancelForm();
-    // Reset the previously-selected project's route toggles so each project
-    // starts with all routes visible. Toggle state is per-session, not persisted.
-    if (_selectedId && _selectedId !== id) _routeToggles.delete(_selectedId);
+    // Reset the previously-selected project's display state so each project
+    // starts fresh: per-route toggles cleared and "show all viable routes"
+    // flag cleared.  All toggle state is per-session, not persisted.
+    if (_selectedId && _selectedId !== id) {
+      _routeToggles.delete(_selectedId);
+      _showAllRoutes.delete(_selectedId);
+    }
     if (_selectedId === id) {
       // Click selected row again → deselect
       _routeToggles.delete(_selectedId);
+      _showAllRoutes.delete(_selectedId);
       _selectedId = null;
       _clearRoutes();
     } else {
@@ -1685,84 +1738,127 @@
                 r.egress_minutes.toFixed(1) + ' min egress penalty</div>';
       }
 
-      // Routes \u2014 v4.12 (all-viable-routes): toggle list, sorted by exit travel time.
-      // All routes start visible; clicking the eye icon hides a route from the map
-      // (the determination still uses ALL routes \u2014 toggles are display only).
+      // v4.13 (route-display-ux): the binding-evidence route is the focus.
+      // The educational note paraphrases JOSH_Legal_Defensibility_Memo.md \u00a78.6:
+      // routes are paths evacuees self-select, not options the project picks.
       if ((r.paths || []).length === 0) {
         html += '<div style="font-size:12px;color:#e74c3c;margin-bottom:8px;">' +
                 'No evacuation routes found near this location.</div>';
       } else {
-        const sortedPaths = (r.paths || []).slice().sort(
+        const sortedPaths     = (r.paths || []).slice().sort(
           (a, b) => (+(a.cost_s || 0)) - (+(b.cost_s || 0))
         );
-        const toggleSet = _routeToggles.get(_selectedId);
-        const totalCount = sortedPaths.length;
-        let visibleCount = 0;
+        const controllingPath = _controllingPath(sortedPaths);
+        const controllingId   = _pathId(controllingPath);
+        const toggleSet       = _routeToggles.get(_selectedId);
+        const totalCount      = sortedPaths.length;
+        const showAll         = _showAllRoutes.get(_selectedId) === true;
 
-        html += '<div style="font-size:10px;color:#888;text-transform:uppercase;letter-spacing:0.04em;' +
-                'margin-bottom:6px;">Evacuation Routes (' + totalCount + ')</div>';
+        // \u2500\u2500 Educational note (legal framing \u2014 see memo \u00a73.6, \u00a78.6) \u2500\u2500
+        html += '<div style="font-size:11px;color:#465464;background:#eef2f7;' +
+                'border-left:3px solid #1c4a6e;padding:8px 10px;border-radius:0 4px 4px 0;' +
+                'margin-bottom:8px;line-height:1.45;">' +
+                '<div style="font-weight:600;color:#1c4a6e;margin-bottom:2px;">' +
+                  'About these routes' +
+                '</div>' +
+                'Routes shown are paths evacuees may self-select during an ' +
+                'evacuation (User Equilibrium). The determination uses the ' +
+                '<strong>worst-case route</strong> because some evacuees will ' +
+                'take it \u2014 slower routes do not "fix" faster ones.' +
+                '</div>';
 
+        // \u2500\u2500 Route list header \u2500\u2500
+        html += '<div style="display:flex;align-items:baseline;justify-content:space-between;' +
+                'margin-bottom:6px;">' +
+                '<span style="font-size:10px;color:#888;text-transform:uppercase;' +
+                  'letter-spacing:0.04em;">Evacuation Routes (' + totalCount + ')</span>';
+
+        // "Show all viable routes" toggle \u2014 visible only when > 1 route
+        if (totalCount > 1) {
+          html += '<button onclick="joshSidebar_toggleShowAll(\'' + _esc(_selectedId) + '\')" ' +
+                  'style="background:none;border:1px solid #ccd6e0;color:#1c4a6e;' +
+                    'border-radius:4px;padding:3px 8px;font-size:10px;cursor:pointer;' +
+                    'text-transform:uppercase;letter-spacing:0.04em;font-weight:600;">' +
+                  (showAll ? 'Hide context routes' : 'Show all ' + totalCount + ' routes') +
+                  '</button>';
+        }
+        html += '</div>';
+
+        // \u2500\u2500 Route cards \u2500\u2500
+        let visibleCount = showAll ? 0 : 1; // controlling always visible in default
         sortedPaths.forEach((path, idx) => {
-          const pid      = _pathId(path) || ('route_' + (idx + 1));
-          const isOn     = !toggleSet || toggleSet.has(pid);
-          if (isOn) visibleCount++;
-          const ok       = !path.flagged;
-          const dColor   = ok ? '#27ae60' : '#e74c3c';
-          const dIcon    = ok ? '\u2713' : '\u25b2';
-          const thrLabel = !ok ? '> ' + (r.delta_t_threshold || _dtThreshold(r.hazard_zone)).toFixed(2) + ' min max' : '';
+          const pid          = _pathId(path) || ('route_' + (idx + 1));
+          const isControlling = pid === controllingId;
+          // Effective visibility on the map:
+          //   default view (showAll=false): only controlling route is drawn
+          //   showAll view: per-route toggles apply; controlling always drawn
+          const isOn = isControlling || (showAll && (!toggleSet || toggleSet.has(pid)));
+          if (isOn && !isControlling) visibleCount++;
           const exitMin  = (+(path.cost_s || 0)) / 60;
-          const cardOpacity = isOn ? '1' : '0.4';
-          // Eye icon: \u25cf = visible, \u25cb = hidden. Outlined circle keeps the layout stable
-          // regardless of platform emoji rendering.
-          const eyeIcon  = isOn
-            ? '<span style="color:' + dColor + ';font-size:13px;line-height:1;">\u25cf</span>'
-            : '<span style="color:#aaa;font-size:13px;line-height:1;">\u25cb</span>';
-          const eyeTitle = isOn ? 'Hide this route on map' : 'Show this route on map';
+          // Card chrome \u2014 uniform navy theme; CONTROLLING card distinguished by gold left edge
+          const borderColor = isControlling ? '#f59e0b' : '#cfd6df';
+          const cardOpacity = isOn ? '1' : '0.45';
 
           html += '<div style="margin-bottom:6px;padding:8px 10px;background:#fafafa;border-radius:6px;' +
-                  'border-left:3px solid ' + dColor + ';opacity:' + cardOpacity + ';' +
+                  'border-left:3px solid ' + borderColor + ';opacity:' + cardOpacity + ';' +
                   'display:flex;gap:8px;align-items:flex-start;">' +
             '<div style="flex:1;min-width:0;">' +
-              '<div style="display:flex;align-items:baseline;gap:8px;margin-bottom:2px;">' +
+              '<div style="display:flex;align-items:baseline;gap:8px;margin-bottom:2px;flex-wrap:wrap;">' +
                 '<span style="font-size:11px;font-weight:600;color:#555;text-transform:uppercase;' +
-                  'letter-spacing:0.04em;">Route ' + (idx + 1) + '</span>' +
-                '<span style="font-size:11px;color:#888;">' + exitMin.toFixed(1) + ' min exit</span>' +
+                  'letter-spacing:0.04em;">Route ' + (idx + 1) + '</span>';
+          if (isControlling) {
+            html += '<span style="display:inline-block;font-size:9px;font-weight:700;' +
+                    'background:#f59e0b;color:#fff;border-radius:3px;padding:1px 5px;' +
+                    'letter-spacing:0.06em;">CONTROLLING</span>';
+          }
+          html +=  '<span style="font-size:11px;color:#888;">' + exitMin.toFixed(1) + ' min exit</span>' +
               '</div>' +
               '<div style="display:flex;align-items:baseline;gap:4px;margin-bottom:' +
-                (thrLabel || path.bottleneck_name ? '4px' : '0') + ';">' +
-                '<span style="font-size:18px;font-weight:700;color:' + dColor + ';line-height:1;">\u0394T ' +
+                (path.bottleneck_name ? '4px' : '0') + ';">' +
+                '<span style="font-size:18px;font-weight:700;color:#1c4a6e;line-height:1;">\u0394T ' +
                   (+(path.delta_t || 0)).toFixed(2) + '</span>' +
-                '<span style="font-size:11px;font-weight:600;color:' + dColor + ';">min ' + dIcon + '</span>' +
+                '<span style="font-size:11px;font-weight:600;color:#666;">min</span>' +
               '</div>';
-          if (thrLabel) {
-            html += '<div style="display:inline-block;font-size:10px;font-weight:700;color:#c0392b;' +
-                    'background:#fde8e8;border:1px solid #f5c0c0;border-radius:3px;' +
-                    'padding:1px 6px;margin-bottom:4px;">' + _esc(thrLabel) + '</div>';
-          }
           if (path.bottleneck_name) {
             var bnDesc = _formatBottleneck(path);
             html += '<div style="font-size:11px;color:#777;">' +
                     'Bottleneck: ' + _esc(bnDesc) + '</div>';
           }
-          html += '</div>' +     // /flex-1 inner column
-            '<button onclick="joshSidebar_toggleRoute(\'' + _esc(_selectedId) + '\',\'' + _esc(pid) + '\')" ' +
+          html += '</div>';     // /flex-1 inner column
+
+          // Per-route eye toggle \u2014 only meaningful when "Show all" is on.
+          // In default view the controlling route is always shown; toggling
+          // individual routes has no effect on the map, so disable the button.
+          if (showAll && !isControlling) {
+            const eyeIcon  = isOn
+              ? '<span style="color:#1c4a6e;font-size:13px;line-height:1;">\u25cf</span>'
+              : '<span style="color:#aaa;font-size:13px;line-height:1;">\u25cb</span>';
+            const eyeTitle = isOn ? 'Hide this route on map' : 'Show this route on map';
+            html += '<button onclick="joshSidebar_toggleRoute(\'' + _esc(_selectedId) + '\',\'' + _esc(pid) + '\')" ' +
               'title="' + eyeTitle + '" ' +
               'style="flex-shrink:0;background:none;border:1px solid #ddd;border-radius:4px;' +
                 'padding:4px 7px;cursor:pointer;align-self:flex-start;">' +
               eyeIcon +
-            '</button>' +
-            '</div>';
+              '</button>';
+          }
+          html += '</div>';
         });
 
-        // Legal safeguard: when any route is toggled off, surface the fact that
-        // the determination still considers every route.  This must never be hidden.
-        if (visibleCount < totalCount) {
+        // Status footer \u2014 what's on the map vs total
+        if (showAll) {
+          const totalVisible = 1 + (toggleSet ? sortedPaths.filter(p =>
+            _pathId(p) !== controllingId && toggleSet.has(_pathId(p))
+          ).length : (sortedPaths.length - 1));
           html += '<div style="font-size:11px;color:#555;margin:6px 0 10px;padding:6px 10px;' +
                   'background:#f0f4f8;border:1px solid #d6e0eb;border-radius:4px;line-height:1.4;">' +
-                  'Showing <strong>' + visibleCount + '</strong> of <strong>' + totalCount + '</strong> routes' +
-                  '<br><span style="color:#777;">Determination uses all ' + totalCount + ' routes.</span></div>';
+                  'Showing <strong>' + totalVisible + '</strong> of <strong>' + totalCount + '</strong> routes ' +
+                  '(controlling + context).<br>' +
+                  '<span style="color:#777;">Determination uses all ' + totalCount + ' routes.</span></div>';
         } else {
-          html += '<div style="height:6px;"></div>';
+          html += '<div style="font-size:11px;color:#777;margin:6px 0 10px;padding:6px 10px;' +
+                  'background:#f8f9fa;border-radius:4px;line-height:1.4;">' +
+                  'Showing controlling route. Determination evaluated <strong>' + totalCount + '</strong> viable routes.' +
+                  '</div>';
         }
       }
 
@@ -1953,6 +2049,16 @@
       _drawRoutes(projectId);
       _render();
     };
+    // v4.13 (route-display-ux): toggle the per-project "show all viable routes"
+    // flag.  Default state (false) draws only the controlling route on the map;
+    // true draws every viable route as context with the controlling route still
+    // distinguished by weight + gold halo.
+    window.joshSidebar_toggleShowAll  = (projectId) => {
+      const cur = _showAllRoutes.get(projectId) === true;
+      _showAllRoutes.set(projectId, !cur);
+      _drawRoutes(projectId);
+      _render();
+    };
   }
 
   // ── DOMContentLoaded — inject sidebar div ─────────────────────────────────────
@@ -2009,6 +2115,7 @@
         _restoreBanner   = false;
         _dirtyIds        = new Set();
         _routeToggles.clear();
+        _showAllRoutes.clear();
         // Clear localStorage for this city to avoid test cross-pollination.
         try {
           const store = (typeof localStorage !== 'undefined') ? localStorage : null;
@@ -2039,6 +2146,13 @@
         const set = _routeToggles.get(projectId);
         if (set.has(pathId)) set.delete(pathId);
         else                  set.add(pathId);
+      },
+      // v4.13 (route-display-ux): controlling-path + show-all toggle test hooks
+      _controllingPath,
+      _showAllRoutes,
+      _toggleShowAll(projectId) {
+        const cur = _showAllRoutes.get(projectId) === true;
+        _showAllRoutes.set(projectId, !cur);
       },
     };
   }
