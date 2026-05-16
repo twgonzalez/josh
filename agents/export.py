@@ -317,10 +317,17 @@ _JS_IDENTIFY_SERVING_PATHS = """\
     const filtered  = candidates.filter(c => c.cost_s <= maxAllowed);
 
     // Identify bottleneck per path (no dedup — all viable routes are returned).
+    // v4.13 parity fix: skip edges with eff_cap_vph<=0 (no roads_gdf row match).
+    // Python wildland.py uses `or float('inf')` to skip the same edges; both
+    // engines therefore agree on which edges are bottleneck candidates.
+    // Previously JS treated missing edges as 1000 vph (would pick them as
+    // bottleneck) while Python skipped them — root cause of the divergence.
     return filtered.map((cand, i) => {
       if (cand.path_edges.length === 0) return null;
-      let bn = cand.path_edges[0];
-      for (const e of cand.path_edges) {
+      const validEdges = cand.path_edges.filter(e => +(e.eff_cap_vph || 0) > 0);
+      if (validEdges.length === 0) return null;
+      let bn = validEdges[0];
+      for (const e of validEdges) {
         if (e.eff_cap_vph < bn.eff_cap_vph) bn = e;
       }
       const path_coords = cand.path_coords ?? [];
@@ -548,43 +555,31 @@ def export_graph_json(
 
     speed_defaults: dict = config.get("speed_defaults", {})
 
-    # ── Build osmid → capacity/zone/name lookup from roads_gdf ──────────────
-    osmid_to_eff_cap: dict[str, float] = {}
-    osmid_to_zone: dict[str, str] = {}
-    osmid_to_haz_deg: dict[str, float] = {}
-    osmid_to_name: dict[str, str | None] = {}
-    osmid_to_road_type: dict[str, str | None] = {}
-    osmid_to_lanes: dict[str, int | None] = {}
-    osmid_to_cap_src: dict[str, str] = {}
+    # ── v4.13 parity fix ────────────────────────────────────────────────────
+    # Bake per-edge capacity attributes onto G so both engines (Python via
+    # wildland.py, JS via graph.json) read from the same source — single
+    # source of truth.  See agents/capacity_analysis.py
+    # bake_capacity_onto_graph for the bottleneck-semantic merge logic.
+    from agents.capacity_analysis import bake_capacity_onto_graph
+    bake_capacity_onto_graph(G, roads_gdf)
+
+    # ── Side tables for override-only attrs (not baked onto edges) ─────────
+    # cap_reason and cap_source_doc are city-override metadata that doesn't
+    # flow through capacity_analysis to the graph; keep them osmid-keyed.
     osmid_to_cap_reason: dict[str, str | None] = {}
     osmid_to_cap_source_doc: dict[str, str | None] = {}
-
     for _, row in roads_gdf.iterrows():
         oid = row.get("osmid")
         if oid is None:
             continue
-        eff = float(row.get("effective_capacity_vph", row.get("capacity_vph", 1000.0)))
-        zone = str(row.get("fhsz_zone", "non_fhsz"))
-        haz_deg = float(row.get("hazard_degradation", 1.0))
-        road_name = row.get("name") or None
-        road_type = row.get("road_type") or None
-        lc = row.get("lane_count")
-        lanes = int(lc) if lc is not None and str(lc) not in ("", "nan") else None
-        cap_src = str(row.get("capacity_source", "hcm"))
         cap_reason = row.get("capacity_override_reason") or None
         cap_source_doc = row.get("capacity_override_source_doc") or None
+        if not (cap_reason or cap_source_doc):
+            continue
         for o in (oid if isinstance(oid, list) else [oid]):
             key = str(o)
-            if eff > osmid_to_eff_cap.get(key, -1):
-                osmid_to_eff_cap[key] = eff
-                osmid_to_zone[key] = zone
-                osmid_to_haz_deg[key] = haz_deg
-                osmid_to_name[key] = road_name
-                osmid_to_road_type[key] = road_type
-                osmid_to_lanes[key] = lanes
-                osmid_to_cap_src[key] = cap_src
-                osmid_to_cap_reason[key] = cap_reason
-                osmid_to_cap_source_doc[key] = cap_source_doc
+            osmid_to_cap_reason[key] = cap_reason
+            osmid_to_cap_source_doc[key] = cap_source_doc
 
     # ── Nodes ─────────────────────────────────────────────────────────────────
     nodes: list[dict] = []
@@ -610,9 +605,19 @@ def export_graph_json(
         speed_mph = float(speed_defaults.get(hw_str, 25))
 
         len_m = float(edata.get("length", 0) or 0)
-        eff_cap = osmid_to_eff_cap.get(osmid_str, 1000.0)
-        zone = osmid_to_zone.get(osmid_str, "non_fhsz")
-        haz_deg = osmid_to_haz_deg.get(osmid_str, 1.0)
+        # v4.13 parity fix: read per-edge baked attributes.  Missing edges
+        # (no matching roads_gdf row) get eff_cap_vph=0 from the bake — the
+        # JS bottleneck argmin skips zero-cap edges via `>0` guard so both
+        # engines agree on which edges to consider.  Previous code defaulted
+        # to 1000 here while wildland.py defaulted to 0 → tier divergence.
+        eff_cap = float(edata.get("eff_cap_vph", 0) or 0)
+        zone = str(edata.get("fhsz_zone", "non_fhsz"))
+        haz_deg = float(edata.get("hazard_degradation", 1.0))
+        edge_name = edata.get("bottleneck_name") or None
+        edge_road_type = edata.get("road_type") or None
+        edge_lc = edata.get("lane_count")
+        edge_lanes = int(edge_lc) if edge_lc is not None and str(edge_lc) not in ("", "0", "nan") else None
+        edge_cap_src = str(edata.get("capacity_source", "hcm"))
 
         # Geometry: Shapely LineString → WGS84 [[lat,lon],...] at 5-decimal precision.
         # Enables full-quality AntPath rendering in the browser (mirrors wildland.py fix).
@@ -637,10 +642,10 @@ def export_graph_json(
             "eff_cap_vph": round(eff_cap, 1),
             "fhsz_zone": zone,
             "haz_deg": round(haz_deg, 4),
-            "name": osmid_to_name.get(osmid_str),
-            "road_type": osmid_to_road_type.get(osmid_str),
-            "lanes": osmid_to_lanes.get(osmid_str),
-            "cap_src": osmid_to_cap_src.get(osmid_str, "hcm"),
+            "name": edge_name,
+            "road_type": edge_road_type,
+            "lanes": edge_lanes,
+            "cap_src": edge_cap_src,
             "cap_reason": osmid_to_cap_reason.get(osmid_str),
             "cap_source_doc": osmid_to_cap_source_doc.get(osmid_str),
             "geom": geom_coords,  # [[lat,lon],...] or null — full road curve for AntPath

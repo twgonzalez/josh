@@ -1062,3 +1062,105 @@ def _build_evac_osmid_map(G_proj, edge_scores: dict) -> dict:
             else:
                 osmid_map[str(osmid)] = max(osmid_map.get(str(osmid), 0), score)
     return osmid_map
+
+
+# ---------------------------------------------------------------------------
+# Per-edge capacity bake (v4.13 parity fix)
+# ---------------------------------------------------------------------------
+# Eliminates the parallel osmid-keyed lookups in segment_index.py and
+# export.py that disagreed on missing-osmid defaults (0.0 vs 1000.0).
+# After this runs, every OSMnx edge carries its own eff_cap_vph, fhsz_zone,
+# hazard_degradation, hcm_capacity_vph, road_type, lane_count, speed_limit,
+# capacity_source.  Both wildland.py (Python engine) and export_graph_json
+# (JS engine source) read from G[u][v][k][attr] directly — single source
+# of truth.
+
+# Attribute names baked onto every OSMnx edge from the matching roads_gdf
+# row(s).  Missing-osmid edges get the defaults documented here:
+#   eff_cap_vph         → 0.0  (skipped by bottleneck argmin downstream)
+#   hcm_capacity_vph    → 0.0
+#   fhsz_zone           → "non_fhsz"
+#   hazard_degradation  → 1.0
+#   road_type           → "two_lane"
+#   lane_count          → 0
+#   speed_limit         → 0
+#   capacity_source     → "hcm"
+#   bottleneck_name     → ""
+_EDGE_BAKE_ATTRS = (
+    "eff_cap_vph", "hcm_capacity_vph", "fhsz_zone", "hazard_degradation",
+    "road_type", "lane_count", "speed_limit", "capacity_source",
+    "bottleneck_name",
+)
+
+
+def bake_capacity_onto_graph(G, roads_gdf: gpd.GeoDataFrame) -> int:
+    """Write per-edge capacity attributes onto every OSMnx edge in G.
+
+    For an OSMnx edge with osmid=[A, B, C] (a list from simplified ways),
+    finds all roads_gdf rows whose osmid matches any of {A, B, C} and
+    picks the row with the LOWEST eff_cap (bottleneck semantics — the
+    weakest sub-segment is what binds the edge's capacity).  The chosen
+    row's attributes are written onto the edge data.
+
+    Returns the number of edges enriched.  Edges with no matching
+    roads_gdf row get eff_cap_vph=0.0 so the bottleneck argmin in
+    wildland.py and the JS engine skip them with the
+    `or float('inf')` pattern.
+    """
+    # osmid → list of row indices in roads_gdf
+    osmid_to_rows: dict[str, list[int]] = {}
+    for idx, row in roads_gdf.iterrows():
+        oid = row.get("osmid")
+        if oid is None:
+            continue
+        for o in (oid if isinstance(oid, list) else [oid]):
+            osmid_to_rows.setdefault(str(o), []).append(idx)
+
+    def _row_attrs(idx) -> dict:
+        row = roads_gdf.iloc[idx]
+        eff_raw = row.get("effective_capacity_vph", row.get("capacity_vph", 0.0))
+        hcm_raw = row.get("capacity_vph", 0.0)
+        return {
+            "eff_cap_vph":         float(eff_raw or 0.0),
+            "hcm_capacity_vph":    float(hcm_raw or 0.0),
+            "fhsz_zone":           str(row.get("fhsz_zone", "non_fhsz")),
+            "hazard_degradation":  float(row.get("hazard_degradation", 1.0)),
+            "road_type":           str(row.get("road_type", "two_lane")),
+            "lane_count":          int(row.get("lane_count", 0) or 0),
+            "speed_limit":         int(row.get("speed_limit", 0) or 0),
+            "capacity_source":     str(row.get("capacity_source", "hcm")),
+            "bottleneck_name":     str(row.get("name", "") or ""),
+        }
+
+    baked = 0
+    missing = 0
+    for u, v, k, data in G.edges(keys=True, data=True):
+        oid = data.get("osmid")
+        if oid is None:
+            data["eff_cap_vph"] = 0.0
+            missing += 1
+            continue
+        osmids = [str(o) for o in (oid if isinstance(oid, list) else [oid])]
+        # Collect all matching row attrs
+        candidates = []
+        for o in osmids:
+            for idx in osmid_to_rows.get(o, []):
+                attrs = _row_attrs(idx)
+                if attrs["eff_cap_vph"] > 0:
+                    candidates.append(attrs)
+        if not candidates:
+            data["eff_cap_vph"] = 0.0
+            missing += 1
+            continue
+        # Bottleneck semantics: pick the row with the LOWEST eff_cap
+        chosen = min(candidates, key=lambda a: a["eff_cap_vph"])
+        for attr in _EDGE_BAKE_ATTRS:
+            data[attr] = chosen[attr]
+        baked += 1
+
+    logger.info(
+        f"  Per-edge capacity bake: {baked} edges enriched, "
+        f"{missing} edges with no matching roads_gdf row "
+        f"(eff_cap_vph=0 → skipped by bottleneck argmin)"
+    )
+    return baked

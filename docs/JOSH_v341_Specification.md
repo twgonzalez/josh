@@ -458,6 +458,8 @@ Paths whose travel time exceeds 3.5× the fastest-exit travel time are excluded 
 
 **User control over display, not over determination.** The sidebar (`static/sidebar.js`) shows the full viable set as a sorted list (fastest-exit-first, matching User Equilibrium ordering). The map's default view shows only the controlling (worst-case) route — the binding evidence for the determination. A "Show all viable routes (N)" toggle in the sidebar route header reveals the other routes as thin context lines under the controlling route. Hiding any route does not exclude it from the determination — a persistent footer note ("Determination uses all N routes") is a legal safeguard that must remain visible whenever a route is hidden.
 
+**Engine parity (v4.13).** Effective road capacity (`eff_cap_vph`) is baked per-edge onto the OSMnx routing graph by `agents/capacity_analysis.py::bake_capacity_onto_graph` as a one-time enrichment. Both engines — Python (`agents/scenarios/wildland.py`) and JavaScript (`static/whatif_engine.js` via `output/{city}/graph.json`) — read `eff_cap_vph` directly from the edge attribute. This eliminates the parallel osmid-keyed lookups that produced silent tier divergence in v4.12 (Python returned `0` for missing osmids, JS defaulted to `1000`; same path, different bottleneck). The `agents/scenarios/segment_index.py` osmid-side-table is removed; the `tests/test_whatif_engine.js matchPaths()` anti-divergence guard hard-fails when bottleneck osmid sets disagree (was a silent log).
+
 ### Display Conventions (v4.13)
 
 The visual design follows the "binding constraint + faint context" pattern used in adjacent safety-analysis disciplines (fault-tree, traffic-engineering studies, floodplain mapping). The default presentation is:

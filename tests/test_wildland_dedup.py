@@ -7,7 +7,7 @@
 
 Tests the pure functions that were extracted from identify_routes():
 - _filter_by_travel_time: travel-time ratio filter
-- SegmentIndex: single-object road attribute lookup
+- bake_capacity_onto_graph: per-edge eff_cap_vph + related attrs (v4.13)
 """
 import sys
 from pathlib import Path
@@ -18,11 +18,12 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 import unittest
 
 import geopandas as gpd
+import networkx as nx
 import pandas as pd
 from shapely.geometry import LineString
 
+from agents.capacity_analysis import bake_capacity_onto_graph
 from agents.scenarios.routing import RawCandidate
-from agents.scenarios.segment_index import SegmentIndex, SegmentInfo
 from agents.scenarios.wildland import _filter_by_travel_time
 
 
@@ -65,11 +66,12 @@ class TestFilterByTravelTime(unittest.TestCase):
         self.assertEqual(len(result), 2)
 
 
-class TestSegmentIndex(unittest.TestCase):
-    """Tests for SegmentIndex construction from roads_gdf."""
+class TestBakeCapacityOntoGraph(unittest.TestCase):
+    """Tests for bake_capacity_onto_graph — the per-edge cap injector that
+    replaced SegmentIndex (v4.13 parity fix)."""
 
     def _make_roads_gdf(self):
-        """Build a minimal roads GeoDataFrame."""
+        """Build a minimal roads GeoDataFrame matching analyze_capacity output."""
         return gpd.GeoDataFrame({
             "osmid": ["100", "200", "300"],
             "name": ["Main St", "Oak Ave", ""],
@@ -87,31 +89,53 @@ class TestSegmentIndex(unittest.TestCase):
             ],
         }, crs="EPSG:4326")
 
-    def test_basic_lookup(self):
-        idx = SegmentIndex(self._make_roads_gdf())
-        info = idx.get("100")
-        self.assertIsNotNone(info)
-        self.assertEqual(info.name, "Main St")
-        self.assertEqual(info.effective_capacity_vph, 900.0)
-        self.assertEqual(info.fhsz_zone, "vhfhsz")
-        self.assertEqual(info.haz_class, 3)
-        self.assertEqual(info.lane_count, 2)
-        self.assertEqual(info.speed_limit, 25)
+    def _make_graph(self, edges):
+        """Build a minimal MultiDiGraph matching OSMnx output."""
+        G = nx.MultiDiGraph()
+        for u, v, osmid in edges:
+            G.add_edge(u, v, 0, osmid=osmid)
+        return G
 
-    def test_eff_cap_shortcut(self):
-        idx = SegmentIndex(self._make_roads_gdf())
-        self.assertEqual(idx.eff_cap("200"), 1800.0)
-        self.assertEqual(idx.eff_cap("missing"), 0.0)
+    def test_single_osmid_edge_baked(self):
+        roads = self._make_roads_gdf()
+        G = self._make_graph([(1, 2, "100"), (2, 3, "200"), (3, 4, "300")])
+        n = bake_capacity_onto_graph(G, roads)
+        self.assertEqual(n, 3)
+        self.assertEqual(G[1][2][0]["eff_cap_vph"], 900.0)
+        self.assertEqual(G[1][2][0]["fhsz_zone"], "vhfhsz")
+        self.assertEqual(G[1][2][0]["bottleneck_name"], "Main St")
+        self.assertEqual(G[2][3][0]["eff_cap_vph"], 1800.0)
+        self.assertEqual(G[3][4][0]["eff_cap_vph"], 500.0)
 
-    def test_missing_osmid(self):
-        idx = SegmentIndex(self._make_roads_gdf())
-        self.assertIsNone(idx.get("999"))
+    def test_multi_osmid_edge_picks_bottleneck(self):
+        # OSMnx-simplified edge with osmid=[100, 200] should bake to the
+        # LOWER eff_cap (100 → 900) — the binding sub-segment.
+        roads = self._make_roads_gdf()
+        G = self._make_graph([(1, 2, ["100", "200"])])
+        bake_capacity_onto_graph(G, roads)
+        self.assertEqual(G[1][2][0]["eff_cap_vph"], 900.0,
+                         "multi-osmid edge takes MIN eff_cap (bottleneck semantics)")
+        # Metadata also comes from the chosen (lowest-cap) row
+        self.assertEqual(G[1][2][0]["bottleneck_name"], "Main St")
 
-    def test_haz_class_mapping(self):
-        idx = SegmentIndex(self._make_roads_gdf())
-        self.assertEqual(idx.get("100").haz_class, 3)  # vhfhsz
-        self.assertEqual(idx.get("200").haz_class, 0)  # non_fhsz
-        self.assertEqual(idx.get("300").haz_class, 2)  # high_fhsz
+    def test_missing_osmid_eff_cap_zero(self):
+        # Edge with an osmid not in roads_gdf gets eff_cap_vph=0 (skipped
+        # by the bottleneck argmin downstream).  This was the source of the
+        # v4.12 parity divergence: Python returned 0 (skip), JS defaulted
+        # to 1000 (consider as bottleneck).  Bake gives them the same 0.
+        roads = self._make_roads_gdf()
+        G = self._make_graph([(1, 2, "999")])  # 999 not in roads_gdf
+        bake_capacity_onto_graph(G, roads)
+        self.assertEqual(G[1][2][0]["eff_cap_vph"], 0.0)
+
+    def test_multi_osmid_one_missing_uses_present(self):
+        # OSMnx simplified an edge to osmid=[100, 999].  100 is in roads_gdf
+        # (eff_cap 900); 999 isn't.  Bake should still pick up 100's data.
+        roads = self._make_roads_gdf()
+        G = self._make_graph([(1, 2, ["100", "999"])])
+        bake_capacity_onto_graph(G, roads)
+        self.assertEqual(G[1][2][0]["eff_cap_vph"], 900.0)
+        self.assertEqual(G[1][2][0]["bottleneck_name"], "Main St")
 
 
 if __name__ == "__main__":

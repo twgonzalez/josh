@@ -50,7 +50,7 @@ from shapely.geometry import Point
 from models.project import Project
 from models.evacuation_path import EvacuationPath
 from .base import EvacuationScenario, Tier
-from .segment_index import SegmentIndex
+from agents.capacity_analysis import bake_capacity_onto_graph
 from .routing import RawCandidate, CandidateWithBottleneck, EgressOrigin, GraphContext
 
 logger = logging.getLogger(__name__)
@@ -295,8 +295,14 @@ class WildlandScenario(EvacuationScenario):
         project.reachable_network_osmids = list(reachable_osmids)
         project.search_radius_miles = radius
 
-        # Phase 2: Segment index
-        segment_index = SegmentIndex(roads_gdf)
+        # Phase 2: Bake per-edge capacity attributes onto the routing graph
+        # so both this engine and export_graph_json (JS engine source) read
+        # eff_cap_vph from G[u][v][k] directly — single source of truth.
+        # See agents/capacity_analysis.py bake_capacity_onto_graph.
+        if gctx is not None and gctx.G is not None:
+            bake_capacity_onto_graph(gctx.G, roads_gdf)
+            if gctx.G_undirected is not None:
+                bake_capacity_onto_graph(gctx.G_undirected, roads_gdf)
 
         # Phase 3: Dijkstra routing (if graph available)
         all_evac_paths: list = context.get("evacuation_paths", [])
@@ -318,10 +324,10 @@ class WildlandScenario(EvacuationScenario):
                     candidates, max_path_ratio, origin.label,
                 )
                 enriched = _identify_and_enrich(
-                    filtered, segment_index, gctx.G, proj_x, proj_y,
+                    filtered, gctx.G, proj_x, proj_y,
                 )
                 project_paths.extend(
-                    _build_evac_paths(enriched, segment_index, origin, gctx)
+                    _build_evac_paths(enriched, origin, gctx)
                 )
 
             logger.info(
@@ -732,27 +738,59 @@ def _filter_by_travel_time(
     return filtered
 
 
+def _edge_attrs(G, osmid: str, osmid_to_uv: dict) -> dict:
+    """Return per-edge attributes baked by bake_capacity_onto_graph.
+
+    Looks up the (u, v) for `osmid` via the path's osmid_to_uv mapping,
+    then reads the edge data directly from G.  Assumes G is a MultiDiGraph
+    (OSMnx default), where get_edge_data returns {key: data_dict, ...};
+    yields the first key's data.  Returns {} if the edge isn't found.
+    """
+    uv = osmid_to_uv.get(osmid)
+    if not uv:
+        return {}
+    u, v = uv
+    ed = G.get_edge_data(u, v) or G.get_edge_data(v, u)
+    if not ed:
+        return {}
+    return next(iter(ed.values()), {})
+
+
+_ZONE_TO_HAZ_CLASS = {
+    "vhfhsz": 3, "high_fhsz": 2, "moderate_fhsz": 1, "non_fhsz": 0,
+}
+
+
 def _identify_and_enrich(
     candidates: list[RawCandidate],
-    segment_index: SegmentIndex,
     G,
     proj_x: float,
     proj_y: float,
 ) -> list[CandidateWithBottleneck]:
-    """Identify bottleneck, enrich with cross-streets and distance/bearing."""
+    """Identify bottleneck (min eff_cap on path) + cross-streets/distance/bearing.
+
+    Reads eff_cap_vph and other attrs from per-edge data baked onto G by
+    bake_capacity_onto_graph().  No osmid-keyed side table.
+    """
     result: list[CandidateWithBottleneck] = []
     for cand in candidates:
+        # Bottleneck = the path's edge with the lowest eff_cap_vph.
+        # Edges with eff_cap_vph=0 (missing roads_gdf row) are skipped via
+        # `or float('inf')` so they never get picked as the bottleneck.
+        def _cap(o: str) -> float:
+            return float(_edge_attrs(G, o, cand.osmid_to_uv).get("eff_cap_vph", 0) or 0)
+
         bottleneck_osmid = min(
             cand.path_osmids,
-            key=lambda o: segment_index.eff_cap(o) or 9999,
+            key=lambda o: _cap(o) or float("inf"),
             default=cand.path_osmids[0],
         )
-        eff_cap = segment_index.eff_cap(bottleneck_osmid)
+        eff_cap = _cap(bottleneck_osmid)
         if eff_cap <= 0:
             continue
 
-        bn_info = segment_index.get(bottleneck_osmid)
-        bn_name = bn_info.name if bn_info else ""
+        bn_attrs = _edge_attrs(G, bottleneck_osmid, cand.osmid_to_uv)
+        bn_name = str(bn_attrs.get("bottleneck_name", "") or "")
         bn_uv = cand.osmid_to_uv.get(bottleneck_osmid)
         cross_a, cross_b = "", ""
         dist_mi, bearing = 0.0, ""
@@ -784,14 +822,18 @@ def _identify_and_enrich(
 
 def _build_evac_paths(
     candidates: list[CandidateWithBottleneck],
-    segment_index: SegmentIndex,
     origin: EgressOrigin,
     gctx: GraphContext,
 ) -> list[EvacuationPath]:
-    """Convert enriched candidates to EvacuationPath objects."""
+    """Convert enriched candidates to EvacuationPath objects.
+
+    Reads per-edge bottleneck metadata from gctx.G[u][v][k] (baked by
+    bake_capacity_onto_graph).  No osmid-keyed side table.
+    """
     paths: list[EvacuationPath] = []
     for cand in candidates:
-        bn_info = segment_index.get(cand.bottleneck_osmid)
+        bn_attrs = _edge_attrs(gctx.G, cand.bottleneck_osmid, cand.osmid_to_uv)
+        fhsz_zone = str(bn_attrs.get("fhsz_zone", "non_fhsz"))
         path_id = f"proj_{origin.node_id}_{cand.exit_node_id}"
         paths.append(EvacuationPath(
             path_id=path_id,
@@ -800,14 +842,14 @@ def _build_evac_paths(
             travel_time_s=cand.travel_time_s,
             bottleneck_osmid=cand.bottleneck_osmid,
             bottleneck_name=cand.bottleneck_name,
-            bottleneck_fhsz_zone=bn_info.fhsz_zone if bn_info else "non_fhsz",
-            bottleneck_road_type=bn_info.road_type if bn_info else "two_lane",
-            bottleneck_hcm_capacity_vph=bn_info.hcm_capacity_vph if bn_info else cand.bottleneck_eff_cap,
-            bottleneck_hazard_degradation=bn_info.hazard_degradation if bn_info else 1.0,
+            bottleneck_fhsz_zone=fhsz_zone,
+            bottleneck_road_type=str(bn_attrs.get("road_type", "two_lane")),
+            bottleneck_hcm_capacity_vph=float(bn_attrs.get("hcm_capacity_vph", cand.bottleneck_eff_cap) or cand.bottleneck_eff_cap),
+            bottleneck_hazard_degradation=float(bn_attrs.get("hazard_degradation", 1.0)),
             bottleneck_effective_capacity_vph=cand.bottleneck_eff_cap,
-            bottleneck_lane_count=bn_info.lane_count if bn_info else 0,
-            bottleneck_speed_limit=bn_info.speed_limit if bn_info else 0,
-            bottleneck_haz_class=bn_info.haz_class if bn_info else 0,
+            bottleneck_lane_count=int(bn_attrs.get("lane_count", 0) or 0),
+            bottleneck_speed_limit=int(bn_attrs.get("speed_limit", 0) or 0),
+            bottleneck_haz_class=_ZONE_TO_HAZ_CLASS.get(fhsz_zone, 0),
             bottleneck_cross_street_a=cand.cross_street_a,
             bottleneck_cross_street_b=cand.cross_street_b,
             bottleneck_distance_mi=cand.distance_mi,

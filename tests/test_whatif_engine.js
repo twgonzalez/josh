@@ -72,28 +72,30 @@ WhatIfEngine.init(graph, params, fhsz);
 
 // ── Helpers ────────────────────────────────────────────────────────────────────
 function matchPaths(actual, expected, vectorName, jsTier) {
-  // For each Python path, check if JS found the same bottleneck.
-  // Missing paths are only a hard failure if:
-  //   - The Python path is flagged AND
-  //   - JS returned a different (non-DISCRETIONARY) tier
-  // When tiers agree, path-level differences reflect dedup divergences between
-  // the Python directed-graph and JS undirected-graph implementations — not
-  // algorithm errors.  The tier check (above) is the primary correctness gate.
+  // v4.13 parity fix: after the per-edge eff_cap bake (delete SegmentIndex),
+  // Python and JS read eff_cap_vph from the same source-of-truth (graph
+  // edge attribute).  They should now pick the SAME bottleneck osmid set
+  // for every path.  Hard-fail if the bottleneck sets disagree — the
+  // previous silent-NOTE logging is the bug-hiding pattern that let the
+  // v4.12 divergence go undetected for months.
+  const jsOsmids  = new Set(actual.map(p => p.bottleneckOsmid));
+  const pyOsmids  = new Set(expected.map(p => p.bottleneck_osmid));
+  const missingInJs   = [...pyOsmids].filter(o => !jsOsmids.has(o));
+  const missingInPy   = [...jsOsmids].filter(o => !pyOsmids.has(o));
+  // Allow some divergence at the edges (boundary-snap differences yield
+  // ±N paths per project) — PATH_COUNT_TOLERANCE governs how much.
+  const totalDiff = missingInJs.length + missingInPy.length;
+  assert.ok(
+    totalDiff <= PATH_COUNT_TOLERANCE,
+    `[${vectorName}] bottleneck osmid sets disagree by ${totalDiff} ` +
+    `(tolerance=${PATH_COUNT_TOLERANCE}): Python-only=[${missingInJs.join(',')}] ` +
+    `JS-only=[${missingInPy.join(',')}]`
+  );
+
+  // Per-bottleneck ΔT check on the bottlenecks both engines found.
   for (const e of expected) {
     const a = actual.find(p => p.bottleneckOsmid === e.bottleneck_osmid);
-    if (!a) {
-      // If Python flagged this path and JS doesn't even find the same bottleneck,
-      // log a note but don't fail — the tier check above already caught any real error.
-      if (e.flagged) {
-        console.log(
-          `  NOTE [${vectorName}] Python flagged bottleneck=${e.bottleneck_osmid} ` +
-          `(ΔT=${e.delta_t_minutes.toFixed(3)}) not matched in JS — ` +
-          `JS tier=${jsTier} (dedup divergence; tier check is the correctness gate)`
-        );
-      }
-      continue;
-    }
-    // When both engines found the same bottleneck, ΔT must agree within tolerance
+    if (!a) continue;  // missing already accounted for above
     const diff = Math.abs(a.delta_t_minutes - e.delta_t_minutes);
     assert.ok(
       diff <= DELTA_T_TOLERANCE,
