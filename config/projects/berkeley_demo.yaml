@@ -1,7 +1,7 @@
 # ============================================================
 # Berkeley AB 747 Demo Projects — JOSH v4.0 (ΔT Standard)
 # ============================================================
-# Use with:  uv run python main.py demo --city "Berkeley"
+# Use with:  uv run python build.py map --city "Berkeley"
 #
 # Purpose: Demonstrate ministerial vs discretionary determination
 # to city planners.  Each project appears as a toggleable layer

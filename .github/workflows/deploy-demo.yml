@@ -31,7 +31,7 @@ jobs:
       - name: Generate Berkeley demo
         run: |
           uv run python build.py analyze --city "Berkeley" --data-dir data/berkeley
-          uv run python build.py demo --city "Berkeley" \
+          uv run python build.py map --city "Berkeley" \
             --data-dir data/berkeley \
             --projects config/projects/berkeley_demo.yaml
 

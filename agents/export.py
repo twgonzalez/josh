@@ -1035,7 +1035,7 @@ def export_app_js() -> Path:
 // GENERATED FILE — DO NOT EDIT
 // Source:   agents/export.py  (export_app_js)
 //           static/whatif_engine.js  (embedded verbatim)
-// Regenerate:  uv run python build.py demo --city "Berkeley"
+// Regenerate:  uv run python build.py map --city "Berkeley"
 // ============================================================================
 
 // ── Schema compatibility check ────────────────────────────────────────────────

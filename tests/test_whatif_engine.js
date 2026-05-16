@@ -8,15 +8,15 @@
  *
  * Validates that the JavaScript evaluation engine produces results within
  * DELTA_T_TOLERANCE of the authoritative Python outputs.  Tests are generated
- * automatically by `uv run python main.py demo --city "Berkeley"`, which writes
+ * automatically by `uv run python build.py map --city "Berkeley"`, which writes
  * output/berkeley/test_vectors.json after evaluating all demo projects.
  *
  * Run:
  *   node --test tests/test_whatif_engine.js
  *
  * Prerequisites (no npm install needed):
- *   1. uv run python main.py analyze --city "Berkeley"   # generates graph.json, parameters.json
- *   2. uv run python main.py demo --city "Berkeley"      # generates test_vectors.json
+ *   1. uv run python build.py analyze --city "Berkeley"   # generates graph.json, parameters.json
+ *   2. uv run python build.py map --city "Berkeley"      # generates test_vectors.json
  *   3. node --test tests/test_whatif_engine.js
  *
  * Tolerances:
@@ -47,7 +47,7 @@ function requireFile(name) {
   if (!fs.existsSync(p)) {
     throw new Error(
       `Missing: ${p}\n` +
-      `Run: uv run python main.py analyze --city "Berkeley" && uv run python main.py demo --city "Berkeley"`
+      `Run: uv run python build.py analyze --city "Berkeley" && uv run python build.py map --city "Berkeley"`
     );
   }
   return JSON.parse(fs.readFileSync(p, "utf8"));

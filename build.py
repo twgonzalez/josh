@@ -370,16 +370,17 @@ def evaluate(city: str, lat: float, lon: float, units: int, stories: int,
     "--output-dir", "output_dir_str", default=None,
     help="Output directory (default: output/{city}/)",
 )
-def demo(city: str, state: str, projects_file: str | None, output_name: str,
-         data_dir_str: str | None, city_config_str: str | None,
-         output_dir_str: str | None):
+def map(city: str, state: str, projects_file: str | None, output_name: str,
+        data_dir_str: str | None, city_config_str: str | None,
+        output_dir_str: str | None):
     """
-    Multi-project demo: evaluate a batch of projects and generate a comparison map.
+    Multi-project map: evaluate a batch of seeded projects and generate the
+    interactive comparison map (output/{city}/analysis_map.html).
 
     Requires a prior `analyze` run.
 
     Example:
-      uv run python build.py demo --city "Berkeley" --data-dir /path/to/data/berkeley
+      uv run python build.py map --city "Berkeley" --data-dir /path/to/data/berkeley
     """
     import geopandas as gpd
     from agents.objective_standards import evaluate_project

@@ -37,7 +37,7 @@ uv run python build.py analyze \
   --data-dir data/berkeley
 
 # Generate the interactive determination map
-uv run python build.py demo \
+uv run python build.py map \
   --city "Berkeley" \
   --data-dir data/berkeley \
   --projects config/projects/berkeley_demo.yaml
@@ -157,7 +157,7 @@ Reads the city data files, runs HCM 2022 capacity calculations on every road seg
 ### `demo` — determination map
 
 ```bash
-uv run python build.py demo \
+uv run python build.py map \
   --city "Berkeley" \
   --data-dir data/berkeley \
   --projects config/projects/berkeley_demo.yaml

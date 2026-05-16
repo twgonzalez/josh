@@ -50,7 +50,7 @@
  * Prerequisites:
  *   npm install                          (installs playwright)
  *   npx playwright install chromium      (downloads headless Chrome)
- *   uv run python build.py demo --city Berkeley --data-dir <path>
+ *   uv run python build.py map --city Berkeley --data-dir <path>
  *     → output/berkeley/analysis_map.html must exist
  *
  * Run:
@@ -81,7 +81,7 @@ describe('Smoke: Berkeley demo map', { timeout: 90_000 }, () => {
     if (!fs.existsSync(DEMO_MAP)) {
       throw new Error(
         '\nDemo map not found: ' + DEMO_MAP +
-        '\nRun: uv run python build.py demo --city Berkeley --data-dir <path>\n'
+        '\nRun: uv run python build.py map --city Berkeley --data-dir <path>\n'
       );
     }
     browser = await chromium.launch({ headless: true });
@@ -861,7 +861,7 @@ describe('Smoke: Berkeley demo map', { timeout: 90_000 }, () => {
       report.failures, [],
       `${report.failures.length} of ${report.total} pipeline projects have ` +
       `an unresolvable folium_fg_name — stale analysis_map.html build? ` +
-      `Rebuild with: uv run python build.py demo --city <city>  (or ` +
+      `Rebuild with: uv run python build.py map --city <city>  (or ` +
       `JOSH_DIR=... uv run python acquire.py run --city <city>):\n` +
       JSON.stringify(report.failures, null, 2));
   });

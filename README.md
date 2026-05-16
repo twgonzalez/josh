@@ -86,8 +86,8 @@ uv run python build.py analyze --city "Encinitas" --data-dir /path/to/data/encin
 uv run python build.py evaluate --city "Encinitas" --lat 33.04 --lon -117.29 --units 80 \
   --data-dir /path/to/data/encinitas
 
-# Generate a multi-project interactive demo map
-uv run python build.py demo --city "Encinitas" \
+# Generate a multi-project interactive comparison map
+uv run python build.py map --city "Encinitas" \
   --data-dir /path/to/data/encinitas \
   --projects /path/to/your/projects.yaml
 # → output/encinitas/analysis_map.html
@@ -168,7 +168,7 @@ Each project needs `name`, `lat`, `lon`, `units`, and optionally `stories` and `
 4. Run the pipeline:
    ```bash
    uv run python build.py analyze --city "YourCity" --data-dir data/{city} --city-config config/cities/{city}.yaml
-   uv run python build.py demo --city "YourCity" --data-dir data/{city} --projects projects/{city}.yaml
+   uv run python build.py map --city "YourCity" --data-dir data/{city} --projects projects/{city}.yaml
    ```
 
 ---

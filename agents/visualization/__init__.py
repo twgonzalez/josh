@@ -3,7 +3,7 @@
 # This file is part of JOSH (Jurisdictional Objective Standards for Housing).
 # See LICENSE for full terms. See CONTRIBUTING.md for contributor license terms.
 
-from .demo import create_analysis_map
+from .analysis_map import create_analysis_map
 from .brief_v3 import create_determination_brief_v3
 
 __all__ = ["create_analysis_map", "create_determination_brief_v3"]
