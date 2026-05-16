@@ -394,10 +394,17 @@ const WhatIfEngine = (() => {
     const filtered  = candidates.filter(c => c.cost_s <= maxAllowed);
 
     // Identify bottleneck per path (no dedup — all viable routes are returned).
+    // v4.13 parity fix: skip edges with eff_cap_vph<=0 (no roads_gdf row match).
+    // Python wildland.py uses `or float('inf')` to skip the same edges; both
+    // engines therefore agree on which edges are bottleneck candidates.
+    // Previously JS treated missing edges as 1000 vph (would pick them as
+    // bottleneck) while Python skipped them — root cause of the divergence.
     return filtered.map((cand, i) => {
       if (cand.path_edges.length === 0) return null;
-      let bn = cand.path_edges[0];
-      for (const e of cand.path_edges) {
+      const validEdges = cand.path_edges.filter(e => +(e.eff_cap_vph || 0) > 0);
+      if (validEdges.length === 0) return null;
+      let bn = validEdges[0];
+      for (const e of validEdges) {
         if (e.eff_cap_vph < bn.eff_cap_vph) bn = e;
       }
       const path_coords = cand.path_coords ?? [];
