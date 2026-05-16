@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-05-16T14:46:50.268912+00:00",
+  "generated_at": "2026-05-16T16:18:06.676635+00:00",
   "parameters_version": "4.0",
   "vectors": [
     {
@@ -23,90 +23,90 @@
       "input": {
         "lat": 37.8695,
         "lon": -122.2685,
-        "units": 120,
+        "units": 85,
         "stories": 3
       },
       "expected": {
-        "tier": "DISCRETIONARY",
+        "tier": "MINISTERIAL WITH STANDARD CONDITIONS",
         "hazard_zone": "non_fhsz",
-        "project_vehicles": 205.2,
+        "project_vehicles": 145.3,
         "serving_paths_count": 13,
         "paths": [
           {
             "bottleneck_osmid": "1000718782",
-            "delta_t_minutes": 6.48,
+            "delta_t_minutes": 4.59,
             "threshold_minutes": 6.0,
-            "flagged": true
+            "flagged": false
           },
           {
             "bottleneck_osmid": "1000718782",
-            "delta_t_minutes": 6.48,
+            "delta_t_minutes": 4.59,
             "threshold_minutes": 6.0,
-            "flagged": true
+            "flagged": false
           },
           {
             "bottleneck_osmid": "1000718782",
-            "delta_t_minutes": 6.48,
+            "delta_t_minutes": 4.59,
             "threshold_minutes": 6.0,
-            "flagged": true
+            "flagged": false
           },
           {
             "bottleneck_osmid": "1000718782",
-            "delta_t_minutes": 6.48,
-            "threshold_minutes": 6.0,
-            "flagged": true
-          },
-          {
-            "bottleneck_osmid": "25738782",
-            "delta_t_minutes": 3.24,
+            "delta_t_minutes": 4.59,
             "threshold_minutes": 6.0,
             "flagged": false
           },
           {
             "bottleneck_osmid": "25738782",
-            "delta_t_minutes": 3.24,
+            "delta_t_minutes": 2.29,
             "threshold_minutes": 6.0,
             "flagged": false
           },
           {
             "bottleneck_osmid": "25738782",
-            "delta_t_minutes": 3.24,
+            "delta_t_minutes": 2.29,
             "threshold_minutes": 6.0,
             "flagged": false
           },
           {
             "bottleneck_osmid": "25738782",
-            "delta_t_minutes": 3.24,
+            "delta_t_minutes": 2.29,
+            "threshold_minutes": 6.0,
+            "flagged": false
+          },
+          {
+            "bottleneck_osmid": "25738782",
+            "delta_t_minutes": 2.29,
             "threshold_minutes": 6.0,
             "flagged": false
           },
           {
             "bottleneck_osmid": "6320410",
-            "delta_t_minutes": 5.47,
+            "delta_t_minutes": 3.88,
             "threshold_minutes": 6.0,
             "flagged": false
           },
           {
             "bottleneck_osmid": "6321559",
-            "delta_t_minutes": 5.47,
+            "delta_t_minutes": 3.88,
             "threshold_minutes": 6.0,
             "flagged": false
           },
           {
             "bottleneck_osmid": "6321559",
-            "delta_t_minutes": 5.47,
+            "delta_t_minutes": 3.88,
             "threshold_minutes": 6.0,
             "flagged": false
           },
           {
             "bottleneck_osmid": "6321559",
-            "delta_t_minutes": 5.47,
+            "delta_t_minutes": 3.88,
             "threshold_minutes": 6.0,
             "flagged": false
           },
           {
             "bottleneck_osmid": "9577895",
-            "delta_t_minutes": 5.47,
+            "delta_t_minutes": 3.88,
             "threshold_minutes": 6.0,
             "flagged": false
           }
@@ -128,56 +128,56 @@
         "serving_paths_count": 13,
         "paths": [
           {
-            "bottleneck_osmid": "6375810",
-            "delta_t_minutes": 20.85,
+            "bottleneck_osmid": "6338567",
+            "delta_t_minutes": 26.06,
             "threshold_minutes": 2.25,
             "flagged": true
           },
           {
-            "bottleneck_osmid": "6375810",
-            "delta_t_minutes": 20.85,
+            "bottleneck_osmid": "6338567",
+            "delta_t_minutes": 26.06,
             "threshold_minutes": 2.25,
             "flagged": true
           },
           {
-            "bottleneck_osmid": "6375810",
-            "delta_t_minutes": 20.85,
+            "bottleneck_osmid": "6338567",
+            "delta_t_minutes": 26.06,
             "threshold_minutes": 2.25,
             "flagged": true
           },
           {
-            "bottleneck_osmid": "6375810",
-            "delta_t_minutes": 20.85,
+            "bottleneck_osmid": "6338567",
+            "delta_t_minutes": 26.06,
             "threshold_minutes": 2.25,
             "flagged": true
           },
           {
-            "bottleneck_osmid": "6375810",
-            "delta_t_minutes": 20.85,
+            "bottleneck_osmid": "6338567",
+            "delta_t_minutes": 26.06,
             "threshold_minutes": 2.25,
             "flagged": true
           },
           {
-            "bottleneck_osmid": "6375810",
-            "delta_t_minutes": 20.85,
+            "bottleneck_osmid": "6338567",
+            "delta_t_minutes": 26.06,
             "threshold_minutes": 2.25,
             "flagged": true
           },
           {
-            "bottleneck_osmid": "6375810",
-            "delta_t_minutes": 20.85,
+            "bottleneck_osmid": "6338567",
+            "delta_t_minutes": 26.06,
             "threshold_minutes": 2.25,
             "flagged": true
           },
           {
-            "bottleneck_osmid": "6375810",
-            "delta_t_minutes": 20.85,
+            "bottleneck_osmid": "6338567",
+            "delta_t_minutes": 26.06,
             "threshold_minutes": 2.25,
             "flagged": true
           },
           {
-            "bottleneck_osmid": "6375810",
-            "delta_t_minutes": 20.85,
+            "bottleneck_osmid": "6338567",
+            "delta_t_minutes": 26.06,
             "threshold_minutes": 2.25,
             "flagged": true
           },
