@@ -4919,12 +4919,7 @@ if (typeof module !== "undefined" && module.exports) {
         <span>Project</span><span class="caret">&#9662;</span>
       </div>
       <div class="mhz-panel-body">
-        <select class="mhz-proj-select">
-          <option>Hillview Terrace Apartments (48 units)</option>
-          <option>Cedar Street Infill (120 units)</option>
-          <option>University Ave Mixed-Use (75 units)</option>
-          <option>Telegraph and Bancroft (25 units)</option>
-        </select>
+        <select class="mhz-proj-select"></select>
 
         <div class="mhz-proj-name">Hillview Terrace Apartments</div>
         <div class="mhz-proj-addr">1234 Foothill Blvd, Berkeley</div>
@@ -5066,100 +5061,177 @@ if (typeof module !== "undefined" && module.exports) {
 </div>
 <script id="mhz-mockup-wiring">
 (function () {
-  var PROJECTS = {
-    "Hillview Terrace Apartments (48 units)": {
-      name: "Hillview Terrace Apartments",
-      addr: "1234 Foothill Blvd, Berkeley",
-      units: 48, stories: 3,
-      meta: "VHFHSZ \u00B7 1 EGRESS \u00B7 SEEDED BY PIPELINE",
-      tier: "DISCRETIONARY", driven: "Wildfire", controlling: "wildfire",
-      wf: { dt: 11.8, thr: 2.25, w: 97 },
-      fl: { dt: 1.1,  thr: 9.00, w: 4  }
-    },
-    "Cedar Street Infill (120 units)": {
-      name: "Cedar Street Infill",
-      addr: "2345 Cedar St, Berkeley",
-      units: 120, stories: 4,
-      meta: "NON-FHSZ \u00B7 2 EGRESS \u00B7 SEEDED BY PIPELINE",
-      tier: "DISCRETIONARY", driven: "Flood", controlling: "flood",
-      wf: { dt: 2.1,  thr: 6.00, w: 12 },
-      fl: { dt: 14.2, thr: 9.00, w: 47 }
-    },
-    "University Ave Mixed-Use (75 units)": {
-      name: "University Ave Mixed-Use",
-      addr: "1500 University Ave, Berkeley",
-      units: 75, stories: 5,
-      meta: "MODERATE FHSZ \u00B7 2 EGRESS \u00B7 SEEDED BY PIPELINE",
+  // Wait until Folium's map global + JOSH_DATA are both ready before running.
+  function findMapNow() {
+    for (var k in window) {
+      try {
+        var v = window[k];
+        if (v && v._leaflet_id && typeof v.eachLayer === "function" && typeof v.fitBounds === "function") return v;
+      } catch (e) {}
+    }
+    return null;
+  }
+  var attempts = 0;
+  function tryBoot() {
+    if (findMapNow() && window.JOSH_DATA && window.JOSH_DATA.projects && window.JOSH_DATA.projects.length) {
+      boot();
+    } else if (attempts++ < 60) {
+      setTimeout(tryBoot, 100);
+    } else {
+      console.warn("[mhz-mockup] map or JOSH_DATA not ready after 6s");
+    }
+  }
+  if (document.readyState === "complete") tryBoot();
+  else window.addEventListener("load", tryBoot);
+
+  function boot() {
+  // ── Faked multi-hazard data, keyed by REAL Berkeley project id ──
+  var HZD = {
+    downtown_mid_rise: {
+      meta: "MODERATE FHSZ \u00B7 2 EGRESS",
       tier: "MINISTERIAL WITH STANDARD CONDITIONS", driven: "Wildfire", controlling: "wildfire",
-      wf: { dt: 4.8, thr: 6.00, w: 27 },
-      fl: { dt: 0.8, thr: 9.00, w: 3  }
+      wf: { dt: 4.8, thr: 6.00, w: 27, zone: "Moderate", deg: 0.75, window: 90, bn: "University Ave at MLK Way", cap: 1080 },
+      fl: { dt: 0.9, thr: 9.00, w: 4,  zone: "X (unshaded)", deg: 1.00, window: 180, bn: null, cap: 1575 }
     },
-    "Telegraph and Bancroft (25 units)": {
-      name: "Telegraph & Bancroft",
-      addr: "2500 Telegraph Ave, Berkeley",
-      units: 25, stories: 2,
-      meta: "NON-FHSZ \u00B7 2 EGRESS \u00B7 SEEDED BY PIPELINE",
-      tier: "MINISTERIAL", driven: "(no hazard fails)", controlling: "wildfire",
-      wf: { dt: 1.2, thr: 6.00, w: 7 },
-      fl: { dt: 0.4, thr: 9.00, w: 2 }
+    hills_gateway: {
+      meta: "VHFHSZ \u00B7 1 EGRESS",
+      tier: "DISCRETIONARY", driven: "Wildfire", controlling: "wildfire",
+      wf: { dt: 11.8, thr: 2.25, w: 97, zone: "VHFHSZ", deg: 0.35, window: 45, bn: "Spruce St at Marin Ave", cap: 551 },
+      fl: { dt: 1.1,  thr: 9.00, w: 4,  zone: "X (unshaded)", deg: 1.00, window: 180, bn: null, cap: 1575 }
+    },
+    claremont_hills_terrace: {
+      meta: "VHFHSZ \u00B7 1 EGRESS",
+      tier: "DISCRETIONARY", driven: "Wildfire", controlling: "wildfire",
+      wf: { dt: 8.4, thr: 2.25, w: 80, zone: "VHFHSZ", deg: 0.35, window: 45, bn: "Tunnel Rd at Caldecott", cap: 612 },
+      fl: { dt: 0.4, thr: 9.00, w: 2,  zone: "X (unshaded)", deg: 1.00, window: 180, bn: null, cap: 1575 }
+    },
+    cedar_street_infill: {
+      meta: "NON-FHSZ \u00B7 2 EGRESS",
+      tier: "DISCRETIONARY", driven: "Flood", controlling: "flood",
+      wf: { dt: 2.1,  thr: 6.00, w: 12, zone: "Moderate", deg: 0.75, window: 90, bn: "Cedar St at MLK Way", cap: 980 },
+      fl: { dt: 14.2, thr: 9.00, w: 47, zone: "AE", deg: 0.20, window: 180, bn: "Cedar St at I-80 underpass", cap: 304 }
     }
   };
 
-  function $(sel, root) { return (root || document).querySelector(sel); }
-  function $$(sel, root) { return (root || document).querySelectorAll(sel); }
+  function $(s, r) { return (r || document).querySelector(s); }
+  function $$(s, r) { return (r || document).querySelectorAll(s); }
+  function findMap() {
+    for (var k in window) {
+      try {
+        var v = window[k];
+        if (v && v._leaflet_id && typeof v.eachLayer === "function" && typeof v.fitBounds === "function") return v;
+      } catch (e) {}
+    }
+    return null;
+  }
+  function deg(v) { return (v == null ? "\u2014" : (Number(v).toFixed(2))); }
 
   var sidebar = $("#josh-sidebar");
-  if (!sidebar) return;
+  var map = findMap();
+  if (!sidebar || !map) return;
 
-  function renderProject(key) {
-    var p = PROJECTS[key];
-    if (!p) return;
-    $(".mhz-proj-name", sidebar).textContent = p.name;
-    $(".mhz-proj-addr", sidebar).textContent = p.addr;
-    $(".mhz-proj-meta", sidebar).textContent = p.meta;
+  // ── Build dropdown from real JOSH_DATA.projects ──
+  var projects = (window.JOSH_DATA && window.JOSH_DATA.projects) || [];
+  var sel = $(".mhz-proj-select", sidebar);
+  projects.forEach(function (p) {
+    var opt = document.createElement("option");
+    opt.value = p.id;
+    opt.textContent = p.name + " (" + p.units + " units)";
+    sel.appendChild(opt);
+  });
+
+  // ── Add faked hazard polygon overlays ──
+  // Flood: bayfront marina + Strawberry Creek corridor (faked SFHA AE)
+  var FLOOD_GJ = {
+    type: "Feature",
+    geometry: { type: "Polygon", coordinates: [[
+      [-122.330, 37.880], [-122.305, 37.880], [-122.300, 37.870],
+      [-122.300, 37.855], [-122.330, 37.855], [-122.330, 37.880]
+    ]] },
+    properties: { name: "Bayfront SFHA (faked)", zone: "AE" }
+  };
+  // Earthquake liquefaction: west Berkeley flatlands (faked CGS SHZ)
+  var EQ_GJ = {
+    type: "Feature",
+    geometry: { type: "Polygon", coordinates: [[
+      [-122.300, 37.890], [-122.275, 37.890], [-122.275, 37.860],
+      [-122.300, 37.860], [-122.300, 37.890]
+    ]] },
+    properties: { name: "West Berkeley liquefaction (faked CGS SHZ)", zone: "liquefaction" }
+  };
+
+  var floodLayer = L.geoJSON(FLOOD_GJ, {
+    style: { color: "#1f77b4", weight: 1.5, fillColor: "#1f77b4", fillOpacity: 0.30 },
+    onEachFeature: function (f, l) { l.bindTooltip("<b>" + f.properties.name + "</b><br>FEMA NFHL Zone " + f.properties.zone + " — <i>faked</i>", { sticky: true }); }
+  });
+  var eqLayer = L.geoJSON(EQ_GJ, {
+    style: { color: "#7f7f7f", weight: 1, fillColor: "#7f7f7f", fillOpacity: 0.18, dashArray: "4,3" },
+    onEachFeature: function (f, l) { l.bindTooltip("<b>" + f.properties.name + "</b><br>Informational only — <i>faked</i>", { sticky: true }); }
+  });
+  floodLayer.addTo(map);
+  eqLayer.addTo(map);
+
+  // ── Helpers to manage project FeatureGroup visibility on the map ──
+  var currentFG = null;
+  function showProjectMarkers(project) {
+    if (currentFG) map.removeLayer(currentFG);
+    var fg = project && project.folium_fg_name ? window[project.folium_fg_name] : null;
+    if (fg) {
+      map.addLayer(fg);
+      currentFG = fg;
+      if (project.lat != null && project.lng != null) {
+        map.setView([project.lat, project.lng], 15, { animate: true });
+      }
+    } else {
+      currentFG = null;
+    }
+  }
+
+  // ── Render the sidebar project detail card ──
+  function renderDetail(project, h) {
+    $(".mhz-proj-name", sidebar).textContent = project.name;
+    $(".mhz-proj-addr", sidebar).textContent = project.address || "";
+    $(".mhz-proj-meta", sidebar).textContent = h.meta;
     var bigs = $$(".mhz-stat .big", sidebar);
-    bigs[0].textContent = p.units;
-    bigs[1].textContent = p.stories;
+    bigs[0].textContent = project.units;
+    bigs[1].textContent = project.stories;
 
     var tier = $(".mhz-tier", sidebar);
-    tier.classList.remove("mws");
-    tier.classList.remove("ministerial");
-    if (p.tier === "MINISTERIAL WITH STANDARD CONDITIONS") tier.classList.add("mws");
-    else if (p.tier === "MINISTERIAL") tier.classList.add("ministerial");
-    var drivenSpan = $(".driven", tier);
-    tier.childNodes[0].nodeValue = "\n          " + p.tier + "\n          ";
-    drivenSpan.textContent = "driven by " + p.driven;
+    tier.classList.remove("mws"); tier.classList.remove("ministerial");
+    if (h.tier === "MINISTERIAL WITH STANDARD CONDITIONS") tier.classList.add("mws");
+    else if (h.tier === "MINISTERIAL") tier.classList.add("ministerial");
+    tier.childNodes[0].nodeValue = "\n          " + h.tier + "\n          ";
+    $(".driven", tier).textContent = "driven by " + h.driven;
 
     var dtRows = $$(".mhz-dt-row", sidebar);
     var wfBar = $(".mhz-dt-bar", dtRows[0]);
     var flBar = $(".mhz-dt-bar", dtRows[1]);
-    var wfFails = p.wf.dt > p.wf.thr;
-    var flFails = p.fl.dt > p.fl.thr;
-    wfBar.className = "mhz-dt-bar " + (wfFails ? "fail" : "pass") + (p.controlling === "wildfire" ? " controls" : "");
-    wfBar.style.width = p.wf.w + "%";
-    flBar.className = "mhz-dt-bar " + (flFails ? "fail" : "pass") + (p.controlling === "flood" ? " controls" : "");
-    flBar.style.width = p.fl.w + "%";
+    var wfFails = h.wf.dt > h.wf.thr;
+    var flFails = h.fl.dt > h.fl.thr;
+    wfBar.className = "mhz-dt-bar " + (wfFails ? "fail" : "pass") + (h.controlling === "wildfire" ? " controls" : "");
+    flBar.className = "mhz-dt-bar " + (flFails ? "fail" : "pass") + (h.controlling === "flood" ? " controls" : "");
+    wfBar.style.width = h.wf.w + "%";
+    flBar.style.width = h.fl.w + "%";
     var wfVal = $(".mhz-dt-value", dtRows[0]);
     var flVal = $(".mhz-dt-value", dtRows[1]);
     wfVal.className = "mhz-dt-value" + (wfFails ? " fail" : "");
     flVal.className = "mhz-dt-value" + (flFails ? " fail" : "");
-    wfVal.textContent = p.wf.dt.toFixed(1) + " / " + p.wf.thr.toFixed(2) + " min";
-    flVal.textContent = p.fl.dt.toFixed(1) + " / " + p.fl.thr.toFixed(2) + " min";
+    wfVal.textContent = h.wf.dt.toFixed(1) + " / " + h.wf.thr.toFixed(2) + " min";
+    flVal.textContent = h.fl.dt.toFixed(1) + " / " + h.fl.thr.toFixed(2) + " min";
 
     var scenBadge = $(".mhz-scen-badge", sidebar);
-    if (scenBadge) scenBadge.textContent = (p.controlling === "flood") ? "Flood" : "Wildfire";
+    if (scenBadge) scenBadge.textContent = (h.controlling === "flood") ? "Flood" : "Wildfire";
 
     var liItems = $$(".mhz-hz-list li", sidebar);
-    var entries = [ ["wildfire", 0, p.wf], ["flood", 1, p.fl] ];
+    var entries = [ ["wildfire", 0, h.wf], ["flood", 1, h.fl] ];
     for (var ei = 0; ei < entries.length; ei++) {
       var hz = entries[ei][0], idx = entries[ei][1], hd = entries[ei][2];
-      var li = liItems[idx];
-      if (!li) continue;
-      var isCtrl = (p.controlling === hz);
+      var li = liItems[idx]; if (!li) continue;
+      var isCtrl = (h.controlling === hz);
       var spans = li.querySelectorAll("span");
       if (spans[1]) spans[1].classList.toggle("hz-ctrl", isCtrl);
-      var existingBadge = li.querySelector(".mhz-scen-badge");
-      if (existingBadge) existingBadge.remove();
+      var existing = li.querySelector(".mhz-scen-badge");
+      if (existing) existing.remove();
       var dtSpan = null;
       for (var si = 0; si < spans.length; si++) {
         var ml = spans[si].style && spans[si].style.marginLeft;
@@ -5176,13 +5248,92 @@ if (typeof module !== "undefined" && module.exports) {
     }
   }
 
-  var sel = $(".mhz-proj-select", sidebar);
-  if (sel) {
-    sel.addEventListener("change", function (e) { renderProject(e.target.value); });
+  // ── Render the brief modal body for the selected project ──
+  function renderBrief(project, h) {
+    var head = $(".mhz-modal-header h2");
+    var sub = $(".mhz-modal-header .sub");
+    if (head) head.textContent = project.name + " \u2014 Objective Standards Brief";
+    if (sub)  sub.textContent  = (project.address || "") + " \u00B7 " + project.units + " units \u00B7 " + project.stories + " stories";
+
+    var body = $(".mhz-modal-body");
+    var wfFails = h.wf.dt > h.wf.thr;
+    var flFails = h.fl.dt > h.fl.thr;
+    var wfRowCls = (h.controlling === "wildfire") ? "controls" : "";
+    var flRowCls = (h.controlling === "flood")    ? "controls" : "";
+
+    var pVeh = Math.round(project.units * 2.5 * 0.90);
+    var ctrlHz = h.controlling === "flood" ? h.fl : h.wf;
+    var ctrlName = h.controlling === "flood" ? "Flood" : "Wildfire";
+
+    var detCls = h.tier === "MINISTERIAL WITH STANDARD CONDITIONS" ? " mws"
+               : h.tier === "MINISTERIAL"                          ? " ministerial"
+               : "";
+
+    var detLine = (h.tier === "MINISTERIAL")
+      ? "MINISTERIAL — all applicable hazards pass thresholds."
+      : h.tier + " (controlled by " + ctrlName + ")";
+
+    var detReason = (h.tier === "MINISTERIAL")
+      ? ""
+      : ctrlName + " \u2014 " + ctrlHz.zone + ": \u0394T " + ctrlHz.dt.toFixed(1)
+        + " min " + (ctrlHz.dt > ctrlHz.thr ? "exceeds" : "within") + " " + ctrlHz.thr.toFixed(2)
+        + " min threshold. Controlling bottleneck: " + (ctrlHz.bn || "n/a") + ".";
+
+    body.innerHTML =
+      '<h3 class="mhz-mlabel"><span class="letter">A</span>Applicability Threshold</h3>' +
+      '<p style="margin:6px 0">Project size: <b>' + project.units + ' units</b>, <b>' + project.stories + ' stories</b>. ' +
+        (project.units >= 15
+          ? '<b>' + project.units + ' \u2265 15</b> \u2014 Objective Standard 1 (Evacuation Clearance) <b>applies</b>.'
+          : project.units + ' &lt; 15 \u2014 Standard 1 does not apply.') +
+      '</p>' +
+      '<h3 class="mhz-mlabel"><span class="letter">B</span>Site Parameters (per hazard)</h3>' +
+      '<table><tr><th>Hazard</th><th>Zone</th><th>Degradation</th><th>Egress window</th><th>\u0394T threshold</th></tr>' +
+      '<tr><td>Wildfire</td><td>' + h.wf.zone + '</td><td>' + deg(h.wf.deg) + '</td><td>' + h.wf.window + ' min</td><td>' + h.wf.thr.toFixed(2) + ' min</td></tr>' +
+      '<tr><td>Flood</td><td>'    + h.fl.zone + '</td><td>' + deg(h.fl.deg) + '</td><td>' + h.fl.window + ' min</td><td>' + h.fl.thr.toFixed(2) + ' min</td></tr>' +
+      '</table>' +
+      '<h3 class="mhz-mlabel"><span class="letter">C</span>Evacuation Clearance Analysis (per hazard)</h3>' +
+      '<table><tr><th>Hazard</th><th>Bottleneck</th><th>Eff. capacity</th><th>Project veh.</th><th>\u0394T</th><th>Threshold</th><th>Result</th></tr>' +
+      '<tr class="' + wfRowCls + '"><td>Wildfire</td><td>' + (h.wf.bn || "—") + '</td><td>' + h.wf.cap + ' vph</td><td>' + pVeh + '</td><td>' + h.wf.dt.toFixed(1) + ' min</td><td>' + h.wf.thr.toFixed(2) + ' min</td>' +
+      '<td><span class="' + (wfFails ? "mhz-chip mhz-chip-fail" : "mhz-chip mhz-chip-pass") + '">' + (wfFails ? "FAIL" + (h.controlling === "wildfire" ? " (controls)" : "") : "PASS") + '</span></td></tr>' +
+      '<tr class="' + flRowCls + '"><td>Flood</td><td>'    + (h.fl.bn || "n/a") + '</td><td>' + h.fl.cap + ' vph</td><td>' + pVeh + '</td><td>' + h.fl.dt.toFixed(1) + ' min</td><td>' + h.fl.thr.toFixed(2) + ' min</td>' +
+      '<td><span class="' + (flFails ? "mhz-chip mhz-chip-fail" : "mhz-chip mhz-chip-pass") + '">' + (flFails ? "FAIL" + (h.controlling === "flood" ? " (controls)" : "") : "PASS") + '</span></td></tr>' +
+      '</table>' +
+      '<p style="font-size:11px;color:#868e96;margin-top:8px">Controlling hazard determines the tier. Worst-case single hazard wins per locked decision #7.</p>' +
+      '<h3 class="mhz-mlabel"><span class="letter">D</span>Hazards Excluded (informational only)</h3>' +
+      '<div class="mhz-excl"><strong>Earthquake:</strong> Liquefaction zone (CGS SHZ). ShakeMap MMI 8. Separate PE-stamped seismic site assessment required under PRC \u00A72690. Not factored into tier determination per JOSH methodology v4.12.' +
+      '<span class="cite">Precedent: City of Berkeley AB 747 report (KLD Engineering, 2024) treats earthquake as descriptive overlay only.</span></div>' +
+      '<div class="mhz-det' + detCls + '">' + detLine + (detReason ? '<span class="reason">' + detReason + '</span>' : '') + '</div>';
   }
 
-  var CAPTIONS = {
-    "mhz-scen-ctrl": "Showing controlling-hazard route. Switching scenario re-routes the AntPath through that hazard's degraded graph (e.g. flood drops edges whose nodes are below BFE + 0.5 ft).",
+  // ── Selection driver ──
+  function selectProject(id) {
+    var project = projects.find(function (p) { return p.id === id; });
+    var h = HZD[id] || HZD.hills_gateway;
+    if (!project) return;
+    showProjectMarkers(project);
+    renderDetail(project, h);
+    renderBrief(project, h);
+  }
+
+  sel.addEventListener("change", function (e) { selectProject(e.target.value); });
+
+  // ── Hazard layer checkboxes toggle the polygon overlays ──
+  function bindCb(id, layer) {
+    var cb = document.getElementById(id);
+    if (!cb) return;
+    cb.addEventListener("change", function () {
+      var row = cb.closest(".mhz-hz-row");
+      if (row) row.style.opacity = cb.checked ? "1" : "0.5";
+      if (cb.checked) { if (!map.hasLayer(layer)) map.addLayer(layer); }
+      else            { if (map.hasLayer(layer))  map.removeLayer(layer); }
+    });
+  }
+  bindCb("mhz-cb-fl", floodLayer);
+  bindCb("mhz-cb-eq", eqLayer);
+
+  // ── Scenario radios update the caption text ──
+  var CAPS = {
+    "mhz-scen-ctrl": "Showing controlling-hazard route. Switching scenario re-routes the AntPath through that hazard\u2019s degraded graph (e.g. flood drops edges whose nodes are below BFE + 0.5 ft).",
     "mhz-scen-wf":   "Wildfire scenario: routes through FHSZ-degraded graph; VHFHSZ edges have capacity multiplied by 0.35. The AntPath above (production) shows this route.",
     "mhz-scen-fl":   "Flood scenario: routes through SFHA-degraded graph; nodes below BFE + 0.5 ft are dropped. Different bottleneck likely; faked here."
   };
@@ -5190,20 +5341,16 @@ if (typeof module !== "undefined" && module.exports) {
   var radios = $$('input[name="mhz-scen"]', sidebar);
   for (var ri = 0; ri < radios.length; ri++) {
     radios[ri].addEventListener("change", function () {
-      if (cap && CAPTIONS[this.id]) cap.textContent = CAPTIONS[this.id];
+      if (cap && CAPS[this.id]) cap.textContent = CAPS[this.id];
     });
   }
 
-  function bindCb(id) {
-    var cb = document.getElementById(id);
-    if (!cb) return;
-    cb.addEventListener("change", function () {
-      var row = cb.closest(".mhz-hz-row");
-      if (row) row.style.opacity = cb.checked ? "1" : "0.4";
-    });
+  // ── Initial selection: first project ──
+  if (projects.length > 0) {
+    sel.value = projects[0].id;
+    selectProject(projects[0].id);
   }
-  bindCb("mhz-cb-fl");
-  bindCb("mhz-cb-eq");
+  } // end boot()
 })();
 </script>
 
