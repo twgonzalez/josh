@@ -4796,7 +4796,6 @@ if (typeof module !== "undefined" && module.exports) {
   .mhz-sw-fl        { background:#1f77b4; opacity:0.55; }
   .mhz-sw-eq        { background:repeating-linear-gradient(45deg, #d8d8d8 0 4px, #7f7f7f 4px 6px); opacity:0.85; }
   .mhz-hz-row label { flex:1; cursor:pointer; }
-  .mhz-info-pill    { font-size:9px; font-weight:700; letter-spacing:0.06em; text-transform:uppercase; color:#1a56db; background:#e7f1ff; padding:2px 6px; border-radius:20px; margin-left:4px; }
 
   .mhz-proj-select  { width:100%; padding:6px 8px; font-size:13px; font-family:inherit; border:1px solid #ccc; border-radius:4px; background:#fff; margin-bottom:12px; font-weight:500; color:#212529; }
   .mhz-proj-name    { font-weight:700; font-size:14px; color:#212529; margin-bottom:2px; }
@@ -4905,12 +4904,6 @@ if (typeof module !== "undefined" && module.exports) {
           <span class="mhz-sw mhz-sw-fl"></span>
           <label for="mhz-cb-fl">Flood (FEMA NFHL &mdash; faked)</label>
         </div>
-        <div class="mhz-hz-row">
-          <input type="checkbox" id="mhz-cb-eq" checked>
-          <span class="mhz-sw mhz-sw-eq"></span>
-          <label for="mhz-cb-eq">Earthquake (CGS SHZ &mdash; faked)</label>
-          <span class="mhz-info-pill" title="Informational only &mdash; does not affect determination. Separate PE-stamped seismic site assessment required (PRC &sect;2690).">info only</span>
-        </div>
       </div>
     </div>
 
@@ -4946,12 +4939,6 @@ if (typeof module !== "undefined" && module.exports) {
           <div class="mhz-dt-track"><div class="mhz-dt-bar pass" style="width:4%;"></div></div>
           <div class="mhz-dt-value">1.1 / 9.00 min</div>
         </div>
-        <div class="mhz-dt-row na">
-          <div class="mhz-dt-label">Earthquake</div>
-          <div class="mhz-dt-track"></div>
-          <div class="mhz-dt-value">info only</div>
-        </div>
-
         <div class="mhz-scen">
           <div class="mhz-section-h" style="margin:0 0 6px;">Hazard Scenario</div>
           <div class="mhz-scen-row">
@@ -4986,10 +4973,6 @@ if (typeof module !== "undefined" && module.exports) {
             Flood
             <span style="color:#868e96;font-size:11px;margin-left:4px">(X unshaded)</span>
             <span style="margin-left:auto;font-size:11px">1.1 min</span>
-          </li>
-          <li>
-            <span class="dot" style="background:#7f7f7f;"></span>
-            <span class="hz-info">Earthquake (liquefaction &mdash; informational, PE assessment required)</span>
           </li>
         </ul>
 
@@ -5043,13 +5026,6 @@ if (typeof module !== "undefined" && module.exports) {
         </tr>
       </table>
       <p style="font-size:11px;color:#868e96;margin-top:8px">Controlling hazard determines the tier. Worst-case single hazard wins per <code style="font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:10px;background:#f1f3f5;padding:1px 4px;border-radius:3px">multihazard_status.md</code> locked decision #7.</p>
-
-      <h3 class="mhz-mlabel"><span class="letter">D</span>Hazards Excluded (informational only)</h3>
-      <div class="mhz-excl">
-        <strong>Earthquake:</strong>
-        Liquefaction zone (CGS SHZ). ShakeMap MMI 8. Separate PE-stamped seismic site assessment required under PRC &sect;2690. Not factored into tier determination per JOSH methodology v4.12.
-        <span class="cite">Precedent: City of Berkeley AB 747 report (KLD Engineering, 2024) treats earthquake as descriptive overlay only.</span>
-      </div>
 
       <div class="mhz-det">
         DISCRETIONARY (controlled by Wildfire)
@@ -5150,26 +5126,11 @@ if (typeof module !== "undefined" && module.exports) {
     ]] },
     properties: { name: "Bayfront SFHA (faked)", zone: "AE" }
   };
-  // Earthquake liquefaction: west Berkeley flatlands (faked CGS SHZ)
-  var EQ_GJ = {
-    type: "Feature",
-    geometry: { type: "Polygon", coordinates: [[
-      [-122.300, 37.890], [-122.275, 37.890], [-122.275, 37.860],
-      [-122.300, 37.860], [-122.300, 37.890]
-    ]] },
-    properties: { name: "West Berkeley liquefaction (faked CGS SHZ)", zone: "liquefaction" }
-  };
-
   var floodLayer = L.geoJSON(FLOOD_GJ, {
     style: { color: "#1f77b4", weight: 1.5, fillColor: "#1f77b4", fillOpacity: 0.30 },
     onEachFeature: function (f, l) { l.bindTooltip("<b>" + f.properties.name + "</b><br>FEMA NFHL Zone " + f.properties.zone + " — <i>faked</i>", { sticky: true }); }
   });
-  var eqLayer = L.geoJSON(EQ_GJ, {
-    style: { color: "#7f7f7f", weight: 1, fillColor: "#7f7f7f", fillOpacity: 0.18, dashArray: "4,3" },
-    onEachFeature: function (f, l) { l.bindTooltip("<b>" + f.properties.name + "</b><br>Informational only — <i>faked</i>", { sticky: true }); }
-  });
   floodLayer.addTo(map);
-  eqLayer.addTo(map);
 
   // ── Helpers to manage project FeatureGroup visibility on the map ──
   var currentFG = null;
@@ -5299,10 +5260,7 @@ if (typeof module !== "undefined" && module.exports) {
       '<td><span class="' + (flFails ? "mhz-chip mhz-chip-fail" : "mhz-chip mhz-chip-pass") + '">' + (flFails ? "FAIL" + (h.controlling === "flood" ? " (controls)" : "") : "PASS") + '</span></td></tr>' +
       '</table>' +
       '<p style="font-size:11px;color:#868e96;margin-top:8px">Controlling hazard determines the tier. Worst-case single hazard wins per locked decision #7.</p>' +
-      '<h3 class="mhz-mlabel"><span class="letter">D</span>Hazards Excluded (informational only)</h3>' +
-      '<div class="mhz-excl"><strong>Earthquake:</strong> Liquefaction zone (CGS SHZ). ShakeMap MMI 8. Separate PE-stamped seismic site assessment required under PRC \u00A72690. Not factored into tier determination per JOSH methodology v4.12.' +
-      '<span class="cite">Precedent: City of Berkeley AB 747 report (KLD Engineering, 2024) treats earthquake as descriptive overlay only.</span></div>' +
-      '<div class="mhz-det' + detCls + '">' + detLine + (detReason ? '<span class="reason">' + detReason + '</span>' : '') + '</div>';
+'<div class="mhz-det' + detCls + '">' + detLine + (detReason ? '<span class="reason">' + detReason + '</span>' : '') + '</div>';
   }
 
   // ── Selection driver ──
@@ -5329,7 +5287,6 @@ if (typeof module !== "undefined" && module.exports) {
     });
   }
   bindCb("mhz-cb-fl", floodLayer);
-  bindCb("mhz-cb-eq", eqLayer);
 
   // ── Scenario radios update the caption text ──
   var CAPS = {
