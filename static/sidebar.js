@@ -1091,12 +1091,33 @@
   // routes render above the citywide heatmap, AND so the heatmap can be
   // dimmed via overlayPane opacity without affecting the routes.
   // Idempotent — runs once per page load.
+  //
+  // NOTE on AntPath + pane: the leaflet-ant-path plugin does NOT propagate
+  // the `pane` option to its internal sub-polylines, so its SVG paths
+  // would otherwise render in the (dimmed) overlayPane.  We work around
+  // this by providing an explicit `renderer` attached to joshRoutes — the
+  // sub-polylines inherit the renderer's pane regardless of what the
+  // plugin does with the `pane` option.  The renderer is cached on the
+  // map so we reuse a single SVG element for all routes.
   function _ensureRoutePane(map) {
     if (!map || !map.createPane) return;
     if (map.getPane('joshRoutes')) return;
     const pane = map.createPane('joshRoutes');
     pane.style.zIndex = 650;          // above overlayPane (400) and markerShadow (500); below marker (600)
     pane.style.pointerEvents = 'auto'; // routes remain tooltip-clickable
+  }
+
+  // Returns the shared joshRoutes SVG renderer for this map, creating it
+  // lazily on first use.  Passing this as `renderer:` to L.polyline or
+  // L.antPath forces the sub-paths into the joshRoutes pane regardless of
+  // whether the plugin honors the `pane` option.
+  function _routeRenderer(map) {
+    if (!map || typeof window.L === 'undefined') return null;
+    if (!map._joshRouteRenderer) {
+      map._joshRouteRenderer = window.L.svg({ pane: 'joshRoutes' });
+      map._joshRouteRenderer.addTo(map);
+    }
+    return map._joshRouteRenderer;
   }
 
   // Map a JOSH determination tier → Leaflet AwesomeMarkers color keyword.
@@ -1239,6 +1260,10 @@
     const _antPathFn = typeof window.L !== 'undefined'
       ? (window.L.antPath || (window.L.polyline && window.L.polyline.antPath))
       : null;
+    // Shared renderer attached to joshRoutes pane — forces both AntPath
+    // sub-polylines and the bottleneck overlay into the correct pane,
+    // bypassing the leaflet-ant-path plugin's pane-option neglect.
+    const routeRenderer = _routeRenderer(map);
 
     // ── Helper: draw one route + its bottleneck overlay ──
     function _drawOneRoute(path, opts) {
@@ -1250,6 +1275,7 @@
           color: opts.color, weight: opts.weight, opacity: opts.opacity,
           delay: 1200, dashArray: [10, 20],
           pane: 'joshRoutes',
+          renderer: routeRenderer,
         });
         const tip = (opts.label || 'Route') + '  ·  exit ' +
                     ((+(path.cost_s || 0)) / 60).toFixed(1) + ' min  ·  ΔT ' +
@@ -1264,6 +1290,7 @@
         const bl = window.L.polyline(bkEdge.geom, {
           color: opts.color, weight: opts.weight + 2, opacity: opts.opacity,
           pane: 'joshRoutes',
+          renderer: routeRenderer,
         });
         const bnTip = (opts.label || 'Route') + ' bottleneck' +
                       (path.bottleneck_name ? ': ' + _formatBottleneck(path) : '');
