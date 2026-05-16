@@ -3,6 +3,7 @@ data/*
 output/*
 !output/berkeley/
 !output/paradise/
+!output/mockup/
 config/private/
 prompts/
 __pycache__/

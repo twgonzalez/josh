@@ -441,3 +441,131 @@ uv run python main.py analyze --city "Berkeley"
 uv run python main.py analyze --city "Santa Cruz"
 # Expected: tsunami_zones.geojson has features along coastal routes
 ```
+
+---
+
+## User Interface — Multi-Hazard Frontend (LOCKED)
+
+**Status:** Locked 2026-05-16 after UX mockup review.
+**Reference prototype:** `output/mockup/multihazard_mockup.html` (faked-data, file://-openable).
+**Replaces:** Current wildfire-only `analysis_map.html` UX patterns where noted below.
+
+This section records the binding UX decisions for the multi-hazard analysis map.
+Implementation must match these patterns; deviations require an explicit revision to this
+section.
+
+### Panel placement: right sidebar
+
+Multi-hazard analysis uses a **right-side panel** (~360px), departing from production
+`analysis_map.html` which uses a left sidebar. Rationale: the panel is an *inspector* for
+the selected project (Figma / browser-devtools pattern), not primary navigation (Google
+Maps results pattern). Right-side placement also avoids occluding the evacuation route in
+the current data, which radiates southwest from project markers.
+
+### Single-project view via dropdown (no card stack)
+
+The panel shows **one project at a time**, selected via a dropdown at the top of the
+project section. Production's stacked project-card list is replaced because:
+
+- Projects are never compared side-by-side — each receives an independent determination.
+- The per-project ΔT bar chart, hazard scenario selector, and hazards-evaluated list need
+  vertical space that a card stack would waste on non-selected projects.
+
+Marker click on the map syncs the dropdown to that project (parallel entry point preserved
+for users who think spatially).
+
+### No marker popups
+
+Clicking a project marker **selects** the project (highlights marker, draws AntPath,
+populates panel) but does **not** open a popup. Rationale: popups sit on top of the project
+marker, which is exactly where the evacuation route originates — popups occlude the route.
+All per-hazard ΔT data and the "Open Brief" affordance live in the right-side panel.
+
+### Panel structure (top to bottom)
+
+1. **Hazard Layers** (collapsed by default): checkbox per applicable hazard with color
+   swatch. Earthquake row carries a grey-hatch swatch and an "info only" pill with tooltip
+   "Informational only — does not affect determination. Separate PE-stamped seismic site
+   assessment required (PRC §2690)."
+2. **Project** (always visible):
+   - Dropdown selector
+   - Project name / address / units / stories
+   - Tier line with **named controlling hazard**: `DISCRETIONARY` with subline `driven by
+     {Hazard Name}`. Amber/orange for DISCRETIONARY (`#fff3e6` / `#e68a2e`), green for
+     MINISTERIAL (`#e8f5e9` / `#4caf50`).
+   - **ΔT bar chart**: one horizontal bar per applicable, non-informational hazard. X-axis
+     normalized to threshold (0–3× range, dashed marker at 1.0×). Bars > 1.0× are red
+     (fail), ≤ 1.0× are green (pass). Controlling bar has a black outline and a ◀ marker.
+     Earthquake and any informational hazard is skipped from this chart.
+   - **Hazard scenario selector**: radio per applicable hazard for the selected project.
+     Changes the AntPath rendered on the map (different hazards produce different routes
+     because the BFE-elevation / FHSZ / liquefaction filters cut different graph nodes).
+     A caption below the radios explains the routing constraint (e.g. "BFE-elevation
+     filter excludes Creek Rd at Highway 1").
+   - **Hazards evaluated** list: every applicable + informational hazard with its zone and
+     ΔT / threshold. Informational rows are italicized in grey.
+   - **Open Brief →** button at the bottom of the panel, opens the brief modal.
+
+### Brief modal: sections A / B / C / D
+
+The brief modal expands from production's A/B/C to **A/B/C/D**:
+
+- **A — Applicability Threshold:** unchanged (size gate, e.g. "48 units ≥ 15 → Standard 1
+  applies").
+- **B — Site Parameters (per hazard):** table with one row per applicable hazard listing
+  zone, degradation factor, safe egress window, ΔT threshold.
+- **C — Evacuation Clearance Analysis (per hazard):** table with one row per applicable
+  hazard listing bottleneck, effective capacity, project vehicles, ΔT, threshold, and
+  pass/fail pill. **Controlling row is visually highlighted** (yellow background, orange
+  left border).
+- **D — Hazards Excluded (informational only):** one block per informational hazard with
+  rationale. Earthquake text must cite PRC §2690 (PE-stamped seismic site assessment) and
+  the City of Berkeley AB 747 / KLD Engineering 2024 precedent for treating earthquake as
+  a descriptive overlay only.
+
+The determination line at the bottom of the modal must **name the controlling hazard**:
+`DISCRETIONARY (controlled by Wildfire — VHFHSZ ΔT 11.8 min exceeds 2.25 min threshold)`.
+
+### Hazard palette (locked)
+
+| Hazard | Stroke color | Fill treatment |
+|---|---|---|
+| Wildfire | `#d62728` | Solid fill, existing FHSZ palette for sub-zones |
+| Flood (A / AE / AH) | `#1f77b4` | Solid fill, low opacity |
+| Flood (VE coastal) | `#1f77b4` | Diagonal hatch pattern |
+| Tsunami | `#17becf` | Solid fill |
+| Dam failure | `#9467bd` | Solid fill |
+| Gas / hazmat (PIR) | `#bcbd22` | Yellow/black diagonal hazard stripe |
+| Landslide | `#8c564b` | Solid fill |
+| Earthquake (informational) | `#7f7f7f` | Diagonal hatch, low opacity, no AntPath option |
+
+### Earthquake is informational only
+
+Earthquake (liquefaction, induced landslide, ShakeMap MMI) appears in three places:
+
+- Grey-hatch polygon overlay on the map (toggle-able from Panel A)
+- "Hazards evaluated" list in the panel, italicized with a "PE assessment required" note
+- Section D of the brief modal
+
+It must **never** appear as a ΔT bar, as a hazard scenario radio option, or as an AntPath.
+The ΔT engine must not include earthquake in most-restrictive-wins selection.
+
+### Controlling hazard is always named
+
+Every tier display surface must name the hazard that drove the determination:
+
+- Panel tier line: `DISCRETIONARY` + `driven by {Hazard Name}` subline
+- Hazards-evaluated list: controlling row is bold with `(controlling)` suffix
+- Brief modal Section C: controlling table row is highlighted
+- Brief modal determination line: `DISCRETIONARY (controlled by {Hazard Name} — {zone} ΔT
+  {value} min exceeds {threshold} min threshold)`
+
+"DISCRETIONARY" without a named hazard is not acceptable.
+
+### Faked-data review prototype
+
+`output/mockup/multihazard_mockup.html` is a self-contained, file://-openable HTML
+prototype with two illustrative projects (one wildfire-controlled, one flood-controlled)
+in a fictional coastal city. It uses Leaflet from CDN, no build step, no backend. Treat it
+as the visual contract for the patterns above when the production frontend changes ship.
+

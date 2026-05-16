@@ -1,0 +1,1249 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>JOSH Multi-Hazard UX Mockup — Demoville</title>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+      integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="">
+<style>
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; height: 100%; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; color: #222; }
+
+  /* ====== Banner ====== */
+  .banner {
+    background: #fff7c2;
+    border-bottom: 1px solid #d6c66a;
+    padding: 10px 18px;
+    font-size: 13px;
+    line-height: 1.45;
+    color: #4a3a00;
+  }
+  .banner b { color: #2c2300; }
+  .banner code { background: #ede1a3; padding: 1px 5px; border-radius: 3px; font-size: 12px; }
+
+  /* ====== Layout ====== */
+  .app {
+    display: flex;
+    height: calc(100vh - 60px);
+    min-height: 600px;
+  }
+  #map { flex: 1; }
+  .sidebar {
+    width: 360px;
+    border-left: 1px solid #d8d8d8;
+    background: #fafafa;
+    overflow-y: auto;
+    padding: 0;
+  }
+
+  /* ====== Sidebar panels ====== */
+  .panel {
+    border-bottom: 1px solid #e0e0e0;
+    background: #fff;
+  }
+  .panel-header {
+    padding: 12px 14px;
+    font-weight: 600;
+    font-size: 13px;
+    letter-spacing: 0.02em;
+    text-transform: uppercase;
+    color: #444;
+    cursor: pointer;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    user-select: none;
+    background: #f5f5f5;
+  }
+  .panel-header .caret { transition: transform 0.15s; font-size: 11px; color: #888; }
+  .panel.collapsed .panel-header .caret { transform: rotate(-90deg); }
+  .panel-body { padding: 10px 14px 14px; }
+  .panel.collapsed .panel-body { display: none; }
+
+  /* ====== Panel A: hazard layers ====== */
+  .hazard-row {
+    display: flex;
+    align-items: center;
+    padding: 6px 0;
+    font-size: 13px;
+    border-bottom: 1px dashed #efefef;
+  }
+  .hazard-row:last-child { border-bottom: none; }
+  .hazard-row input[type=checkbox] { margin-right: 8px; }
+  .hazard-swatch {
+    width: 18px;
+    height: 18px;
+    margin-right: 8px;
+    border: 1px solid #999;
+    border-radius: 3px;
+    flex-shrink: 0;
+  }
+  .hazard-row label { flex: 1; cursor: pointer; text-transform: capitalize; }
+  .hazard-row .info {
+    font-size: 11px;
+    color: #888;
+    margin-left: 4px;
+    cursor: help;
+  }
+  .swatch-wildfire { background: #d62728; opacity: 0.55; }
+  .swatch-flood    { background: #1f77b4; opacity: 0.55; }
+  .swatch-tsunami  { background: #17becf; opacity: 0.55; }
+  .swatch-dam      { background: #9467bd; opacity: 0.55; }
+  .swatch-hazmat   { background: repeating-linear-gradient(45deg, #bcbd22 0 5px, #000 5px 7px); }
+  .swatch-landslide{ background: #8c564b; opacity: 0.55; }
+  .swatch-earthquake {
+    background: repeating-linear-gradient(45deg, #d8d8d8 0 4px, #7f7f7f 4px 6px);
+    opacity: 0.85;
+  }
+  .info-pill {
+    font-size: 10px;
+    color: #555;
+    background: #ececec;
+    padding: 1px 5px;
+    border-radius: 8px;
+    margin-left: 4px;
+  }
+
+  /* ====== Panel B: project selector + detail ====== */
+  .project-select {
+    width: 100%;
+    padding: 8px 10px;
+    font-size: 14px;
+    border: 1px solid #bbb;
+    border-radius: 4px;
+    background: #fff;
+    margin-bottom: 12px;
+    font-weight: 500;
+    cursor: pointer;
+  }
+  .project-select:focus { outline: 2px solid #2c7fb8; outline-offset: -1px; }
+  .project-detail .pd-header { margin-bottom: 8px; }
+  .project-detail .pd-name { font-weight: 600; font-size: 14px; margin-bottom: 2px; }
+  .project-detail .pd-addr { font-size: 12px; color: #666; margin-bottom: 2px; }
+  .project-detail .pd-meta { font-size: 11px; color: #888; margin-bottom: 8px; }
+  .project-detail .pd-section {
+    margin-top: 14px;
+    padding-top: 10px;
+    border-top: 1px solid #eee;
+  }
+  .project-detail .pd-section-label {
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: #888;
+    margin-bottom: 6px;
+    font-weight: 600;
+  }
+  .project-detail .pd-hazard-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    font-size: 12px;
+  }
+  .project-detail .pd-hazard-list li {
+    padding: 4px 0;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .project-detail .pd-hazard-list .dot {
+    display: inline-block; width: 8px; height: 8px; border-radius: 50%;
+    flex-shrink: 0;
+  }
+  .project-detail .pd-hazard-list .hz-info { color: #888; font-style: italic; }
+  .project-detail .pd-hazard-list .hz-ctrl { font-weight: 600; }
+  /* Bootstrap 5 .btn-primary equivalents (production uses BS 5.2.2) */
+  .project-detail .pd-open-brief {
+    margin-top: 14px;
+    padding: 0.375rem 0.75rem;
+    background: #0d6efd;
+    color: #fff;
+    border: 1px solid #0d6efd;
+    border-radius: 0.375rem;
+    font-size: 14px;
+    line-height: 1.5;
+    cursor: pointer;
+    font-weight: 400;
+    width: 100%;
+    transition: background-color 0.15s, border-color 0.15s, box-shadow 0.15s;
+  }
+  .project-detail .pd-open-brief:hover  { background: #0b5ed7; border-color: #0a58ca; }
+  .project-detail .pd-open-brief:focus  { outline: 0; box-shadow: 0 0 0 0.25rem rgba(13,110,253,0.5); }
+  .project-detail .pd-open-brief:active { background: #0a58ca; border-color: #0a53be; }
+  /* Tier colors match production TIER_COLOR (analysis_map.html:1416):
+     DISCRETIONARY #c0392b  ·  MINISTERIAL_WITH_STANDARD_CONDITIONS #d67c00  ·  MINISTERIAL #27ae60 */
+  .tier-line {
+    font-size: 13px;
+    font-weight: 600;
+    padding: 8px 10px;
+    border-radius: 4px;
+    margin: 6px 0 10px;
+    background: #fdecea;
+    border-left: 4px solid #c0392b;
+    color: #7a1c12;
+  }
+  .tier-line .driven { font-weight: 400; font-size: 11px; color: #8a3a30; display: block; margin-top: 2px; }
+  .tier-line.mws         { background: #fff4e3; border-left-color: #d67c00; color: #6e3e00; }
+  .tier-line.mws .driven { color: #8a5400; }
+  .tier-line.ministerial         { background: #e8f5e9; border-left-color: #27ae60; color: #1b5e20; }
+  .tier-line.ministerial .driven { color: #2e7d32; }
+
+  /* ====== ΔT bar chart ====== */
+  .dt-chart { margin-top: 4px; }
+  .dt-row {
+    display: flex;
+    align-items: center;
+    margin-bottom: 4px;
+    font-size: 11px;
+  }
+  .dt-label {
+    width: 60px;
+    flex-shrink: 0;
+    text-transform: capitalize;
+    color: #444;
+  }
+  .dt-bar-track {
+    flex: 1;
+    height: 14px;
+    background: #f0f0f0;
+    border-radius: 2px;
+    position: relative;
+    overflow: visible;
+  }
+  /* threshold marker at ratio = 1.0; track shows ratio 0..3 → 33.3% per unit */
+  .dt-bar-track::before {
+    content: '';
+    position: absolute;
+    left: 33.3%;
+    top: -2px;
+    bottom: -2px;
+    width: 1px;
+    border-left: 1px dashed #888;
+  }
+  .dt-bar-track::after {
+    content: '1.0×';
+    position: absolute;
+    left: 33.3%;
+    top: 14px;
+    font-size: 9px;
+    color: #888;
+    transform: translateX(-50%);
+  }
+  .dt-bar {
+    height: 100%;
+    border-radius: 2px;
+    transition: width 0.2s;
+  }
+  .dt-bar.pass { background: #4caf50; }
+  .dt-bar.fail { background: #e53935; }
+  .dt-bar.controls { outline: 2px solid #000; outline-offset: -1px; }
+  .dt-value {
+    width: 80px;
+    margin-left: 8px;
+    font-size: 11px;
+    color: #555;
+    text-align: right;
+  }
+  .dt-value.fail { color: #b22; font-weight: 600; }
+  .dt-row.na .dt-bar-track { background: #f7f7f7; }
+  .dt-row.na .dt-label, .dt-row.na .dt-value { color: #aaa; font-style: italic; }
+
+  /* ====== Panel C: scenario selector ====== */
+  #panel-c { display: none; }
+  #panel-c.visible { display: block; }
+  .scenario-radio {
+    display: flex;
+    align-items: center;
+    padding: 6px 0;
+    font-size: 13px;
+    cursor: pointer;
+  }
+  .scenario-radio input { margin-right: 8px; }
+  .scenario-radio .badge {
+    font-size: 10px;
+    background: #ffeb3b;
+    color: #5a4500;
+    padding: 1px 5px;
+    border-radius: 8px;
+    margin-left: auto;
+  }
+  .scenario-caption {
+    margin-top: 8px;
+    padding: 8px 10px;
+    background: #f0f7ff;
+    border-left: 3px solid #2c7fb8;
+    font-size: 11px;
+    color: #355;
+    line-height: 1.4;
+  }
+
+  /* ====== Popup ====== */
+  .popup-content { font-size: 13px; line-height: 1.4; min-width: 280px; }
+  .popup-content h3 { margin: 0 0 2px; font-size: 14px; }
+  .popup-content .addr { color: #666; font-size: 12px; margin-bottom: 2px; }
+  .popup-content .meta { color: #888; font-size: 11px; margin-bottom: 8px; }
+  .popup-content table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 6px 0 8px;
+    font-size: 12px;
+  }
+  .popup-content table th {
+    text-align: left;
+    font-weight: 600;
+    color: #555;
+    padding: 3px 4px;
+    border-bottom: 1px solid #ddd;
+    font-size: 11px;
+    text-transform: uppercase;
+  }
+  .popup-content table td { padding: 3px 4px; border-bottom: 1px solid #f0f0f0; }
+  .popup-content tr.controls td { background: #fff9d6; font-weight: 600; }
+  .popup-content tr.info td { color: #777; font-style: italic; font-size: 11px; }
+  .popup-content .tier {
+    margin-top: 8px;
+    padding: 6px 8px;
+    background: #fff3e6;
+    border-left: 3px solid #e68a2e;
+    font-weight: 600;
+    font-size: 12px;
+    color: #803d00;
+  }
+  .popup-content .tier .driven { font-weight: 400; color: #6a5500; }
+  .popup-content button.open-brief {
+    margin-top: 10px;
+    padding: 6px 12px;
+    background: #2c7fb8;
+    color: #fff;
+    border: none;
+    border-radius: 4px;
+    font-size: 12px;
+    cursor: pointer;
+    font-weight: 600;
+  }
+  .popup-content button.open-brief:hover { background: #1e6a9c; }
+
+  /* Bootstrap 5 modal equivalents (production uses BS 5.2.2) */
+  .modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.5);
+    display: none;
+    align-items: flex-start;
+    justify-content: center;
+    z-index: 1055;
+    overflow-y: auto;
+    padding: 1.75rem 1rem;
+  }
+  .modal-overlay.visible { display: flex; }
+  .modal {
+    background: #fff;
+    border: 1px solid rgba(0,0,0,0.2);
+    border-radius: 0.5rem;
+    max-width: 880px;
+    width: 100%;
+    padding: 1rem 1rem 1.25rem;
+    box-shadow: 0 0.5rem 1rem rgba(0,0,0,0.15);
+    position: relative;
+  }
+  .modal h2 { padding: 0 0.5rem; }
+  .modal .modal-sub { padding: 0 0.5rem; }
+  .modal h3, .modal .determination, .modal .exclusion, .modal table,
+  .modal .pd-section, .modal p { margin-left: 0.5rem; margin-right: 0.5rem; }
+  /* Bootstrap btn-close uses a CSS-masked SVG X */
+  .modal-close {
+    position: absolute;
+    top: 0.875rem;
+    right: 0.875rem;
+    width: 1em;
+    height: 1em;
+    padding: 0.25em;
+    box-sizing: content-box;
+    background: transparent url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='%23000'%3E%3Cpath d='M.293.293a1 1 0 0 1 1.414 0L8 6.586 14.293.293a1 1 0 1 1 1.414 1.414L9.414 8l6.293 6.293a1 1 0 0 1-1.414 1.414L8 9.414l-6.293 6.293a1 1 0 0 1-1.414-1.414L6.586 8 .293 1.707a1 1 0 0 1 0-1.414z'/%3E%3C/svg%3E") center/1em auto no-repeat;
+    border: 0;
+    border-radius: 0.375rem;
+    opacity: 0.5;
+    cursor: pointer;
+    color: transparent;
+    font-size: 0;
+  }
+  .modal-close:hover { opacity: 0.75; }
+  .modal-close:focus { outline: 0; box-shadow: 0 0 0 0.25rem rgba(13,110,253,0.25); opacity: 1; }
+  .modal h2 { margin: 0 0 4px; font-size: 20px; }
+  .modal .modal-sub { color: #666; font-size: 13px; margin-bottom: 18px; }
+  .modal h3 {
+    font-size: 14px;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: #2c7fb8;
+    margin: 22px 0 8px;
+    padding-bottom: 4px;
+    border-bottom: 1px solid #e0e0e0;
+  }
+  .modal h3 .section-letter {
+    display: inline-block;
+    background: #2c7fb8;
+    color: #fff;
+    width: 22px;
+    height: 22px;
+    line-height: 22px;
+    text-align: center;
+    border-radius: 50%;
+    margin-right: 8px;
+    font-size: 12px;
+  }
+  .modal table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 6px;
+    font-size: 13px;
+  }
+  .modal table th {
+    text-align: left;
+    background: #f5f5f5;
+    padding: 8px 10px;
+    font-weight: 600;
+    border-bottom: 2px solid #ddd;
+    font-size: 12px;
+  }
+  .modal table td { padding: 8px 10px; border-bottom: 1px solid #eee; }
+  .modal table tr.controls td {
+    background: #fffbe0;
+    font-weight: 600;
+    border-left: 3px solid #e68a2e;
+  }
+  .modal table tr.controls td:first-child { border-left: 3px solid #e68a2e; }
+  .modal .pass-pill {
+    background: #e8f5e9;
+    color: #2e7d32;
+    padding: 2px 8px;
+    border-radius: 10px;
+    font-size: 11px;
+    font-weight: 600;
+  }
+  .modal .fail-pill {
+    background: #ffebee;
+    color: #c62828;
+    padding: 2px 8px;
+    border-radius: 10px;
+    font-size: 11px;
+    font-weight: 600;
+  }
+  .modal .determination {
+    margin-top: 24px;
+    padding: 14px 18px;
+    background: #fdecea;
+    border-left: 5px solid #c0392b;
+    font-size: 15px;
+    font-weight: 600;
+    color: #7a1c12;
+  }
+  .modal .determination .reason {
+    display: block;
+    font-weight: 400;
+    font-size: 13px;
+    color: #8a3a30;
+    margin-top: 4px;
+  }
+  .modal .determination.mws         { background: #fff4e3; border-left-color: #d67c00; color: #6e3e00; }
+  .modal .determination.mws .reason { color: #8a5400; }
+  .modal .determination.ministerial { background: #e8f5e9; border-left-color: #27ae60; color: #1b5e20; }
+  .modal .determination.ministerial .reason { color: #2e7d32; }
+  .modal .exclusion {
+    background: #f7f7f7;
+    border-left: 3px solid #aaa;
+    padding: 10px 14px;
+    font-size: 13px;
+    line-height: 1.5;
+    color: #555;
+  }
+  .modal .exclusion strong { color: #333; }
+  .modal .exclusion .citation { font-size: 11px; color: #888; display: block; margin-top: 4px; }
+
+  /* Teardrop project pin (visual match for Leaflet.awesome-markers used in production) */
+  .josh-pin-wrapper { background: transparent; border: 0; }
+  .josh-pin {
+    width: 30px;
+    height: 30px;
+    border-radius: 50% 50% 50% 0;
+    border: 2px solid #fff;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.4);
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    margin: -15px 0 0 -15px;
+    transform: rotate(-45deg);
+    transition: box-shadow 0.15s;
+  }
+  .josh-pin::after {
+    content: '';
+    position: absolute;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.9);
+    top: 7px;
+    left: 7px;
+  }
+  .josh-pin.selected {
+    box-shadow: 0 0 0 3px rgba(13,110,253,0.55), 0 2px 4px rgba(0,0,0,0.4);
+  }
+</style>
+</head>
+<body>
+
+<!-- SVG defs for hatch patterns used as Leaflet polygon fills -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <pattern id="quakeHatch" patternUnits="userSpaceOnUse" width="8" height="8" patternTransform="rotate(45)">
+      <rect width="8" height="8" fill="#d8d8d8" fill-opacity="0.35"/>
+      <line x1="0" y1="0" x2="0" y2="8" stroke="#7f7f7f" stroke-width="2"/>
+    </pattern>
+    <pattern id="floodVHatch" patternUnits="userSpaceOnUse" width="10" height="10" patternTransform="rotate(45)">
+      <rect width="10" height="10" fill="#1f77b4" fill-opacity="0.25"/>
+      <line x1="0" y1="0" x2="0" y2="10" stroke="#1f77b4" stroke-width="3"/>
+    </pattern>
+  </defs>
+</svg>
+
+<div class="banner">
+  <b>Multi-hazard UX mockup — review draft.</b>
+  This is a faked-data prototype of the new sidebar, popup, and brief modal for JOSH's multi-hazard extension.
+  The map, polygons, projects, and ΔT values are illustrative — they do not represent any real city or analysis.
+  The purpose is for the user to approve the UX patterns before any real frontend changes ship.
+  Architecture spec: <code>docs/multihazard_first_principles.md</code> §7–8.
+  Locked design decisions: <code>docs/multihazard_status.md</code>.
+</div>
+
+<div class="app">
+  <div id="map"></div>
+  <div class="sidebar">
+
+    <!-- Panel A -->
+    <div class="panel collapsed" id="panel-a">
+      <div class="panel-header" onclick="togglePanel('panel-a')">
+        <span>Hazard Layers</span>
+        <span class="caret">▾</span>
+      </div>
+      <div class="panel-body" id="hazard-layers"></div>
+    </div>
+
+    <!-- Panel B: project selector + detail (single project at a time) -->
+    <div class="panel" id="panel-b">
+      <div class="panel-header" onclick="togglePanel('panel-b')">
+        <span>Project</span>
+        <span class="caret">▾</span>
+      </div>
+      <div class="panel-body">
+        <select id="project-select" class="project-select"
+                onchange="selectProject(this.value)"></select>
+        <div id="project-detail"></div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- Modal -->
+<div class="modal-overlay" id="brief-modal" onclick="if(event.target===this) closeBrief()">
+  <div class="modal" id="brief-modal-body">
+    <button class="modal-close" onclick="closeBrief()">&times;</button>
+    <!-- populated by JS -->
+  </div>
+</div>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+        integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+
+<script>
+/* ============================================================
+   Faked data
+   ============================================================ */
+window.JOSH_DATA = {
+  city: "Demoville",
+  applicable_hazards: ["wildfire", "flood", "earthquake"],
+
+  hazard_polygons: {
+    wildfire: [
+      {
+        type: "Feature",
+        properties: { zone: "VHFHSZ", name: "Foothill VHFHSZ" },
+        geometry: {
+          type: "Polygon",
+          coordinates: [[
+            [-122.268, 37.880],
+            [-122.252, 37.882],
+            [-122.246, 37.876],
+            [-122.250, 37.870],
+            [-122.262, 37.868],
+            [-122.270, 37.873],
+            [-122.268, 37.880]
+          ]]
+        }
+      },
+      {
+        type: "Feature",
+        properties: { zone: "high", name: "Foothill High FHSZ" },
+        geometry: {
+          type: "Polygon",
+          coordinates: [[
+            [-122.270, 37.873],
+            [-122.262, 37.868],
+            [-122.265, 37.864],
+            [-122.273, 37.866],
+            [-122.270, 37.873]
+          ]]
+        }
+      }
+    ],
+    flood: [
+      {
+        type: "Feature",
+        properties: { zone: "AE", name: "Creek Rd SFHA (AE)" },
+        geometry: {
+          type: "Polygon",
+          coordinates: [[
+            [-122.288, 37.872],
+            [-122.270, 37.872],
+            [-122.266, 37.868],
+            [-122.272, 37.864],
+            [-122.286, 37.866],
+            [-122.290, 37.870],
+            [-122.288, 37.872]
+          ]]
+        }
+      }
+    ],
+    earthquake: [
+      {
+        type: "Feature",
+        properties: { zone: "liquefaction", name: "Demoville liquefaction zone (CGS SHZ)" },
+        geometry: {
+          type: "Polygon",
+          coordinates: [[
+            [-122.295, 37.885],
+            [-122.240, 37.885],
+            [-122.240, 37.860],
+            [-122.295, 37.860],
+            [-122.295, 37.885]
+          ]]
+        }
+      }
+    ]
+  },
+
+  projects: [
+    {
+      id: "p1",
+      name: "Hillview Terrace Apartments",
+      address: "1234 Foothill Blvd, Demoville",
+      units: 48,
+      stories: 3,
+      lat: 37.876,
+      lon: -122.260,
+      hazard_results: [
+        {
+          hazard: "wildfire",
+          zone: "VHFHSZ",
+          delta_t_min: 11.8,
+          threshold_min: 2.25,
+          bottleneck: "Foothill Blvd at Marin Ave",
+          eff_cap_vph: 551,
+          project_vehicles: 108,
+          degradation: 0.35,
+          safe_egress_window: 45,
+          applicable: true,
+          controls: true,
+          route_coords: [
+            [37.876, -122.260],
+            [37.875, -122.262],
+            [37.874, -122.264],
+            [37.873, -122.267],
+            [37.872, -122.270],
+            [37.870, -122.273],
+            [37.868, -122.276],
+            [37.867, -122.279]
+          ]
+        },
+        {
+          hazard: "flood",
+          zone: "none",
+          delta_t_min: null,
+          threshold_min: null,
+          applicable: false,
+          controls: false
+        },
+        {
+          hazard: "earthquake",
+          zone: "liquefaction",
+          informational: true,
+          shakemap_mmi: 8,
+          note: "PE-stamped seismic site assessment required (PRC §2690)"
+        }
+      ],
+      controlling_hazard: "wildfire",
+      tier: "DISCRETIONARY"
+    },
+    {
+      id: "p2",
+      name: "Riverside Commons",
+      address: "555 Creek Rd, Demoville",
+      units: 32,
+      stories: 2,
+      lat: 37.870,
+      lon: -122.275,
+      hazard_results: [
+        {
+          hazard: "wildfire",
+          zone: "moderate",
+          delta_t_min: 2.1,
+          threshold_min: 6.0,
+          bottleneck: "Creek Rd at 5th St",
+          eff_cap_vph: 980,
+          project_vehicles: 72,
+          degradation: 0.75,
+          safe_egress_window: 90,
+          applicable: true,
+          controls: false,
+          route_coords: [
+            [37.870, -122.275],
+            [37.871, -122.272],
+            [37.872, -122.269],
+            [37.874, -122.266],
+            [37.876, -122.263],
+            [37.878, -122.260],
+            [37.880, -122.257]
+          ]
+        },
+        {
+          hazard: "flood",
+          zone: "AE",
+          delta_t_min: 14.2,
+          threshold_min: 9.0,
+          bottleneck: "Creek Rd at Highway 1 (inundated; BFE elev. excludes node)",
+          eff_cap_vph: 412,
+          project_vehicles: 72,
+          degradation: 0.40,
+          safe_egress_window: 60,
+          applicable: true,
+          controls: true,
+          route_coords: [
+            [37.870, -122.275],
+            [37.869, -122.272],
+            [37.867, -122.270],
+            [37.865, -122.267],
+            [37.863, -122.263],
+            [37.861, -122.258],
+            [37.860, -122.253]
+          ]
+        },
+        {
+          hazard: "earthquake",
+          zone: "liquefaction",
+          informational: true,
+          shakemap_mmi: 8,
+          note: "PE-stamped seismic site assessment required (PRC §2690)"
+        }
+      ],
+      controlling_hazard: "flood",
+      tier: "DISCRETIONARY"
+    }
+  ]
+};
+
+/* ============================================================
+   Hazard palette + metadata
+   ============================================================ */
+const HAZARDS = {
+  wildfire:   { name: "Wildfire",   color: "#d62728", swatchClass: "swatch-wildfire",   informational: false },
+  flood:      { name: "Flood",      color: "#1f77b4", swatchClass: "swatch-flood",      informational: false },
+  tsunami:    { name: "Tsunami",    color: "#17becf", swatchClass: "swatch-tsunami",    informational: false },
+  dam:        { name: "Dam Failure",color: "#9467bd", swatchClass: "swatch-dam",        informational: false },
+  hazmat:     { name: "Gas / Hazmat (PIR)", color: "#bcbd22", swatchClass: "swatch-hazmat", informational: false },
+  landslide:  { name: "Landslide",  color: "#8c564b", swatchClass: "swatch-landslide",  informational: false },
+  earthquake: { name: "Earthquake", color: "#7f7f7f", swatchClass: "swatch-earthquake", informational: true,
+                tooltip: "Informational only — does not affect determination. Separate PE-stamped seismic site assessment required (PRC §2690)." }
+};
+
+/* ============================================================
+   Map setup
+   ============================================================ */
+const map = L.map('map').setView([37.873, -122.268], 14);
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+  attribution: '© OpenStreetMap contributors',
+  maxZoom: 19
+}).addTo(map);
+
+/* ============================================================
+   Hazard polygon layers
+   ============================================================ */
+const hazardLayers = {};
+
+function buildHazardLayer(hazardKey) {
+  const features = (JOSH_DATA.hazard_polygons[hazardKey] || []);
+  if (!features.length) return null;
+  const meta = HAZARDS[hazardKey];
+
+  const layer = L.geoJSON({ type: "FeatureCollection", features }, {
+    style: feat => {
+      if (hazardKey === "earthquake") {
+        return {
+          color: "#555",
+          weight: 1,
+          opacity: 0.7,
+          dashArray: "4,4",
+          fillOpacity: 1,
+          fillColor: "#7f7f7f"
+        };
+      }
+      if (hazardKey === "flood" && feat.properties.zone === "VE") {
+        return {
+          color: meta.color, weight: 2, opacity: 0.9,
+          fillColor: meta.color, fillOpacity: 0.3
+        };
+      }
+      return {
+        color: meta.color, weight: 2, opacity: 0.9,
+        fillColor: meta.color, fillOpacity: 0.25
+      };
+    },
+    onEachFeature: (feat, lyr) => {
+      lyr.bindTooltip(`<b>${meta.name}</b><br>${feat.properties.name || feat.properties.zone}`,
+                      { sticky: true });
+    }
+  });
+
+  // earthquake → swap fill to SVG pattern after the layer renders
+  layer.on('add', () => {
+    if (hazardKey === "earthquake") {
+      layer.eachLayer(l => {
+        if (l._path) l._path.setAttribute('fill', 'url(#quakeHatch)');
+      });
+    }
+  });
+
+  return layer;
+}
+
+JOSH_DATA.applicable_hazards.forEach(h => {
+  const lyr = buildHazardLayer(h);
+  if (lyr) hazardLayers[h] = lyr;
+});
+
+// add all to map by default
+Object.values(hazardLayers).forEach(l => l.addTo(map));
+
+/* ============================================================
+   Panel A: hazard layer panel
+   ============================================================ */
+function buildHazardPanel() {
+  const container = document.getElementById('hazard-layers');
+  container.innerHTML = '';
+  JOSH_DATA.applicable_hazards.forEach(h => {
+    const meta = HAZARDS[h];
+    const row = document.createElement('div');
+    row.className = 'hazard-row';
+    row.innerHTML = `
+      <input type="checkbox" id="layer-${h}" checked>
+      <span class="hazard-swatch ${meta.swatchClass}"></span>
+      <label for="layer-${h}">${meta.name}</label>
+      ${meta.informational ? `<span class="info-pill" title="${meta.tooltip}">info only</span>` : ''}
+    `;
+    container.appendChild(row);
+    row.querySelector('input').addEventListener('change', e => {
+      const layer = hazardLayers[h];
+      if (!layer) return;
+      if (e.target.checked) layer.addTo(map);
+      else map.removeLayer(layer);
+    });
+  });
+}
+
+/* ============================================================
+   Project markers + popups
+   ============================================================ */
+const projectMarkers = {};
+
+function makePinIcon(color, selected) {
+  return L.divIcon({
+    className: 'josh-pin-wrapper',
+    iconSize: [30, 42],
+    iconAnchor: [15, 42],
+    popupAnchor: [0, -36],
+    html: `<div class="josh-pin${selected ? ' selected' : ''}" style="background:${color}"></div>`
+  });
+}
+
+function buildProjectMarkers() {
+  JOSH_DATA.projects.forEach(p => {
+    const meta = HAZARDS[p.controlling_hazard];
+    const marker = L.marker([p.lat, p.lon], { icon: makePinIcon(meta.color, false) }).addTo(map);
+    marker.bindTooltip(p.name, { direction: 'top', offset: [0, -36] });
+    marker.on('click', () => selectProject(p.id));
+    projectMarkers[p.id] = marker;
+    marker._hazardColor = meta.color;
+  });
+}
+
+/* ============================================================
+   Panel B: project selector dropdown + single-project detail
+   ============================================================ */
+function buildProjectSelector() {
+  const sel = document.getElementById('project-select');
+  sel.innerHTML = JOSH_DATA.projects.map(p =>
+    `<option value="${p.id}">${p.name}</option>`
+  ).join('');
+}
+
+function tierClass(tier) {
+  const t = (tier || '').toUpperCase();
+  if (t.includes('STANDARD CONDITIONS')) return 'mws';
+  if (t === 'MINISTERIAL') return 'ministerial';
+  return ''; // DISCRETIONARY (red default)
+}
+
+function renderProjectDetail(p) {
+  const tierCls = tierClass(p.tier);
+  const hazardListItems = p.hazard_results.map(hr => {
+    const meta = HAZARDS[hr.hazard];
+    if (hr.informational) {
+      return `<li class="hz-info">
+        <span class="dot" style="background:${meta.color}"></span>
+        ${meta.name} — informational (${hr.zone} zone)
+      </li>`;
+    }
+    if (!hr.applicable) {
+      return `<li style="color:#aaa;font-style:italic">
+        <span class="dot" style="background:${meta.color};opacity:0.4"></span>
+        ${meta.name} — not applicable
+      </li>`;
+    }
+    const fails = hr.delta_t_min > hr.threshold_min;
+    const icon = hr.controls ? '⚠' : (fails ? '⚠' : '✓');
+    return `<li class="${hr.controls ? 'hz-ctrl' : ''}">
+      <span class="dot" style="background:${meta.color}"></span>
+      ${meta.name} — ΔT ${hr.delta_t_min.toFixed(1)} / ${hr.threshold_min.toFixed(2)} min ${icon}${hr.controls ? ' <span style="color:#888;font-weight:400">(controlling)</span>' : ''}
+    </li>`;
+  }).join('');
+
+  return `
+    <div class="pd-header">
+      <div class="pd-name">${p.name}</div>
+      <div class="pd-addr">${p.address}</div>
+      <div class="pd-meta">${p.units} units • ${p.stories} stories</div>
+    </div>
+
+    <div class="tier-line ${tierCls}">
+      ${p.tier}
+      <span class="driven">driven by ${HAZARDS[p.controlling_hazard].name}</span>
+    </div>
+
+    <div class="pd-section">
+      <div class="pd-section-label">ΔT vs threshold</div>
+      <div class="dt-chart">${renderDtChart(p)}</div>
+    </div>
+
+    <div class="pd-section">
+      <div class="pd-section-label">Hazard scenario shown on map</div>
+      <div id="scenario-body"></div>
+    </div>
+
+    <div class="pd-section">
+      <div class="pd-section-label">Hazards evaluated</div>
+      <ul class="pd-hazard-list">${hazardListItems}</ul>
+    </div>
+
+    <button class="pd-open-brief" onclick="openBrief('${p.id}')">Open Brief →</button>
+  `;
+}
+
+function renderDtChart(p) {
+  // skip informational hazards
+  const rows = p.hazard_results
+    .filter(hr => !hr.informational)
+    .map(hr => {
+      if (!hr.applicable) {
+        return `<div class="dt-row na" title="${HAZARDS[hr.hazard].name}: not applicable in this zone">
+          <span class="dt-label">${HAZARDS[hr.hazard].name}</span>
+          <div class="dt-bar-track"></div>
+          <span class="dt-value">n/a</span>
+        </div>`;
+      }
+      const ratio = hr.delta_t_min / hr.threshold_min;
+      const isFail = ratio > 1.0;
+      // x-axis: 0..3 maps to 0..100%; threshold line at 33.3%
+      const widthPct = Math.min(ratio / 3.0, 1.0) * 100;
+      const ctrlCls = hr.controls ? ' controls' : '';
+      const tooltip = `${HAZARDS[hr.hazard].name} (${hr.zone}) — ΔT ${hr.delta_t_min.toFixed(1)} min vs ${hr.threshold_min.toFixed(2)} min threshold. Bottleneck: ${hr.bottleneck}`;
+      return `<div class="dt-row" title="${tooltip}">
+        <span class="dt-label">${HAZARDS[hr.hazard].name}</span>
+        <div class="dt-bar-track">
+          <div class="dt-bar ${isFail ? 'fail' : 'pass'}${ctrlCls}" style="width:${widthPct.toFixed(1)}%"></div>
+        </div>
+        <span class="dt-value ${isFail ? 'fail' : ''}">${ratio.toFixed(2)}× ${hr.controls ? '◀' : ''}</span>
+      </div>`;
+    }).join('');
+  return rows;
+}
+
+/* ============================================================
+   AntPath — animated dashed polyline (no plugin)
+   ============================================================ */
+let activeAntPath = null;
+let activeAntTimer = null;
+
+function clearAntPath() {
+  if (activeAntTimer) { clearInterval(activeAntTimer); activeAntTimer = null; }
+  if (activeAntPath) { map.removeLayer(activeAntPath); activeAntPath = null; }
+}
+
+function drawAntPath(coords, color, caption) {
+  clearAntPath();
+  if (!coords || coords.length < 2) return;
+  const line = L.polyline(coords, {
+    color,
+    weight: 5,
+    opacity: 0.95,
+    dashArray: '12, 14',
+    lineCap: 'round'
+  }).addTo(map);
+  activeAntPath = line;
+  let offset = 0;
+  activeAntTimer = setInterval(() => {
+    offset = (offset + 1) % 26;
+    if (line._path) line._path.setAttribute('stroke-dashoffset', -offset);
+  }, 50);
+  // background underline (static, thinner) so the dashed path reads clearly
+  const bg = L.polyline(coords, { color, weight: 2, opacity: 0.35 }).addTo(map);
+  line._bg = bg;
+  line.on('remove', () => map.removeLayer(bg));
+}
+
+/* ============================================================
+   Selection logic
+   ============================================================ */
+let selectedProjectId = null;
+let selectedHazard = null; // which hazard's route is shown
+
+function selectProject(pid) {
+  const p = JOSH_DATA.projects.find(x => x.id === pid);
+  if (!p) return;
+  selectedProjectId = pid;
+  selectedHazard = p.controlling_hazard;
+
+  // sync dropdown
+  const sel = document.getElementById('project-select');
+  if (sel && sel.value !== pid) sel.value = pid;
+
+  // marker emphasis: re-skin selected pin with focus ring
+  Object.entries(projectMarkers).forEach(([id, m]) => {
+    m.setIcon(makePinIcon(m._hazardColor, id === pid));
+  });
+
+  // render detail panel
+  document.getElementById('project-detail').innerHTML = renderProjectDetail(p);
+  buildScenarioPanel(p);
+
+  // ant path
+  refreshRoute();
+}
+
+function refreshRoute() {
+  const p = JOSH_DATA.projects.find(x => x.id === selectedProjectId);
+  if (!p) { clearAntPath(); return; }
+  const hr = p.hazard_results.find(r => r.hazard === selectedHazard);
+  if (!hr || !hr.applicable || !hr.route_coords) { clearAntPath(); return; }
+  drawAntPath(hr.route_coords, HAZARDS[selectedHazard].color);
+  updateScenarioCaption(p, hr);
+}
+
+/* ============================================================
+   Panel C: scenario selector
+   ============================================================ */
+function buildScenarioPanel(p) {
+  const body = document.getElementById('scenario-body');
+  if (!body) return;
+  // applicable, non-informational hazards
+  const opts = p.hazard_results.filter(h => h.applicable && !h.informational);
+  const radios = opts.map(hr => {
+    const isCtrl = hr.controls;
+    const checked = hr.hazard === selectedHazard ? 'checked' : '';
+    return `<label class="scenario-radio">
+      <input type="radio" name="scenario-${p.id}" value="${hr.hazard}" ${checked}
+             onchange="onScenarioChange('${hr.hazard}')">
+      <span style="display:inline-block;width:10px;height:10px;background:${HAZARDS[hr.hazard].color};border-radius:50%;margin-right:6px"></span>
+      ${HAZARDS[hr.hazard].name} <span style="color:#888;font-size:11px;margin-left:4px">(${hr.zone})</span>
+      ${isCtrl ? '<span class="badge">controlling</span>' : ''}
+    </label>`;
+  }).join('');
+  body.innerHTML = `${radios}<div class="scenario-caption" id="scenario-caption"></div>`;
+}
+
+function updateScenarioCaption(p, hr) {
+  const el = document.getElementById('scenario-caption');
+  if (!el) return;
+  let detail = '';
+  if (hr.hazard === 'flood') {
+    detail = 'BFE-elevation filter excludes inundated nodes from the graph; route diverts south away from Creek Rd at Highway 1.';
+  } else if (hr.hazard === 'wildfire') {
+    detail = 'FHSZ filter retains all nodes; standard egress capacity applies with the wildfire degradation factor.';
+  } else {
+    detail = 'Standard egress capacity applies with the per-hazard degradation factor.';
+  }
+  el.innerHTML = `<b>Showing:</b> ${HAZARDS[hr.hazard].name} route ${hr.controls ? '<i>(controlling)</i>' : '<i>(non-controlling)</i>'}. ${detail}`;
+}
+
+function onScenarioChange(hazardKey) {
+  selectedHazard = hazardKey;
+  refreshRoute();
+}
+
+/* ============================================================
+   Modal — brief with sections A/B/C/D
+   ============================================================ */
+function openBrief(pid) {
+  const p = JOSH_DATA.projects.find(x => x.id === pid);
+  if (!p) return;
+
+  // Section A
+  const sectionA = `
+    <h3><span class="section-letter">A</span>Applicability Threshold</h3>
+    <p style="font-size:13px;line-height:1.5;margin:6px 0">
+      Project size: <b>${p.units} units</b>, <b>${p.stories} stories</b>.
+      ${p.units >= 15 ? `<b>${p.units} ≥ 15</b> — Objective Standard 1 (Evacuation Clearance) <b>applies</b>.`
+                       : `${p.units} &lt; 15 — Standard 1 does not apply.`}
+    </p>
+  `;
+
+  // Section B — site parameters per hazard
+  const siteRows = p.hazard_results
+    .filter(h => !h.informational)
+    .map(h => {
+      if (!h.applicable) {
+        return `<tr><td>${HAZARDS[h.hazard].name}</td><td colspan="4" style="color:#aaa;font-style:italic">not applicable in zone of record</td></tr>`;
+      }
+      return `<tr>
+        <td>${HAZARDS[h.hazard].name}</td>
+        <td>${h.zone}</td>
+        <td>${h.degradation.toFixed(2)}</td>
+        <td>${h.safe_egress_window} min</td>
+        <td>${h.threshold_min.toFixed(2)} min</td>
+      </tr>`;
+    }).join('');
+
+  const sectionB = `
+    <h3><span class="section-letter">B</span>Site Parameters (per hazard)</h3>
+    <table>
+      <tr><th>Hazard</th><th>Zone</th><th>Degradation</th><th>Egress window</th><th>ΔT threshold</th></tr>
+      ${siteRows}
+    </table>
+  `;
+
+  // Section C — evacuation clearance analysis
+  const evacRows = p.hazard_results
+    .filter(h => !h.informational)
+    .map(h => {
+      if (!h.applicable) {
+        return `<tr><td>${HAZARDS[h.hazard].name}</td><td colspan="6" style="color:#aaa;font-style:italic">not applicable</td></tr>`;
+      }
+      const fails = h.delta_t_min > h.threshold_min;
+      const ctrlCls = h.controls ? 'controls' : '';
+      const pill = fails ? `<span class="fail-pill">FAIL${h.controls ? ' (controls)' : ''}</span>` : `<span class="pass-pill">PASS</span>`;
+      return `<tr class="${ctrlCls}">
+        <td>${HAZARDS[h.hazard].name}</td>
+        <td>${h.bottleneck}</td>
+        <td>${h.eff_cap_vph} vph</td>
+        <td>${h.project_vehicles}</td>
+        <td>${h.delta_t_min.toFixed(1)} min</td>
+        <td>${h.threshold_min.toFixed(2)} min</td>
+        <td>${pill}</td>
+      </tr>`;
+    }).join('');
+
+  const sectionC = `
+    <h3><span class="section-letter">C</span>Evacuation Clearance Analysis (per hazard)</h3>
+    <table>
+      <tr>
+        <th>Hazard</th><th>Bottleneck</th><th>Eff. capacity</th>
+        <th>Project veh.</th><th>ΔT</th><th>Threshold</th><th>Pass / Fail</th>
+      </tr>
+      ${evacRows}
+    </table>
+    <p style="font-size:11px;color:#888;margin-top:6px">
+      Controlling hazard determines the tier. Most-restrictive-wins logic per JOSH §6.
+    </p>
+  `;
+
+  // Section D — hazards excluded (informational)
+  const excluded = p.hazard_results.filter(h => h.informational);
+  const sectionD = excluded.length ? `
+    <h3><span class="section-letter">D</span>Hazards Excluded (informational only)</h3>
+    ${excluded.map(h => `
+      <div class="exclusion">
+        <strong>${HAZARDS[h.hazard].name}:</strong>
+        ${h.zone === 'liquefaction' ? 'Liquefaction zone (CGS SHZ).' : ''}
+        ${h.shakemap_mmi ? `ShakeMap MMI ${h.shakemap_mmi}.` : ''}
+        Separate PE-stamped seismic site assessment required under PRC §2690.
+        Not factored into tier determination per JOSH methodology v4.12.
+        <span class="citation">Precedent: City of Berkeley AB 747 report (KLD Engineering, 2024) treats earthquake as descriptive overlay only.</span>
+      </div>
+    `).join('')}
+  ` : '';
+
+  // Determination line — tier class drives color (red / amber / green)
+  const ctrl = p.hazard_results.find(h => h.controls);
+  const detCls = tierClass(p.tier);
+  const determination = ctrl ? `
+    <div class="determination ${detCls}">
+      ${p.tier} <span style="font-weight:400">(controlled by ${HAZARDS[ctrl.hazard].name})</span>
+      <span class="reason">
+        ${HAZARDS[ctrl.hazard].name} — ${ctrl.zone}: ΔT ${ctrl.delta_t_min.toFixed(1)} min exceeds ${ctrl.threshold_min.toFixed(2)} min threshold.
+        Controlling bottleneck: ${ctrl.bottleneck}.
+      </span>
+    </div>
+  ` : `
+    <div class="determination ministerial">
+      MINISTERIAL — all applicable hazards pass thresholds.
+    </div>
+  `;
+
+  document.getElementById('brief-modal-body').innerHTML = `
+    <button class="modal-close" onclick="closeBrief()">&times;</button>
+    <h2>${p.name} — Objective Standards Brief</h2>
+    <div class="modal-sub">${p.address} · ${p.units} units · ${p.stories} stories · ${JOSH_DATA.city}</div>
+    ${sectionA}
+    ${sectionB}
+    ${sectionC}
+    ${sectionD}
+    ${determination}
+  `;
+  document.getElementById('brief-modal').classList.add('visible');
+}
+
+function closeBrief() {
+  document.getElementById('brief-modal').classList.remove('visible');
+}
+
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') closeBrief();
+});
+
+/* ============================================================
+   Panel collapse helper
+   ============================================================ */
+function togglePanel(id) {
+  document.getElementById(id).classList.toggle('collapsed');
+}
+
+/* ============================================================
+   Init
+   ============================================================ */
+buildHazardPanel();
+buildProjectSelector();
+buildProjectMarkers();
+// Pre-select the first project so the panel is populated on load.
+if (JOSH_DATA.projects.length) selectProject(JOSH_DATA.projects[0].id);
+</script>
+
+</body>
+</html>
