@@ -4784,6 +4784,9 @@ if (typeof module !== "undefined" && module.exports) {
   .mhz-sb-header .sub { display:block; font-size:10px; font-weight:400; text-transform:none; letter-spacing:0; color:rgba(255,255,255,0.75); margin-top:2px; }
   .mhz-sb-scroll    { flex:1; overflow-y:auto; }
   .mhz-panel        { border-bottom:1px solid #dee2e6; background:#fff; }
+  .mhz-panel.collapsed .mhz-panel-body { display:none; }
+  .mhz-panel.collapsed .mhz-panel-head .caret { transform:rotate(-90deg); }
+  .mhz-panel-head .caret { display:inline-block; transition:transform 0.15s; }
   .mhz-panel-head   { padding:10px 14px; font-weight:700; font-size:10px; letter-spacing:0.10em; text-transform:uppercase; color:#868e96; background:#f8f9fa; border-bottom:1px solid #e9ecef; display:flex; justify-content:space-between; cursor:pointer; user-select:none; }
   .mhz-panel-body   { padding:10px 14px 12px; }
   .mhz-hz-row       { display:flex; align-items:center; padding:5px 0; font-size:12px; color:#212529; }
@@ -4806,6 +4809,8 @@ if (typeof module !== "undefined" && module.exports) {
 
   .mhz-tier         { font-size:13px; font-weight:700; padding:10px 12px; border-radius:4px; margin:4px 0 14px; background:#fdf2f2; border-left:4px solid #c0392b; color:#c0392b; letter-spacing:0.02em; }
   .mhz-tier .driven { display:block; font-weight:400; font-size:11px; color:#212529; opacity:0.75; margin-top:2px; letter-spacing:0; }
+  .mhz-tier.mws         { background:#fffbf0; border-left-color:#d67c00; color:#d67c00; }
+  .mhz-tier.ministerial { background:#f0faf4; border-left-color:#27ae60; color:#27ae60; }
 
   .mhz-section-h    { font-size:10px; font-weight:700; letter-spacing:0.08em; text-transform:uppercase; color:#868e96; margin:14px 0 6px; }
   .mhz-dt-row       { display:flex; align-items:center; margin-bottom:8px; font-size:11px; }
@@ -4839,7 +4844,7 @@ if (typeof module !== "undefined" && module.exports) {
   .mhz-brief-btn:hover { background:#15405e; }
 
   /* Brief modal */
-  .mhz-modal-overlay { position:fixed; inset:0; background:rgba(0,0,0,0.5); z-index:2000; display:none; align-items:flex-start; justify-content:center; padding:28px 16px; overflow-y:auto; font-family:system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif; color:#212529; }
+  .mhz-modal-overlay { position:fixed; inset:0; background:rgba(0,0,0,0.5); z-index:10002; display:none; align-items:flex-start; justify-content:center; padding:28px 16px; overflow-y:auto; font-family:system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif; color:#212529; }
   .mhz-modal-overlay.open { display:flex; }
   .mhz-modal        { background:#fff; border:1px solid #dee2e6; border-radius:8px; max-width:880px; width:100%; box-shadow:0 12px 32px rgba(0,0,0,0.18); position:relative; overflow:hidden; }
   .mhz-modal-header { background:#1c4a6e; color:#fff; padding:22px 28px 18px; }
@@ -4886,8 +4891,8 @@ if (typeof module !== "undefined" && module.exports) {
   <div class="mhz-sb-scroll">
 
     <div class="mhz-panel">
-      <div class="mhz-panel-head">
-        <span>Hazard Layers</span><span>&#9662;</span>
+      <div class="mhz-panel-head" onclick="this.parentElement.classList.toggle(&quot;collapsed&quot;)">
+        <span>Hazard Layers</span><span class="caret">&#9662;</span>
       </div>
       <div class="mhz-panel-body">
         <div class="mhz-hz-row">
@@ -4910,15 +4915,15 @@ if (typeof module !== "undefined" && module.exports) {
     </div>
 
     <div class="mhz-panel">
-      <div class="mhz-panel-head">
-        <span>Project</span><span>&#9662;</span>
+      <div class="mhz-panel-head" onclick="this.parentElement.classList.toggle(&quot;collapsed&quot;)">
+        <span>Project</span><span class="caret">&#9662;</span>
       </div>
       <div class="mhz-panel-body">
         <select class="mhz-proj-select">
           <option>Hillview Terrace Apartments (48 units)</option>
           <option>Cedar Street Infill (120 units)</option>
           <option>University Ave Mixed-Use (75 units)</option>
-          <option>Telegraph &amp; Bancroft (25 units)</option>
+          <option>Telegraph and Bancroft (25 units)</option>
         </select>
 
         <div class="mhz-proj-name">Hillview Terrace Apartments</div>
@@ -5059,6 +5064,149 @@ if (typeof module !== "undefined" && module.exports) {
     </div>
   </div>
 </div>
+<script id="mhz-mockup-wiring">
+(function () {
+  var PROJECTS = {
+    "Hillview Terrace Apartments (48 units)": {
+      name: "Hillview Terrace Apartments",
+      addr: "1234 Foothill Blvd, Berkeley",
+      units: 48, stories: 3,
+      meta: "VHFHSZ \u00B7 1 EGRESS \u00B7 SEEDED BY PIPELINE",
+      tier: "DISCRETIONARY", driven: "Wildfire", controlling: "wildfire",
+      wf: { dt: 11.8, thr: 2.25, w: 97 },
+      fl: { dt: 1.1,  thr: 9.00, w: 4  }
+    },
+    "Cedar Street Infill (120 units)": {
+      name: "Cedar Street Infill",
+      addr: "2345 Cedar St, Berkeley",
+      units: 120, stories: 4,
+      meta: "NON-FHSZ \u00B7 2 EGRESS \u00B7 SEEDED BY PIPELINE",
+      tier: "DISCRETIONARY", driven: "Flood", controlling: "flood",
+      wf: { dt: 2.1,  thr: 6.00, w: 12 },
+      fl: { dt: 14.2, thr: 9.00, w: 47 }
+    },
+    "University Ave Mixed-Use (75 units)": {
+      name: "University Ave Mixed-Use",
+      addr: "1500 University Ave, Berkeley",
+      units: 75, stories: 5,
+      meta: "MODERATE FHSZ \u00B7 2 EGRESS \u00B7 SEEDED BY PIPELINE",
+      tier: "MINISTERIAL WITH STANDARD CONDITIONS", driven: "Wildfire", controlling: "wildfire",
+      wf: { dt: 4.8, thr: 6.00, w: 27 },
+      fl: { dt: 0.8, thr: 9.00, w: 3  }
+    },
+    "Telegraph and Bancroft (25 units)": {
+      name: "Telegraph & Bancroft",
+      addr: "2500 Telegraph Ave, Berkeley",
+      units: 25, stories: 2,
+      meta: "NON-FHSZ \u00B7 2 EGRESS \u00B7 SEEDED BY PIPELINE",
+      tier: "MINISTERIAL", driven: "(no hazard fails)", controlling: "wildfire",
+      wf: { dt: 1.2, thr: 6.00, w: 7 },
+      fl: { dt: 0.4, thr: 9.00, w: 2 }
+    }
+  };
+
+  function $(sel, root) { return (root || document).querySelector(sel); }
+  function $$(sel, root) { return (root || document).querySelectorAll(sel); }
+
+  var sidebar = $("#josh-sidebar");
+  if (!sidebar) return;
+
+  function renderProject(key) {
+    var p = PROJECTS[key];
+    if (!p) return;
+    $(".mhz-proj-name", sidebar).textContent = p.name;
+    $(".mhz-proj-addr", sidebar).textContent = p.addr;
+    $(".mhz-proj-meta", sidebar).textContent = p.meta;
+    var bigs = $$(".mhz-stat .big", sidebar);
+    bigs[0].textContent = p.units;
+    bigs[1].textContent = p.stories;
+
+    var tier = $(".mhz-tier", sidebar);
+    tier.classList.remove("mws");
+    tier.classList.remove("ministerial");
+    if (p.tier === "MINISTERIAL WITH STANDARD CONDITIONS") tier.classList.add("mws");
+    else if (p.tier === "MINISTERIAL") tier.classList.add("ministerial");
+    var drivenSpan = $(".driven", tier);
+    tier.childNodes[0].nodeValue = "\n          " + p.tier + "\n          ";
+    drivenSpan.textContent = "driven by " + p.driven;
+
+    var dtRows = $$(".mhz-dt-row", sidebar);
+    var wfBar = $(".mhz-dt-bar", dtRows[0]);
+    var flBar = $(".mhz-dt-bar", dtRows[1]);
+    var wfFails = p.wf.dt > p.wf.thr;
+    var flFails = p.fl.dt > p.fl.thr;
+    wfBar.className = "mhz-dt-bar " + (wfFails ? "fail" : "pass") + (p.controlling === "wildfire" ? " controls" : "");
+    wfBar.style.width = p.wf.w + "%";
+    flBar.className = "mhz-dt-bar " + (flFails ? "fail" : "pass") + (p.controlling === "flood" ? " controls" : "");
+    flBar.style.width = p.fl.w + "%";
+    var wfVal = $(".mhz-dt-value", dtRows[0]);
+    var flVal = $(".mhz-dt-value", dtRows[1]);
+    wfVal.className = "mhz-dt-value" + (wfFails ? " fail" : "");
+    flVal.className = "mhz-dt-value" + (flFails ? " fail" : "");
+    wfVal.textContent = p.wf.dt.toFixed(1) + " / " + p.wf.thr.toFixed(2) + " min";
+    flVal.textContent = p.fl.dt.toFixed(1) + " / " + p.fl.thr.toFixed(2) + " min";
+
+    var scenBadge = $(".mhz-scen-badge", sidebar);
+    if (scenBadge) scenBadge.textContent = (p.controlling === "flood") ? "Flood" : "Wildfire";
+
+    var liItems = $$(".mhz-hz-list li", sidebar);
+    var entries = [ ["wildfire", 0, p.wf], ["flood", 1, p.fl] ];
+    for (var ei = 0; ei < entries.length; ei++) {
+      var hz = entries[ei][0], idx = entries[ei][1], hd = entries[ei][2];
+      var li = liItems[idx];
+      if (!li) continue;
+      var isCtrl = (p.controlling === hz);
+      var spans = li.querySelectorAll("span");
+      if (spans[1]) spans[1].classList.toggle("hz-ctrl", isCtrl);
+      var existingBadge = li.querySelector(".mhz-scen-badge");
+      if (existingBadge) existingBadge.remove();
+      var dtSpan = null;
+      for (var si = 0; si < spans.length; si++) {
+        var ml = spans[si].style && spans[si].style.marginLeft;
+        if (ml === "auto") { dtSpan = spans[si]; break; }
+      }
+      if (dtSpan) dtSpan.textContent = hd.dt.toFixed(1) + " min";
+      if (isCtrl) {
+        var b = document.createElement("span");
+        b.className = "mhz-scen-badge";
+        b.style.marginLeft = "6px";
+        b.textContent = "controls";
+        li.appendChild(b);
+      }
+    }
+  }
+
+  var sel = $(".mhz-proj-select", sidebar);
+  if (sel) {
+    sel.addEventListener("change", function (e) { renderProject(e.target.value); });
+  }
+
+  var CAPTIONS = {
+    "mhz-scen-ctrl": "Showing controlling-hazard route. Switching scenario re-routes the AntPath through that hazard's degraded graph (e.g. flood drops edges whose nodes are below BFE + 0.5 ft).",
+    "mhz-scen-wf":   "Wildfire scenario: routes through FHSZ-degraded graph; VHFHSZ edges have capacity multiplied by 0.35. The AntPath above (production) shows this route.",
+    "mhz-scen-fl":   "Flood scenario: routes through SFHA-degraded graph; nodes below BFE + 0.5 ft are dropped. Different bottleneck likely; faked here."
+  };
+  var cap = $(".mhz-scen-cap", sidebar);
+  var radios = $$('input[name="mhz-scen"]', sidebar);
+  for (var ri = 0; ri < radios.length; ri++) {
+    radios[ri].addEventListener("change", function () {
+      if (cap && CAPTIONS[this.id]) cap.textContent = CAPTIONS[this.id];
+    });
+  }
+
+  function bindCb(id) {
+    var cb = document.getElementById(id);
+    if (!cb) return;
+    cb.addEventListener("change", function () {
+      var row = cb.closest(".mhz-hz-row");
+      if (row) row.style.opacity = cb.checked ? "1" : "0.4";
+    });
+  }
+  bindCb("mhz-cb-fl");
+  bindCb("mhz-cb-eq");
+})();
+</script>
+
 
 <script id="josh-sidebar-bridge">
 (function () {
