@@ -735,13 +735,13 @@
         var controllingDt   = +(controllingPath.delta_t_minutes || 0);
 
         // Summary line — single-glance answer to "how bad is this?"
-        // v4.13: ΔT color stays project-tier-aware (red when controlling is
-        // flagged; navy otherwise).  Color here describes the determination,
-        // not the individual route.
+        // v4.13: ΔT color is red when the controlling route is flagged, green
+        // when it passes — matches the red/green marching ants on the
+        // interactive map so the brief and the map tell the same visual story.
         var summaryLine = '<div style="font-size:12px; margin-bottom:6px; color:#212529;">' +
           '<strong>' + paths.length + ' route' + (paths.length === 1 ? '' : 's') + ' evaluated</strong>; ' +
           'controlling &Delta;T = <strong style="color:' +
-            (controllingPath.flagged ? '#c0392b' : '#1c4a6e') + '">' +
+            (controllingPath.flagged ? '#c0392b' : '#27ae60') + '">' +
             _f(controllingDt, 2) + ' min</strong> on ' +
           '<em>' + _esc(controllingBnNm) + '</em>.</div>';
 
@@ -796,10 +796,14 @@
             : _esc(bname);
 
           // v4.13 (route-display-ux): only the CONTROLLING row carries
-          // pass/fail color.  Other rows are neutral \u2014 the determination is
-          // project-level, not route-level.
-          var dtColor     = isCtrl ? (flg ? '#c0392b' : '#1c4a6e') : '#495057';
-          var marginColor = isCtrl ? (flg ? '#c0392b' : '#27ae60') : '#6c757d';
+          // pass/fail color (red flagged / green within-threshold), matching
+          // the red/green marching ants on the interactive map.  Non-controlling
+          // rows are neutral \u2014 the determination is project-level, not
+          // route-level, and per-row color would invite the alternative-route
+          // objection (see Legal Defensibility Memo \u00a78.6).
+          var ctrlBadgeColor = flg ? '#e74c3c' : '#27ae60';
+          var dtColor     = isCtrl ? ctrlBadgeColor : '#495057';
+          var marginColor = isCtrl ? ctrlBadgeColor : '#6c757d';
           var marginStr   = flg ? '+' + _f(margin,2) : '\u2212' + _f(Math.abs(margin),2);
 
           var costMin = (+(rr.cost_s || 0)) / 60;
@@ -807,7 +811,7 @@
           var pidCell = isCtrl
             ? "<td style='font-size:10px;color:#868e96'>" + _esc(pid) + "<br>" +
                 "<span style='display:inline-block;font-size:9px;font-weight:700;" +
-                "background:#f59e0b;color:#fff;border-radius:3px;padding:1px 5px;" +
+                "background:" + ctrlBadgeColor + ";color:#fff;border-radius:3px;padding:1px 5px;" +
                 "letter-spacing:0.06em;margin-top:2px;'>CONTROLLING</span></td>"
             : "<td style='font-size:10px;color:#868e96'>" + _esc(pid) + "</td>";
           return "<tr class='" + rowCls + "'>" +

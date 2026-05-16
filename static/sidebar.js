@@ -1213,11 +1213,18 @@
     // User Equilibrium, not a menu of options.  Default view surfaces only the
     // controlling (worst-case) route — the binding evidence for the
     // determination.  "Show all viable routes" reveals the others as faint
-    // context lines.  Per-route color dropped: all routes draw in uniform
-    // JOSH navy; pass/fail color lives on the project tier banner only.
+    // navy context lines (uniform color: context routes are inputs, not
+    // alternatives).
+    //
+    // The controlling route uses red/green to communicate the determination
+    // viscerally: red when it exceeds the ΔT threshold (flagged →
+    // DISCRETIONARY-binding), green when it passes (CONDITIONAL-binding).
+    // Per-route color is safe ONLY on the controlling route because no menu
+    // of options is visible — the route shown IS the determination.
     // See docs/JOSH_Legal_Defensibility_Memo.md §3.6, §8.6.
-    const NAVY       = '#1c4a6e';   // JOSH brand navy — uniform route color
-    const HALO_GOLD  = '#f59e0b';   // amber 500 — controlling-route attention halo
+    const NAVY    = '#1c4a6e';   // context routes — neutral supporting evidence
+    const FAIL    = '#e74c3c';   // controlling route when flagged
+    const PASS    = '#27ae60';   // controlling route when within threshold
     const allPaths   = (project.result.paths || []).slice().sort(
       (a, b) => (+(a.cost_s || 0)) - (+(b.cost_s || 0))
     );
@@ -1237,19 +1244,10 @@
     function _drawOneRoute(path, opts) {
       const coords = path.path_coords || path.coordinates || [];
       if (coords.length < 2) return;
-      // Halo (rendered first so it sits under the main line).
-      if (opts.halo && _antPathFn) {
-        const halo = window.L.polyline(coords, {
-          color: HALO_GOLD, weight: opts.haloWeight, opacity: 0.55,
-          pane: 'joshRoutes',
-        });
-        halo.addTo(map);
-        _routeLayers.push(halo);
-      }
       // Main AntPath.
       if (_antPathFn) {
         const ap = _antPathFn(coords, {
-          color: NAVY, weight: opts.weight, opacity: opts.opacity,
+          color: opts.color, weight: opts.weight, opacity: opts.opacity,
           delay: 1200, dashArray: [10, 20],
           pane: 'joshRoutes',
         });
@@ -1264,7 +1262,7 @@
       const bkEdge = bkMap.get(String(path.bottleneck_osmid || ''));
       if (bkEdge && bkEdge.geom && bkEdge.geom.length >= 2 && typeof window.L !== 'undefined') {
         const bl = window.L.polyline(bkEdge.geom, {
-          color: NAVY, weight: opts.weight + 2, opacity: opts.opacity,
+          color: opts.color, weight: opts.weight + 2, opacity: opts.opacity,
           pane: 'joshRoutes',
         });
         const bnTip = (opts.label || 'Route') + ' bottleneck' +
@@ -1276,14 +1274,17 @@
     }
 
     // Context routes first (so they render under the controlling route).
+    // Uniform navy at low opacity — supporting evidence, not focal.
     contextPaths.forEach(p => _drawOneRoute(p, {
-      weight: 2, opacity: 0.45, halo: false, label: 'Viable route',
+      color: NAVY, weight: 2, opacity: 0.45, label: 'Viable route',
     }));
 
-    // Controlling route last — prominent (thick, full opacity, gold halo).
+    // Controlling route last — prominent (thick, full opacity, red/green
+    // per the determination).
     if (controllingPath) {
+      const ctrlColor = controllingPath.flagged ? FAIL : PASS;
       _drawOneRoute(controllingPath, {
-        weight: 5, opacity: 0.95, halo: true, haloWeight: 11,
+        color: ctrlColor, weight: 5, opacity: 0.95,
         label: 'Controlling route',
       });
     }
@@ -1795,8 +1796,13 @@
           const isOn = isControlling || (showAll && (!toggleSet || toggleSet.has(pid)));
           if (isOn && !isControlling) visibleCount++;
           const exitMin  = (+(path.cost_s || 0)) / 60;
-          // Card chrome \u2014 uniform navy theme; CONTROLLING card distinguished by gold left edge
-          const borderColor = isControlling ? '#f59e0b' : '#cfd6df';
+          // Card chrome.  The controlling card carries the determination color
+          // (red flagged / green within-threshold) so the sidebar matches the
+          // red/green marching ants on the map.  Non-controlling cards use a
+          // neutral gray edge \u2014 they're supporting evidence, not focal.
+          const ctrlColor   = path.flagged ? '#e74c3c' : '#27ae60';
+          const borderColor = isControlling ? ctrlColor : '#cfd6df';
+          const dtColor     = isControlling ? ctrlColor : '#1c4a6e';
           const cardOpacity = isOn ? '1' : '0.45';
 
           html += '<div style="margin-bottom:6px;padding:8px 10px;background:#fafafa;border-radius:6px;' +
@@ -1808,14 +1814,14 @@
                   'letter-spacing:0.04em;">Route ' + (idx + 1) + '</span>';
           if (isControlling) {
             html += '<span style="display:inline-block;font-size:9px;font-weight:700;' +
-                    'background:#f59e0b;color:#fff;border-radius:3px;padding:1px 5px;' +
+                    'background:' + ctrlColor + ';color:#fff;border-radius:3px;padding:1px 5px;' +
                     'letter-spacing:0.06em;">CONTROLLING</span>';
           }
           html +=  '<span style="font-size:11px;color:#888;">' + exitMin.toFixed(1) + ' min exit</span>' +
               '</div>' +
               '<div style="display:flex;align-items:baseline;gap:4px;margin-bottom:' +
                 (path.bottleneck_name ? '4px' : '0') + ';">' +
-                '<span style="font-size:18px;font-weight:700;color:#1c4a6e;line-height:1;">\u0394T ' +
+                '<span style="font-size:18px;font-weight:700;color:' + dtColor + ';line-height:1;">\u0394T ' +
                   (+(path.delta_t || 0)).toFixed(2) + '</span>' +
                 '<span style="font-size:11px;font-weight:600;color:#666;">min</span>' +
               '</div>';
