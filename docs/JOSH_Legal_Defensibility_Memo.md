@@ -323,6 +323,81 @@ Response: Observed evacuation rates from GPS studies (Zhao et al. 2022, Wong et 
 
 The 90% mobilization rate applies this same design principle to the road. It asks: if this building needs to be evacuated, can the road handle the vehicles? The 10% reduction from 100% accounts for households with no vehicle (Census B25044). The standard is designed for the emergency that requires evacuation, not for the average case where many people choose to stay.
 
+### 8.6 "Faster routes exist — use those instead of the worst one."
+
+This is the most frequent developer objection to the methodology. It is also the objection most fully addressed by the legal framework. The response involves four reinforcing arguments.
+
+**The standard is not picking the worst route. It is applying a uniform rule to every route.** The standard is: ΔT > threshold on any viable route → DISCRETIONARY. The rule is applied identically to every route in every project. Two engineers running JOSH on the same coordinates produce the same determination. The objection is therefore not about objectivity — it is about whether the rule's policy direction (conservative) is correct. That is a council-tier question, not a legal-defensibility question.
+
+**The proposed alternative is *less* objective, not more.** A standard that selected "the route evacuees would actually use" would require the city to identify, in each determination, which route counts. That decision could not be reduced to an algorithm — it would inevitably reflect engineering judgment about evacuee behavior, traffic management capacity, and local conditions. The HAA at §65589.5(d)(5) forbids exactly this: "objective" standards must be "uniformly verifiable by reference to an external and uniform benchmark or criterion available and knowable by both the applicant and the public official." The "worst route binds" rule eliminates the discretion that "best route" would require. The objection, taken seriously, would replace JOSH with a less defensible standard, not a more defensible one.
+
+**The methodology adopts the standard traffic-engineering model for evacuation: User Equilibrium.** Under User Equilibrium (Wardrop 1952; codified in HCM Chapter 12 and in every regional transportation model used in California), drivers self-select the route they perceive as fastest. Evacuees distribute across all viable routes. Some take the slow route. *Their* evacuation delay is what the ΔT calculation measures. The alternative model — System Optimum, in which a central authority assigns routes — requires real-time traffic control, intersection staffing, and driver compliance with assigned routes. NIST Technical Note 2135, the Camp Fire reconstruction, documented minute-by-minute that none of these conditions exist during a fast-moving fire: spot fires arrived 40 minutes ahead of the front, fire department resources were consumed by life-safety operations within the first hour, and residents self-evacuated via every available arterial because no one was directing traffic. Importing System Optimum into the standard would require the city to make a finding that its fire department has the operational capacity to assign and enforce routes during a wildfire — a finding that is unverifiable, jurisdiction-specific, and contestable. Such a finding, embedded in the standard, would *destroy* the standard's objectivity under §65589.5(d)(5). User Equilibrium preserves objectivity by making no assumption about traffic management capacity.
+
+**The "weakest link" principle is established engineering practice across fire and building codes.** The Highway Capacity Manual (HCM 2022) evaluates intersection capacity at the most constrained approach, not the average. NFPA 101, Life Safety Code, requires building egress to handle 100% of occupants — and sizes each egress component for its share of the load, not the average load across all components. The International Building Code (IBC) Chapter 10 sets corridor widths and door capacities for the worst occupant load served by each path. AASHTO sight-distance standards calculate stopping distance for the worst alignment, not the typical curve. The "any viable route fails → project fails" rule sits inside this tradition. Courts already defer to these conventions in CEQA, fire-code, and transportation-impact litigation. The objection is implicitly asking the city to deviate from established engineering safety practice — an argument the city is well-positioned to refuse.
+
+**One-sentence summary for the record:** Adopting the developer's preferred "best-route" methodology would require the city to make an unverifiable finding about fire-department operational capacity, replacing an objective standard with discretionary engineering judgment in violation of §65589.5(d)(5).
+
+------
+
+## Sidebar: Explaining the Standard at the Council Table
+
+This sidebar is written for fire chiefs, planning staff, and city attorneys who need to explain the alternative-routes objection — and the standard's response — in language that is direct, accurate, and non-confrontational. The arguments below mirror §8.6 but use the framing of professional engineering practice that public-meeting audiences understand readily.
+
+### The objection, in plain terms
+
+A developer (or council member, or resident) will eventually ask some version of:
+
+> "If there are faster routes available, why can't the project use those? The map shows several routes that pass the test. Why are we using the slowest one to deny ministerial approval?"
+
+This is a reasonable question. It deserves a clear answer, not a legal recitation. The answer involves explaining one concept the audience is already comfortable with from their own life experience and from the fire chief's own professional code.
+
+### The concept: every road has to carry its own load
+
+Use this framing — it works with every audience the authors have presented to:
+
+> "Fire codes don't let us build a building with one big stairway and one small stairway and tell people 'just use the big one.' Every exit has to handle its share. If 200 people are on a floor, both stairways have to be sized to clear those 200 people. Not because everyone will use the small stairway, but because *some people will.* The small stairway has to handle the people who reach it first.
+> 
+> JOSH applies the same principle to evacuation routes. If the project's evacuating vehicles can use two roads — one fast, one slow — some vehicles will end up on the slow one. The slow road has to handle them. The standard asks: can it? If the slow road takes too long to clear, the project's contribution to that road is what fails the test. The fast road isn't 'wrong' — it's just irrelevant to whether the slow road works."
+
+This framing accomplishes several things at once. It (a) anchors the standard in fire-code principles the audience already accepts, (b) avoids the language of "denial" and "discretion" that triggers defensive responses, (c) makes the binding-constraint principle feel obvious in retrospect, and (d) reframes the developer's argument from "your standard is too conservative" to "you're applying the same rule fire chiefs apply to buildings."
+
+### The follow-up: "But couldn't the fire department direct traffic to the fast road?"
+
+This is the next objection. The answer references Paradise without dwelling on the tragedy:
+
+> "The NIST Camp Fire study documented, minute by minute, what actually happens in a fast-moving wildfire evacuation. Spot fires reached Paradise about 40 minutes before the fire front arrived. By that point, the fire department's resources were entirely committed to life-safety operations — getting people out of buildings, escorting people who couldn't drive, dealing with downed lines and burning vehicles. There was no one available to staff intersections and direct traffic.
+> 
+> So residents drove the route they could see. That's User Equilibrium — it's the actual evacuation behavior the standard models. Designing a road capacity standard around a traffic-management assumption we know isn't operationally available would be designing for a scenario that doesn't happen. The standard models the scenario that *does* happen: people pick the route in front of them, and some of those routes are too slow. The standard tells us which projects make those slow routes meaningfully worse."
+
+### The third follow-up: "So what would actually fix this for the developer?"
+
+This is the question that turns the conversation productive. The standard is not a denial — it's a finding that mitigation is required. Spell out the mitigation pathways concretely:
+
+> "The standard identifies a number. The number measures how many minutes the project adds to evacuation clearance on its slowest serving route. To bring the project under the threshold, the developer has several options:
+> 
+> - **Reduce the unit count** — fewer vehicles → smaller ΔT contribution.
+> - **Modify the building design** — fewer stories (under 4) eliminates the NFPA 101 egress penalty entirely.
+> - **Provide secondary road access** — a second egress changes the bottleneck.
+> - **Fund road capacity improvements** — widening, signal changes, or new connections that raise the bottleneck's capacity.
+> 
+> Any of these brings the project within the threshold. The standard isn't a wall — it's a number that tells the developer what needs to change and by how much. That's what an objective standard is supposed to do."
+
+This is the most important framing. It moves the conversation from "the city is denying my project" to "the standard tells us what we need to do." It also demonstrates good faith — the city is not trying to stop the project; it is identifying a measurable constraint with measurable solutions.
+
+### Tone notes for the public meeting
+
+- **Lead with the fire-code analogy, not the law.** The HAA framework matters in court, not at the council table. The council and the public respond to professional engineering reasoning.
+- **Cite Paradise specifically when challenged on User Equilibrium.** Most audiences accept that Camp Fire changed how California thinks about wildfire evacuation. The NIST timeline is the authority. Don't argue traffic engineering theory in the abstract — point to the documented record.
+- **Never describe the methodology as "the city's choice."** It is the implementation of national fire codes, federal Census data, state FHSZ designations, and a federally-funded NIST investigation. The city's only choice was to apply published standards to its own geography.
+- **Acknowledge that the developer's intuition is reasonable.** "Why not use the fast route?" is the question every first-time viewer asks. Validating the question before answering it preserves the council's deliberative posture and avoids the appearance that the city is dismissing concerns.
+- **End on mitigation.** The developer wants a path to yes. The standard provides one. Make it explicit.
+
+### What the fire chief is not arguing
+
+The fire chief is not arguing the project should be denied. The fire chief is explaining what an objective safety standard says about the project's evacuation contribution. The DISCRETIONARY tier triggers council review — it does not preclude approval. The council can approve a project that exceeds the threshold by making findings under §65589.5(j)(1). The standard's purpose is to ensure the council has the evidence it needs to make that decision; not to make the decision for them.
+
+Saying this explicitly defuses the perception that the fire chief is opposing housing. The fire chief is providing analysis. The council decides.
+
 ------
 
 ## 9. Strengthening the Record
