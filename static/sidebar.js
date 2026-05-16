@@ -1279,12 +1279,14 @@
       color: NAVY, weight: 2, opacity: 0.45, label: 'Viable route',
     }));
 
-    // Controlling route last — prominent (thick, full opacity, red/green
-    // per the determination).
+    // Controlling route last — prominent (thick, slightly translucent so
+    // the marching ants read as a moving overlay rather than a solid stripe).
+    // Opacity 0.8 matches the pre-v4.12 setting that was tuned for demo
+    // visibility against the citywide basemap + dimmed heatmap.
     if (controllingPath) {
       const ctrlColor = controllingPath.flagged ? FAIL : PASS;
       _drawOneRoute(controllingPath, {
-        color: ctrlColor, weight: 5, opacity: 0.95,
+        color: ctrlColor, weight: 5, opacity: 0.8,
         label: 'Controlling route',
       });
     }
