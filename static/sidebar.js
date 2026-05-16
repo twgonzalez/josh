@@ -1055,8 +1055,27 @@
           }
         });
       }
+      // v4.12 (all-viable-routes): restore citywide heatmap opacity.
+      // _drawRoutes dims overlayPane so per-project routes pop out of the heatmap;
+      // we put it back here so the heatmap is at full intensity when no project
+      // is selected (heatmap is the focus when no route detail is shown).
+      const overlayPane = map.getPane && map.getPane('overlayPane');
+      if (overlayPane) overlayPane.style.opacity = '';
     }
     _routeLayers = [];
+  }
+
+  // v4.12 (all-viable-routes): dedicated pane for per-project AntPaths +
+  // bottleneck overlays.  Placed above the standard overlayPane (400) so
+  // routes render above the citywide heatmap, AND so the heatmap can be
+  // dimmed via overlayPane opacity without affecting the routes.
+  // Idempotent — runs once per page load.
+  function _ensureRoutePane(map) {
+    if (!map || !map.createPane) return;
+    if (map.getPane('joshRoutes')) return;
+    const pane = map.createPane('joshRoutes');
+    pane.style.zIndex = 650;          // above overlayPane (400) and markerShadow (500); below marker (600)
+    pane.style.pointerEvents = 'auto'; // routes remain tooltip-clickable
   }
 
   // Map a JOSH determination tier → Leaflet AwesomeMarkers color keyword.
@@ -1130,6 +1149,12 @@
     if (!project || !project.result) return;
     const map = _getMap();
     if (!map) return;
+    // v4.12 (all-viable-routes): dim the citywide heatmap and render project
+    // routes in a dedicated pane above it.  Without this, routes 3+ at the
+    // tail of the opacity hierarchy vanish into the ~8K heatmap polylines.
+    _ensureRoutePane(map);
+    const overlayPane = map.getPane('overlayPane');
+    if (overlayPane) overlayPane.style.opacity = '0.2';
     // Show the Folium FeatureGroup baked for this project (search radius + route GeoJSON).
     // Pipeline projects carry folium_fg_name → sidebar.js just toggles the pre-baked layer.
     // Browser / reloaded / opened-from-.json projects have no Folium FG — they fall
@@ -1178,9 +1203,11 @@
       const ok       = !path.flagged;
       const pathColor = ok ? '#27ae60' : '#e74c3c';
       // Opacity/weight hierarchy by list position (fastest = brightest).
-      // Bottleneck overlay matches the parent route's opacity.
-      const weight  = idx === 0 ? 4    : idx === 1 ? 3    : 2;
-      const opacity = idx === 0 ? 0.85 : idx === 1 ? 0.60 : 0.35;
+      // v4.12 floor raised from 0.35→0.65 so tail routes remain visible when
+      // the citywide heatmap is in the background; weight gap widened so the
+      // top route still reads as the dominant route.
+      const weight  = idx === 0 ? 5    : idx === 1 ? 4    : 3;
+      const opacity = idx === 0 ? 0.95 : idx === 1 ? 0.80 : 0.65;
       // AntPath for full route.
       // The leaflet-ant-path plugin exposes L.antPath() and L.polyline.antPath()
       // as aliases.  Guard against both in case only one form is available.
@@ -1190,6 +1217,7 @@
       if (_antPathFn) {
         const ap = _antPathFn(coords, {
           color: pathColor, weight: weight, opacity: opacity, delay: 1200, dashArray: [10, 20],
+          pane: 'joshRoutes',
         });
         const tip = 'Route ' + (path.route_id || (idx + 1)) + '  ·  ' +
                     (+(path.delta_t || 0)).toFixed(2) + ' min ' + (ok ? '✓' : '▲');
@@ -1200,7 +1228,10 @@
       // Thick bottleneck segment overlay
       const bkEdge = bkMap.get(String(path.bottleneck_osmid || ''));
       if (bkEdge && bkEdge.geom && bkEdge.geom.length >= 2 && typeof window.L !== 'undefined') {
-        const bl = window.L.polyline(bkEdge.geom, { color: pathColor, weight: weight + 3, opacity: opacity });
+        const bl = window.L.polyline(bkEdge.geom, {
+          color: pathColor, weight: weight + 2, opacity: opacity,
+          pane: 'joshRoutes',
+        });
         const bnTip = 'Route ' + (path.route_id || (idx + 1)) + ' bottleneck' +
                       (path.bottleneck_name ? ': ' + _formatBottleneck(path) : '');
         bl.bindTooltip(bnTip, { sticky: true });
