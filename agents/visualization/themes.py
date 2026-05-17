@@ -71,6 +71,41 @@ WILDFIRE_LABELS = {
 WILDFIRE_LEGEND_LABEL = "Wildfire (FHSZ)"
 
 # ---------------------------------------------------------------------------
+# Flood (FEMA NFHL) — Stage 0 Step 5 mock vocabulary
+# Real FEMA NFHL acquisition lands in Stage 3. Stage 0 emits a hand-crafted
+# SFHA polygon for UI prototyping; this vocabulary holds the production-ready
+# zone/palette/label maps so Stage 3 only swaps the feature data.
+# Zones per FEMA flood-zone codes — see docs/plan-multihazard-stage-0.md §4.0.
+# ---------------------------------------------------------------------------
+
+FLOOD_ZONE_MAP = {
+    "AE": "ae",   # 1% annual chance flood with BFE
+    "A":  "a",    # 1% annual chance flood, no BFE
+    "AO": "ao",   # shallow flooding
+    "VE": "ve",   # coastal high-hazard (wave action)
+    "X":  "x",    # outside SFHA
+}
+
+# Blue family — distinct from FHSZ red/orange so layers compose visually.
+FLOOD_PALETTE = {
+    "ae": "#1f77b4",  # AE — primary blue
+    "a":  "#1f77b4",
+    "ao": "#3399cc",  # shallow — slightly lighter
+    "ve": "#08306b",  # coastal high-hazard — dark blue
+    "x":  "transparent",
+}
+
+FLOOD_LABELS = {
+    "ae": "FEMA NFHL — Zone AE (1% annual flood, BFE shown)",
+    "a":  "FEMA NFHL — Zone A (1% annual flood)",
+    "ao": "FEMA NFHL — Zone AO (shallow flooding)",
+    "ve": "FEMA NFHL — Zone VE (coastal high hazard)",
+    "x":  "FEMA NFHL — Zone X (outside SFHA)",
+}
+
+FLOOD_LEGEND_LABEL = "Flood (FEMA NFHL — mock)"  # "— mock" reminder drops in Stage 3
+
+# ---------------------------------------------------------------------------
 # Determination tier color maps
 # ---------------------------------------------------------------------------
 

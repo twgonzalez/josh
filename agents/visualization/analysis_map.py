@@ -1180,7 +1180,7 @@ def _inject_josh_data_bundle(
         "projects":       projects_data or [],
     }
 
-    # Stage 0 Step 4 [AUTO]: emit hazard_polygons.wildfire under the v2 flag.
+    # Stage 0 Steps 4–5 [AUTO + REVIEW]: emit hazard_polygons under the v2 flag.
     # Pure additive emission — Folium-baked FHSZ rendering continues unchanged
     # through Step 7 (per plan §6.3 Step 3 Option B). Step 8 (Hazard Layers panel)
     # wires this data through HazardPolygonLayer.create() in JS and supersedes
@@ -1188,7 +1188,33 @@ def _inject_josh_data_bundle(
     if multihazard:
         from agents.visualization.themes import (
             WILDFIRE_ZONE_MAP, WILDFIRE_PALETTE, WILDFIRE_LABELS, WILDFIRE_LEGEND_LABEL,
+            FLOOD_ZONE_MAP,    FLOOD_PALETTE,    FLOOD_LABELS,    FLOOD_LEGEND_LABEL,
         )
+        # Step 5 mock flood polygon — bayfront SFHA fixture from the multi-hazard
+        # mockup at output/mockup/multihazard_on_berkeley.html. Coordinates
+        # unchanged from the user-approved visual; real FEMA NFHL acquisition
+        # lands in Stage 3 (FloodAdapter) and replaces this hand-crafted feature.
+        mock_flood_fc = {
+            "type": "FeatureCollection",
+            "features": [
+                {
+                    "type": "Feature",
+                    "properties": {
+                        "FLD_ZONE":   "AE",
+                        "BFE_FT":     10.0,
+                        "STATIC_BFE": 10.0,
+                        "name":       "Bayfront SFHA (Stage 0 mock — replace in Stage 3)",
+                    },
+                    "geometry": {
+                        "type": "Polygon",
+                        "coordinates": [[
+                            [-122.330, 37.880], [-122.305, 37.880], [-122.300, 37.870],
+                            [-122.300, 37.855], [-122.330, 37.855], [-122.330, 37.880],
+                        ]],
+                    },
+                },
+            ],
+        }
         josh_data["hazard_polygons"] = {
             "wildfire": {
                 "feature_collection": fhsz_geojson,
@@ -1197,6 +1223,14 @@ def _inject_josh_data_bundle(
                 "palette":            WILDFIRE_PALETTE,
                 "labels":             WILDFIRE_LABELS,
                 "legend_label":       WILDFIRE_LEGEND_LABEL,
+            },
+            "flood": {
+                "feature_collection": mock_flood_fc,
+                "zone_attribute":     "FLD_ZONE",
+                "zone_map":           FLOOD_ZONE_MAP,
+                "palette":            FLOOD_PALETTE,
+                "labels":             FLOOD_LABELS,
+                "legend_label":       FLOOD_LEGEND_LABEL,
             },
         }
 
