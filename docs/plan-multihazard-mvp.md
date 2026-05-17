@@ -6,10 +6,10 @@
 
 This plan defines the staged path from "wildfire-only JOSH + multi-hazard mockup" to "production-ready multi-hazard MVP." It assumes the architecture, decisions, and visual contract already locked in:
 
-- `docs/multihazard_first_principles.md` — architecture (4-function HazardAdapter, three hazard classes)
+- `docs/multihazard_first_principles.md` — architecture (4-function HazardAdapter, two hazard classes)
 - `docs/multihazard_status.md` — 8 locked decisions + current phase
 - `docs/josh-design-tokens.md` — production design tokens used by Phase 7 UI
-- `output/mockup/multihazard_on_berkeley.html` (worktree `claude/magical-blackburn-f0c875`) — visual contract for the new UX
+- `output/mockup/multihazard_on_berkeley.html` (branch `feature/multi-hazard`) — visual contract for the new UX
 
 ---
 
@@ -103,7 +103,7 @@ main ─────────────────────────
 
 **Scope:** Merge the scaffold + mockup that already exists into main, so the workplan has a stable foundation.
 
-**Already done** (on `claude/magical-blackburn-f0c875` worktree):
+**Already done** (committed on `feature/multi-hazard`):
 - `docs/multihazard_first_principles.md` (architecture memo)
 - `docs/multihazard_status.md` (locked decisions table)
 - `docs/josh-design-tokens.md` (production tokens reference)
@@ -114,7 +114,7 @@ main ─────────────────────────
 - `.claude/agents/multihazard-architect.md` (supervising agent definition)
 
 **Acceptance:**
-- [ ] Worktree branch `claude/magical-blackburn-f0c875` reviewed and merged into `feature/multi-hazard`
+- [ ] `feature/multi-hazard` reviewed and confirmed as the umbrella branch (renamed from chip-created `claude/magical-blackburn-f0c875` 2026-05-16)
 - [ ] Uncommitted main-side scaffold (status doc + first-principles + deprecation banner + this plan) committed onto `feature/multi-hazard` (NOT `main`)
 - [ ] Status doc updated with merge confirmation
 - [ ] Mockup file made discoverable from CLAUDE.md or a README on the feature branch
@@ -586,7 +586,7 @@ If a client running production wildfire-only code is on a fixed cadence, the fea
 ## 17. What we still need before kicking off Stage 1
 
 1. **User sign-off on this plan** — confirm scope, branch strategy, effort estimates are acceptable
-2. **Worktree merge** (Stage 0 — current branch needs to land on main)
+2. **Stage 0 acceptance** — confirm the existing 8 commits on `feature/multi-hazard` represent the baseline; main remains untouched
 3. **Status doc update** — add a "MVP plan" row pointing at this doc; flip the "next up" list to mirror Stage 1 first task
 4. **Snapshot the current Berkeley determinations** as the regression baseline for Stage 1
 
