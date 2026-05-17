@@ -1,10 +1,10 @@
 # Multi-Hazard Extension — Status
 
 **Last updated:** 2026-05-17
-**Phase:** Stage 0 — **COMPLETE** ✅ (all 28 steps shipped; awaiting HARD STOP review before Stage 1)
+**Phase:** Stage 0.5 — Production parity + all-6-hazards mock UI. Phase A (flag removal) ✅ shipped; Phase B (CRUD migration) + Phase C (all 6 hazards) in flight.
 **Supervising agent:** `.claude/agents/multihazard-architect.md`
 **MVP plan:** `docs/plan-multihazard-mvp.md`
-**Active stage plan:** `docs/plan-multihazard-stage-0.md` (28-step sequence — done)
+**Active stage:** Stage 0.5 (3 phases: A=flag removal, B=CRUD migration, C=all-6-hazards mocks)
 **Schema contract:** `docs/josh-data-schema-v2.md` (Stage 1+ gospel)
 
 This document is the single source of truth for where the multi-hazard work stands. Any session working on multi-hazard items must read this first and update it before closing the work.
@@ -116,6 +116,7 @@ Mirrors `docs/plan-ab747-multihazard-research.md` §8. Update as work lands.
 | Stage 0 expanded into UI-first prototype plan | `docs/plan-multihazard-stage-0.md` — 28-step incremental build sequence; locks right-side sidebar (decision #9); adds tsunami-dispositive mock fixture to validate decision #2 rendering before TsunamiAdapter ships. Supersedes the 1-day baseline-merge framing in `plan-multihazard-mvp.md` §3. | 2026-05-17 |
 | Schema design pivot: tagged-union per-hazard result types (decision #11) | After surfacing the per-hazard data requirements (BFE for flood, per-feature arrival times for dam, computed PIR for gas, dispositive for tsunami, TTL for landslide), reversed earlier "fully abstract renderer" stance. Plan §4.0 now documents per-hazard data requirements; §4.2 rewrites `hazard_results[]` as discriminated union; §4.2.1 documents the 4-switch-site renderer rule; §6.3 steps 12/13/15/17/22 updated to switch-based per-case implementation order. | 2026-05-17 |
 | **Stage 0 — UI prototype with mock data — COMPLETE** ✅ | All 28 steps shipped on `feature/multi-hazard`. 22 commits. Production v1 byte-identical to baseline (flag off). v2 mode delivers: right sidebar, Hazard Layers panel + JS polygon rendering, project dropdown, marker-popup suppression, detail card with stat cards + tier banner + per-hazard ΔT bar chart + Hazards Evaluated list + scenario radio + Open Brief button, mock fixtures (4 real + 2 hand-crafted: cedar_st_bayfront_mock flood-controlling, marina_pointe tsunami-dispositive), narrow-viewport bottom drawer. Brief renderer: v1/v2 schema branching + per-hazard B/C tables + Section D excluded + controlling-hazard footer with dispositive variant. Canonical schema doc `docs/josh-data-schema-v2.md` ratified. **All 107 JS tests pass** (27 hazard_polygon_layer + 80 production including 3 new v2 brief vectors). | 2026-05-17 |
+| **Stage 0.5 Phase A — flag removal** ✅ | Retires the `multihazard: bool` city-config field. Pipeline always emits v2 schema + hazard_polygons; sidebar.js always injects the right-side multi-hazard shell; legacy Folium FHSZ render block deleted; app.js schema check tightened to v2-only; left-sidebar div no longer emitted by Python. v1 brief input shape retained inside `brief_renderer.js` only so the 17 v1 brief tests stay green — no runtime path passes v1 input. All 110 JS tests pass. Status: ready for Phase B (CRUD migration onto the right sidebar). | 2026-05-17 |
 
 ## In-flight
 

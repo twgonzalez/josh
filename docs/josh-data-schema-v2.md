@@ -1,7 +1,7 @@
 # JOSH_DATA schema v2 — Multi-Hazard
 
-**Status:** Canonical (ratified by working Stage 0 implementation, 2026-05-17)
-**Supersedes:** v1 (wildfire-only) — see §11 Migration
+**Status:** Canonical (ratified by Stage 0 implementation 2026-05-17; flag
+retired in Stage 0.5 Phase A — multi-hazard is now JOSH's only schema).
 **Authoritative example:** [`static/multihazard_fixtures.js`](../static/multihazard_fixtures.js)
 **Locked decisions:** see `docs/multihazard_status.md` (especially #6, #7, #8, #9, #10, #11)
 
@@ -15,20 +15,20 @@ must produce JSON matching these shapes exactly.
 ## 1. Overview
 
 JOSH_DATA is the per-city data payload inlined into `output/{city}/analysis_map.html`
-as `window.JOSH_DATA`. v2 extends v1 with multi-hazard fields under an explicit
-schema-version discriminator.
+as `window.JOSH_DATA`. Every map produced by the pipeline emits this shape with
+`schema_version: 2`.
 
 ```js
 window.JOSH_DATA = {
-  schema_version: 2,       // 1 (legacy wildfire-only) | 2 (multi-hazard)
+  schema_version: 2,
   ...
 }
 ```
 
-**When v2 applies:** the city config has `multihazard: true`. The pipeline emits
-v2 (`schema_version: 2`) and the browser activates the right-side multi-hazard
-sidebar (`static/sidebar.js`). When the flag is absent or false, v1 is emitted
-and production behavior is preserved.
+There is no v1 runtime path; the `schema_version` field is kept as a
+discriminator so future schema bumps can be staged behind a version check
+without re-introducing a feature flag. The browser `app.js` warns on any
+value other than `2`.
 
 **Why a tagged union for hazard results** (locked decision #11): with six finite
 hazards each carrying genuinely different physics (BFE-elevation for flood,
@@ -40,34 +40,29 @@ bounded cost of 6 explicit switch cases per consumer.
 
 ---
 
-## 2. Top-level JOSH_DATA v2 fields
-
-The v2 root is a superset of v1. All v1 fields below remain present; the **new**
-v2 fields are flagged in the comment column.
+## 2. Top-level JOSH_DATA fields
 
 ```ts
-interface JoshDataV2 {
-  // ── v1 keys (preserved) ──────────────────────────────────────────────────
-  schema_version: 2;                       // discriminator (== 2 for v2)
-  app_js_version: string;                  // e.g. "v1" — bumped on
-                                           // backward-incompatible schema breaks
+interface JoshData {
+  schema_version: 2;                       // discriminator — bumped on a
+                                           // future backward-incompatible schema
+  app_js_version: string;                  // e.g. "v1" — app.js bundle version
   city_name:      string;
   city_slug:      string;
   graph:          GraphPayload;            // OSMnx export (nodes + edges)
   parameters:     ParametersPayload;       // legacy per-zone parameter dict
-  fhsz:           GeoJsonFeatureCollection;// legacy FHSZ singleton (DEPRECATED
-                                           // for v2 consumers — see §3.1)
-  briefs:         { [project_id: string]: string }; // pre-baked v1 HTML;
-                                           // empty {} in v2 (rendered live)
-  projects:       ProjectV2[];             // shape changes per §7
+                                           // (Stage 1+: superseded by
+                                           // hazard_parameters[])
+  fhsz:           GeoJsonFeatureCollection;// transitional — same data as
+                                           // hazard_polygons.wildfire
+  briefs:         {};                      // always empty — briefs rendered live
+  projects:       Project[];               // §7
 
-  // ── v2 NEW keys ──────────────────────────────────────────────────────────
-  applicable_hazards:  HazardId[];         // city-level list of evaluated hazards;
-                                           // e.g. ["wildfire","flood"]
+  applicable_hazards:  HazardId[];         // city-level list of evaluated hazards
   hazard_polygons: {                       // §3
     [hazardId: HazardId]: HazardPolygonRecord
   };
-  hazard_parameters: {                     // §4 — NOT YET EMITTED IN STAGE 0
+  hazard_parameters?: {                    // §4 — planned, not currently emitted
     [hazardId: HazardId]: HazardParametersRecord
   };
 }
@@ -83,14 +78,14 @@ type HazardId =
 
 **Field-by-field:**
 
-| Field | v1 | v2 | Notes |
-|---|---|---|---|
-| `schema_version` | `1` | `2` | Required. Browser engine warns on unsupported values. |
-| `applicable_hazards` | — | string[] | Required. City-level applicability filter; UI iterates this to render hazard layer checkboxes (Step 8). |
-| `hazard_polygons` | — | dict | Required when v2. §3. |
-| `hazard_parameters` | — | dict | **Planned (Stage 1+)** — not currently emitted by the Stage 0 pipeline. §4. |
-| `fhsz` | dict | dict (DEPRECATED) | Retained for v1 fallback. v2 consumers should read `hazard_polygons.wildfire.feature_collection` instead. Removed in a future major version. |
-| `briefs` | dict | `{}` | v2 renders briefs live via `BriefRenderer.render()` (Step 21+) — no pre-baking. |
+| Field | Type | Notes |
+|---|---|---|
+| `schema_version` | `2` | Required. Browser engine warns on any other value. |
+| `applicable_hazards` | `string[]` | Required. City-level applicability filter; UI iterates this to render hazard layer checkboxes. |
+| `hazard_polygons` | dict | Required. §3. |
+| `hazard_parameters` | dict | **Planned (Stage 1+)** — not currently emitted by the pipeline. §4. |
+| `fhsz` | dict | Transitional — same data as `hazard_polygons.wildfire.feature_collection`. Read from `hazard_polygons.wildfire` instead. Removed in a future cleanup. |
+| `briefs` | `{}` | Always empty — briefs are rendered live via `BriefRenderer.render()`. |
 
 ---
 
@@ -415,7 +410,7 @@ Optional = adapter degrades gracefully when missing.
 Each project in `JOSH_DATA.projects[]` carries an `evaluation` field under v2:
 
 ```ts
-interface ProjectV2 {
+interface Project {
   // v1 fields (preserved): id, name, address, lat, lng, units, stories,
   // folium_fg_name, source, etc.
   id:       string;
@@ -515,21 +510,17 @@ reason.
 
 ---
 
-## 11. Migration: v1 deprecated, v2 is the future
+## 11. History — flag retirement
 
-v1 (wildfire-only) is **deprecated** as of Stage 0 close. v2 is the canonical
-schema going forward. Cities migrate when their pipeline run sets
-`multihazard: true` in `cities/{city}.yaml`; Stage 12 of the MVP plan promotes
-the flag to default and removes the v1 code paths from the JS engine.
+The v1 (wildfire-only) schema was active in production through Stage 0. It
+was guarded by an optional `multihazard: bool` field in city configs that
+defaulted to false; when set to true, the pipeline emitted the v2 schema
+fields documented here.
 
-**During the transition** (Stages 1–11 of the MVP plan):
-
-- v1 cities continue to render via `static/app.js` v1 schema check (warns on
-  schema_version not in {1, 2}).
-- v2 cities render the multi-hazard right sidebar + per-hazard bar chart +
-  v2 brief (Section B/C/D + controlling footer).
-- The legacy `JOSH_DATA.fhsz` and `JOSH_DATA.briefs` keys remain present in
-  v2 output for fallback consumers, but are not read by the v2 JS engine.
+The flag was retired in **Stage 0.5 Phase A**. Multi-hazard is JOSH's only
+schema. v1 input shape is retained internally in `static/brief_renderer.js`
+only so the legacy 17 brief renderer tests continue to exercise the v1 input
+contract; no runtime path passes v1 input.
 
 **Stage 1+ work**: Python adapters must produce JSON matching §5 variants
 exactly. The `static/multihazard_fixtures.js` file is the regression target
