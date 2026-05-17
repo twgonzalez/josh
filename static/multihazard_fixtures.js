@@ -268,6 +268,77 @@
           dispositive:           true,
           delta_t_informational: 18.4,
           route_coords:          null
+        },
+        {
+          // Stage 0.5 Phase C — informational, not controlling.
+          // Marina Pointe sits in San Pablo Dam's inundation pathway
+          // (~45 min arrival). Two upstream dams threaten the area.
+          type:              'dam_failure',
+          controls:          false,
+          flagged:           false,
+          zone:              'in_inundation',
+          zone_label:        'In inundation polygon',
+          dams_affecting:    [
+            { name: 'San Pablo Dam', arrival_time_min: 45 },
+            { name: 'Briones Reservoir', arrival_time_min: 90 }
+          ],
+          degradation:       0.40,
+          egress_window_min: 45,
+          threshold:         2.25,  // 45 min × 0.05
+          delta_t:           1.8,
+          bottleneck:        {
+            // Per design pick: bottleneck cell joins all affecting dam names
+            // so the brief Section C row reads coherently.
+            name:        'University Avenue at Frontage Road (San Pablo Dam, Briones)',
+            eff_cap_vph: 680,
+            vehicles:    225
+          },
+          route_coords: null
+        },
+        {
+          // Stage 0.5 Phase C — informational, not controlling.
+          // PG&E I-80 corridor PIR buffer clips the project lot.
+          type:              'gas_hazmat',
+          controls:          false,
+          flagged:           false,
+          in_pir:            true,
+          // Per design pick: zone_label bakes the buffer radius + product in.
+          zone:              'in_pir',
+          zone_label:        'In PIR (660 ft) — natural gas',
+          pir_ft:            660,
+          operator:          'PG&E (mock)',
+          product:           'natural_gas',
+          degradation:       0.50,
+          egress_window_min: 30,
+          threshold:         1.50,  // 30 min × 0.05
+          delta_t:           1.1,
+          bottleneck:        {
+            name:        'University Avenue at Frontage Road',
+            eff_cap_vph: 850,
+            vehicles:    225
+          },
+          route_coords: null
+        },
+        {
+          // Stage 0.5 Phase C — informational, EILZ exposure (statewide
+          // CGS layer covers low-grade slope at the marina edge).
+          type:              'landslide',
+          controls:          false,
+          flagged:           false,
+          zone_type:         'eilz',
+          zone:              'eilz',
+          zone_label:        'CGS EILZ (low-grade slope)',
+          burn_year:         null,
+          degradation:       0.85,
+          egress_window_min: 60,
+          threshold:         3.00,  // 60 min × 0.05
+          delta_t:           1.6,
+          bottleneck:        {
+            name:        'University Avenue at Frontage Road',
+            eff_cap_vph: 1445,
+            vehicles:    225
+          },
+          route_coords: null
         }
       ]
     },

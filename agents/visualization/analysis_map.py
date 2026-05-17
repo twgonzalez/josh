@@ -1161,8 +1161,11 @@ def _inject_josh_data_bundle(
     # docs/plan-multihazard-mvp.md; until then Stage 0 mock fixtures here +
     # static/multihazard_fixtures.js drive the UI.
     from agents.visualization.themes import (
-        WILDFIRE_ZONE_MAP, WILDFIRE_PALETTE, WILDFIRE_LABELS, WILDFIRE_LEGEND_LABEL,
-        FLOOD_ZONE_MAP,    FLOOD_PALETTE,    FLOOD_LABELS,    FLOOD_LEGEND_LABEL,
+        WILDFIRE_ZONE_MAP,    WILDFIRE_PALETTE,    WILDFIRE_LABELS,    WILDFIRE_LEGEND_LABEL,
+        FLOOD_ZONE_MAP,       FLOOD_PALETTE,       FLOOD_LABELS,       FLOOD_LEGEND_LABEL,
+        DAM_FAILURE_ZONE_MAP, DAM_FAILURE_PALETTE, DAM_FAILURE_LABELS, DAM_FAILURE_LEGEND_LABEL,
+        GAS_HAZMAT_ZONE_MAP,  GAS_HAZMAT_PALETTE,  GAS_HAZMAT_LABELS,  GAS_HAZMAT_LEGEND_LABEL,
+        LANDSLIDE_ZONE_MAP,   LANDSLIDE_PALETTE,   LANDSLIDE_LABELS,   LANDSLIDE_LEGEND_LABEL,
     )
     # Bayfront SFHA mock from the multi-hazard mockup. Real FEMA NFHL
     # acquisition lands in Stage 3 (FloodAdapter) and replaces this feature.
@@ -1187,6 +1190,84 @@ def _inject_josh_data_bundle(
             },
         ],
     }
+    # Stage 0.5 Phase C — three additional mock polygons covering the
+    # remaining hazards. Each is a coarse hand-drawn fixture; Stage 7–9
+    # adapters replace them with real DSOD / NPMS / USGS-CGS data.
+
+    # Dam failure: San Pablo Dam inundation polygon. The flat West Berkeley
+    # / North Bayfront area is the realistic downstream pathway. Polygon
+    # overlaps the flood SFHA but extends north and slightly inland.
+    mock_dam_fc = {
+        "type": "FeatureCollection",
+        "features": [
+            {
+                "type": "Feature",
+                "properties": {
+                    "ZONE":             "IN",
+                    "DAM_NAME":         "San Pablo Dam",
+                    "ARRIVAL_TIME_MIN": 45,
+                    "name":             "San Pablo Dam inundation (Stage 0 mock)",
+                },
+                "geometry": {
+                    "type": "Polygon",
+                    "coordinates": [[
+                        [-122.320, 37.895], [-122.290, 37.895], [-122.285, 37.880],
+                        [-122.290, 37.865], [-122.320, 37.865], [-122.330, 37.880],
+                        [-122.320, 37.895],
+                    ]],
+                },
+            },
+        ],
+    }
+    # Gas / hazmat: PG&E transmission line PIR buffer running along the
+    # I-80 corridor in West Berkeley. ~660 ft buffer (HCA Method 2 fallback).
+    mock_gas_fc = {
+        "type": "FeatureCollection",
+        "features": [
+            {
+                "type": "Feature",
+                "properties": {
+                    "ZONE":      "IN_PIR",
+                    "OPERATOR":  "PG&E (mock)",
+                    "PRODUCT":   "natural_gas",
+                    "MAOP_PSIG": None,
+                    "DIAM_IN":   None,
+                    "PIR_FT":    660,
+                    "name":      "PG&E I-80 corridor PIR (Stage 0 mock)",
+                },
+                "geometry": {
+                    "type": "Polygon",
+                    "coordinates": [[
+                        [-122.310, 37.895], [-122.305, 37.895], [-122.295, 37.855],
+                        [-122.300, 37.855], [-122.310, 37.895],
+                    ]],
+                },
+            },
+        ],
+    }
+    # Landslide: CGS EILZ across the Berkeley hills, generally overlapping
+    # the VHFHSZ but extending slightly upslope (steeper terrain).
+    mock_landslide_fc = {
+        "type": "FeatureCollection",
+        "features": [
+            {
+                "type": "Feature",
+                "properties": {
+                    "ZONE":       "EILZ",
+                    "ZONE_TYPE":  "eilz",
+                    "BURN_YEAR":  None,
+                    "name":       "Berkeley Hills EILZ (Stage 0 mock)",
+                },
+                "geometry": {
+                    "type": "Polygon",
+                    "coordinates": [[
+                        [-122.265, 37.905], [-122.235, 37.905], [-122.230, 37.870],
+                        [-122.255, 37.860], [-122.275, 37.880], [-122.265, 37.905],
+                    ]],
+                },
+            },
+        ],
+    }
     josh_data = {
         "schema_version":  2,
         "app_js_version":  _APP_JS_VERSION,
@@ -1199,7 +1280,8 @@ def _inject_josh_data_bundle(
         "fhsz":            fhsz_geojson,
         "briefs":          brief_data,
         "projects":        projects_data or [],
-        "applicable_hazards": ["wildfire", "flood"],
+        "applicable_hazards": ["wildfire", "flood", "tsunami",
+                                "dam_failure", "gas_hazmat", "landslide"],
         "hazard_polygons": {
             "wildfire": {
                 "feature_collection": fhsz_geojson,
@@ -1216,6 +1298,37 @@ def _inject_josh_data_bundle(
                 "palette":            FLOOD_PALETTE,
                 "labels":             FLOOD_LABELS,
                 "legend_label":       FLOOD_LEGEND_LABEL,
+            },
+            # Tsunami has no Berkeley-side mock polygon yet (mockup focused
+            # on Encinitas-style coastal hazard; Berkeley Marina exposure is
+            # handled via marina_pointe's tsunami HazardResult.dispositive
+            # flag without a Tsunami polygon layer). The hazard layers panel
+            # will show a tsunami row only when a polygon is present, so we
+            # omit it from hazard_polygons here. Stage 6 (TsunamiAdapter)
+            # supplies the real CGS THA layer.
+            "dam_failure": {
+                "feature_collection": mock_dam_fc,
+                "zone_attribute":     "ZONE",
+                "zone_map":           DAM_FAILURE_ZONE_MAP,
+                "palette":            DAM_FAILURE_PALETTE,
+                "labels":             DAM_FAILURE_LABELS,
+                "legend_label":       DAM_FAILURE_LEGEND_LABEL,
+            },
+            "gas_hazmat": {
+                "feature_collection": mock_gas_fc,
+                "zone_attribute":     "ZONE",
+                "zone_map":           GAS_HAZMAT_ZONE_MAP,
+                "palette":            GAS_HAZMAT_PALETTE,
+                "labels":             GAS_HAZMAT_LABELS,
+                "legend_label":       GAS_HAZMAT_LEGEND_LABEL,
+            },
+            "landslide": {
+                "feature_collection": mock_landslide_fc,
+                "zone_attribute":     "ZONE",
+                "zone_map":           LANDSLIDE_ZONE_MAP,
+                "palette":            LANDSLIDE_PALETTE,
+                "labels":             LANDSLIDE_LABELS,
+                "legend_label":       LANDSLIDE_LEGEND_LABEL,
             },
         },
     }

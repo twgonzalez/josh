@@ -106,6 +106,82 @@ FLOOD_LABELS = {
 FLOOD_LEGEND_LABEL = "Flood (FEMA NFHL — mock)"  # "— mock" reminder drops in Stage 3
 
 # ---------------------------------------------------------------------------
+# Dam failure (DSOD inundation) — Stage 0.5 Phase C mock vocabulary
+# Real DSOD shapefile + per-dam EAP arrival times land in Stage 7
+# (DamFailureAdapter); zone is binary in/out of inundation polygon.
+# ---------------------------------------------------------------------------
+
+DAM_FAILURE_ZONE_MAP = {
+    "IN":  "in_inundation",
+    "OUT": "outside",
+}
+
+# Purple family — distinct from wildfire red, flood blue.
+DAM_FAILURE_PALETTE = {
+    "in_inundation": "#9467bd",
+    "outside":       "transparent",
+}
+
+DAM_FAILURE_LABELS = {
+    "in_inundation": "DSOD — Inside dam-failure inundation polygon",
+    "outside":       "Outside DSOD inundation",
+}
+
+DAM_FAILURE_LEGEND_LABEL = "Dam Failure (DSOD — mock)"
+
+# ---------------------------------------------------------------------------
+# Gas / hazmat (NPMS pipelines + PIR buffer) — Stage 0.5 Phase C mock vocabulary
+# Real NPMS pipeline acquisition + computed PIR buffer land in Stage 8
+# (GasHazmatAdapter). PIR_FT property on the feature carries the per-segment
+# radius (default 660 ft fallback per HCA Method 2).
+# ---------------------------------------------------------------------------
+
+GAS_HAZMAT_ZONE_MAP = {
+    "IN_PIR":  "in_pir",
+    "OUTSIDE": "outside",
+}
+
+# Burnt-orange family — distinct from flood/dam/landslide.
+GAS_HAZMAT_PALETTE = {
+    "in_pir":  "#e6550d",
+    "outside": "transparent",
+}
+
+GAS_HAZMAT_LABELS = {
+    "in_pir":  "PHMSA — Inside pipeline PIR buffer",
+    "outside": "Outside pipeline PIR",
+}
+
+GAS_HAZMAT_LEGEND_LABEL = "Gas / Hazmat (NPMS — mock)"
+
+# ---------------------------------------------------------------------------
+# Landslide (USGS post-fire DF + CGS EILZ) — Stage 0.5 Phase C mock vocabulary
+# Real per-burn-scar post-fire products + CGS EILZ acquisition land in Stage 9
+# (LandslideAdapter). zone_type discriminates which authority flagged the site.
+# ---------------------------------------------------------------------------
+
+LANDSLIDE_ZONE_MAP = {
+    "POST_FIRE_DF": "post_fire_df",
+    "EILZ":         "eilz",
+    "NONE":         "none",
+}
+
+# Brown family — earth/landslide intuition.
+LANDSLIDE_PALETTE = {
+    "post_fire_df": "#8c564b",
+    "eilz":         "#a0826d",
+    "none":         "transparent",
+}
+
+LANDSLIDE_LABELS = {
+    "post_fire_df": "USGS — Post-fire debris flow basin",
+    "eilz":         "CGS — Earthquake-Induced Landslide Zone",
+    "none":         "No landslide hazard",
+}
+
+LANDSLIDE_LEGEND_LABEL = "Landslide (USGS/CGS — mock)"
+
+# ---------------------------------------------------------------------------
 # Determination tier color maps
 # ---------------------------------------------------------------------------
 

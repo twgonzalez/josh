@@ -2377,9 +2377,34 @@
           flagged:   true,
           controls:  result.controls
         });
-      case 'dam_failure': return '';  // Stage 7
-      case 'gas_hazmat':  return '';  // Stage 8
-      case 'landslide':   return '';  // Stage 9
+      // Stage 0.5 Phase C — three additional hazards. Each delegates to the
+      // standard bar row; hazard-specific data (dam names, PIR ft, burn
+      // year) is baked into bottleneck.name / zone_label by the fixture,
+      // so the bar row needs no special treatment.
+      case 'dam_failure':
+        return _renderStandardBarRow({
+          label:     'Dam Failure',
+          delta_t:   result.delta_t,
+          threshold: result.threshold,
+          flagged:   result.flagged,
+          controls:  result.controls
+        });
+      case 'gas_hazmat':
+        return _renderStandardBarRow({
+          label:     'Gas / Hazmat',
+          delta_t:   result.delta_t,
+          threshold: result.threshold,
+          flagged:   result.flagged,
+          controls:  result.controls
+        });
+      case 'landslide':
+        return _renderStandardBarRow({
+          label:     'Landslide',
+          delta_t:   result.delta_t,
+          threshold: result.threshold,
+          flagged:   result.flagged,
+          controls:  result.controls
+        });
       default:            return '';  // unknown (already caught by merge validator)
     }
   }
@@ -2395,13 +2420,14 @@
     switch (result.type) {
       case 'wildfire':
       case 'flood':
+      case 'dam_failure':
+      case 'gas_hazmat':
+      case 'landslide':
         return _renderStandardHazardListItem(result);
       case 'tsunami':
         return _renderTsunamiHazardListItem(result);
-      case 'dam_failure': return '';  // Stage 7
-      case 'gas_hazmat':  return '';  // Stage 8
-      case 'landslide':   return '';  // Stage 9
-      default:            return '';
+      default:
+        return '';
     }
   }
 
