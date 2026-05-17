@@ -2115,6 +2115,9 @@
   // _mhzCurrentProjectFG: the per-project Folium FeatureGroup currently shown
   // on the map (Stage 0 Step 10). Swapped on dropdown change.
   let _mhzCurrentProjectFG = null;
+  // _mhzSyntheticMarker: fallback marker for mock projects (Step 16+) that
+  // have no production FeatureGroup. Tracked so dropdown change can remove it.
+  let _mhzSyntheticMarker = null;
 
   function _pickHazardSwatchColor(palette) {
     // First non-transparent palette value in dict-insertion order. Themes.py
@@ -2194,25 +2197,31 @@
     const projects = (window.JOSH_DATA && window.JOSH_DATA.projects) || [];
     let merged = 0;
     let rejected = 0;
-    projects.forEach(function (p) {
-      if (!p || !p.id) return;
-      const f = fixture[p.id];
-      if (!f) return;
-      // Validate every result's discriminator before merge — catch fixture
-      // bugs at load time, not at render time three steps later.
-      const results = Array.isArray(f.hazard_results) ? f.hazard_results : [];
-      let valid = true;
+    let injected = 0;
+    // Shared validator — runs against every fixture entry whether merged
+    // onto an existing project or injected as a new one.
+    function _validateResults(label, results) {
       for (let i = 0; i < results.length; i++) {
         const t = results[i] && results[i].type;
         if (!t || _MHZ_HAZARD_WHITELIST.indexOf(t) === -1) {
           console.error('[josh-mhz] Unknown hazard type "' + t +
-            '" in fixture for project "' + p.id + '" at index ' + i +
-            '. Skipping merge for this project.');
-          valid = false;
-          break;
+            '" in fixture for ' + label + ' at index ' + i +
+            '. Skipping.');
+          return false;
         }
       }
-      if (!valid) { rejected++; return; }
+      return true;
+    }
+    // Pass 1: merge fixtures that match an existing project id.
+    projects.forEach(function (p) {
+      if (!p || !p.id) return;
+      const f = fixture[p.id];
+      if (!f || f.inject) return;  // inject entries handled in pass 2
+      const results = Array.isArray(f.hazard_results) ? f.hazard_results : [];
+      if (!_validateResults('project "' + p.id + '"', results)) {
+        rejected++;
+        return;
+      }
       p.evaluation = {
         schema_version:     2,
         controlling_hazard: f.controlling_hazard || null,
@@ -2221,8 +2230,33 @@
       };
       merged++;
     });
-    if (merged > 0 || rejected > 0) {
-      console.info('[josh-mhz] Merged ' + merged + ' fixture(s) onto projects' +
+    // Pass 2: inject hand-crafted mock projects that don't exist in real
+    // JOSH_DATA. The fixture entry carries the project metadata in `.project`;
+    // we synthesize a JOSH_DATA.projects[] entry and stamp its evaluation.
+    // Used by Step 16 (cedar_st_bayfront_mock) and Step 17 (marina_pointe).
+    Object.keys(fixture).forEach(function (id) {
+      const f = fixture[id];
+      if (!f || !f.inject || !f.project) return;
+      // Don't double-inject if a real project already has this id.
+      if (projects.some(function (p) { return p && p.id === id; })) return;
+      const results = Array.isArray(f.hazard_results) ? f.hazard_results : [];
+      if (!_validateResults('injected project "' + id + '"', results)) {
+        rejected++;
+        return;
+      }
+      const synth = Object.assign({}, f.project);
+      synth.evaluation = {
+        schema_version:     2,
+        controlling_hazard: f.controlling_hazard || null,
+        tier:               f.tier || null,
+        hazard_results:     results
+      };
+      projects.push(synth);
+      injected++;
+    });
+    if (merged > 0 || injected > 0 || rejected > 0) {
+      console.info('[josh-mhz] Merged ' + merged + ' fixture(s), injected ' +
+                   injected + ' mock project(s)' +
                    (rejected > 0 ? ', rejected ' + rejected : ''));
     }
   }
@@ -2425,6 +2459,16 @@
             'Hazards Evaluated</div>' +
           '<ul style="margin:0;padding:0;">' + listItems + '</ul>'
         ) : '') +
+        // Stage 0 mock-project footnote (Step 16). Surfaces only for
+        // hand-crafted fixtures that don't exist in real production data.
+        (project.is_mock ? (
+          '<div style="margin-top:14px;padding:8px 10px;border-radius:4px;' +
+            'background:#fff9db;border-left:3px solid #f59f00;' +
+            'font-size:11px;color:#5c4a00;line-height:1.4;">' +
+            '<b>Stage 0 mock project.</b> Replaced by real adapter output ' +
+            'when the corresponding hazard ships (Stage 3+).' +
+          '</div>'
+        ) : '') +
       '</div>';
   }
 
@@ -2443,33 +2487,54 @@
     if (!map) return;
     const projects = (typeof window !== 'undefined' && window.JOSH_DATA &&
                       window.JOSH_DATA.projects) || [];
-    // Always remove the previously-shown FG first.
+    // Always remove the previously-shown FG + synthetic marker first.
     if (_mhzCurrentProjectFG) {
       try { map.removeLayer(_mhzCurrentProjectFG); } catch (_) {}
       _mhzCurrentProjectFG = null;
+    }
+    if (_mhzSyntheticMarker) {
+      try { map.removeLayer(_mhzSyntheticMarker); } catch (_) {}
+      _mhzSyntheticMarker = null;
     }
     if (!projectId) return;  // dropdown reset to "Select a project…"
     const project = projects.find(function (p) { return p && p.id === projectId; });
     if (!project) return;
     const fgName = project.folium_fg_name;
     const fg = fgName && typeof window !== 'undefined' ? window[fgName] : null;
-    if (!fg) return;
-    map.addLayer(fg);
-    _mhzCurrentProjectFG = fg;
-    // Strip popups from any markers inside the FG. Iterate eachLayer recursively
-    // because FGs may contain nested groups.
-    function _stripPopups(layer) {
-      if (!layer) return;
-      if (typeof layer.unbindPopup === 'function') {
-        try {
-          if (typeof layer.getPopup === 'function' && layer.getPopup()) {
-            layer.unbindPopup();
-          }
-        } catch (_) {}
+    if (fg) {
+      // Real project with a pipeline-baked FeatureGroup.
+      map.addLayer(fg);
+      _mhzCurrentProjectFG = fg;
+      // Strip popups from any markers inside the FG. Iterate eachLayer
+      // recursively because FGs may contain nested groups.
+      function _stripPopups(layer) {
+        if (!layer) return;
+        if (typeof layer.unbindPopup === 'function') {
+          try {
+            if (typeof layer.getPopup === 'function' && layer.getPopup()) {
+              layer.unbindPopup();
+            }
+          } catch (_) {}
+        }
+        if (typeof layer.eachLayer === 'function') layer.eachLayer(_stripPopups);
       }
-      if (typeof layer.eachLayer === 'function') layer.eachLayer(_stripPopups);
+      _stripPopups(fg);
+    } else if (project.lat != null && project.lng != null &&
+               typeof window !== 'undefined' && window.L) {
+      // Mock project (Step 16+): no Folium FG. Drop a synthetic circle
+      // marker so the user can see WHERE the project sits. Distinct yellow
+      // fill makes it obvious this is mock data.
+      _mhzSyntheticMarker = window.L.circleMarker([project.lat, project.lng], {
+        radius: 9,
+        color: '#212529',
+        weight: 2,
+        fillColor: '#ffd43b',
+        fillOpacity: 0.9
+      });
+      _mhzSyntheticMarker.bindTooltip((project.name || project.id) + ' — Stage 0 mock',
+                                      { permanent: false, sticky: true });
+      map.addLayer(_mhzSyntheticMarker);
     }
-    _stripPopups(fg);
     // Pan to the project. Use lat/lng from JOSH_DATA.projects (WGS84) at zoom 15
     // (matches mockup). animate:false is intentional — Folium's auto-fitBounds
     // on freshly-added FeatureGroups interferes with animated setView, so the

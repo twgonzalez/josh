@@ -178,6 +178,83 @@
       ]
     },
 
+    // Hand-crafted mock project — flood-controlling. Stage 0 Step 16.
+    // Located in the bayfront SFHA polygon emitted by Step 5; allows the
+    // UI to render the non-wildfire-controlling branch before any
+    // FloodAdapter ships. Deleted in Stage 3 when FloodAdapter takes over.
+    //
+    // `inject: true` tells _mergeMockFixturesIntoProjects to PUSH the
+    // entry's `.project` into JOSH_DATA.projects (rather than merging
+    // onto an existing project id). The is_mock sentinel surfaces the
+    // detail-card footnote.
+    cedar_st_bayfront_mock: {
+      inject: true,
+      project: {
+        id:      'cedar_st_bayfront_mock',
+        name:    'Cedar St Bayfront (mock)',
+        address: 'Cedar St near I-80, West Berkeley',
+        lat:     37.870,
+        lng:     -122.310,
+        units:   60,
+        stories: 3,
+        is_mock: true
+      },
+      controlling_hazard: 'flood',
+      tier: 'DISCRETIONARY',
+      hazard_results: [
+        {
+          // Project sits in flat western Berkeley with a multilane arterial —
+          // wildfire ΔT is comfortably under threshold.
+          type:              'wildfire',
+          controls:          false,
+          flagged:           false,
+          zone:              'non_fhsz',
+          zone_label:        'Not in FHSZ',
+          fhsz_haz_class:    0,
+          degradation:       1.00,
+          egress_window_min: 120,
+          threshold:         6.00,
+          delta_t:           4.26,
+          bottleneck:        {
+            name:        'University Avenue at San Pablo Avenue',
+            eff_cap_vph: 1900,
+            vehicles:    135
+          },
+          route_coords: null
+        },
+        {
+          // Inside the bayfront SFHA polygon (Step 5 mock). AE zone
+          // degradation = 0.20 chokes the route; ΔT crashes through threshold.
+          type:              'flood',
+          controls:          true,
+          flagged:           true,
+          zone:              'ae',
+          zone_label:        'AE (1% annual flood)',
+          bfe_ft:            10.0,
+          flooded_exit_nodes_dropped: 2,
+          degradation:       0.20,
+          egress_window_min: 180,
+          threshold:         9.00,
+          delta_t:           21.3,
+          bottleneck:        {
+            name:        'Cedar Street at I-80 underpass',
+            eff_cap_vph: 380,
+            vehicles:    135
+          },
+          route_coords: null
+        },
+        {
+          // Excluded from analysis. Cedar St I-80 underpass is just outside
+          // the CGS Tsunami Hazard Area boundary (which sits closer to the
+          // marina). Surfaces in brief Section D (Step 23).
+          type:     'tsunami',
+          excluded: {
+            reason: 'Project location is east of the CGS Tsunami Hazard Area boundary.'
+          }
+        }
+      ]
+    },
+
     // 6-story project — wildfire flagged via egress penalty (delta_t 15.84
     // with 9.0 min penalty for stories>=4 takes it past the 6.0 threshold)
     cedar_street_infill: {
