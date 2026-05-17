@@ -34,6 +34,20 @@
 }(typeof globalThis !== 'undefined' ? globalThis : this, function () {
   'use strict';
 
+  // Stage 0 Step 19 helper. Generates a stub polyline from the project's
+  // lat/lng going eastward — visually distinct from the production Folium
+  // wildfire route (which heads to the nearest exit, typically downhill/west).
+  // Real per-hazard routing lands in Stage 3 (FloodAdapter) when actual
+  // network-cutting routes are computed.
+  function _stubFloodRoute(lat, lng) {
+    return [
+      [lat,         lng],
+      [lat + 0.003, lng + 0.008],
+      [lat - 0.001, lng + 0.015],
+      [lat - 0.002, lng + 0.022]
+    ];
+  }
+
   // Per-project fixtures keyed by project.id (the same id JOSH_DATA.projects uses).
   // Schema follows plan-multihazard-stage-0.md §4.2.
   // Production values from JOSH_DATA.projects[].result on 2026-05-17 baseline.
@@ -83,7 +97,7 @@
             eff_cap_vph: 900,
             vehicles:    137
           },
-          route_coords: null
+          route_coords: _stubFloodRoute(37.8914, -122.2494)
         }
       ]
     },
@@ -128,7 +142,7 @@
             eff_cap_vph: 1900,
             vehicles:    145
           },
-          route_coords: null
+          route_coords: _stubFloodRoute(37.8695, -122.2685)
         }
       ]
     },
@@ -173,7 +187,7 @@
             eff_cap_vph: 1125,
             vehicles:    43
           },
-          route_coords: null
+          route_coords: _stubFloodRoute(37.876, -122.26)
         }
       ]
     },
@@ -238,7 +252,7 @@
             eff_cap_vph: 340,
             vehicles:    225
           },
-          route_coords: null
+          route_coords: _stubFloodRoute(37.864, -122.318)
         },
         {
           // CONTROLLING. Per locked decision #2 (status doc), in-CGS-THA
@@ -321,7 +335,7 @@
             eff_cap_vph: 380,
             vehicles:    135
           },
-          route_coords: null
+          route_coords: _stubFloodRoute(37.870, -122.310)
         },
         {
           // Excluded from analysis. Cedar St I-80 underpass is just outside
@@ -378,7 +392,7 @@
             eff_cap_vph: 1125,
             vehicles:    128
           },
-          route_coords: null
+          route_coords: _stubFloodRoute(37.879, -122.278)
         }
       ]
     }
