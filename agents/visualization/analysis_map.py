@@ -1297,6 +1297,26 @@ def _inject_josh_data_bundle(
     # static #josh-sidebar div is still injected for v1 compatibility — sidebar.js
     # hides it via display:none when v2 is detected (per Step 6).
     _map_left = "0" if multihazard else "320px"
+    # Stage 0 Step 25 — narrow-viewport media query for v2 mode. At < 768 px,
+    # the right sidebar becomes a bottom drawer (50vh) and the map takes the
+    # top half. v1 mode keeps the existing left-sidebar layout unchanged.
+    _narrow_block = """
+  @media (max-width: 768px) {
+    .folium-map {
+      left: 0 !important;
+      width: 100% !important;
+      top: 54px !important;
+      height: calc(50vh - 27px) !important;
+    }
+    #josh-sidebar-mhz {
+      top: 50vh !important;
+      right: 0 !important;
+      width: 100% !important;
+      height: 50vh !important;
+      box-shadow: 0 -2px 12px rgba(0,0,0,0.12) !important;
+    }
+  }
+""" if multihazard else ""
     layout_block = """\
 <!-- Leaflet.AntPath plugin — required by sidebar.js _drawRoutes().
      Phase 3 removed all folium.AntPath() calls (routes now drawn by sidebar.js),
@@ -1308,7 +1328,7 @@ def _inject_josh_data_bundle(
     width: calc(100% - 320px) !important;
     top: 54px !important;
     height: calc(100vh - 54px) !important;
-  }
+  }""" + _narrow_block + """
 </style>
 <div id="josh-sidebar" style="
   position:fixed;top:54px;left:0;width:320px;height:calc(100vh - 54px);
