@@ -1270,6 +1270,17 @@ def _inject_josh_data_bundle(
     hpl_js   = hpl_path.read_text(encoding="utf-8") if hpl_path.exists() else ""
     hpl_block = f'<script id="josh-hpl">\n{hpl_js}\n</script>\n' if hpl_js else ""
 
+    # ── multihazard_fixtures.js: inline for browser mock-data merge ──────────────
+    # Multi-hazard Stage 0 Step 11. Only meaningful when multihazard flag is on
+    # (sidebar.js reads window.JOSH_MOCK_MULTIHAZARD on v2 init and merges
+    # hazard_results[] onto each JOSH_DATA.projects[i].evaluation). For v1 maps
+    # the script just defines a global that's never read, costing ~5 KB. Inlined
+    # unconditionally to keep the build deterministic; remove when Python adapters
+    # land (Stage 1+).
+    mhz_fix_path = static_dir / "multihazard_fixtures.js"
+    mhz_fix_js   = mhz_fix_path.read_text(encoding="utf-8") if mhz_fix_path.exists() else ""
+    mhz_fix_block = f'<script id="josh-mhz-fixtures">\n{mhz_fix_js}\n</script>\n' if mhz_fix_js else ""
+
     # ── sidebar.js: inline (replaces project_manager.js + what-if panel) ───────
     sb_path  = static_dir / "sidebar.js"
     sb_js    = sb_path.read_text(encoding="utf-8") if sb_path.exists() else ""
@@ -1352,7 +1363,7 @@ def _inject_josh_data_bundle(
         f'JOSH v{_PARAMETERS_VERSION} · © 2026 Thomas Gonzalez · AGPL-3.0'
         f'</div>\n'
     )
-    injection = data_block + app_block + br_block + hpl_block + sb_block + layout_block + footer_block
+    injection = data_block + app_block + br_block + hpl_block + mhz_fix_block + sb_block + layout_block + footer_block
     if "</body>" in html:
         html = html.replace("</body>", injection + "</body>", 1)
     else:

@@ -2156,6 +2156,57 @@
     })();
   }
 
+  // Hazard-type whitelist used by the fixture-merge validator. Mirrors the
+  // discriminated union in plan §4.2 (locked decision #11). An unknown type
+  // in the fixture is a console.error — flags schema drift loudly instead
+  // of silently corrupting downstream renders.
+  const _MHZ_HAZARD_WHITELIST = ['wildfire', 'flood', 'tsunami',
+                                  'dam_failure', 'gas_hazmat', 'landslide'];
+
+  function _mergeMockFixturesIntoProjects() {
+    // Stage 0 Step 11 [AUTO]. Reads window.JOSH_MOCK_MULTIHAZARD and stamps
+    // each entry onto the corresponding JOSH_DATA.projects[i].evaluation field.
+    // Step 12+ consumers (bar chart, tier banner, brief renderer) read off
+    // project.evaluation only — they never touch the mock fixture directly.
+    if (typeof window === 'undefined') return;
+    const fixture = window.JOSH_MOCK_MULTIHAZARD;
+    if (!fixture || typeof fixture !== 'object') return;
+    const projects = (window.JOSH_DATA && window.JOSH_DATA.projects) || [];
+    let merged = 0;
+    let rejected = 0;
+    projects.forEach(function (p) {
+      if (!p || !p.id) return;
+      const f = fixture[p.id];
+      if (!f) return;
+      // Validate every result's discriminator before merge — catch fixture
+      // bugs at load time, not at render time three steps later.
+      const results = Array.isArray(f.hazard_results) ? f.hazard_results : [];
+      let valid = true;
+      for (let i = 0; i < results.length; i++) {
+        const t = results[i] && results[i].type;
+        if (!t || _MHZ_HAZARD_WHITELIST.indexOf(t) === -1) {
+          console.error('[josh-mhz] Unknown hazard type "' + t +
+            '" in fixture for project "' + p.id + '" at index ' + i +
+            '. Skipping merge for this project.');
+          valid = false;
+          break;
+        }
+      }
+      if (!valid) { rejected++; return; }
+      p.evaluation = {
+        schema_version:     2,
+        controlling_hazard: f.controlling_hazard || null,
+        tier:               f.tier || null,
+        hazard_results:     results
+      };
+      merged++;
+    });
+    if (merged > 0 || rejected > 0) {
+      console.info('[josh-mhz] Merged ' + merged + ' fixture(s) onto projects' +
+                   (rejected > 0 ? ', rejected ' + rejected : ''));
+    }
+  }
+
   function _showProjectOnMap(projectId, map) {
     // Stage 0 Step 10 [REVIEW]. When the dropdown selects a project, swap the
     // visible per-project FeatureGroup on the map. Strips Folium-bound popups
@@ -2396,6 +2447,9 @@
     // Hide any pre-injected production left sidebar.
     const left = _el('josh-sidebar');
     if (left) left.style.display = 'none';
+    // Stage 0 Step 11: merge mock fixtures onto JOSH_DATA.projects[].evaluation
+    // before any consumer reads them. Idempotent / safe to call without fixtures.
+    _mergeMockFixturesIntoProjects();
     // Wire panels. Project dropdown doesn't need the map and can render
     // immediately. Hazard layers wait for the Folium map to be in the DOM.
     _renderProjectDropdownPanel();
