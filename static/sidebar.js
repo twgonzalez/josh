@@ -2096,12 +2096,141 @@
     };
   }
 
-  // ── Multi-hazard right-side shell (Stage 0 Step 6) ────────────────────────────
+  // ── Multi-hazard right-side shell (Stage 0 Step 6 + 8) ─────────────────────────
   // When JOSH_DATA.schema_version === 2 (multihazard:true), production CRUD on
   // the left is deferred (locked decision in plan §6.3 Step 6 PAUSE, 2026-05-17).
   // The right shell holds hazard panels/dropdown/detail card added in later steps.
-  // At Step 6 the shell has no header and a single placeholder message — production
-  // left sidebar is hidden / not injected.
+  // No header — JOSH brand bar above already names the mode (Step 6 PAUSE decision).
+  // Step 8 adds the Hazard Layers panel + wires HazardPolygonLayer.create() to
+  // render FHSZ + flood from JOSH_DATA.hazard_polygons.
+
+  // Module-scoped registry of hazard-id → Leaflet layer, so checkbox handlers
+  // can find their layer on toggle.
+  const _hazardLayers = {};
+
+  function _pickHazardSwatchColor(palette) {
+    // First non-transparent palette value in dict-insertion order. Themes.py
+    // writes palettes in severity-descending order so this picks the most-
+    // severe-visible zone (vhfhsz red for wildfire, ae blue for flood).
+    if (!palette) return '#cccccc';
+    const keys = Object.keys(palette);
+    for (let i = 0; i < keys.length; i++) {
+      const c = palette[keys[i]];
+      if (c && c !== 'transparent') return c;
+    }
+    return '#cccccc';
+  }
+
+  function _findFoliumMap() {
+    // Folium attaches the Leaflet map to a global named after the element id;
+    // the josh-sidebar-bridge sets window._joshMap once it polls and finds it.
+    // Fall back to a fresh scan if the bridge hasn't fired yet.
+    if (typeof window === 'undefined') return null;
+    if (window._joshMap) return window._joshMap;
+    for (const k in window) {
+      try {
+        const v = window[k];
+        if (v && v._leaflet_id && typeof v.eachLayer === 'function' &&
+            typeof v.addLayer === 'function') {
+          return v;
+        }
+      } catch (_) { /* cross-origin window prop access can throw */ }
+    }
+    return null;
+  }
+
+  function _waitForMapThen(cb) {
+    let attempt = 0;
+    (function poll() {
+      const m = _findFoliumMap();
+      if (m) { cb(m); return; }
+      if (attempt++ < 60) setTimeout(poll, 100);  // 6s budget
+    })();
+  }
+
+  function _wireHazardLayers(map) {
+    const hp = (typeof window !== 'undefined' && window.JOSH_DATA &&
+                window.JOSH_DATA.hazard_polygons) || {};
+    const HPL = (typeof window !== 'undefined') && window.HazardPolygonLayer;
+    if (!HPL || typeof window === 'undefined' || !window.L) {
+      console.warn('[josh-sidebar] HazardPolygonLayer or Leaflet not loaded; skipping panel.');
+      return;
+    }
+    const hazardIds = Object.keys(hp);
+    if (hazardIds.length === 0) return;
+
+    // Build a Leaflet layer per hazard, add all to map initially (locked: both
+    // checked on first paint per Step 8 PAUSE decision).
+    const rows = hazardIds.map(function (id) {
+      const record = hp[id];
+      const layer = HPL.create(window.L, record);
+      _hazardLayers[id] = layer;
+      map.addLayer(layer);
+      const swatch = _pickHazardSwatchColor(record.palette);
+      const cbId = 'josh-hz-cb-' + id;
+      return (
+        '<label for="' + cbId + '" style="display:flex;align-items:center;gap:8px;' +
+          'padding:6px 14px;cursor:pointer;font-size:12px;line-height:1.3;color:#212529;">' +
+          '<input type="checkbox" id="' + cbId + '" data-hazard="' + _esc(id) + '" checked ' +
+            'style="width:14px;height:14px;flex-shrink:0;cursor:pointer;">' +
+          '<span style="display:inline-block;width:14px;height:14px;flex-shrink:0;' +
+            'background:' + _esc(swatch) + ';border:1px solid rgba(0,0,0,0.15);' +
+            'border-radius:2px;"></span>' +
+          '<span style="flex:1;">' + _esc(record.legend_label || id) + '</span>' +
+        '</label>'
+      );
+    }).join('');
+
+    const panel = _el('josh-hazard-layers-panel');
+    if (!panel) return;
+    panel.innerHTML =
+      '<div class="josh-mhz-panel" data-collapsed="false" ' +
+        'style="border-bottom:1px solid #dee2e6;background:#fff;">' +
+        '<div class="josh-mhz-panel-head" data-collapsible ' +
+          'style="padding:10px 14px;font-weight:700;font-size:10px;' +
+          'letter-spacing:0.10em;text-transform:uppercase;color:#868e96;' +
+          'background:#f8f9fa;border-bottom:1px solid #e9ecef;' +
+          'display:flex;justify-content:space-between;align-items:center;' +
+          'cursor:pointer;user-select:none;">' +
+          '<span>Hazard Layers</span>' +
+          '<span class="josh-mhz-panel-caret" ' +
+            'style="display:inline-block;transition:transform 0.15s;">&#9662;</span>' +
+        '</div>' +
+        '<div class="josh-mhz-panel-body" style="padding:8px 0;">' + rows + '</div>' +
+      '</div>';
+
+    // Collapsible toggle on header click.
+    const head = panel.querySelector('[data-collapsible]');
+    if (head) {
+      head.addEventListener('click', function () {
+        const wrap = head.parentElement;
+        const body = wrap.querySelector('.josh-mhz-panel-body');
+        const caret = head.querySelector('.josh-mhz-panel-caret');
+        const collapsed = wrap.getAttribute('data-collapsed') === 'true';
+        if (collapsed) {
+          wrap.setAttribute('data-collapsed', 'false');
+          if (body) body.style.display = '';
+          if (caret) caret.style.transform = '';
+        } else {
+          wrap.setAttribute('data-collapsed', 'true');
+          if (body) body.style.display = 'none';
+          if (caret) caret.style.transform = 'rotate(-90deg)';
+        }
+      });
+    }
+
+    // Checkbox change → toggle layer visibility.
+    panel.querySelectorAll('input[type=checkbox][data-hazard]').forEach(function (cb) {
+      cb.addEventListener('change', function () {
+        const id = cb.getAttribute('data-hazard');
+        const layer = _hazardLayers[id];
+        if (!layer) return;
+        if (cb.checked) map.addLayer(layer);
+        else map.removeLayer(layer);
+      });
+    });
+  }
+
   function _injectMultiHazardSidebar() {
     if (_el('josh-sidebar-mhz')) return;
     const sb = document.createElement('div');
@@ -2109,26 +2238,26 @@
     sb.style.cssText =
       'position:fixed;top:54px;right:0;width:' + SIDEBAR_W + 'px;height:calc(100vh - 54px);' +
       'background:#fff;box-shadow:-2px 0 12px rgba(0,0,0,0.12);' +
-      'display:flex;flex-direction:column;overflow:hidden;' +
+      'display:flex;flex-direction:column;overflow-y:auto;overflow-x:hidden;' +
       'font-family:system-ui,-apple-system,BlinkMacSystemFont,sans-serif;font-size:13px;z-index:1000;';
-    // Placeholder body — no header per locked decision (the JOSH brand header
-    // above already names the mode; redundant chrome would be noise). Later
-    // steps replace the placeholder with the hazard layer panel, project
-    // dropdown, and detail card.
     sb.innerHTML =
+      // Container for the Hazard Layers panel (filled by _wireHazardLayers
+      // once the Folium map is ready).
+      '<div id="josh-hazard-layers-panel"></div>' +
+      // Placeholder for future sections (project selector, detail card, etc.).
       '<div id="josh-sidebar-mhz-placeholder" style="padding:24px 18px;color:#868e96;font-size:12px;line-height:1.5;">' +
-      'Hazard panels and project selector load here as Stage 0 progresses.' +
+      'Project selector and analysis panels load here as Stage 0 progresses.' +
       '<br><br>' +
       '<em>Multi-hazard prototype mode. To return to the production sidebar, ' +
       'set <code style="background:#f1f3f5;padding:1px 4px;border-radius:3px;">multihazard: false</code> ' +
       'in cities/&lt;city&gt;.yaml and rebuild.</em>' +
       '</div>';
     document.body.appendChild(sb);
-    // Hide any pre-injected production left sidebar (defensive — in v2 mode
-    // production CRUD is deferred; the left div sits idle until later stages
-    // either re-purpose it or delete it).
+    // Hide any pre-injected production left sidebar.
     const left = _el('josh-sidebar');
     if (left) left.style.display = 'none';
+    // Wire the Hazard Layers panel once the Folium map is in the DOM.
+    _waitForMapThen(_wireHazardLayers);
   }
 
   // ── DOMContentLoaded — inject sidebar div ─────────────────────────────────────

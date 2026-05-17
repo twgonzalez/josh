@@ -271,7 +271,13 @@ def create_analysis_map(
     roads_wgs84 = roads_gdf.to_crs("EPSG:4326")
 
     # ── Layer 1: FHSZ Fire Zones ───────────────────────────────────────────
-    if not fhsz_gdf.empty and "HAZ_CLASS" in fhsz_gdf.columns:
+    # Stage 0 Step 8: when multihazard flag is on, skip the Folium-baked FHSZ
+    # rendering — JS factory in sidebar.js + static/hazard_polygon_layer.js
+    # renders FHSZ (and flood, and future hazards) through the Hazard Layers
+    # panel. Per locked decision Option B (plan §6.3 Step 3 PAUSE), this is
+    # the visual-parity cutover moment.
+    _mhz_flag = bool((city_config or {}).get("multihazard", False))
+    if not _mhz_flag and not fhsz_gdf.empty and "HAZ_CLASS" in fhsz_gdf.columns:
         fhsz_wgs84 = fhsz_gdf.to_crs("EPSG:4326")
         for _, row in fhsz_wgs84.iterrows():
             haz = _to_int_safe(row.get("HAZ_CLASS", 0))
@@ -1257,6 +1263,13 @@ def _inject_josh_data_bundle(
     br_block = f'<script id="josh-br">\n{br_js}\n</script>\n' if br_js else ""
     br_note  = f"inlined ({len(br_js) // 1024} KB)" if br_js else "not found (skipped)"
 
+    # ── hazard_polygon_layer.js: inline for HazardPolygonLayer.create() in browser ─
+    # Multi-hazard Stage 0 Step 8 — sidebar.js consumes window.HazardPolygonLayer
+    # to build Leaflet layers from JOSH_DATA.hazard_polygons[hazardId] records.
+    hpl_path = static_dir / "hazard_polygon_layer.js"
+    hpl_js   = hpl_path.read_text(encoding="utf-8") if hpl_path.exists() else ""
+    hpl_block = f'<script id="josh-hpl">\n{hpl_js}\n</script>\n' if hpl_js else ""
+
     # ── sidebar.js: inline (replaces project_manager.js + what-if panel) ───────
     sb_path  = static_dir / "sidebar.js"
     sb_js    = sb_path.read_text(encoding="utf-8") if sb_path.exists() else ""
@@ -1339,7 +1352,7 @@ def _inject_josh_data_bundle(
         f'JOSH v{_PARAMETERS_VERSION} · © 2026 Thomas Gonzalez · AGPL-3.0'
         f'</div>\n'
     )
-    injection = data_block + app_block + br_block + sb_block + layout_block + footer_block
+    injection = data_block + app_block + br_block + hpl_block + sb_block + layout_block + footer_block
     if "</body>" in html:
         html = html.replace("</body>", injection + "</body>", 1)
     else:
