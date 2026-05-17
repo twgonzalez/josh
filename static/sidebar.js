@@ -2429,6 +2429,54 @@
     );
   }
 
+  function _renderScenarioRadio(evaluation) {
+    // Stage 0 Step 18 — composition only. Renders "Controlling (default)"
+    // plus one radio per applicable hazard. Change handler wires in Step 20.
+    if (!evaluation || !Array.isArray(evaluation.hazard_results)) return '';
+    const applicable = evaluation.hazard_results.filter(function (r) {
+      return r && !r.excluded;
+    });
+    if (applicable.length === 0) return '';
+    const ch = evaluation.controlling_hazard;
+    const chLabel = ch ? (_MHZ_HAZARD_DISPLAY[ch] || ch) : '';
+    const rows = [
+      // "Controlling" sentinel — checked by default.
+      '<label style="display:flex;align-items:center;gap:8px;padding:4px 0;' +
+        'font-size:12px;color:#212529;cursor:pointer;">' +
+        '<input type="radio" name="josh-mhz-scenario" value="__controlling__" checked ' +
+          'style="width:14px;height:14px;cursor:pointer;flex-shrink:0;">' +
+        '<span>Controlling (default)</span>' +
+        (chLabel ? '<span style="margin-left:auto;padding:1px 6px;border-radius:8px;' +
+          'background:#e9ecef;color:#495057;font-size:10px;font-weight:600;">' +
+          _esc(chLabel) + '</span>' : '') +
+      '</label>'
+    ].concat(applicable.map(function (r) {
+      const name = _MHZ_HAZARD_DISPLAY[r.type] || r.type;
+      const rid = 'josh-mhz-scen-' + r.type;
+      return (
+        '<label for="' + rid + '" style="display:flex;align-items:center;gap:8px;' +
+          'padding:4px 0;font-size:12px;color:#212529;cursor:pointer;">' +
+          '<input type="radio" id="' + rid + '" name="josh-mhz-scenario" ' +
+            'value="' + _esc(r.type) + '" ' +
+            'style="width:14px;height:14px;cursor:pointer;flex-shrink:0;">' +
+          '<span>' + _esc(name) + '</span>' +
+        '</label>'
+      );
+    }));
+    return (
+      '<div style="font-size:10px;font-weight:700;color:#868e96;' +
+        'letter-spacing:0.10em;text-transform:uppercase;margin:14px 0 6px;">' +
+        'Hazard Scenario</div>' +
+      rows.join('') +
+      // Caption hint — updated by Step 20 wiring depending on selection.
+      '<div id="josh-mhz-scen-caption" style="font-size:11px;color:#868e96;' +
+        'margin-top:6px;line-height:1.4;">' +
+        'Showing controlling-hazard route. Switching scenario re-routes ' +
+        'the AntPath through that hazard’s degraded graph (Step 20+).' +
+      '</div>'
+    );
+  }
+
   function _renderTierBanner(evaluation) {
     // Stage 0 Step 14 — tier pill + "driven by <hazard>" footer line.
     // No banner rendered when tier is missing.
@@ -2512,6 +2560,8 @@
             'Hazards Evaluated</div>' +
           '<ul style="margin:0;padding:0;">' + listItems + '</ul>'
         ) : '') +
+        // Stage 0 Step 18: scenario radio (composition only; behavior in Step 20).
+        _renderScenarioRadio(evaluation) +
         // Stage 0 mock-project footnote (Step 16). Surfaces only for
         // hand-crafted fixtures that don't exist in real production data.
         (project.is_mock ? (
