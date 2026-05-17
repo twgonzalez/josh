@@ -1672,6 +1672,13 @@
   function _render() {
     if (typeof document === 'undefined') return;
     if (!_sb()) return;
+    // FSAPI session-restore banner — Phase B polish. Renders the legacy
+    // production banner HTML inside our scoped container; visibility driven
+    // by _restoreBanner state (set by init() when IndexedDB handles exist).
+    const banner = _el('josh-mhz-restore-banner');
+    if (banner) {
+      banner.innerHTML = _restoreBanner ? _renderRestoreBanner() : '';
+    }
     _renderProjectDropdownPanel();
     const detailEl = _el('josh-project-detail');
     if (detailEl) {
@@ -2669,12 +2676,24 @@
       );
     }
 
+    // Phase B polish — re-analyzed indicator chip. Production's _dirtyIds
+    // Set marks projects whose params don't match the current city's
+    // parameters_version. Show a small chip just below the name when present.
+    const isDirty = (typeof _dirtyIds !== 'undefined') && _dirtyIds.has(project.id);
+    const reanalyzedChip = isDirty
+      ? '<div style="display:inline-block;margin:0 0 8px;padding:2px 8px;' +
+          'border-radius:10px;background:#fff3cd;color:#5c4a00;font-size:10px;' +
+          'font-weight:600;letter-spacing:0.04em;">' +
+          '&#9432; Re-analyzed — parameters updated' +
+        '</div>'
+      : '';
     container.innerHTML =
       '<div style="padding:14px 16px 18px;">' +
         '<div style="font-size:15px;font-weight:600;color:#212529;margin-bottom:2px;line-height:1.3;">' +
           _esc(project.name || project.id) + '</div>' +
         '<div style="font-size:11px;color:#868e96;margin-bottom:12px;">' +
           _esc(project.address || '') + '</div>' +
+        reanalyzedChip +
         '<div style="display:flex;gap:8px;margin-bottom:14px;">' +
           statCard(project.units, 'Units') +
           statCard(project.stories, 'Stories') +
@@ -2710,13 +2729,35 @@
               'border-radius:4px;background:#fdf3f3;color:#c0392b;' +
               'font-size:12px;font-weight:600;cursor:pointer;">Delete</button>' +
           '</div>') +
-        // Stage 0 Step 22 — Open Brief button. Renders the v2 multihazard
-        // brief via BriefRenderer.render() and opens the result in a new tab.
-        '<button id="josh-mhz-open-brief" style="margin-top:10px;width:100%;' +
-          'padding:10px;border:none;border-radius:4px;background:#1c4a6e;' +
-          'color:#fff;font-size:13px;font-weight:600;cursor:pointer;">' +
-          'Open Brief →' +
-        '</button>' +
+        // Stage 0 Step 22 — Open Brief button. Phase B polish adds a chevron
+        // menu trigger for additional brief actions (Save HTML, Print, Audit .txt).
+        '<div style="display:flex;gap:4px;margin-top:10px;">' +
+          '<button id="josh-mhz-open-brief" style="flex:1;padding:10px;' +
+            'border:none;border-radius:4px 0 0 4px;background:#1c4a6e;' +
+            'color:#fff;font-size:13px;font-weight:600;cursor:pointer;">' +
+            'Open Brief →' +
+          '</button>' +
+          '<button id="josh-mhz-brief-menu-btn" aria-label="More brief actions" ' +
+            'style="width:36px;padding:10px 0;border:none;border-left:1px solid #2c5a7e;' +
+            'border-radius:0 4px 4px 0;background:#1c4a6e;color:#fff;' +
+            'font-size:13px;cursor:pointer;line-height:1;">&#x25BE;</button>' +
+        '</div>' +
+        // Hidden menu — toggled by chevron button. Positioned absolute relative
+        // to the detail container; appears just below the button row.
+        '<div id="josh-mhz-brief-menu" style="display:none;position:absolute;' +
+          'right:16px;margin-top:4px;padding:4px 0;background:#fff;' +
+          'border:1px solid #dee2e6;border-radius:4px;' +
+          'box-shadow:0 2px 8px rgba(0,0,0,0.12);z-index:1100;min-width:160px;">' +
+          '<button data-brief-action="save" style="width:100%;text-align:left;' +
+            'padding:8px 12px;border:none;background:transparent;font-size:12px;' +
+            'color:#212529;cursor:pointer;">Save HTML…</button>' +
+          '<button data-brief-action="print" style="width:100%;text-align:left;' +
+            'padding:8px 12px;border:none;background:transparent;font-size:12px;' +
+            'color:#212529;cursor:pointer;">Print</button>' +
+          '<button data-brief-action="audit" style="width:100%;text-align:left;' +
+            'padding:8px 12px;border:none;background:transparent;font-size:12px;' +
+            'color:#212529;cursor:pointer;">Audit trail .txt</button>' +
+        '</div>' +
         // Stage 0 mock-project footnote (Step 16). Surfaces only for
         // hand-crafted fixtures that don't exist in real production data.
         (project.is_mock ? (
@@ -2740,14 +2781,69 @@
         if (m) _applyScenario(project, radio.value, m);
       });
     });
-    // Stage 0 Step 22: wire Open Brief button. Builds a v2 brief input and
-    // opens the rendered HTML in a new tab via blob URL.
+    // Stage 0 Step 22: wire Open Brief button. Phase B polish adds a chevron
+    // menu trigger for Save HTML / Print / Audit .txt actions.
     const briefBtn = _el('josh-mhz-open-brief');
     if (briefBtn) {
-      briefBtn.addEventListener('click', function () {
-        _openMhzBrief(project);
-      });
+      briefBtn.addEventListener('click', function () { _openMhzBrief(project); });
     }
+    const menuBtn = _el('josh-mhz-brief-menu-btn');
+    const menu    = _el('josh-mhz-brief-menu');
+    if (menuBtn && menu) {
+      menuBtn.addEventListener('click', function (e) {
+        e.stopPropagation();
+        menu.style.display = (menu.style.display === 'block') ? 'none' : 'block';
+      });
+      menu.querySelectorAll('button[data-brief-action]').forEach(function (b) {
+        b.addEventListener('click', function () {
+          const action = b.getAttribute('data-brief-action');
+          menu.style.display = 'none';
+          if (action === 'save')  _saveMhzBriefHtml(project);
+          if (action === 'print') _printMhzBrief(project);
+          if (action === 'audit') _downloadDetermination(project);
+        });
+      });
+      // Click-anywhere-else closes the menu.
+      document.addEventListener('click', function close(e) {
+        if (!menu.contains(e.target) && e.target !== menuBtn) {
+          menu.style.display = 'none';
+        }
+      }, { once: false });
+    }
+  }
+
+  function _saveMhzBriefHtml(project) {
+    // Stage 0.5 Phase B polish — render brief HTML and trigger a save-as-file
+    // via blob URL + anchor with download attribute. Matches the production
+    // _blobDownload pattern.
+    if (typeof window === 'undefined' || !window.BriefRenderer) return;
+    let html;
+    try { html = window.BriefRenderer.render(_buildMhzBriefInput(project)); }
+    catch (e) { console.error('[josh-mhz] BriefRenderer threw:', e); return; }
+    const fname = 'brief_' + (project.id || 'project') + '.html';
+    _blobDownload(html, fname);
+  }
+
+  function _printMhzBrief(project) {
+    // Stage 0.5 Phase B polish — open the brief in a new tab and trigger
+    // print once the page is loaded. Falls back to a blob URL when popup
+    // is blocked.
+    if (typeof window === 'undefined' || !window.BriefRenderer) return;
+    let html;
+    try { html = window.BriefRenderer.render(_buildMhzBriefInput(project)); }
+    catch (e) { console.error('[josh-mhz] BriefRenderer threw:', e); return; }
+    const w = window.open('', '_blank');
+    if (!w) {
+      // Popup blocked — fall back to blob URL (user prints manually).
+      const blob = new Blob([html], { type: 'text/html' });
+      window.open(URL.createObjectURL(blob), '_blank');
+      return;
+    }
+    w.document.open();
+    w.document.write(html);
+    w.document.close();
+    // Slight delay to let layout settle before print dialog.
+    setTimeout(function () { try { w.focus(); w.print(); } catch (_) {} }, 250);
   }
 
   function _buildMhzBriefInput(project) {
@@ -3086,6 +3182,8 @@
       'display:flex;flex-direction:column;overflow-y:auto;overflow-x:hidden;' +
       'font-family:system-ui,-apple-system,BlinkMacSystemFont,sans-serif;font-size:13px;z-index:1000;';
     sb.innerHTML =
+      // FSAPI session-restore banner (filled by _render when _restoreBanner is true).
+      '<div id="josh-mhz-restore-banner"></div>' +
       // Container for the Hazard Layers panel (filled by _wireHazardLayers
       // once the Folium map is ready).
       '<div id="josh-hazard-layers-panel"></div>' +
