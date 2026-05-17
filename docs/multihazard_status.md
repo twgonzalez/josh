@@ -1,10 +1,11 @@
 # Multi-Hazard Extension — Status
 
 **Last updated:** 2026-05-17
-**Phase:** Stage 0 — UI prototype with mock data (expanded from baseline-merge; see `docs/plan-multihazard-stage-0.md`)
+**Phase:** Stage 0 — **COMPLETE** ✅ (all 28 steps shipped; awaiting HARD STOP review before Stage 1)
 **Supervising agent:** `.claude/agents/multihazard-architect.md`
 **MVP plan:** `docs/plan-multihazard-mvp.md`
-**Active stage plan:** `docs/plan-multihazard-stage-0.md` (28-step incremental build sequence)
+**Active stage plan:** `docs/plan-multihazard-stage-0.md` (28-step sequence — done)
+**Schema contract:** `docs/josh-data-schema-v2.md` (Stage 1+ gospel)
 
 This document is the single source of truth for where the multi-hazard work stands. Any session working on multi-hazard items must read this first and update it before closing the work.
 
@@ -70,13 +71,13 @@ Mirrors `docs/plan-ab747-multihazard-research.md` §8. Update as work lands.
 - [ ] Per-adapter data acquisition prototypes in `josh-pipeline`
 
 ### Phase 4 — Architecture and prototype
-- [ ] `HazardAdapter` abstract base class (4-function interface per decision #6)
-- [ ] `WildfireAdapter` refactor (existing logic moved into adapter pattern)
-- [ ] Exit-node validity filter (generalized — falls out of `degradation == 0` per decision #6)
-- [ ] `FloodAdapter` prototype (first new hazard; validates architecture per decision #5)
-- [ ] Multi-hazard determination logic (`evaluate_multihazard()`)
-- [ ] Updated `JOSH_DATA` schema for multi-hazard results
-- [ ] `WhatIfEngine` accepts `hazard` parameter — see in-flight task spawn below
+- [ ] `HazardAdapter` abstract base class (4-function interface per decision #6) — Stage 1
+- [ ] `WildfireAdapter` refactor (existing logic moved into adapter pattern) — Stage 1
+- [ ] Exit-node validity filter (generalized — falls out of `degradation == 0` per decision #6) — Stage 3
+- [ ] `FloodAdapter` prototype (first new hazard; validates architecture per decision #5) — Stage 3
+- [ ] Multi-hazard determination logic (`evaluate_multihazard()`) — Stage 5
+- [x] **Updated `JOSH_DATA` schema for multi-hazard results** ✅ Stage 0 — see `docs/josh-data-schema-v2.md`
+- [ ] `WhatIfEngine` accepts `hazard` parameter — Stage 1 (deferred from Stage 0; mock fixture drives UI today)
 
 ### Phase 5 — Parameter documentation and legal review
 - [ ] Methodology statement per hazard (template: `docs/mobilization_rate_methodology_statement.md`)
@@ -93,17 +94,17 @@ Mirrors `docs/plan-ab747-multihazard-research.md` §8. Update as work lands.
 - [ ] Multi-hazard demo map for a city with ≥ 2 applicable hazards
 
 ### Phase 7 — Visualization and reports (added in `multihazard_first_principles.md` §7–8)
-- [ ] Hazard palette implementation (`agents/visualization/`)
-- [ ] Hazard layer panel in `static/sidebar.js`
-- [ ] Per-project hazard bar chart in sidebar evaluation card
-- [ ] Hazard scenario selector (radio group → swaps visible AntPath)
-- [ ] Per-hazard route pre-baking in `agents/export.py`
-- [ ] Popup HTML per-hazard table
-- [ ] `BriefRenderer` A/B/C/D template; per-hazard tables; controlling-hazard highlight
-- [ ] `_buildAuditText()` rewritten for per-hazard sections
-- [ ] `BriefInput` schema expanded (`hazardResults[]`, `controllingHazard`, `excludedHazards`)
-- [ ] `tests/test_brief_renderer.js` covers 1/2/3-hazard cases
-- [ ] `tests/test_whatif_engine.js` covers per-hazard parity
+- [x] **Hazard palette implementation** ✅ Stage 0 — `agents/visualization/themes.py` (WILDFIRE/FLOOD constants)
+- [x] **Hazard layer panel in `static/sidebar.js`** ✅ Stage 0 Step 8
+- [x] **Per-project hazard bar chart in sidebar evaluation card** ✅ Stage 0 Steps 12-13
+- [x] **Hazard scenario selector (radio group → swaps visible AntPath)** ✅ Stage 0 Steps 18-20
+- [ ] Per-hazard route pre-baking in `agents/export.py` — Stage 3+ (mock route_coords drive Stage 0)
+- [ ] Popup HTML per-hazard table — deferred; right sidebar replaces popup workflow (locked decision #9)
+- [x] **`BriefRenderer` A/B/C/D template; per-hazard tables; controlling-hazard highlight** ✅ Stage 0 Steps 21-23
+- [ ] `_buildAuditText()` rewritten for per-hazard sections — Stage 4+ (production CRUD deferred from Stage 0)
+- [x] **`BriefInput` schema expanded (`hazard_results[]`, `controlling_hazard`)** ✅ Stage 0 — `docs/josh-data-schema-v2.md` §5,§7
+- [x] **`tests/test_brief_renderer.js` covers 1/2/3-hazard cases** ✅ Stage 0 Step 24 (3 v2 vectors, 20 tests total)
+- [ ] `tests/test_whatif_engine.js` covers per-hazard parity — Stage 1+ (anti-divergence vs Python adapters)
 
 ---
 
@@ -114,6 +115,7 @@ Mirrors `docs/plan-ab747-multihazard-research.md` §8. Update as work lands.
 | PIR constant fix in `plan-ab747-multihazard-research.md` §5D (decision #3) | Replaced `0.004` with `0.69` (per PHMSA TTO-13, 2005; 49 CFR §192.903). Inline note flags the prior incorrect value. | 2026-05-16 |
 | Stage 0 expanded into UI-first prototype plan | `docs/plan-multihazard-stage-0.md` — 28-step incremental build sequence; locks right-side sidebar (decision #9); adds tsunami-dispositive mock fixture to validate decision #2 rendering before TsunamiAdapter ships. Supersedes the 1-day baseline-merge framing in `plan-multihazard-mvp.md` §3. | 2026-05-17 |
 | Schema design pivot: tagged-union per-hazard result types (decision #11) | After surfacing the per-hazard data requirements (BFE for flood, per-feature arrival times for dam, computed PIR for gas, dispositive for tsunami, TTL for landslide), reversed earlier "fully abstract renderer" stance. Plan §4.0 now documents per-hazard data requirements; §4.2 rewrites `hazard_results[]` as discriminated union; §4.2.1 documents the 4-switch-site renderer rule; §6.3 steps 12/13/15/17/22 updated to switch-based per-case implementation order. | 2026-05-17 |
+| **Stage 0 — UI prototype with mock data — COMPLETE** ✅ | All 28 steps shipped on `feature/multi-hazard`. 22 commits. Production v1 byte-identical to baseline (flag off). v2 mode delivers: right sidebar, Hazard Layers panel + JS polygon rendering, project dropdown, marker-popup suppression, detail card with stat cards + tier banner + per-hazard ΔT bar chart + Hazards Evaluated list + scenario radio + Open Brief button, mock fixtures (4 real + 2 hand-crafted: cedar_st_bayfront_mock flood-controlling, marina_pointe tsunami-dispositive), narrow-viewport bottom drawer. Brief renderer: v1/v2 schema branching + per-hazard B/C tables + Section D excluded + controlling-hazard footer with dispositive variant. Canonical schema doc `docs/josh-data-schema-v2.md` ratified. **All 107 JS tests pass** (27 hazard_polygon_layer + 80 production including 3 new v2 brief vectors). | 2026-05-17 |
 
 ## In-flight
 
