@@ -2112,6 +2112,9 @@
   // _mhzSelectedProjectId: dropdown selection. Step 12 renders the detail card
   // off this. Exposed on window.joshSidebar for future-step consumers.
   let _mhzSelectedProjectId = null;
+  // _mhzCurrentProjectFG: the per-project Folium FeatureGroup currently shown
+  // on the map (Stage 0 Step 10). Swapped on dropdown change.
+  let _mhzCurrentProjectFG = null;
 
   function _pickHazardSwatchColor(palette) {
     // First non-transparent palette value in dict-insertion order. Themes.py
@@ -2151,6 +2154,57 @@
       if (m) { cb(m); return; }
       if (attempt++ < 60) setTimeout(poll, 100);  // 6s budget
     })();
+  }
+
+  function _showProjectOnMap(projectId, map) {
+    // Stage 0 Step 10 [REVIEW]. When the dropdown selects a project, swap the
+    // visible per-project FeatureGroup on the map. Strips Folium-bound popups
+    // from any Markers inside the FG so the production v1 popup never opens
+    // in v2 mode; map pans to the project location at zoom 15.
+    //
+    // Marker-click semantics: under current Stage 0 architecture only the
+    // selected project's marker is visible at any time, so "click marker to
+    // select" is implicit (clicking the visible marker corresponds to the
+    // already-selected project). The popup suppression here is the meaningful
+    // production-divergence — the v1 popup would have opened a project info
+    // card; v2 will render that as a sidebar detail card (Step 12).
+    if (!map) return;
+    const projects = (typeof window !== 'undefined' && window.JOSH_DATA &&
+                      window.JOSH_DATA.projects) || [];
+    // Always remove the previously-shown FG first.
+    if (_mhzCurrentProjectFG) {
+      try { map.removeLayer(_mhzCurrentProjectFG); } catch (_) {}
+      _mhzCurrentProjectFG = null;
+    }
+    if (!projectId) return;  // dropdown reset to "Select a project…"
+    const project = projects.find(function (p) { return p && p.id === projectId; });
+    if (!project) return;
+    const fgName = project.folium_fg_name;
+    const fg = fgName && typeof window !== 'undefined' ? window[fgName] : null;
+    if (!fg) return;
+    map.addLayer(fg);
+    _mhzCurrentProjectFG = fg;
+    // Strip popups from any markers inside the FG. Iterate eachLayer recursively
+    // because FGs may contain nested groups.
+    function _stripPopups(layer) {
+      if (!layer) return;
+      if (typeof layer.unbindPopup === 'function') {
+        try {
+          if (typeof layer.getPopup === 'function' && layer.getPopup()) {
+            layer.unbindPopup();
+          }
+        } catch (_) {}
+      }
+      if (typeof layer.eachLayer === 'function') layer.eachLayer(_stripPopups);
+    }
+    _stripPopups(fg);
+    // Pan to the project. Use lat/lng from JOSH_DATA.projects (WGS84) at zoom 15
+    // (matches mockup). animate:false is intentional — Folium's auto-fitBounds
+    // on freshly-added FeatureGroups interferes with animated setView, so the
+    // animation visibly never completes. Instant pan avoids the race.
+    if (project.lat != null && project.lng != null) {
+      try { map.setView([project.lat, project.lng], 15, { animate: false }); } catch (_) {}
+    }
   }
 
   function _renderProjectDropdownPanel() {
@@ -2204,8 +2258,11 @@
     if (sel) {
       sel.addEventListener('change', function () {
         _mhzSelectedProjectId = sel.value || null;
-        // Step 9 only updates state. Future steps (12+) will trigger
-        // detail-card rendering off this state change.
+        // Stage 0 Step 10: swap the visible project FeatureGroup on the map
+        // (suppresses production popups; pans to project). Detail-card
+        // rendering off this state change lands in Step 12.
+        const map = _findFoliumMap();
+        if (map) _showProjectOnMap(_mhzSelectedProjectId, map);
       });
     }
     // Wire the collapsible header toggle (same pattern as Hazard Layers panel).
