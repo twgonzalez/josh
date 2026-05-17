@@ -36,6 +36,41 @@ FHSZ_LABELS = {
 }
 
 # ---------------------------------------------------------------------------
+# Multi-hazard schema v2 — normalized wildfire vocabulary
+# Used in JOSH_DATA.hazard_polygons.wildfire (when multihazard flag is on).
+# Mirrors FHSZ_COLORS / FHSZ_LABELS above but keys are the normalized
+# zone-id strings consumed by HazardPolygonLayer.create() in JS.
+# See docs/plan-multihazard-stage-0.md §4.0 for the per-hazard data spec.
+# ---------------------------------------------------------------------------
+
+# Maps raw CAL FIRE HAZ_CLASS integer (as string) → normalized zone id.
+WILDFIRE_ZONE_MAP = {
+    "3": "vhfhsz",
+    "2": "high_fhsz",
+    "1": "moderate_fhsz",
+}
+
+# Per-zone fill color. Values mirror FHSZ_COLORS by integer key, but indexed
+# by the normalized zone id used in HazardResult.zone and bar chart rendering.
+WILDFIRE_PALETTE = {
+    "vhfhsz":        FHSZ_COLORS[3],
+    "high_fhsz":     FHSZ_COLORS[2],
+    "moderate_fhsz": FHSZ_COLORS[1],
+    "non_fhsz":      "transparent",
+}
+
+# Per-zone tooltip label. Mirrors FHSZ_LABELS by integer key.
+WILDFIRE_LABELS = {
+    "vhfhsz":        FHSZ_LABELS[3],
+    "high_fhsz":     FHSZ_LABELS[2],
+    "moderate_fhsz": FHSZ_LABELS[1],
+    "non_fhsz":      "Not in FHSZ",
+}
+
+# Display label for the hazard layer panel chip + brief tables.
+WILDFIRE_LEGEND_LABEL = "Wildfire (FHSZ)"
+
+# ---------------------------------------------------------------------------
 # Determination tier color maps
 # ---------------------------------------------------------------------------
 

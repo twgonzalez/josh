@@ -1165,9 +1165,8 @@ def _inject_josh_data_bundle(
             brief_data[fname] = path.read_text(encoding="utf-8")
 
     # Multi-hazard schema flag (per docs/plan-multihazard-stage-0.md §6.3 Step 2).
-    # multihazard:false (default) emits v1; multihazard:true bumps to v2. v2 will add
-    # hazard_polygons + hazard_parameters in later steps; at Step 2 the only difference
-    # is this version number.
+    # multihazard:false (default) emits v1; multihazard:true bumps to v2. v2 adds
+    # hazard_polygons (Steps 4–5) + hazard_parameters (later); v1 stays unchanged.
     multihazard = bool((city_config or {}).get("multihazard", False))
     josh_data = {
         "schema_version": 2 if multihazard else 1,
@@ -1180,6 +1179,26 @@ def _inject_josh_data_bundle(
         "briefs":         brief_data,
         "projects":       projects_data or [],
     }
+
+    # Stage 0 Step 4 [AUTO]: emit hazard_polygons.wildfire under the v2 flag.
+    # Pure additive emission — Folium-baked FHSZ rendering continues unchanged
+    # through Step 7 (per plan §6.3 Step 3 Option B). Step 8 (Hazard Layers panel)
+    # wires this data through HazardPolygonLayer.create() in JS and supersedes
+    # the Folium-baked rendering. Until then, this data sits in JOSH_DATA unused.
+    if multihazard:
+        from agents.visualization.themes import (
+            WILDFIRE_ZONE_MAP, WILDFIRE_PALETTE, WILDFIRE_LABELS, WILDFIRE_LEGEND_LABEL,
+        )
+        josh_data["hazard_polygons"] = {
+            "wildfire": {
+                "feature_collection": fhsz_geojson,
+                "zone_attribute":     "HAZ_CLASS",
+                "zone_map":           WILDFIRE_ZONE_MAP,
+                "palette":            WILDFIRE_PALETTE,
+                "labels":             WILDFIRE_LABELS,
+                "legend_label":       WILDFIRE_LEGEND_LABEL,
+            },
+        }
 
     data_block = (
         '\n<script id="josh-data">\n'
