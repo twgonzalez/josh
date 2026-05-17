@@ -105,6 +105,16 @@
 
   function render(inp) {
     inp = inp || {};
+    // Stage 0 Step 21 schema branching. v2 inputs (multihazard:true) will
+    // soon take a separate per-hazard code path (Step 22 PAUSE adds B/C
+    // tables, Step 23 adds Section D + footer). At Step 21 the v2 path
+    // falls through to v1 — proves the branch fires without regressing
+    // v1 output (which the production-baseline test vectors lock down).
+    if (inp.schema_version === 2 && typeof console !== 'undefined' && console.info) {
+      console.info('[josh-brief] schema_version=2 (multihazard); rendering ' +
+                   'v1 fallback at Step 21. Per-hazard B/C/D sections land ' +
+                   'in Steps 22-23.');
+    }
     var r   = inp.result   || {};
     var tier = (r.tier || 'MINISTERIAL').toUpperCase().trim();
 
