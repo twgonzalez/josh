@@ -1,9 +1,10 @@
 # Multi-Hazard Extension — Status
 
-**Last updated:** 2026-05-16
-**Phase:** Pre-MVP (scaffold + mockup complete; MVP implementation plan ready in `docs/plan-multihazard-mvp.md`; awaiting Stage 0 merge)
+**Last updated:** 2026-05-17
+**Phase:** Stage 0 — UI prototype with mock data (expanded from baseline-merge; see `docs/plan-multihazard-stage-0.md`)
 **Supervising agent:** `.claude/agents/multihazard-architect.md`
 **MVP plan:** `docs/plan-multihazard-mvp.md`
+**Active stage plan:** `docs/plan-multihazard-stage-0.md` (28-step incremental build sequence)
 
 This document is the single source of truth for where the multi-hazard work stands. Any session working on multi-hazard items must read this first and update it before closing the work.
 
@@ -32,6 +33,9 @@ These were settled in conversation and are binding unless the user explicitly ov
 | 6 | **4-function `HazardAdapter` interface** (not 5 as in the plan's §7.1). | Exit-node validity is a Boolean projection of degradation — an exit is invalid iff every incident edge has capacity 0, which Dijkstra discovers automatically. Collapses the plan's 5-function form. | `docs/multihazard_first_principles.md` §1, §5.1 |
 | 7 | **Worst-case single hazard drives the tier; all applicable hazards reported.** Plan §9 policy decision #3. | More transparent than controlling-only output. Controlling hazard MUST be named in the determination letter — a tier with no stated cause is the failure mode that invites legal challenge. | `docs/multihazard_first_principles.md` §5.3, §8.1 |
 | 8 | **Determination output format expands A/B/C → A/B/C/D.** B and C become per-hazard tables; D = "Hazards Excluded" (informational overlays). | Per-hazard transparency in the brief; preserves the legal posture of fully algorithmic determinations. | `docs/multihazard_first_principles.md` §8.2 |
+| 9 | **Multi-hazard sidebar sits on the right side of the map** (inspector pattern), not the left. Flag-gated — production wildfire-only cities keep the left sidebar. Move Leaflet zoom control to `topleft` to free the right edge. | The mockup keeps the sidebar on the left because it overlays production; the inspector pattern in `multihazard_first_principles.md` §7.3 specifies right. Confirmed by user 2026-05-17 during Stage 0 planning. | `docs/multihazard_first_principles.md` §7.3; `docs/plan-multihazard-stage-0.md` §7.1 |
+| 10 | **Stage 0 is a UI-first prototype phase, not a baseline merge.** Build the production sidebar + brief renderer against a normalized mock fixture (`static/multihazard_fixtures.js`) **before** any Python adapter code. Schema is ratified by working JS code, then handed to Stage 1 Python as the regression target. | The prior 1-day "merge the scaffold" framing would have let Stage 1 design data shapes around the mockup's hardcoded `wf:`/`fl:` keys and the production FHSZ-specific coupling. Front-loading the schema decisions under mock data avoids paying refactor cost again at Stage 3 (FloodAdapter). | `docs/plan-multihazard-stage-0.md` §1, §4 |
+| 11 | **`HazardResult` is a tagged union with one named variant per hazard.** `WildfireResult`, `FloodResult`, `TsunamiResult`, `DamFailureResult`, `GasHazmatResult`, `LandslideResult` each have explicit hazard-specific fields; `type` is the discriminator. Renderers dispatch via `switch (result.type)` with 6 cases in exactly 4 named functions: `_renderHazardBarRow`, `_renderHazardListItem`, `BriefRenderer._renderBRow`, `BriefRenderer._renderCRow`. No flag-based hidden dispatch (no `if r.dispositive` on a generic shape — `dispositive: true` is structurally part of `TsunamiResult` only). No `result.type === 'X'` checks outside the 4 switch sites. | With 6 finite hazards each carrying genuinely different physics (flood needs BFE + node elevation; dam needs per-feature arrival times; gas needs computed PIR buffer; tsunami is dispositive), a semi-abstract schema (uniform shape + optional fields) hides where the hazard logic lives without saving any real code. Explicit tagged unions buy debuggability + type safety + grep-ability at the bounded cost of 6 switch cases per consumer. The 4-function `HazardAdapter` interface (decision #6) still holds at the orchestrator call sites — but the *return types* are hazard-specific. | `docs/plan-multihazard-stage-0.md` §4.0, §4.2, §4.2.1 |
 
 ---
 
@@ -108,6 +112,8 @@ Mirrors `docs/plan-ab747-multihazard-research.md` §8. Update as work lands.
 | Item | Outcome | Date |
 |---|---|---|
 | PIR constant fix in `plan-ab747-multihazard-research.md` §5D (decision #3) | Replaced `0.004` with `0.69` (per PHMSA TTO-13, 2005; 49 CFR §192.903). Inline note flags the prior incorrect value. | 2026-05-16 |
+| Stage 0 expanded into UI-first prototype plan | `docs/plan-multihazard-stage-0.md` — 28-step incremental build sequence; locks right-side sidebar (decision #9); adds tsunami-dispositive mock fixture to validate decision #2 rendering before TsunamiAdapter ships. Supersedes the 1-day baseline-merge framing in `plan-multihazard-mvp.md` §3. | 2026-05-17 |
+| Schema design pivot: tagged-union per-hazard result types (decision #11) | After surfacing the per-hazard data requirements (BFE for flood, per-feature arrival times for dam, computed PIR for gas, dispositive for tsunami, TTL for landslide), reversed earlier "fully abstract renderer" stance. Plan §4.0 now documents per-hazard data requirements; §4.2 rewrites `hazard_results[]` as discriminated union; §4.2.1 documents the 4-switch-site renderer rule; §6.3 steps 12/13/15/17/22 updated to switch-based per-case implementation order. | 2026-05-17 |
 
 ## In-flight
 
@@ -116,9 +122,8 @@ Work currently dispatched but not yet landed. Each entry: title, owner (session/
 | Item | Owner | Producing | Dispatched |
 |---|---|---|---|
 | WhatIfEngine hazard parameter design doc | Chip | `docs/plan-whatif-multihazard-param.md` | 2026-05-16 |
-| Multi-hazard UI/UX mockup (Phase 7 gate — user-requested checkpoint) | Chip | `output/mockup/multihazard_mockup.html` | 2026-05-16 |
 
-> **User gate:** the UI/UX mockup is an explicit user-approval checkpoint. No further frontend work (sidebar, popup, brief renderer, AntPath, etc.) ships until the user reviews and approves the mockup.
+> **Mockup status:** the standalone UI/UX mockup gate (`output/mockup/multihazard_on_berkeley.html`) is **superseded** by Stage 0 implementation (`docs/plan-multihazard-stage-0.md`). The mockup remains the visual contract reference; further frontend approval happens incrementally as Stage 0 steps land, not at a single checkpoint.
 
 ---
 
@@ -131,18 +136,59 @@ Work currently dispatched but not yet landed. Each entry: title, owner (session/
 - **Branch:** `feature/multi-hazard` long-lived umbrella; stage branches merge into it. **Nothing lands on `main` until the entire MVP is complete and ready to fully replace what's on main today.**
 - **Test suite as integration guide:** the four existing production test files (`tests/test_whatif_engine.js`, `test_brief_renderer.js`, `test_sidebar.js`, `test_project_manager.js`) must stay green through every stage PR. See `plan-multihazard-mvp.md` §13.
 
-## Next up (MVP stage order — see `plan-multihazard-mvp.md` for full detail)
+## Next up
 
-1. **Stage 0 — Baseline merge.** Land the existing scaffold + mockup on main (worktree `claude/magical-blackburn-f0c875` + uncommitted main-side docs).
-2. **Stage 1 — HazardAdapter abstraction + WildfireAdapter refactor.** Pure structural refactor, zero behavior change. Effort: M.
-3. **Stage 2 — JOSH_DATA schema v2 + feature flag.** Forward-compatible schema bump behind per-city flag.
-4. **Stage 3 — FloodAdapter.** First new hazard. Validates network-cutting + BFE exit filter against real FEMA NFHL data.
-5. **Stage 4 — Frontend right-sidebar migration.** sidebar.js + brief_renderer.js extended per the mockup visual contract.
-6. **Stage 5 — Multi-hazard determination logic + Berkeley feature-flag flip.** First main-line merge of multi-hazard.
-7. **Stages 6–9 — Remaining adapters** (Tsunami, Dam, Gas, Landslide — parallelizable).
-8. **Stage 10 — Encinitas onboarding.** Validates portability.
-9. **Stage 11 — Methodology memos.** Per-hazard memos, legal defensibility, PE technical brief update.
-10. **Stage 12 — Promote multi-hazard from flag to default.** All cities migrate; feature flag retired.
+**Active stage: 0 (UI-first prototype with mock data).** Dispatch in step order per
+`docs/plan-multihazard-stage-0.md` §6.3. The supervising agent picks up the lowest-numbered
+unstarted step.
+
+### Stage 0 step queue (next ≈ 14 working days)
+
+1. **Step 1 — Baseline snapshot.** Capture current Berkeley pipeline outputs into `tests/snapshots/baseline/`. Regression bar for every later step.
+2. **Step 2 — `multihazard` flag plumbing + `schema_version: 2` emit.** No visible change.
+3. **Step 3 — `HazardPolygonLayer` JS module.** Refactor existing FHSZ render to use it; no behavior change.
+4. **Step 4 — Emit `JOSH_DATA.hazard_polygons.wildfire`.** Renderer reads new path when flag on.
+5. **Step 5 — Mock flood polygon to `hazard_polygons.flood`.** Bayfront fake visible via legacy layer control.
+6. **Step 6 — Hide left sidebar; show empty right shell when flag on.**
+7. **Step 7 — Move Leaflet zoom to topleft when flag on.**
+8. **Step 8 — Hazard Layers panel (replaces Folium auto-control).**
+9. **Step 9 — Project dropdown panel.**
+10. **Step 10 — Suppress marker popups; click → `selectProject(id)`.**
+11. **Step 11 — Load `static/multihazard_fixtures.js`; merge `hazard_results[]` onto projects.**
+12. **Step 12 — Project detail card + per-hazard ΔT bar chart (wildfire only).**
+13. **Step 13 — Extend fixture with flood `hazard_results[]` for all 6 real projects.**
+14. **Step 14 — Tier banner with controlling-hazard footer.**
+15. **Step 15 — Hazards Evaluated list.**
+16. **Step 16 — Inject `cedar_street_infill` (flood-controlling) mock project.**
+17. **Step 17 — Inject `marina_pointe` (tsunami-dispositive) + `_renderDispositive` treatment.**
+18. **Step 18 — Hazard scenario radio (no behavior yet).**
+19. **Step 19 — Stub mock `route_coords` per hazard in fixture.**
+20. **Step 20 — Wire scenario change → re-`_drawRoutes()`.**
+21. **Step 21 — `BriefRenderer` schema branching (v1 path unchanged).**
+22. **Step 22 — Section B/C per-hazard tables.**
+23. **Step 23 — Section D excluded hazards + determination footer.**
+24. **Step 24 — Brief renderer tests for v2 cases.**
+25. **Step 25 — Narrow-viewport media query.**
+26. **Step 26 — Leaflet attribution placement check.**
+27. **Step 27 — Write `docs/josh-data-schema-v2.md`.**
+28. **Step 28 — Status doc updates + Stage 0 PR review.**
+
+See `docs/plan-multihazard-stage-0.md` §6.3 for full per-step scope, files touched, and
+verification criteria. §6.4 has the dependency graph and parallelization opportunities.
+
+### Stages 1–12 (after Stage 0 closes)
+
+The original MVP stage order remains the umbrella plan — see `docs/plan-multihazard-mvp.md` for full detail:
+
+1. **Stage 1 — HazardAdapter abstraction + WildfireAdapter refactor.** Python adapter ABC; target schema = the ratified Stage 0 fixture shape.
+2. **Stage 2 — JOSH_DATA schema v2 + feature flag.** (Largely consumed by Stage 0; remaining work is hardening the flag for non-Berkeley cities.)
+3. **Stage 3 — FloodAdapter.** First real hazard data; inherits `cedar_street_infill` fixture as regression target.
+4. **Stage 4 — Frontend Phase 7.** (Largely consumed by Stage 0; remaining work is replacing mock fixtures with adapter output.)
+5. **Stage 5 — Multi-hazard determination logic + Berkeley flag flip.**
+6. **Stages 6–9 — Tsunami, Dam, Gas, Landslide adapters** (parallelizable). Stage 6 inherits `marina_pointe` fixture as regression target.
+7. **Stage 10 — Encinitas onboarding.**
+8. **Stage 11 — Methodology memos.**
+9. **Stage 12 — Promote multi-hazard from flag to default.**
 
 The supervising agent dispatches these. See `.claude/agents/multihazard-architect.md`.
 
@@ -162,11 +208,12 @@ This is enforceable as a PR review checklist item but not by hook today — unti
 
 ## Related documents
 
-- `docs/plan-multihazard-mvp.md` — **implementation plan** (12 stages, ~18 weeks, MVP definition)
+- `docs/plan-multihazard-stage-0.md` — **active stage plan** (28-step UI-first prototype with mock data)
+- `docs/plan-multihazard-mvp.md` — umbrella implementation plan (12 stages, ~18 weeks, MVP definition)
 - `docs/plan-ab747-multihazard-research.md` — research plan (the territory)
 - `docs/multihazard_first_principles.md` — architecture memo (the map)
 - `docs/josh-design-tokens.md` — production design tokens for Phase 7 UI
 - `docs/mobilization_rate_methodology_statement.md` — template for per-hazard mobilization memos
-- `output/mockup/multihazard_on_berkeley.html` — visual contract for Stage 4 frontend (on worktree branch `claude/magical-blackburn-f0c875` until Stage 0 merges)
+- `output/mockup/multihazard_on_berkeley.html` — visual contract (superseded by Stage 0 implementation; retained as reference)
 - `.claude/agents/multihazard-architect.md` — supervising agent definition
 - `CLAUDE.md` — entry-point pointer
