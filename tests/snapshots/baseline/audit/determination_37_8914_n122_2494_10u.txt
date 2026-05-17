@@ -1,0 +1,82 @@
+======================================================================
+FIRE EVACUATION CAPACITY ANALYSIS  -  PROJECT DETERMINATION
+JOSH v4.0 (dT Standard  -  Constant Mobilization, NFPA 101)
+======================================================================
+Date:           2026-05-16T09:34:40.065808
+Project:        Hills FHSZ Small Infill
+Address:        Tunnel Rd & Claremont Ave, Berkeley Hills (FHSZ Zone 3 area)
+APN:            Not provided
+Location:       37.8914, -122.2494
+Dwelling Units: 10
+Stories:        2
+
+ALGORITHM
+----------------------------------------
+  Universal 5-Step Evacuation Capacity Algorithm v4.0 (dT Standard  -  constant mobilization)
+  Each scenario applies: (1) applicability check, (2) scale gate, (3) route identification (EvacuationPath objects with bottleneck tracking), (4) demand calculation (behavioral_mobilization 0.90 x vpu x units  -  FHWA constant), (5) dT test (project_vehicles / bottleneck_effective_capacity x 60 + egress). FHSZ affects road capacity degradation only  -  not mobilization. Most restrictive tier across all applicable scenarios is the final determination.
+  Reference: See legal.md for full legal basis and defense reference.
+
+======================================================================
+SCENARIO: WILDLAND_AB747
+  Legal Basis: AB 747 (California Government Code Sec.65302.15)  -  General Plan Safety Element mandatory update for evacuation route capacity analysis; HCM 2022 (Highway Capacity Manual, 7th Edition)  -  effective capacity with hazard degradation; NFPA 101 (Life Safety Code)  -  0.90 mobilization design basis (100% occupant evacuation, adjusted for ~10% zero-vehicle households per Census ACS B25044); NIST TN 2135 (Maranghides et al.)  -  safe egress windows by hazard zone
+  Result: MINISTERIAL  |  Triggered: NO
+======================================================================
+
+  STEP 1  -  APPLICABILITY CHECK (Standard 3: FHSZ Modifier)
+  --------------------------------------
+  Method: Always applicable; site FHSZ check via GIS point-in-polygon
+  Result: APPLICABLE
+  Note: FHSZ Zone 3 (vhfhsz)  -  road capacity degradation applied; mobilization unaffected. Behavioral mobilization 0.90 (FHWA, constant).
+  Standard 3 (FHSZ): Zone 3 (Very High) [HAZ_CLASS=3]  hazard_zone=vhfhsz  (IN FIRE ZONE)
+  Behavioral Mobilization: 0.90 (FHWA Emergency Transportation Operations  -  mandatory evacuation compliance rate)
+
+  STEP 2  -  SCALE GATE (Standard 1)
+  --------------------------------------
+  10 >= 15 -> not triggered
+  (10 units vs. 15 threshold)
+  -> Determination: MINISTERIAL (below scale threshold)
+  Reason: Project has 10 dwelling units, below the 15-unit threshold. Ministerial approval eligible.
+
+======================================================================
+SCENARIO: SB79_TRANSIT
+  Legal Basis: SB 79 (2025)  -  objective health and safety standard carve-out for by-right projects (transit proximity context); California Public Utilities Code Sec.21155 (Tier 1/2 transit)
+  Result: NOT_APPLICABLE  |  Triggered: NO
+======================================================================
+  NOT APPLICABLE: SB 79: project is not within 0.5 miles of Tier 1/2 transit. Informational only  -  no tier impact.
+  SB 79 Transit Proximity: outside transit buffer
+
+======================================================================
+FINAL DETERMINATION
+======================================================================
+  RESULT: MINISTERIAL APPROVAL ELIGIBLE
+
+  Project has 10 dwelling units, below the 15-unit threshold. Ministerial approval eligible.
+
+  PARAMETERS APPLIED
+  --------------------------------------
+  Hazard Zone:        vhfhsz
+  Behavioral Mobilization: 0.90 (FHWA Emergency Transportation Operations  -  mandatory evacuation compliance rate)
+  Vehicles per Unit:  1.9 (U.S. Census ACS B25044, CA statewide all-HH average)
+  Egress Penalty:     0.0 min (NFPA 101/IBC  -  2 stories)
+  Safe Egress Window:  min (vhfhsz, per NIST TN 2135)
+  Max Project Share:  5%
+  dT Threshold:        min
+  Max dT (project):   0.00 min
+
+  Determination Tier:
+    MINISTERIAL APPROVAL ELIGIBLE
+
+  Project is below the dwelling unit size threshold (Standard 1 not met).
+  No evacuation capacity analysis is required.
+
+  Scenario Tier Summary:
+    wildland_ab747: MINISTERIAL
+    sb79_transit: NOT_APPLICABLE
+
+  Aggregation Logic: Most restrictive tier across all applicable scenarios wins.
+  Tier Ranking: DISCRETIONARY(3) > MINISTERIAL WITH STANDARD CONDITIONS(2) > MINISTERIAL(1) > NOT_APPLICABLE(0)
+
+  This determination is based solely on objective, verifiable criteria.
+  No professional discretion was applied. All calculations are reproducible.
+  See legal.md for full legal basis and defense reference.
+======================================================================

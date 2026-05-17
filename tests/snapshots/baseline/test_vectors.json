@@ -1,0 +1,418 @@
+{
+  "generated_at": "2026-05-16T16:34:44.865910+00:00",
+  "parameters_version": "4.0",
+  "vectors": [
+    {
+      "name": "Ashby Small Infill",
+      "input": {
+        "lat": 37.8528,
+        "lon": -122.2699,
+        "units": 10,
+        "stories": 2
+      },
+      "expected": {
+        "tier": "MINISTERIAL",
+        "hazard_zone": "non_fhsz",
+        "project_vehicles": 0.0,
+        "serving_paths_count": 0,
+        "paths": []
+      }
+    },
+    {
+      "name": "Downtown Mid-Rise",
+      "input": {
+        "lat": 37.8695,
+        "lon": -122.2685,
+        "units": 85,
+        "stories": 3
+      },
+      "expected": {
+        "tier": "MINISTERIAL WITH STANDARD CONDITIONS",
+        "hazard_zone": "non_fhsz",
+        "project_vehicles": 145.3,
+        "serving_paths_count": 13,
+        "paths": [
+          {
+            "bottleneck_osmid": "1000718782",
+            "delta_t_minutes": 4.59,
+            "threshold_minutes": 6.0,
+            "flagged": false
+          },
+          {
+            "bottleneck_osmid": "1000718782",
+            "delta_t_minutes": 4.59,
+            "threshold_minutes": 6.0,
+            "flagged": false
+          },
+          {
+            "bottleneck_osmid": "1000718782",
+            "delta_t_minutes": 4.59,
+            "threshold_minutes": 6.0,
+            "flagged": false
+          },
+          {
+            "bottleneck_osmid": "1000718782",
+            "delta_t_minutes": 4.59,
+            "threshold_minutes": 6.0,
+            "flagged": false
+          },
+          {
+            "bottleneck_osmid": "25738782",
+            "delta_t_minutes": 2.29,
+            "threshold_minutes": 6.0,
+            "flagged": false
+          },
+          {
+            "bottleneck_osmid": "25738782",
+            "delta_t_minutes": 2.29,
+            "threshold_minutes": 6.0,
+            "flagged": false
+          },
+          {
+            "bottleneck_osmid": "25738782",
+            "delta_t_minutes": 2.29,
+            "threshold_minutes": 6.0,
+            "flagged": false
+          },
+          {
+            "bottleneck_osmid": "25738782",
+            "delta_t_minutes": 2.29,
+            "threshold_minutes": 6.0,
+            "flagged": false
+          },
+          {
+            "bottleneck_osmid": "6320410",
+            "delta_t_minutes": 3.88,
+            "threshold_minutes": 6.0,
+            "flagged": false
+          },
+          {
+            "bottleneck_osmid": "6321559",
+            "delta_t_minutes": 3.88,
+            "threshold_minutes": 6.0,
+            "flagged": false
+          },
+          {
+            "bottleneck_osmid": "6321559",
+            "delta_t_minutes": 3.88,
+            "threshold_minutes": 6.0,
+            "flagged": false
+          },
+          {
+            "bottleneck_osmid": "6321559",
+            "delta_t_minutes": 3.88,
+            "threshold_minutes": 6.0,
+            "flagged": false
+          },
+          {
+            "bottleneck_osmid": "9577895",
+            "delta_t_minutes": 3.88,
+            "threshold_minutes": 6.0,
+            "flagged": false
+          }
+        ]
+      }
+    },
+    {
+      "name": "Hills Gateway",
+      "input": {
+        "lat": 37.8914,
+        "lon": -122.2494,
+        "units": 80,
+        "stories": 3
+      },
+      "expected": {
+        "tier": "DISCRETIONARY",
+        "hazard_zone": "vhfhsz",
+        "project_vehicles": 136.8,
+        "serving_paths_count": 13,
+        "paths": [
+          {
+            "bottleneck_osmid": "6338567",
+            "delta_t_minutes": 26.06,
+            "threshold_minutes": 2.25,
+            "flagged": true
+          },
+          {
+            "bottleneck_osmid": "6338567",
+            "delta_t_minutes": 26.06,
+            "threshold_minutes": 2.25,
+            "flagged": true
+          },
+          {
+            "bottleneck_osmid": "6338567",
+            "delta_t_minutes": 26.06,
+            "threshold_minutes": 2.25,
+            "flagged": true
+          },
+          {
+            "bottleneck_osmid": "6338567",
+            "delta_t_minutes": 26.06,
+            "threshold_minutes": 2.25,
+            "flagged": true
+          },
+          {
+            "bottleneck_osmid": "6338567",
+            "delta_t_minutes": 26.06,
+            "threshold_minutes": 2.25,
+            "flagged": true
+          },
+          {
+            "bottleneck_osmid": "6338567",
+            "delta_t_minutes": 26.06,
+            "threshold_minutes": 2.25,
+            "flagged": true
+          },
+          {
+            "bottleneck_osmid": "6338567",
+            "delta_t_minutes": 26.06,
+            "threshold_minutes": 2.25,
+            "flagged": true
+          },
+          {
+            "bottleneck_osmid": "6338567",
+            "delta_t_minutes": 26.06,
+            "threshold_minutes": 2.25,
+            "flagged": true
+          },
+          {
+            "bottleneck_osmid": "6338567",
+            "delta_t_minutes": 26.06,
+            "threshold_minutes": 2.25,
+            "flagged": true
+          },
+          {
+            "bottleneck_osmid": "6375810",
+            "delta_t_minutes": 20.85,
+            "threshold_minutes": 2.25,
+            "flagged": true
+          },
+          {
+            "bottleneck_osmid": "6375810",
+            "delta_t_minutes": 20.85,
+            "threshold_minutes": 2.25,
+            "flagged": true
+          },
+          {
+            "bottleneck_osmid": "6375810",
+            "delta_t_minutes": 20.85,
+            "threshold_minutes": 2.25,
+            "flagged": true
+          },
+          {
+            "bottleneck_osmid": "6375810",
+            "delta_t_minutes": 20.85,
+            "threshold_minutes": 2.25,
+            "flagged": true
+          }
+        ]
+      }
+    },
+    {
+      "name": "Hills FHSZ Small Infill",
+      "input": {
+        "lat": 37.8914,
+        "lon": -122.2494,
+        "units": 10,
+        "stories": 2
+      },
+      "expected": {
+        "tier": "MINISTERIAL",
+        "hazard_zone": "vhfhsz",
+        "project_vehicles": 0.0,
+        "serving_paths_count": 0,
+        "paths": []
+      }
+    },
+    {
+      "name": "Claremont Hills Terrace",
+      "input": {
+        "lat": 37.876,
+        "lon": -122.26,
+        "units": 25,
+        "stories": 3
+      },
+      "expected": {
+        "tier": "MINISTERIAL WITH STANDARD CONDITIONS",
+        "hazard_zone": "non_fhsz",
+        "project_vehicles": 42.8,
+        "serving_paths_count": 13,
+        "paths": [
+          {
+            "bottleneck_osmid": "23089172",
+            "delta_t_minutes": 2.28,
+            "threshold_minutes": 6.0,
+            "flagged": false
+          },
+          {
+            "bottleneck_osmid": "23089172",
+            "delta_t_minutes": 2.28,
+            "threshold_minutes": 6.0,
+            "flagged": false
+          },
+          {
+            "bottleneck_osmid": "23089172",
+            "delta_t_minutes": 2.28,
+            "threshold_minutes": 6.0,
+            "flagged": false
+          },
+          {
+            "bottleneck_osmid": "23089172",
+            "delta_t_minutes": 2.28,
+            "threshold_minutes": 6.0,
+            "flagged": false
+          },
+          {
+            "bottleneck_osmid": "23089172",
+            "delta_t_minutes": 2.28,
+            "threshold_minutes": 6.0,
+            "flagged": false
+          },
+          {
+            "bottleneck_osmid": "23089172",
+            "delta_t_minutes": 2.28,
+            "threshold_minutes": 6.0,
+            "flagged": false
+          },
+          {
+            "bottleneck_osmid": "23089172",
+            "delta_t_minutes": 2.28,
+            "threshold_minutes": 6.0,
+            "flagged": false
+          },
+          {
+            "bottleneck_osmid": "23089172",
+            "delta_t_minutes": 2.28,
+            "threshold_minutes": 6.0,
+            "flagged": false
+          },
+          {
+            "bottleneck_osmid": "23089172",
+            "delta_t_minutes": 2.28,
+            "threshold_minutes": 6.0,
+            "flagged": false
+          },
+          {
+            "bottleneck_osmid": "23089172",
+            "delta_t_minutes": 2.28,
+            "threshold_minutes": 6.0,
+            "flagged": false
+          },
+          {
+            "bottleneck_osmid": "23089172",
+            "delta_t_minutes": 2.28,
+            "threshold_minutes": 6.0,
+            "flagged": false
+          },
+          {
+            "bottleneck_osmid": "23089172",
+            "delta_t_minutes": 2.28,
+            "threshold_minutes": 6.0,
+            "flagged": false
+          },
+          {
+            "bottleneck_osmid": "23089172",
+            "delta_t_minutes": 2.28,
+            "threshold_minutes": 6.0,
+            "flagged": false
+          }
+        ]
+      }
+    },
+    {
+      "name": "Cedar Street Infill",
+      "input": {
+        "lat": 37.879,
+        "lon": -122.278,
+        "units": 75,
+        "stories": 6
+      },
+      "expected": {
+        "tier": "DISCRETIONARY",
+        "hazard_zone": "non_fhsz",
+        "project_vehicles": 128.2,
+        "serving_paths_count": 13,
+        "paths": [
+          {
+            "bottleneck_osmid": "6393514",
+            "delta_t_minutes": 15.84,
+            "threshold_minutes": 6.0,
+            "flagged": true
+          },
+          {
+            "bottleneck_osmid": "6393514",
+            "delta_t_minutes": 15.84,
+            "threshold_minutes": 6.0,
+            "flagged": true
+          },
+          {
+            "bottleneck_osmid": "6393514",
+            "delta_t_minutes": 15.84,
+            "threshold_minutes": 6.0,
+            "flagged": true
+          },
+          {
+            "bottleneck_osmid": "6393514",
+            "delta_t_minutes": 15.84,
+            "threshold_minutes": 6.0,
+            "flagged": true
+          },
+          {
+            "bottleneck_osmid": "6393514",
+            "delta_t_minutes": 15.84,
+            "threshold_minutes": 6.0,
+            "flagged": true
+          },
+          {
+            "bottleneck_osmid": "6393514",
+            "delta_t_minutes": 15.84,
+            "threshold_minutes": 6.0,
+            "flagged": true
+          },
+          {
+            "bottleneck_osmid": "6393514",
+            "delta_t_minutes": 15.84,
+            "threshold_minutes": 6.0,
+            "flagged": true
+          },
+          {
+            "bottleneck_osmid": "6393514",
+            "delta_t_minutes": 15.84,
+            "threshold_minutes": 6.0,
+            "flagged": true
+          },
+          {
+            "bottleneck_osmid": "6393514",
+            "delta_t_minutes": 15.84,
+            "threshold_minutes": 6.0,
+            "flagged": true
+          },
+          {
+            "bottleneck_osmid": "6393514",
+            "delta_t_minutes": 15.84,
+            "threshold_minutes": 6.0,
+            "flagged": true
+          },
+          {
+            "bottleneck_osmid": "6393514",
+            "delta_t_minutes": 15.84,
+            "threshold_minutes": 6.0,
+            "flagged": true
+          },
+          {
+            "bottleneck_osmid": "6393514",
+            "delta_t_minutes": 15.84,
+            "threshold_minutes": 6.0,
+            "flagged": true
+          },
+          {
+            "bottleneck_osmid": "6393514",
+            "delta_t_minutes": 15.84,
+            "threshold_minutes": 6.0,
+            "flagged": true
+          }
+        ]
+      }
+    }
+  ]
+}

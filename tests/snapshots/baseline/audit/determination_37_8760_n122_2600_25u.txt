@@ -1,0 +1,213 @@
+======================================================================
+FIRE EVACUATION CAPACITY ANALYSIS  -  PROJECT DETERMINATION
+JOSH v4.0 (dT Standard  -  Constant Mobilization, NFPA 101)
+======================================================================
+Date:           2026-05-16T09:34:42.433351
+Project:        Claremont Hills Terrace
+Address:        Ridge Road & Claremont Ave, Berkeley Hills
+APN:            Not provided
+Location:       37.876, -122.26
+Dwelling Units: 25
+Stories:        3
+
+ALGORITHM
+----------------------------------------
+  Universal 5-Step Evacuation Capacity Algorithm v4.0 (dT Standard  -  constant mobilization)
+  Each scenario applies: (1) applicability check, (2) scale gate, (3) route identification (EvacuationPath objects with bottleneck tracking), (4) demand calculation (behavioral_mobilization 0.90 x vpu x units  -  FHWA constant), (5) dT test (project_vehicles / bottleneck_effective_capacity x 60 + egress). FHSZ affects road capacity degradation only  -  not mobilization. Most restrictive tier across all applicable scenarios is the final determination.
+  Reference: See legal.md for full legal basis and defense reference.
+
+======================================================================
+SCENARIO: WILDLAND_AB747
+  Legal Basis: AB 747 (California Government Code Sec.65302.15)  -  General Plan Safety Element mandatory update for evacuation route capacity analysis; HCM 2022 (Highway Capacity Manual, 7th Edition)  -  effective capacity with hazard degradation; NFPA 101 (Life Safety Code)  -  0.90 mobilization design basis (100% occupant evacuation, adjusted for ~10% zero-vehicle households per Census ACS B25044); NIST TN 2135 (Maranghides et al.)  -  safe egress windows by hazard zone
+  Result: MINISTERIAL WITH STANDARD CONDITIONS  |  Triggered: NO
+======================================================================
+
+  STEP 1  -  APPLICABILITY CHECK (Standard 3: FHSZ Modifier)
+  --------------------------------------
+  Method: Always applicable; site FHSZ check via GIS point-in-polygon
+  Result: APPLICABLE
+  Note: Not in FHSZ (hazard_zone=non_fhsz)  -  no road degradation. Behavioral mobilization 0.90 (FHWA, constant).
+  Standard 3 (FHSZ): Not in FHSZ [HAZ_CLASS=0]  hazard_zone=non_fhsz  (not in FHSZ)
+  Note: Point not within any FHSZ polygon; nearest polygon 842 m away (>50 m threshold).
+  Behavioral Mobilization: 0.90 (FHWA Emergency Transportation Operations  -  mandatory evacuation compliance rate)
+
+  STEP 2  -  SCALE GATE (Standard 1)
+  --------------------------------------
+  25 >= 15 -> TRIGGERED
+  (25 units vs. 15 threshold)
+
+  STEP 3  -  ROUTE IDENTIFICATION (Standard 2)
+  --------------------------------------
+  Method: Project-origin Dijkstra (v4.0, travel-time weight)  -  fastest path from project site to each regional-network exit node (motorway/trunk/primary at city boundary); weight=length/speed_limit (seconds) per speed_defaults config; 81 nodes within 0.5 mi network zone; respects road barriers (I-5, rail, etc.)
+  Radius: 0.5 miles (804.7 m)
+  Serving route segments found: 91
+  Serving EvacuationPaths identified: 13
+    - Eastshore Freeway: eff_cap=11250 vph, fhsz=non_fhsz, deg=1.00, vc=0.500 (informational)
+    - 6321559: eff_cap=2250 vph, fhsz=non_fhsz, deg=1.00, vc=0.500 (informational)
+    - 9577895: eff_cap=2250 vph, fhsz=non_fhsz, deg=1.00, vc=0.764 (informational)
+    - 510151009: eff_cap=2250 vph, fhsz=non_fhsz, deg=1.00, vc=0.764 (informational)
+    - 6322298: eff_cap=2250 vph, fhsz=non_fhsz, deg=1.00, vc=0.500 (informational)
+    - Ridge Road: eff_cap=1125 vph, fhsz=non_fhsz, deg=1.00, vc=0.424 (informational)
+    - University Avenue: eff_cap=5700 vph, fhsz=non_fhsz, deg=1.00, vc=0.400 (informational)
+    - Ashby Avenue: eff_cap=7600 vph, fhsz=non_fhsz, deg=1.00, vc=3.095 (informational)
+    - Shattuck Avenue: eff_cap=7600 vph, fhsz=non_fhsz, deg=1.00, vc=0.400 (informational)
+    - San Pablo Avenue: eff_cap=3800 vph, fhsz=non_fhsz, deg=1.00, vc=0.280 (informational)
+    - Le Conte Avenue: eff_cap=1125 vph, fhsz=non_fhsz, deg=1.00, vc=0.250 (informational)
+    - Scenic Avenue: eff_cap=1125 vph, fhsz=non_fhsz, deg=1.00, vc=1.552 (informational)
+    - Adeline Street: eff_cap=3800 vph, fhsz=non_fhsz, deg=1.00, vc=0.719 (informational)
+    - 6320410: eff_cap=2250 vph, fhsz=non_fhsz, deg=1.00, vc=4.388 (informational)
+    - Hearst Avenue: eff_cap=1125 vph, fhsz=non_fhsz, deg=1.00, vc=0.250 (informational)
+
+  STEP 4  -  DEMAND CALCULATION
+  --------------------------------------
+  Formula: 25 x 1.9 x 0.90
+  Hazard Zone: non_fhsz
+  Behavioral Mobilization: 0.90 (FHWA Emergency Transportation Operations, constant)
+  Project vehicles (peak hour): 42.8 vph
+  Source (vehicles/unit): U.S. Census ACS B25044
+  Source (mobilization): FHWA Emergency Transportation Operations  -  mandatory evacuation compliance rate for residential areas (0.90). vehicles_per_unit already reflects zero-vehicle households via ACS B25044 all-household average.
+
+  STEP 5  -  dT TEST (Standard 4)
+  --------------------------------------
+  Method: dT = (project_vehicles / bottleneck_effective_capacity) x 60 + egress
+  Hazard Zone: non_fhsz
+  Behavioral Mobilization: 0.90 (FHWA Emergency Transportation Operations, constant)
+  Project Vehicles: 42.8 vph
+  Egress Penalty: 0.0 min (NFPA 101/IBC; applies to buildings >= 4 stories)
+  Safe Egress Window: 120 min (non_fhsz, NIST TN 2135)
+  Max Project Share:  5%
+  dT Threshold:       6.00 min (120 min window x 5%, NIST TN 2135)
+  Paths Evaluated: 13
+  Max dT: 2.28 min
+  Triggered: NO
+
+  Per-Path Results (all evaluated paths  -  no deduplication):
+    Path proj_53148316_243670952  |  origin BG: project_origin  |  35 segments
+    Bottleneck: Ridge Road (Euclid Avenue to Scenic Avenue), 0.1 mi W [within threshold]
+      Road: Two-lane highway  |  Speed: 25 mph  |  Lanes: 1  |  HAZ_CLASS: 0 (non_fhsz)
+      HCM cap: 1125 vph  x degradation 1.00 (non_fhsz)  = eff cap 1125 vph
+      dT = (42.8 vph / 1125 vph) x 60 + 0.0 min egress = 2.28 min  (threshold: 6.00 min (120 min x 5%))
+
+    Path proj_53148316_2644106915  |  origin BG: project_origin  |  50 segments
+    Bottleneck: Ridge Road (Euclid Avenue to Scenic Avenue), 0.1 mi W [within threshold]
+      Road: Two-lane highway  |  Speed: 25 mph  |  Lanes: 1  |  HAZ_CLASS: 0 (non_fhsz)
+      HCM cap: 1125 vph  x degradation 1.00 (non_fhsz)  = eff cap 1125 vph
+      dT = (42.8 vph / 1125 vph) x 60 + 0.0 min egress = 2.28 min  (threshold: 6.00 min (120 min x 5%))
+
+    Path proj_53148316_2644106917  |  origin BG: project_origin  |  49 segments
+    Bottleneck: Ridge Road (Euclid Avenue to Scenic Avenue), 0.1 mi W [within threshold]
+      Road: Two-lane highway  |  Speed: 25 mph  |  Lanes: 1  |  HAZ_CLASS: 0 (non_fhsz)
+      HCM cap: 1125 vph  x degradation 1.00 (non_fhsz)  = eff cap 1125 vph
+      dT = (42.8 vph / 1125 vph) x 60 + 0.0 min egress = 2.28 min  (threshold: 6.00 min (120 min x 5%))
+
+    Path proj_53148316_52982359  |  origin BG: project_origin  |  38 segments
+    Bottleneck: Ridge Road (Euclid Avenue to Scenic Avenue), 0.1 mi W [within threshold]
+      Road: Two-lane highway  |  Speed: 25 mph  |  Lanes: 1  |  HAZ_CLASS: 0 (non_fhsz)
+      HCM cap: 1125 vph  x degradation 1.00 (non_fhsz)  = eff cap 1125 vph
+      dT = (42.8 vph / 1125 vph) x 60 + 0.0 min egress = 2.28 min  (threshold: 6.00 min (120 min x 5%))
+
+    Path proj_53148316_35833153  |  origin BG: project_origin  |  33 segments
+    Bottleneck: Ridge Road (Euclid Avenue to Scenic Avenue), 0.1 mi W [within threshold]
+      Road: Two-lane highway  |  Speed: 25 mph  |  Lanes: 1  |  HAZ_CLASS: 0 (non_fhsz)
+      HCM cap: 1125 vph  x degradation 1.00 (non_fhsz)  = eff cap 1125 vph
+      dT = (42.8 vph / 1125 vph) x 60 + 0.0 min egress = 2.28 min  (threshold: 6.00 min (120 min x 5%))
+
+    Path proj_53148316_86276581  |  origin BG: project_origin  |  34 segments
+    Bottleneck: Ridge Road (Euclid Avenue to Scenic Avenue), 0.1 mi W [within threshold]
+      Road: Two-lane highway  |  Speed: 25 mph  |  Lanes: 1  |  HAZ_CLASS: 0 (non_fhsz)
+      HCM cap: 1125 vph  x degradation 1.00 (non_fhsz)  = eff cap 1125 vph
+      dT = (42.8 vph / 1125 vph) x 60 + 0.0 min egress = 2.28 min  (threshold: 6.00 min (120 min x 5%))
+
+    Path proj_53148316_52982363  |  origin BG: project_origin  |  37 segments
+    Bottleneck: Ridge Road (Euclid Avenue to Scenic Avenue), 0.1 mi W [within threshold]
+      Road: Two-lane highway  |  Speed: 25 mph  |  Lanes: 1  |  HAZ_CLASS: 0 (non_fhsz)
+      HCM cap: 1125 vph  x degradation 1.00 (non_fhsz)  = eff cap 1125 vph
+      dT = (42.8 vph / 1125 vph) x 60 + 0.0 min egress = 2.28 min  (threshold: 6.00 min (120 min x 5%))
+
+    Path proj_53148316_53013480  |  origin BG: project_origin  |  36 segments
+    Bottleneck: Ridge Road (Euclid Avenue to Scenic Avenue), 0.1 mi W [within threshold]
+      Road: Two-lane highway  |  Speed: 25 mph  |  Lanes: 1  |  HAZ_CLASS: 0 (non_fhsz)
+      HCM cap: 1125 vph  x degradation 1.00 (non_fhsz)  = eff cap 1125 vph
+      dT = (42.8 vph / 1125 vph) x 60 + 0.0 min egress = 2.28 min  (threshold: 6.00 min (120 min x 5%))
+
+    Path proj_53148316_52995575  |  origin BG: project_origin  |  36 segments
+    Bottleneck: Ridge Road (Euclid Avenue to Scenic Avenue), 0.1 mi W [within threshold]
+      Road: Two-lane highway  |  Speed: 25 mph  |  Lanes: 1  |  HAZ_CLASS: 0 (non_fhsz)
+      HCM cap: 1125 vph  x degradation 1.00 (non_fhsz)  = eff cap 1125 vph
+      dT = (42.8 vph / 1125 vph) x 60 + 0.0 min egress = 2.28 min  (threshold: 6.00 min (120 min x 5%))
+
+    Path proj_53148316_53011243  |  origin BG: project_origin  |  37 segments
+    Bottleneck: Ridge Road (Euclid Avenue to Scenic Avenue), 0.1 mi W [within threshold]
+      Road: Two-lane highway  |  Speed: 25 mph  |  Lanes: 1  |  HAZ_CLASS: 0 (non_fhsz)
+      HCM cap: 1125 vph  x degradation 1.00 (non_fhsz)  = eff cap 1125 vph
+      dT = (42.8 vph / 1125 vph) x 60 + 0.0 min egress = 2.28 min  (threshold: 6.00 min (120 min x 5%))
+
+    Path proj_53148316_1635557750  |  origin BG: project_origin  |  35 segments
+    Bottleneck: Ridge Road (Euclid Avenue to Scenic Avenue), 0.1 mi W [within threshold]
+      Road: Two-lane highway  |  Speed: 25 mph  |  Lanes: 1  |  HAZ_CLASS: 0 (non_fhsz)
+      HCM cap: 1125 vph  x degradation 1.00 (non_fhsz)  = eff cap 1125 vph
+      dT = (42.8 vph / 1125 vph) x 60 + 0.0 min egress = 2.28 min  (threshold: 6.00 min (120 min x 5%))
+
+    Path proj_53148316_1541561262  |  origin BG: project_origin  |  34 segments
+    Bottleneck: Ridge Road (Euclid Avenue to Scenic Avenue), 0.1 mi W [within threshold]
+      Road: Two-lane highway  |  Speed: 25 mph  |  Lanes: 1  |  HAZ_CLASS: 0 (non_fhsz)
+      HCM cap: 1125 vph  x degradation 1.00 (non_fhsz)  = eff cap 1125 vph
+      dT = (42.8 vph / 1125 vph) x 60 + 0.0 min egress = 2.28 min  (threshold: 6.00 min (120 min x 5%))
+
+    Path proj_53148316_1895821107  |  origin BG: project_origin  |  35 segments
+    Bottleneck: Ridge Road (Euclid Avenue to Scenic Avenue), 0.1 mi W [within threshold]
+      Road: Two-lane highway  |  Speed: 25 mph  |  Lanes: 1  |  HAZ_CLASS: 0 (non_fhsz)
+      HCM cap: 1125 vph  x degradation 1.00 (non_fhsz)  = eff cap 1125 vph
+      dT = (42.8 vph / 1125 vph) x 60 + 0.0 min egress = 2.28 min  (threshold: 6.00 min (120 min x 5%))
+
+
+  -> Scenario Tier: MINISTERIAL WITH STANDARD CONDITIONS
+  Reason: Project meets the 15-unit applicability threshold and has 13 serving path(s). Max dT 2.3 min within threshold (6.00 min). Not in FHSZ (hazard_zone=non_fhsz)  -  no road degradation. Behavioral mobilization: 0.90 (FHWA, constant). Ministerial approval with standard conditions applied automatically. Legal basis: AB 747 (California Government Code Sec.65302.15)  -  General Plan Safety Element mandatory update for evacuation route capacity analysis; HCM 2022 (Highway Capacity Manual, 7th Edition)  -  effective capacity with hazard degradation; NFPA 101 (Life Safety Code)  -  0.90 mobilization design basis (100% occupant evacuation, adjusted for ~10% zero-vehicle households per Census ACS B25044); NIST TN 2135 (Maranghides et al.)  -  safe egress windows by hazard zone.
+
+======================================================================
+SCENARIO: SB79_TRANSIT
+  Legal Basis: SB 79 (2025)  -  objective health and safety standard carve-out for by-right projects (transit proximity context); California Public Utilities Code Sec.21155 (Tier 1/2 transit)
+  Result: NOT_APPLICABLE  |  Triggered: NO
+======================================================================
+  NOT APPLICABLE: SB 79: project is not within 0.5 miles of Tier 1/2 transit. Informational only  -  no tier impact.
+  SB 79 Transit Proximity: outside transit buffer
+
+======================================================================
+FINAL DETERMINATION
+======================================================================
+  RESULT: MINISTERIAL WITH STANDARD CONDITIONS
+
+  Project meets the 15-unit applicability threshold and has 13 serving path(s). Max dT 2.3 min within threshold (6.00 min). Not in FHSZ (hazard_zone=non_fhsz)  -  no road degradation. Behavioral mobilization: 0.90 (FHWA, constant). Ministerial approval with standard conditions applied automatically. Legal basis: AB 747 (California Government Code Sec.65302.15)  -  General Plan Safety Element mandatory update for evacuation route capacity analysis; HCM 2022 (Highway Capacity Manual, 7th Edition)  -  effective capacity with hazard degradation; NFPA 101 (Life Safety Code)  -  0.90 mobilization design basis (100% occupant evacuation, adjusted for ~10% zero-vehicle households per Census ACS B25044); NIST TN 2135 (Maranghides et al.)  -  safe egress windows by hazard zone.
+
+  PARAMETERS APPLIED
+  --------------------------------------
+  Hazard Zone:        non_fhsz
+  Behavioral Mobilization: 0.90 (FHWA Emergency Transportation Operations  -  mandatory evacuation compliance rate)
+  Vehicles per Unit:  1.9 (U.S. Census ACS B25044, CA statewide all-HH average)
+  Egress Penalty:     0.0 min (NFPA 101/IBC  -  3 stories)
+  Safe Egress Window: 120 min (non_fhsz, per NIST TN 2135)
+  Max Project Share:  5%
+  dT Threshold:       6.00 min (120 x 5%)
+  Max dT (project):   2.28 min
+
+  Determination Tier:
+    MINISTERIAL WITH STANDARD CONDITIONS
+
+  The project meets the dwelling unit size threshold and all serving paths' dT
+  are within the applicable threshold for the project's hazard zone.
+  Approved ministerially. The following pre-adopted, objective conditions apply
+  automatically: PRC Sec.4291 defensible space (if FHSZ); AB 1600 evacuation
+  infrastructure impact fee (if fee schedule adopted); emergency vehicle access
+  per local fire code; WUI building standards compliance (if FHSZ).
+
+  Scenario Tier Summary:
+    wildland_ab747: MINISTERIAL WITH STANDARD CONDITIONS
+    sb79_transit: NOT_APPLICABLE
+
+  Aggregation Logic: Most restrictive tier across all applicable scenarios wins.
+  Tier Ranking: DISCRETIONARY(3) > MINISTERIAL WITH STANDARD CONDITIONS(2) > MINISTERIAL(1) > NOT_APPLICABLE(0)
+
+  This determination is based solely on objective, verifiable criteria.
+  No professional discretion was applied. All calculations are reproducible.
+  See legal.md for full legal basis and defense reference.
+======================================================================
