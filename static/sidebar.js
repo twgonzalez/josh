@@ -2118,6 +2118,10 @@
   // _mhzSyntheticMarker: fallback marker for mock projects (Step 16+) that
   // have no production FeatureGroup. Tracked so dropdown change can remove it.
   let _mhzSyntheticMarker = null;
+  // _mhzCurrentScenarioPolyline: Leaflet polyline drawn for non-controlling
+  // scenarios that have route_coords (Step 20). Tracked so scenario radio
+  // change can remove it.
+  let _mhzCurrentScenarioPolyline = null;
 
   function _pickHazardSwatchColor(palette) {
     // First non-transparent palette value in dict-insertion order. Themes.py
@@ -2429,6 +2433,72 @@
     );
   }
 
+  function _applyScenario(project, scenario, map) {
+    // Stage 0 Step 20. Resolve the chosen scenario to a target HazardResult,
+    // then swap the visible route:
+    //   • If the result has stub route_coords → hide the Folium FG (real route),
+    //     draw a Leaflet polyline (mock alt route).
+    //   • If the result is dispositive (tsunami) → hide all routes and update
+    //     the caption to explain.
+    //   • Otherwise (controlling / wildfire / null route_coords) → ensure the
+    //     Folium FG is visible (production route).
+    if (!map || !project) return;
+    // Always clear the previous scenario polyline.
+    if (_mhzCurrentScenarioPolyline) {
+      try { map.removeLayer(_mhzCurrentScenarioPolyline); } catch (_) {}
+      _mhzCurrentScenarioPolyline = null;
+    }
+    const evaluation = project.evaluation || {};
+    const results = Array.isArray(evaluation.hazard_results) ?
+                    evaluation.hazard_results : [];
+    let scenResult = null;
+    if (scenario === '__controlling__') {
+      scenResult = results.find(function (r) { return r && r.controls; }) || null;
+    } else {
+      scenResult = results.find(function (r) { return r && r.type === scenario; }) || null;
+    }
+    const fg = _mhzCurrentProjectFG;
+    const hasStubRoute = scenResult && Array.isArray(scenResult.route_coords) &&
+                         scenResult.route_coords.length > 0;
+    const dispositive = !!(scenResult && scenResult.dispositive);
+    // Folium FG visibility
+    if (fg) {
+      if (hasStubRoute || dispositive) {
+        // Non-Folium scenario: hide FG.
+        if (map.hasLayer(fg)) {
+          try { map.removeLayer(fg); } catch (_) {}
+        }
+      } else {
+        // Folium-backed scenario: ensure FG visible.
+        if (!map.hasLayer(fg)) map.addLayer(fg);
+      }
+    }
+    // Synthetic polyline for stub routes
+    if (hasStubRoute && typeof window !== 'undefined' && window.L) {
+      _mhzCurrentScenarioPolyline = window.L.polyline(scenResult.route_coords, {
+        color:     '#1f77b4',   // blue — only flood has stub routes at Step 19
+        weight:    4,
+        opacity:   0.85,
+        dashArray: '8 6'
+      });
+      map.addLayer(_mhzCurrentScenarioPolyline);
+    }
+    // Caption update
+    const caption = _el('josh-mhz-scen-caption');
+    if (caption) {
+      if (dispositive) {
+        caption.textContent = 'Dispositive at Standard 3 — no route computed; ' +
+          'in-zone presence forces DISCRETIONARY regardless of ΔT.';
+      } else if (hasStubRoute) {
+        const hzName = _MHZ_HAZARD_DISPLAY[scenResult.type] || scenResult.type;
+        caption.textContent = 'Showing ' + hzName + ' scenario route ' +
+          '(Stage 0 mock polyline — replaced by real per-hazard routing in Stage 3+).';
+      } else {
+        caption.textContent = 'Showing controlling-hazard route (production Folium routes).';
+      }
+    }
+  }
+
   function _renderScenarioRadio(evaluation) {
     // Stage 0 Step 18 — composition only. Renders "Controlling (default)"
     // plus one radio per applicable hazard. Change handler wires in Step 20.
@@ -2573,6 +2643,18 @@
           '</div>'
         ) : '') +
       '</div>';
+    // Stage 0 Step 20: wire scenario radio change handlers AFTER innerHTML
+    // is in the DOM. Initial state is "controlling" (default checked); call
+    // _applyScenario once to set the caption + ensure FG visible.
+    const map = _findFoliumMap();
+    if (map) _applyScenario(project, '__controlling__', map);
+    container.querySelectorAll('input[name="josh-mhz-scenario"]').forEach(function (radio) {
+      radio.addEventListener('change', function () {
+        if (!radio.checked) return;
+        const m = _findFoliumMap();
+        if (m) _applyScenario(project, radio.value, m);
+      });
+    });
   }
 
   function _showProjectOnMap(projectId, map) {
