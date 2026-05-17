@@ -556,3 +556,137 @@ test('T16 — non-controlling rows are neutral; only controlling row has pass/fa
   assert.ok(passRow.includes('#495057'), 'non-controlling row uses neutral text color');
   assert.ok(!passRow.includes('#27ae60'), 'non-controlling row does not use pass-green');
 });
+
+// ── Multi-hazard v2 schema tests (Stage 0 Step 24) ─────────────────────────────
+// These cover the v2 BriefRenderer path:
+//   • Section B per-hazard (Site Parameters)
+//   • Section C per-hazard (Evacuation Clearance Analysis)
+//   • Section D excluded hazards (only when present)
+//   • Controlling-hazard footer
+//   • Tsunami dispositive treatment (locked decision #2)
+// Plan reference: docs/plan-multihazard-stage-0.md §6.3 Step 24.
+
+function _makeV2Input(overrides) {
+  // Minimal v1-compatible scaffolding for the legacy sections, plus the v2
+  // evaluation block consumed by the new B/C/D builders.
+  var base = makeInput('DISCRETIONARY', [makePath({})], null, makeAnalysis(true, true));
+  return Object.assign(base, {
+    schema_version: 2,
+    evaluation: { tier: 'DISCRETIONARY', controlling_hazard: 'wildfire', hazard_results: [] }
+  }, overrides);
+}
+
+test('V2-1 — wildfire-only project renders B/C with single row + no Section D', function() {
+  var inp = _makeV2Input({
+    evaluation: {
+      tier: 'DISCRETIONARY',
+      controlling_hazard: 'wildfire',
+      hazard_results: [{
+        type: 'wildfire', controls: true, flagged: true,
+        zone: 'vhfhsz', zone_label: 'Very High FHSZ', fhsz_haz_class: 3,
+        degradation: 0.35, egress_window_min: 45, threshold: 2.25, delta_t: 26.06,
+        bottleneck: { name: 'Marin Ave', eff_cap_vph: 315, vehicles: 137 }
+      }]
+    }
+  });
+
+  var html = BR.render(inp);
+
+  // v2 section headers present
+  assert.ok(html.includes('B. Site Parameters (per hazard)'), 'Section B v2 header');
+  assert.ok(html.includes('C. Evacuation Clearance Analysis (per hazard)'), 'Section C v2 header');
+  // No Section D (no excluded hazards in this case)
+  assert.ok(!html.includes('D. Hazards Excluded'), 'no Section D for wildfire-only');
+  // Controlling-hazard footer names wildfire with ΔT/threshold
+  assert.ok(html.includes('<b>Controlled by:</b>'), 'controlling-hazard footer present');
+  assert.ok(/Controlled by:.*Wildfire.*26\.06 min exceeds 2\.25 min/.test(html.replace(/\s+/g, ' ')),
+            'wildfire ΔT/threshold in footer');
+});
+
+test('V2-2 — flood-controlling + excluded tsunami renders Section D', function() {
+  var inp = _makeV2Input({
+    evaluation: {
+      tier: 'DISCRETIONARY',
+      controlling_hazard: 'flood',
+      hazard_results: [
+        {
+          type: 'wildfire', controls: false, flagged: false,
+          zone: 'non_fhsz', zone_label: 'Not in FHSZ', fhsz_haz_class: 0,
+          degradation: 1.00, egress_window_min: 120, threshold: 6.00, delta_t: 4.26,
+          bottleneck: { name: 'University Ave', eff_cap_vph: 1900, vehicles: 135 }
+        },
+        {
+          type: 'flood', controls: true, flagged: true,
+          zone: 'ae', zone_label: 'AE (1% annual flood)', bfe_ft: 10.0,
+          degradation: 0.20, egress_window_min: 180, threshold: 9.00, delta_t: 21.3,
+          bottleneck: { name: 'Cedar St at I-80 underpass', eff_cap_vph: 380, vehicles: 135 }
+        },
+        {
+          type: 'tsunami',
+          excluded: { reason: 'Project location is east of the CGS Tsunami Hazard Area boundary.' }
+        }
+      ]
+    }
+  });
+
+  var html = BR.render(inp);
+
+  // Section D present and names the excluded hazard with reason
+  assert.ok(html.includes('D. Hazards Excluded'), 'Section D header');
+  assert.ok(html.includes('Tsunami'), 'tsunami name in D');
+  assert.ok(html.includes('east of the CGS Tsunami Hazard Area'), 'exclusion reason in D');
+  // Controlling-hazard footer names Flood
+  assert.ok(/Controlled by:.*Flood.*21\.30 min exceeds 9\.00 min/.test(html.replace(/\s+/g, ' ')),
+            'flood ΔT/threshold in footer');
+  // Section C has 2 data rows (wildfire + flood; excluded tsunami filtered out).
+  // Count <tbody>'s <tr> inside Section C by isolating the Section C block.
+  var cMatch = html.match(/C\. Evacuation Clearance Analysis[\s\S]*?<\/section>/);
+  assert.ok(cMatch, 'Section C block isolatable');
+  var cBlock = cMatch[0];
+  var trCount = (cBlock.match(/<tbody>([\s\S]*?)<\/tbody>/) || ['',''])[1]
+                .match(/<tr[\s>]/g);
+  assert.equal(trCount && trCount.length, 2, 'Section C has 2 rows (excluded tsunami filtered)');
+});
+
+test('V2-3 — tsunami dispositive: special row + footnote + dispositive footer', function() {
+  var inp = _makeV2Input({
+    evaluation: {
+      tier: 'DISCRETIONARY',
+      controlling_hazard: 'tsunami',
+      hazard_results: [
+        {
+          type: 'wildfire', controls: false, flagged: false,
+          zone: 'non_fhsz', zone_label: 'Not in FHSZ', fhsz_haz_class: 0,
+          degradation: 1.00, egress_window_min: 120, threshold: 6.00, delta_t: 3.4,
+          bottleneck: { name: 'University Ave', eff_cap_vph: 1700, vehicles: 225 }
+        },
+        {
+          type: 'flood', controls: false, flagged: false,
+          zone: 'ae', zone_label: 'AE (1% annual flood)', bfe_ft: 10.0,
+          degradation: 0.20, egress_window_min: 180, threshold: 9.00, delta_t: 6.1,
+          bottleneck: { name: 'University Ave', eff_cap_vph: 340, vehicles: 225 }
+        },
+        {
+          type: 'tsunami', controls: true, flagged: true,
+          in_cgs_tha: true, eva_type: 'Tsunami Inundation Zone',
+          dispositive: true, delta_t_informational: 18.4
+        }
+      ]
+    }
+  });
+
+  var html = BR.render(inp);
+
+  // Section C has the dispositive colspan cell text
+  assert.ok(html.includes('Dispositive at Standard 3 — in CGS Tsunami Hazard Area'),
+            'dispositive colspan cell text');
+  // Informational ΔT footnote present
+  assert.ok(html.includes('informational ΔT'),
+            'informational ΔT footnote present');
+  assert.ok(html.includes('18.4'), 'informational ΔT value 18.4 in footnote');
+  // Controlling footer uses the dispositive variant
+  assert.ok(html.includes('Standard 3 is dispositive (locked decision #2)'),
+            'dispositive footer language');
+  assert.ok(!/Controlled by:[^<]*\b\d+\.\d+ min exceeds/.test(html),
+            'no ΔT/threshold comparison in dispositive footer');
+});
