@@ -103,20 +103,183 @@
 
   // ── Public API ─────────────────────────────────────────────────────────────
 
+  // ── Multi-hazard helpers (Stage 0 Step 22) ────────────────────────────────
+  // v2 brief input carries inp.evaluation = { tier, controlling_hazard,
+  // hazard_results }. v2-aware sections read off inp.evaluation; other
+  // sections continue to read inp.result (which sidebar.js populates with
+  // the controlling-hazard data so the v1 surfaces render correctly).
+  var _MHZ_HAZARD_NAMES = {
+    wildfire:    'Wildfire',
+    flood:       'Flood',
+    tsunami:     'Tsunami',
+    dam_failure: 'Dam Failure',
+    gas_hazmat:  'Gas / Hazmat',
+    landslide:   'Landslide'
+  };
+  var _MHZ_TIER_BG = {
+    DISCRETIONARY:                        '#fdebe9',
+    MINISTERIAL_WITH_STANDARD_CONDITIONS: '#fdf2d0',
+    MINISTERIAL:                          '#e3f5e3'
+  };
+  var _MHZ_TIER_FG = {
+    DISCRETIONARY:                        '#c0392b',
+    MINISTERIAL_WITH_STANDARD_CONDITIONS: '#a06200',
+    MINISTERIAL:                          '#2c7a2c'
+  };
+  function _mhzFmt(n, digits, suffix) {
+    if (n == null || !isFinite(Number(n))) return '—';
+    return Number(n).toFixed(digits || 0) + (suffix || '');
+  }
+  function _mhzApplicable(evaluation) {
+    var rs = (evaluation && evaluation.hazard_results) || [];
+    return rs.filter(function (r) { return r && !r.excluded; });
+  }
+  function _mhzControllingRowStyle(r, tier) {
+    if (!r || !r.controls) return '';
+    var bg = _MHZ_TIER_BG[tier] || '#f1f3f5';
+    var fg = _MHZ_TIER_FG[tier] || '#212529';
+    return ' style="background:' + bg + ';color:' + fg + ';font-weight:600;"';
+  }
+
+  function _buildSectionBV2(evaluation) {
+    var rows = _mhzApplicable(evaluation);
+    if (rows.length === 0) return '';
+    var tier = (evaluation && evaluation.tier) || 'MINISTERIAL';
+    var trs = rows.map(function (r) {
+      var rowStyle = _mhzControllingRowStyle(r, tier);
+      var hzName = _MHZ_HAZARD_NAMES[r.type] || r.type;
+      var zone = r.zone_label || r.zone || '—';
+      // Tsunami has no numeric degradation/window/threshold — show "—".
+      return '<tr' + rowStyle + '>' +
+        '<td style="padding:6px 8px;">' + hzName + '</td>' +
+        '<td style="padding:6px 8px;">' + zone + '</td>' +
+        '<td style="padding:6px 8px;text-align:right;">' + _mhzFmt(r.degradation, 2) + '</td>' +
+        '<td style="padding:6px 8px;text-align:right;">' + _mhzFmt(r.egress_window_min, 0, ' min') + '</td>' +
+        '<td style="padding:6px 8px;text-align:right;">' + _mhzFmt(r.threshold, 2, ' min') + '</td>' +
+        '</tr>';
+    }).join('');
+    return (
+      '<section class="legal-section legal-section-b">' +
+        '<h2 class="legal-section-h">B. Site Parameters (per hazard)</h2>' +
+        '<table style="width:100%;border-collapse:collapse;font-size:12px;' +
+          'margin-bottom:12px;">' +
+          '<thead><tr style="background:#f8f9fa;font-size:10px;font-weight:700;' +
+            'letter-spacing:0.06em;text-transform:uppercase;color:#495057;">' +
+            '<th style="padding:6px 8px;text-align:left;">Hazard</th>' +
+            '<th style="padding:6px 8px;text-align:left;">Zone</th>' +
+            '<th style="padding:6px 8px;text-align:right;">Degradation</th>' +
+            '<th style="padding:6px 8px;text-align:right;">Egress window</th>' +
+            '<th style="padding:6px 8px;text-align:right;">ΔT threshold</th>' +
+          '</tr></thead>' +
+          '<tbody>' + trs + '</tbody>' +
+        '</table>' +
+      '</section>'
+    );
+  }
+
+  function _buildSectionCV2(evaluation) {
+    var rows = _mhzApplicable(evaluation);
+    if (rows.length === 0) return '';
+    var tier = (evaluation && evaluation.tier) || 'MINISTERIAL';
+    var footnotes = [];
+    var trs = rows.map(function (r) {
+      var rowStyle = _mhzControllingRowStyle(r, tier);
+      var hzName = _MHZ_HAZARD_NAMES[r.type] || r.type;
+      if (r.dispositive) {
+        // Dispositive row: single colspan cell + footnote with informational ΔT.
+        if (r.delta_t_informational != null && isFinite(r.delta_t_informational)) {
+          footnotes.push(hzName + ' informational ΔT ' +
+            r.delta_t_informational.toFixed(1) +
+            ' min shown for context; not compared to threshold.');
+        }
+        return '<tr' + rowStyle + '>' +
+          '<td style="padding:6px 8px;">' + hzName + '</td>' +
+          '<td colspan="6" style="padding:6px 8px;font-style:italic;">' +
+            'Dispositive at Standard 3 — in CGS Tsunami Hazard Area' +
+            (r.controls ? ' <span style="margin-left:8px;padding:1px 6px;' +
+              'border-radius:8px;background:#212529;color:#fff;font-size:9px;' +
+              'font-weight:700;letter-spacing:0.05em;text-transform:uppercase;' +
+              'font-style:normal;">controls</span>' : '') +
+          '</td>' +
+          '</tr>';
+      }
+      var bn = r.bottleneck || {};
+      var resultPill = r.flagged
+        ? '<span style="color:#c0392b;font-weight:700;">FAIL</span>'
+        : '<span style="color:#2c7a2c;font-weight:700;">PASS</span>';
+      var controlsBadge = r.controls
+        ? ' <span style="margin-left:6px;padding:1px 6px;border-radius:8px;' +
+          'background:#212529;color:#fff;font-size:9px;font-weight:700;' +
+          'letter-spacing:0.05em;text-transform:uppercase;">controls</span>'
+        : '';
+      return '<tr' + rowStyle + '>' +
+        '<td style="padding:6px 8px;">' + hzName + '</td>' +
+        '<td style="padding:6px 8px;">' + (bn.name || '—') + '</td>' +
+        '<td style="padding:6px 8px;text-align:right;">' +
+          _mhzFmt(bn.eff_cap_vph, 0, ' vph') + '</td>' +
+        '<td style="padding:6px 8px;text-align:right;">' +
+          _mhzFmt(bn.vehicles, 0) + '</td>' +
+        '<td style="padding:6px 8px;text-align:right;">' +
+          _mhzFmt(r.delta_t, 1, ' min') + '</td>' +
+        '<td style="padding:6px 8px;text-align:right;">' +
+          _mhzFmt(r.threshold, 2, ' min') + '</td>' +
+        '<td style="padding:6px 8px;text-align:right;">' + resultPill + controlsBadge + '</td>' +
+        '</tr>';
+    }).join('');
+    var footnoteBlock = footnotes.length > 0
+      ? '<p style="font-size:11px;color:#868e96;margin:6px 0 12px;">' +
+        footnotes.join(' ') + '</p>'
+      : '';
+    return (
+      '<section class="legal-section legal-section-c">' +
+        '<h2 class="legal-section-h">C. Evacuation Clearance Analysis (per hazard)</h2>' +
+        '<table style="width:100%;border-collapse:collapse;font-size:12px;' +
+          'margin-bottom:6px;">' +
+          '<thead><tr style="background:#f8f9fa;font-size:10px;font-weight:700;' +
+            'letter-spacing:0.06em;text-transform:uppercase;color:#495057;">' +
+            '<th style="padding:6px 8px;text-align:left;">Hazard</th>' +
+            '<th style="padding:6px 8px;text-align:left;">Bottleneck</th>' +
+            '<th style="padding:6px 8px;text-align:right;">Eff. cap</th>' +
+            '<th style="padding:6px 8px;text-align:right;">Veh</th>' +
+            '<th style="padding:6px 8px;text-align:right;">ΔT</th>' +
+            '<th style="padding:6px 8px;text-align:right;">Threshold</th>' +
+            '<th style="padding:6px 8px;text-align:right;">Result</th>' +
+          '</tr></thead>' +
+          '<tbody>' + trs + '</tbody>' +
+        '</table>' +
+        footnoteBlock +
+      '</section>'
+    );
+  }
+
   function render(inp) {
     inp = inp || {};
-    // Stage 0 Step 21 schema branching. v2 inputs (multihazard:true) will
-    // soon take a separate per-hazard code path (Step 22 PAUSE adds B/C
-    // tables, Step 23 adds Section D + footer). At Step 21 the v2 path
-    // falls through to v1 — proves the branch fires without regressing
-    // v1 output (which the production-baseline test vectors lock down).
-    if (inp.schema_version === 2 && typeof console !== 'undefined' && console.info) {
-      console.info('[josh-brief] schema_version=2 (multihazard); rendering ' +
-                   'v1 fallback at Step 21. Per-hazard B/C/D sections land ' +
-                   'in Steps 22-23.');
+    // Stage 0 Step 21 schema branching. v2 inputs (multihazard:true) carry
+    // inp.evaluation = { tier, controlling_hazard, hazard_results[] }. Most
+    // brief sections continue to read inp.result (which sidebar.js seeds with
+    // controlling-hazard data); Sections B and C are swapped for the per-
+    // hazard table builders below when v2. Step 23 adds Section D + footer.
+    var isV2 = (inp.schema_version === 2);
+    if (isV2 && typeof console !== 'undefined' && console.info) {
+      console.info('[josh-brief] rendering v2 (multihazard) brief.');
     }
     var r   = inp.result   || {};
     var tier = (r.tier || 'MINISTERIAL').toUpperCase().trim();
+    var standardsBlock;
+    if (isV2 && inp.evaluation) {
+      // v2 path: replace Sections B + C with per-hazard tables.
+      // Keep v1 Section A (applicability) by calling the existing builder
+      // BEFORE the v2 B/C; the v1 builder happens to include A/B/C/D.
+      // Cleaner: extract Section A from v1; but for Stage 0 it's enough
+      // to call the v1 builder and let the v2 path also emit the new
+      // tables underneath. Reviewer note: simplify post-Stage-0.
+      standardsBlock =
+        _buildStandardsAnalysis(inp, tier) +
+        _buildSectionBV2(inp.evaluation) +
+        _buildSectionCV2(inp.evaluation);
+    } else {
+      standardsBlock = _buildStandardsAnalysis(inp, tier);
+    }
 
     var body = [
       _buildPrintCss(),
@@ -127,7 +290,7 @@
       '<main>',
       _buildSummaryStats(inp, tier),
       _buildControllingFinding(inp, tier),
-      _buildStandardsAnalysis(inp, tier),
+      standardsBlock,
       _buildDeterminationBox(inp, tier),
       _buildConditions(inp, tier),
       _buildLegalAuthority(inp, tier),

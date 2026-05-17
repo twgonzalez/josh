@@ -2632,6 +2632,13 @@
         ) : '') +
         // Stage 0 Step 18: scenario radio (composition only; behavior in Step 20).
         _renderScenarioRadio(evaluation) +
+        // Stage 0 Step 22 — Open Brief button. Renders the v2 multihazard
+        // brief via BriefRenderer.render() and opens the result in a new tab.
+        '<button id="josh-mhz-open-brief" style="margin-top:14px;width:100%;' +
+          'padding:10px;border:none;border-radius:4px;background:#1c4a6e;' +
+          'color:#fff;font-size:13px;font-weight:600;cursor:pointer;">' +
+          'Open Brief →' +
+        '</button>' +
         // Stage 0 mock-project footnote (Step 16). Surfaces only for
         // hand-crafted fixtures that don't exist in real production data.
         (project.is_mock ? (
@@ -2655,6 +2662,93 @@
         if (m) _applyScenario(project, radio.value, m);
       });
     });
+    // Stage 0 Step 22: wire Open Brief button. Builds a v2 brief input and
+    // opens the rendered HTML in a new tab via blob URL.
+    const briefBtn = _el('josh-mhz-open-brief');
+    if (briefBtn) {
+      briefBtn.addEventListener('click', function () {
+        _openMhzBrief(project);
+      });
+    }
+  }
+
+  function _buildMhzBriefInput(project) {
+    // Stage 0 Step 22. Constructs a v2-shaped brief input from a project +
+    // its merged evaluation. Populates inp.result with controlling-hazard
+    // data so v1 sections (header, summary, determination box, conditions,
+    // legal authority, appeal rights) still render coherently; inp.evaluation
+    // carries the full multi-hazard payload that the v2 B/C sections consume.
+    const evaluation = project.evaluation || {};
+    const results = Array.isArray(evaluation.hazard_results) ?
+                    evaluation.hazard_results : [];
+    const ctrl = results.find(function (r) { return r && r.controls; }) || results[0] || {};
+    // Map the tier string to the v1 spelling that BriefRenderer expects
+    // (v1 tiers use spaces, e.g. "MINISTERIAL WITH STANDARD CONDITIONS").
+    const tierV1 = (evaluation.tier === 'MINISTERIAL_WITH_STANDARD_CONDITIONS')
+      ? 'MINISTERIAL WITH STANDARD CONDITIONS'
+      : (evaluation.tier || 'MINISTERIAL');
+    return {
+      schema_version: 2,
+      brief_input_version: 1,           // v1-section consumers still need this
+      project: {
+        name:    project.name,
+        address: project.address || '',
+        units:   project.units,
+        stories: project.stories,
+        lat:     project.lat,
+        lng:     project.lng
+      },
+      // v1-shaped result for the legacy sections to consume. Controlling-hazard
+      // data fills the slots that the wildfire-only schema had.
+      result: {
+        tier:         tierV1,
+        hazard_zone:  ctrl.zone || 'non_fhsz',
+        delta_t_min:  ctrl.delta_t != null ? ctrl.delta_t : (ctrl.delta_t_informational || 0),
+        threshold_min: ctrl.threshold,
+        flagged:       !!ctrl.flagged,
+        bottleneck_name: (ctrl.bottleneck && ctrl.bottleneck.name) || '—',
+        // Minimal paths shape — v1 sections iterate this for route detail.
+        paths: results
+          .filter(function (r) { return r && !r.excluded && !r.dispositive; })
+          .map(function (r) {
+            return {
+              path_id:                     (r.type || 'unknown') + '-controlling',
+              bottleneck_name:             (r.bottleneck && r.bottleneck.name) || '—',
+              bottleneck_cross_street_a:   '',
+              bottleneck_cross_street_b:   '',
+              bottleneck_distance_mi:      0,
+              effective_capacity_vph:      (r.bottleneck && r.bottleneck.eff_cap_vph) || 0,
+              delta_t:                     r.delta_t,
+              hazard_degradation_factor:   r.degradation,
+              flagged:                     !!r.flagged
+            };
+          })
+      },
+      // v2 surface — read by _buildSectionBV2 / _buildSectionCV2.
+      evaluation: evaluation
+    };
+  }
+
+  function _openMhzBrief(project) {
+    // Stage 0 Step 22. Render via BriefRenderer and open the HTML in a new tab.
+    // No modal infrastructure at Stage 0 — blob URL + new tab is the minimal
+    // viable "share this with a colleague" path.
+    if (typeof window === 'undefined' || !window.BriefRenderer ||
+        typeof window.BriefRenderer.render !== 'function') {
+      console.error('[josh-mhz] BriefRenderer not loaded; cannot open brief.');
+      return;
+    }
+    const input = _buildMhzBriefInput(project);
+    let html;
+    try {
+      html = window.BriefRenderer.render(input);
+    } catch (e) {
+      console.error('[josh-mhz] BriefRenderer.render threw:', e);
+      return;
+    }
+    const blob = new Blob([html], { type: 'text/html' });
+    const url = URL.createObjectURL(blob);
+    window.open(url, '_blank');
   }
 
   function _showProjectOnMap(projectId, map) {
