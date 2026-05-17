@@ -2096,9 +2096,53 @@
     };
   }
 
+  // ── Multi-hazard right-side shell (Stage 0 Step 6) ────────────────────────────
+  // When JOSH_DATA.schema_version === 2 (multihazard:true), production CRUD on
+  // the left is deferred (locked decision in plan §6.3 Step 6 PAUSE, 2026-05-17).
+  // The right shell holds hazard panels/dropdown/detail card added in later steps.
+  // At Step 6 the shell has no header and a single placeholder message — production
+  // left sidebar is hidden / not injected.
+  function _injectMultiHazardSidebar() {
+    if (_el('josh-sidebar-mhz')) return;
+    const sb = document.createElement('div');
+    sb.id = 'josh-sidebar-mhz';
+    sb.style.cssText =
+      'position:fixed;top:54px;right:0;width:' + SIDEBAR_W + 'px;height:calc(100vh - 54px);' +
+      'background:#fff;box-shadow:-2px 0 12px rgba(0,0,0,0.12);' +
+      'display:flex;flex-direction:column;overflow:hidden;' +
+      'font-family:system-ui,-apple-system,BlinkMacSystemFont,sans-serif;font-size:13px;z-index:1000;';
+    // Placeholder body — no header per locked decision (the JOSH brand header
+    // above already names the mode; redundant chrome would be noise). Later
+    // steps replace the placeholder with the hazard layer panel, project
+    // dropdown, and detail card.
+    sb.innerHTML =
+      '<div id="josh-sidebar-mhz-placeholder" style="padding:24px 18px;color:#868e96;font-size:12px;line-height:1.5;">' +
+      'Hazard panels and project selector load here as Stage 0 progresses.' +
+      '<br><br>' +
+      '<em>Multi-hazard prototype mode. To return to the production sidebar, ' +
+      'set <code style="background:#f1f3f5;padding:1px 4px;border-radius:3px;">multihazard: false</code> ' +
+      'in cities/&lt;city&gt;.yaml and rebuild.</em>' +
+      '</div>';
+    document.body.appendChild(sb);
+    // Hide any pre-injected production left sidebar (defensive — in v2 mode
+    // production CRUD is deferred; the left div sits idle until later stages
+    // either re-purpose it or delete it).
+    const left = _el('josh-sidebar');
+    if (left) left.style.display = 'none';
+  }
+
   // ── DOMContentLoaded — inject sidebar div ─────────────────────────────────────
   if (typeof document !== 'undefined') {
     document.addEventListener('DOMContentLoaded', () => {
+      // Stage 0 Step 6: multi-hazard mode branch. Detect via schema_version.
+      // v2 path: right shell + skip production init (no CRUD wired yet).
+      const v2 = (typeof window !== 'undefined' &&
+                  window.JOSH_DATA && window.JOSH_DATA.schema_version === 2);
+      if (v2) {
+        _injectMultiHazardSidebar();
+        return;
+      }
+      // v1 path (default) — production behavior unchanged.
       if (_el('josh-sidebar')) return;  // already injected by demo.py
       const sb = document.createElement('div');
       sb.id = 'josh-sidebar';
