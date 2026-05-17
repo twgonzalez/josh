@@ -1401,6 +1401,11 @@
         result:              seed.result  || null,
         brief_cache:         seed.brief_cache || null,
         folium_fg_name:      seed.folium_fg_name || null,
+        // Stage 0.5 Phase B — preserve v2 multi-hazard fields from
+        // _mergeMockFixturesIntoProjects (evaluation = HazardResult union)
+        // and the mock-project sentinel.
+        evaluation:          seed.evaluation || null,
+        is_mock:             !!seed.is_mock,
         _handle:             null,
         _stale:              false,
       });
@@ -1616,7 +1621,11 @@
 
   function _el(id) { return typeof document !== 'undefined' ? document.getElementById(id) : null; }
 
-  function _sb() { return _el('josh-sidebar'); }
+  // Stage 0.5 Phase B — _sb() now returns the multi-hazard sidebar shell.
+  // Legacy production code that did `_sb().innerHTML = ...` is intercepted by
+  // the _render() override below so its output lands in scoped containers
+  // (project-detail / project-form) instead of replacing the whole shell.
+  function _sb() { return _el('josh-sidebar-mhz'); }
 
   function _showError(msg) {
     const sb = _sb();
@@ -1648,14 +1657,41 @@
   }
 
   // ── Render ────────────────────────────────────────────────────────────────────
+  // Stage 0.5 Phase B — production _render() refactored for the multi-hazard
+  // right sidebar. Instead of replacing the entire sidebar contents (which
+  // wiped the Hazard Layers + Project panels), this writes into scoped
+  // containers:
+  //   • #josh-project-panel        — re-rendered dropdown with +New / Open buttons
+  //   • #josh-project-detail       — form (when _formMode set) OR multi-hazard
+  //                                  detail card (when project selected) OR
+  //                                  empty (when nothing selected)
+  //   • #josh-sidebar-mhz-placeholder — visible only when nothing selected
+  // The legacy _renderHeader / _renderList / _renderDetail / _renderFooter
+  // functions remain in the file so test_sidebar.js can call them directly;
+  // they are NOT called by the runtime _render() anymore.
   function _render() {
     if (typeof document === 'undefined') return;
-    const sb = _sb();
-    if (!sb) return;
-
-    sb.innerHTML = _renderHeader() + _renderRestoreBanner() + _renderList() +
-                   (_formMode ? _renderForm() : _renderDetail()) + _renderFooter();
-
+    if (!_sb()) return;
+    _renderProjectDropdownPanel();
+    const detailEl = _el('josh-project-detail');
+    if (detailEl) {
+      if (_formMode) {
+        detailEl.innerHTML = _renderForm();
+      } else if (_selectedId) {
+        const project = _projects.find(p => p && p.id === _selectedId);
+        if (project) {
+          _renderProjectDetail(project);   // multi-hazard detail card
+        } else {
+          detailEl.innerHTML = '';
+        }
+      } else {
+        detailEl.innerHTML = '';
+      }
+    }
+    const placeholder = _el('josh-sidebar-mhz-placeholder');
+    if (placeholder) {
+      placeholder.style.display = (_selectedId || _formMode) ? 'none' : '';
+    }
     _wireFormListeners();
   }
 
@@ -2632,9 +2668,25 @@
         ) : '') +
         // Stage 0 Step 18: scenario radio (composition only; behavior in Step 20).
         _renderScenarioRadio(evaluation) +
+        // Stage 0.5 Phase B — CRUD action row. Edit + Delete buttons sit
+        // above the Open Brief button so the destructive action is visually
+        // separated from the primary "view brief" workflow. Edit and Delete
+        // are hidden for pipeline-sourced projects (cannot mutate the seeded
+        // entries from the browser) and mock projects.
+        (project.is_mock || project.source === 'pipeline' ? '' :
+          '<div style="display:flex;gap:6px;margin-top:14px;">' +
+            '<button onclick="joshSidebar_edit(\'' + _esc(project.id) + '\')" ' +
+              'style="flex:1;padding:8px;border:1px solid #ced4da;' +
+              'border-radius:4px;background:#fff;color:#495057;' +
+              'font-size:12px;font-weight:600;cursor:pointer;">Edit</button>' +
+            '<button onclick="joshSidebar_confirmDelete(\'' + _esc(project.id) + '\')" ' +
+              'style="flex:1;padding:8px;border:1px solid #f5c6c6;' +
+              'border-radius:4px;background:#fdf3f3;color:#c0392b;' +
+              'font-size:12px;font-weight:600;cursor:pointer;">Delete</button>' +
+          '</div>') +
         // Stage 0 Step 22 — Open Brief button. Renders the v2 multihazard
         // brief via BriefRenderer.render() and opens the result in a new tab.
-        '<button id="josh-mhz-open-brief" style="margin-top:14px;width:100%;' +
+        '<button id="josh-mhz-open-brief" style="margin-top:10px;width:100%;' +
           'padding:10px;border:none;border-radius:4px;background:#1c4a6e;' +
           'color:#fff;font-size:13px;font-weight:600;cursor:pointer;">' +
           'Open Brief →' +
@@ -2824,73 +2876,81 @@
   }
 
   function _renderProjectDropdownPanel() {
-    // Stage 0 Step 9 [REVIEW]. Adds a "PROJECT" panel below Hazard Layers.
-    // Just selection state at this step — the detail card lands in Step 12.
+    // Reads the production _projects state (populated by init() from JOSH_DATA
+    // pipeline seeds + localStorage + FSAPI handles) and renders the PROJECT
+    // panel: title + CRUD toolbar + dropdown. Re-runs every time _render()
+    // fires so the dropdown reflects fresh CRUD state.
     const panel = _el('josh-project-panel');
     if (!panel) return;
-    const projects = (typeof window !== 'undefined' && window.JOSH_DATA &&
-                      window.JOSH_DATA.projects) || [];
-    if (projects.length === 0) {
-      panel.innerHTML = '';
-      return;
-    }
-    const sorted = projects.slice().sort(function (a, b) {
+    const sorted = _projects.slice().sort(function (a, b) {
       const an = (a && a.name) || '';
       const bn = (b && b.name) || '';
       return an.localeCompare(bn);
     });
     const opts = sorted.map(function (p) {
       const id = _esc(p.id);
-      const name = _esc(p.name || p.id);
+      const name = _esc(p.name || 'Untitled');
       const units = (p.units != null) ? ' (' + p.units + 'u)' : '';
-      return '<option value="' + id + '">' + name + units + '</option>';
+      return '<option value="' + id + '"' +
+        (p.id === _selectedId ? ' selected' : '') + '>' +
+        name + units + '</option>';
     }).join('');
     panel.innerHTML =
       '<div class="josh-mhz-panel" data-collapsed="false" ' +
         'style="border-bottom:1px solid #dee2e6;background:#fff;">' +
-        '<div class="josh-mhz-panel-head" data-collapsible ' +
+        '<div class="josh-mhz-panel-head" ' +
           'style="padding:10px 14px;font-weight:700;font-size:10px;' +
           'letter-spacing:0.10em;text-transform:uppercase;color:#868e96;' +
           'background:#f8f9fa;border-bottom:1px solid #e9ecef;' +
           'display:flex;justify-content:space-between;align-items:center;' +
-          'cursor:pointer;user-select:none;">' +
-          '<span>Project</span>' +
-          '<span class="josh-mhz-panel-caret" ' +
-            'style="display:inline-block;transition:transform 0.15s;">&#9662;</span>' +
+          'gap:6px;user-select:none;">' +
+          '<span data-collapsible style="cursor:pointer;flex:1;">' +
+            'Project' +
+            ' <span class="josh-mhz-panel-caret" ' +
+              'style="display:inline-block;transition:transform 0.15s;">&#9662;</span>' +
+          '</span>' +
+          '<button onclick="joshSidebar_newProject()" ' +
+            'style="' + _btn('#2980b9','#fff') + 'padding:3px 8px;font-size:10px;' +
+            'text-transform:none;letter-spacing:0;font-weight:600;">+ New</button>' +
+          '<button onclick="joshSidebar_openFile()" ' +
+            'style="' + _btn('#f1f3f5','#495057','#dee2e6') + 'padding:3px 8px;' +
+            'font-size:10px;text-transform:none;letter-spacing:0;font-weight:600;">' +
+            'Open…</button>' +
         '</div>' +
         '<div class="josh-mhz-panel-body" style="padding:10px 14px;">' +
-          '<select id="josh-mhz-project-select" ' +
-            'style="width:100%;padding:6px 8px;border:1px solid #ced4da;' +
-            'border-radius:4px;background:#fff;font-size:13px;color:#212529;' +
-            'cursor:pointer;">' +
-            '<option value="">Select a project…</option>' +
-            opts +
-          '</select>' +
+          (_projects.length === 0
+            ? '<div style="color:#aaa;font-size:12px;text-align:center;padding:6px 0;">' +
+                'No projects yet. Click <b>+ New</b> or <b>Open…</b>.</div>'
+            : '<select id="josh-mhz-project-select" ' +
+              'style="width:100%;padding:6px 8px;border:1px solid #ced4da;' +
+              'border-radius:4px;background:#fff;font-size:13px;color:#212529;' +
+              'cursor:pointer;">' +
+              '<option value="">Select a project…</option>' +
+              opts +
+              '</select>') +
         '</div>' +
       '</div>';
 
-    // Wire the dropdown change handler.
+    // Dropdown change → production selectProject (handles routes + re-render).
     const sel = _el('josh-mhz-project-select');
     if (sel) {
       sel.addEventListener('change', function () {
-        _mhzSelectedProjectId = sel.value || null;
-        // Stage 0 Step 10: swap the visible project FeatureGroup on the map.
+        const id = sel.value || null;
         const map = _findFoliumMap();
-        if (map) _showProjectOnMap(_mhzSelectedProjectId, map);
-        // Stage 0 Step 12: render detail card with stats + bar chart.
-        const projects = (typeof window !== 'undefined' && window.JOSH_DATA &&
-                          window.JOSH_DATA.projects) || [];
-        const project = _mhzSelectedProjectId
-          ? projects.find(function (p) { return p && p.id === _mhzSelectedProjectId; })
-          : null;
-        _renderProjectDetail(project);
+        if (map) _showProjectOnMap(id, map);
+        if (id) selectProject(id);
+        else {
+          _selectedId = null;
+          _clearRoutes();
+          _render();
+        }
       });
     }
-    // Wire the collapsible header toggle (same pattern as Hazard Layers panel).
+    // Collapsible header toggle — click the title span (NOT the buttons).
     const head = panel.querySelector('[data-collapsible]');
     if (head) {
       head.addEventListener('click', function () {
-        const wrap = head.parentElement;
+        const wrap = head.closest('.josh-mhz-panel');
         const body = wrap.querySelector('.josh-mhz-panel-body');
         const caret = head.querySelector('.josh-mhz-panel-caret');
         const collapsed = wrap.getAttribute('data-collapsed') === 'true';
@@ -3015,11 +3075,13 @@
       '</div>';
     document.body.appendChild(sb);
     // Stage 0 Step 11: merge mock fixtures onto JOSH_DATA.projects[].evaluation
-    // before any consumer reads them. Idempotent / safe to call without fixtures.
+    // before init() reads JOSH_DATA.projects into _projects.
     _mergeMockFixturesIntoProjects();
-    // Wire panels. Project dropdown doesn't need the map and can render
-    // immediately. Hazard layers wait for the Folium map to be in the DOM.
-    _renderProjectDropdownPanel();
+    // Stage 0.5 Phase B: initialize production CRUD state (loads pipeline
+    // seeds + localStorage + restores FSAPI handles). Triggers _render() which
+    // paints the dropdown / detail / form into the multi-hazard containers.
+    init();
+    // Hazard layers wait for the Folium map to be in the DOM.
     _waitForMapThen(_wireHazardLayers);
   }
 
