@@ -1,7 +1,7 @@
 # JOSH — Technical Brief for Professional Engineer Review
 
 **System:** JOSH Fire Evacuation Capacity Analysis System v3.4.1
-**Version:** May 2026 (updated for v3.4.1 — ACS B25044 1.9 vpu, FHWA behavioral mobilization)
+**Version:** May 2026 (updated for v3.4.1 — ACS B25044 1.9 vpu; mobilization citations corrected per WPI review)
 **Audience:** Licensed professional engineers evaluating methodology veracity
 **Purpose:** Demonstrate that the system's outputs are derived entirely from published national standards and federal data; that the software is an automation layer, not a new methodology
 
@@ -13,7 +13,7 @@ JOSH (v3.4.1) computes a single number — **ΔT, in minutes** — for each prop
 
 No engineering judgment is required at any step. Every input is drawn from a published, authoritative source. Every calculation is arithmetic.
 
-The software does not invent a methodology. It automates the same calculations a transportation engineer would perform manually: road capacity from HCM tables, demand from Census data, mobilization from NFPA 101, hazard adjustment from HCM capacity factors applied to Cal Fire-designated zones. The software's contribution is speed, reproducibility, and a complete audit trail — not methodology.
+The software does not invent a methodology. It automates the same calculations a transportation engineer would perform manually: road capacity from HCM tables, demand from Census data and published evacuation compliance literature, hazard adjustment from HCM capacity factors applied to Cal Fire-designated zones. The software's contribution is speed, reproducibility, and a complete audit trail — not methodology.
 
 ---
 
@@ -52,11 +52,15 @@ Default: **1.9 vehicles per dwelling unit**, sourced from U.S. Census Bureau Ame
 
 ### 3.3 Behavioral Mobilization Rate — 0.90 (Constant)
 
-**Source: FHWA Emergency Transportation Operations — mandatory evacuation compliance rate for residential areas under imminent fire threat.**
+**0.90 is a conservative design vehicle release factor, not a prediction of average observed evacuation behavior.**
 
-FHWA documents that approximately 90% of households in a mandatory evacuation zone will generate a vehicle trip during the critical evacuation window. This is an empirically measured compliance rate, not a design assumption. It accounts for residents not home, shadow non-compliance, and households sharing vehicles. It does NOT account for vehicle non-ownership — that is already embedded in the `vehicles_per_unit` figure (the all-household ACS average, which includes zero-vehicle households).
+The value is anchored to Roberson et al. (2012), a peer-reviewed survey of residents in a Southern California High Fire Hazard Area, which found that 82.6% of respondents stated they would "likely" or "for sure" evacuate under a mandatory evacuation order, with approximately 10% stating they would not comply. The 0.90 design value sits at the upper bound of this stated-compliance range, appropriate for a standard that must protect against a credible high-demand scenario.
 
-**The mobilization rate does not vary by fire hazard zone.** In v3.4.1, FHSZ affects only road capacity (the denominator). Mobilization is constant because the demand a project generates on a road — the number of vehicles that must pass through the bottleneck — does not change based on which side of a FHSZ boundary the project site falls on.
+GPS-based observational studies of actual California WUI fires (Zhao et al. 2022; Wu et al. 2022, Kincade Fire) documented observed compliance rates of approximately 46–48% across evacuation zones — roughly half the design value. JOSH deliberately uses the higher figure because the purpose of the ΔT test is to size roads for the scenario that produces meaningful evacuation demand, not to replicate the historical average. A standard built on the observed 0.47 would be calibrated to past events, not designed to protect against future ones. This is the same orientation NFPA 101 uses when sizing building egress for the full calculated occupant load rather than average occupancy.
+
+This factor accounts for residents not home when the order is issued, households that share a vehicle and depart together, and the fraction that receives the order but does not immediately comply. It does NOT account for vehicle non-ownership — that is already embedded in `vehicles_per_unit = 1.9`, the all-household Census ACS average including zero-vehicle households.
+
+**The mobilization rate does not vary by fire hazard zone.** FHSZ affects only road capacity (the denominator). The demand a project generates on the network — the vehicles that must pass through the bottleneck — does not change based on which side of an FHSZ boundary the project falls on.
 
 ---
 
@@ -186,7 +190,7 @@ Every input to the system traces to an authoritative, publicly accessible source
 | Housing units | Census ACS 5-Year B25001 | U.S. Census Bureau | Federal API |
 | Vehicles per household | Census ACS 5-Year B25044 | U.S. Census Bureau | Federal API |
 | City boundary | U.S. Census TIGER | U.S. Census Bureau | Federal GIS |
-| Mobilization rate (0.90) | NFPA 101 Life Safety Code | National Fire Protection Association | Published standard |
+| Mobilization rate (0.90) | Roberson et al. (2012) J. Emergency Management; Zhao et al. (2022) Trans. Research Part D; Wu et al. (2022) Int. J. Disaster Risk Reduction | Peer-reviewed literature | Published studies |
 | Safe egress windows (VHFHSZ) | NIST TN 2135, 2252, 2262 | National Institute of Standards and Technology | Federal technical notes |
 | Egress penalty schedule | NFPA 101; International Building Code | NFPA; ICC | Published standards |
 | Unit threshold (15) | ITE Trip Generation de minimis; SB 330 anchor | Institute of Transportation Engineers; California statute | Published standard / statute |
@@ -254,7 +258,7 @@ The software does not:
 
 - Invent capacity values — all values come from HCM 2022
 - Invent degradation factors — all factors come from HCM Exhibits 10-15 and 10-17, calibrated against NIST Camp Fire data
-- Invent the mobilization rate — 0.90 is NFPA 101 design basis, adjusted for zero-vehicle households per Census B25044
+- Invent the mobilization rate — 0.90 is a conservative design release factor anchored to California WUI stated-intent literature (Roberson 2012) and explicitly above GPS-observed compliance rates (Zhao 2022, Wu 2022)
 - Invent the safe egress windows — all windows come from NIST post-incident investigations
 - Choose significance thresholds — 5% is a standard engineering de minimis criterion
 - Make discretionary judgments — every determination is a deterministic computation
@@ -281,7 +285,7 @@ Where the methodology makes choices between equally defensible options, the syst
 
 | Choice | JOSH Approach | Alternative | Why Conservative |
 |---|---|---|---|
-| Mobilization | 0.90 (NFPA 101 full-evacuation basis) | 0.57 (observed peak-hour fraction, KLD study) | Sizes for the emergency, not the average case |
+| Mobilization | 0.90 (upper bound of CA WUI stated-intent literature, Roberson 2012) | 0.47 (GPS-observed mean, Zhao/Wu 2022 Kincade Fire) | Sizes for credible high-demand scenario, not GPS-observed average |
 | Route capacity | Minimum capacity along full path (bottleneck) | Average capacity along path | Uses the constraint, not the average |
 | Project demand assignment | Full project demand tested on each serving route independently | Demand distributed across all routes | Tests worst-case route failure |
 | Capacity degradation | HCM lower-bound adjustments composited | Point estimates from single HCM exhibit | Accounts for compounding effects |
@@ -327,7 +331,7 @@ The JOSH system asks one question: **given this project's vehicles, this road's 
 
 The answer is computed from:
 
-- **HCM 2022** (road capacity) ÷ **Census ACS B25044 × NFPA 101** (project demand) = **minutes** (ΔT)
+- **HCM 2022** (road capacity) ÷ **Census ACS B25044 × 0.90 design mobilization** (project demand) = **minutes** (ΔT)
 - **NIST TN 2135** (safe window) × **5% de minimis** = **threshold**
 
 If ΔT > threshold → discretionary review. If ΔT ≤ threshold → ministerial. The software performs the arithmetic. Every input is on the table. Every source is cited. Any licensed engineer with HCM, Census data, and a calculator can reproduce the result from first principles.
@@ -339,7 +343,7 @@ If ΔT > threshold → discretionary review. If ΔT ≤ threshold → ministeria
 1. Transportation Research Board. *Highway Capacity Manual, 7th Edition (HCM 2022).* National Academies of Sciences, Engineering, and Medicine, 2022.
 2. Maranghides, A., et al. *A Case Study of the Camp Fire — Fire Progression Timeline.* NIST Technical Note 2135. National Institute of Standards and Technology, 2021.
 3. Maranghides, A., et al. *A Case Study of the Camp Fire — NETTRA.* NIST Technical Note 2252. NIST, 2023.
-4. Maranghides, A., et al. *A Case Study of the Camp Fire — ESCAPE.* NIST Technical Note 2262. NIST, 2023 (updated 2025).
+4. Maranghides, A., et al. *A Case Study of the Camp Fire — ESCAPE.* NIST Technical Note 2262r1. NIST, March 2025. [Supersedes TN 2262, August 2023, which has been officially withdrawn.]
 5. NFPA 101. *Life Safety Code.* National Fire Protection Association (current edition).
 6. International Code Council. *International Building Code (IBC)* (current California adoption).
 7. U.S. Census Bureau. *American Community Survey 5-Year Estimates.* Tables B25001, B25044. Census.gov.
@@ -348,3 +352,7 @@ If ΔT > threshold → discretionary review. If ΔT ≤ threshold → ministeria
 10. Boeing, G. *OSMnx: New Methods for Acquiring, Constructing, Analyzing, and Visualizing Complex Street Networks.* Computers, Environment and Urban Systems, 65, 126-139, 2017.
 11. FHWA. *Guide for Highway Capacity and Operations Analysis of ATDM Strategies.* Appendices A and C (HCM weather and incident capacity adjustment factors).
 12. Link, E.D. & Maranghides, A. *Burnover Events Identified During the 2018 Camp Fire.* NIST, 2022.
+13. Roberson, C., Dionne, C., Demeter, N., and Balch, R. (2012). "Attitudes on wildfire evacuation: Exploring the intended evacuation behavior of residents living in two Southern California communities." *Journal of Emergency Management*, 10(5), 335–346. [Primary source for behavioral_mobilization = 0.90: 82.6% stated likely/sure evacuation under mandatory order in CA High Fire Hazard Area.]
+14. Zhao, X., Xu, Y., Lovreglio, R., Kuligowski, E., Nilsson, D., Cova, T., Wu, A., and Yan, X. (2022). "Estimating wildfire evacuation decision and departure timing using large-scale GPS data." *Transportation Research Part D*, 107, 103277. [GPS-observed compliance ~46% in Kincade Fire; supports conservative framing of 0.90 design value.]
+15. Wu, A., Yan, X., Kuligowski, E., Lovreglio, R., Nilsson, D., Cova, T., Xu, Y., and Zhao, X. (2022). "Wildfire evacuation decision modeling using GPS data." *International Journal of Disaster Risk Reduction*, 83, 103424. [GPS-observed mean block-group compliance 47.6% in Kincade Fire.]
+16. California Governor's Office of Planning and Research (OPR). *Draft Evacuation Planning Technical Advisory.* State of California, 2024. [Supports use of documented planning assumptions — including conservative upper-bound values — in California evacuation clearance-time analysis.]
