@@ -178,6 +178,86 @@
       ]
     },
 
+    // Hand-crafted mock project — tsunami-dispositive. Stage 0 Step 17.
+    // Berkeley Marina sits inside the CGS Tsunami Hazard Area (real-world
+    // boundary covers the marina + parts of W. Berkeley shoreline). The
+    // dispositive-at-Standard-3 logic from locked decision #2 produces
+    // DISCRETIONARY regardless of ΔT; wildfire + flood are informational.
+    // Deleted in Stage 6 when TsunamiAdapter takes over.
+    marina_pointe: {
+      inject: true,
+      project: {
+        id:      'marina_pointe',
+        name:    'Marina Pointe (mock)',
+        address: 'Berkeley Marina, University Ave Frontage',
+        lat:     37.864,
+        lng:     -122.318,
+        units:   100,
+        stories: 4,
+        is_mock: true
+      },
+      controlling_hazard: 'tsunami',
+      tier: 'DISCRETIONARY',
+      hazard_results: [
+        {
+          // Informational only — wildfire ΔT well under threshold (flat
+          // bayfront, no FHSZ exposure).
+          type:              'wildfire',
+          controls:          false,
+          flagged:           false,
+          zone:              'non_fhsz',
+          zone_label:        'Not in FHSZ',
+          fhsz_haz_class:    0,
+          degradation:       1.00,
+          egress_window_min: 120,
+          threshold:         6.00,
+          delta_t:           3.4,
+          bottleneck:        {
+            name:        'University Avenue at Frontage Road',
+            eff_cap_vph: 1700,
+            vehicles:    225
+          },
+          route_coords: null
+        },
+        {
+          // Informational only — flood ΔT under threshold despite AE
+          // location (mock route avoids the worst-flooded segments).
+          type:              'flood',
+          controls:          false,
+          flagged:           false,
+          zone:              'ae',
+          zone_label:        'AE (1% annual flood)',
+          bfe_ft:            10.0,
+          flooded_exit_nodes_dropped: 1,
+          degradation:       0.20,
+          egress_window_min: 180,
+          threshold:         9.00,
+          delta_t:           6.1,
+          bottleneck:        {
+            name:        'University Avenue at Frontage Road',
+            eff_cap_vph: 340,
+            vehicles:    225
+          },
+          route_coords: null
+        },
+        {
+          // CONTROLLING. Per locked decision #2 (status doc), in-CGS-THA
+          // forces DISCRETIONARY at Standard 3; ΔT is not computed against
+          // a threshold (the 15-min Cascadia design window × 5% project
+          // share yields a 45-second threshold — unusable as gradation).
+          // delta_t_informational is shown only for context.
+          type:                  'tsunami',
+          controls:              true,
+          flagged:               true,
+          in_cgs_tha:            true,
+          eva_type:              'Tsunami Inundation Zone',
+          dispositive:           true,
+          delta_t_informational: 18.4,
+          route_coords:          null
+        }
+      ]
+    },
+
     // Hand-crafted mock project — flood-controlling. Stage 0 Step 16.
     // Located in the bayfront SFHA polygon emitted by Step 5; allows the
     // UI to render the non-wildfire-controlling branch before any

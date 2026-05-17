@@ -2262,18 +2262,25 @@
   }
 
   function _renderStandardBarRow(opts) {
-    // Stage 0 Step 12 helper — one per-hazard bar row. Shared by every hazard
-    // case in _renderHazardBarRow except tsunami (which uses a dispositive
-    // treatment instead of a bar; landing in Step 17).
+    // Stage 0 Step 12 helper — one per-hazard bar row. Shared by every
+    // implemented case in _renderHazardBarRow including tsunami (Step 17
+    // PAUSE 2026-05-17: tsunami matches the other hazard types in this
+    // surface; the dispositive-only marker lives in the Hazards Evaluated
+    // list, not here).
     //
     // Locked design (Step 12 PAUSE 2026-05-17):
     //   • Two-tone: pass=green (#2ca02c), fail=red (#d62728). No marginal band.
     //   • Width capped at 100% when failed; pass is proportional dt/threshold.
-    //   • Value text: "<dt> / <threshold> min"
-    const dt = Number(opts.delta_t);
-    const th = Number(opts.threshold);
+    //   • Value text: "<dt> / <threshold> min". null threshold renders as "—"
+    //     so tsunami (no defined threshold) reads coherently.
+    const dt = opts.delta_t;
+    const th = opts.threshold;
+    const dtNum = Number(dt);
+    const thNum = Number(th);
+    const dtFinite = (dt != null && isFinite(dtNum));
+    const thFinite = (th != null && isFinite(thNum));
     const failed = !!opts.flagged;
-    const ratio = (th > 0 && isFinite(dt)) ? Math.min(1, dt / th) : 0;
+    const ratio = (thFinite && thNum > 0 && dtFinite) ? Math.min(1, dtNum / thNum) : 0;
     const pct = (failed ? 100 : ratio * 100).toFixed(1);
     const barColor = failed ? '#d62728' : '#2ca02c';
     const valueColor = failed ? '#d62728' : '#212529';
@@ -2285,8 +2292,8 @@
         '</div>' +
         '<div style="font-variant-numeric:tabular-nums;color:' + valueColor +
           ';flex-shrink:0;text-align:right;min-width:104px;">' +
-          (isFinite(dt) ? dt.toFixed(1) : '—') + ' / ' +
-          (isFinite(th) ? th.toFixed(2) : '—') + ' min' +
+          (dtFinite ? dtNum.toFixed(1) : '—') + ' / ' +
+          (thFinite ? thNum.toFixed(2) : '—') + ' min' +
         '</div>' +
       '</div>'
     );
@@ -2317,7 +2324,19 @@
           flagged:   result.flagged,
           controls:  result.controls
         });
-      case 'tsunami':     return '';  // Step 17 (dispositive case)
+      case 'tsunami':
+        // Bar treatment matches other hazard types (Step 17 PAUSE choice).
+        // delta_t_informational shows where ΔT normally would; threshold
+        // renders as "—" because tsunami is dispositive at Standard 3
+        // (no comparison done). The explicit "Dispositive" callout lives
+        // in the Hazards Evaluated list row.
+        return _renderStandardBarRow({
+          label:     'Tsunami',
+          delta_t:   result.delta_t_informational,
+          threshold: null,
+          flagged:   true,
+          controls:  result.controls
+        });
       case 'dam_failure': return '';  // Stage 7
       case 'gas_hazmat':  return '';  // Stage 8
       case 'landslide':   return '';  // Stage 9
@@ -2337,12 +2356,46 @@
       case 'wildfire':
       case 'flood':
         return _renderStandardHazardListItem(result);
-      case 'tsunami':     return '';  // Step 17 dispositive
+      case 'tsunami':
+        return _renderTsunamiHazardListItem(result);
       case 'dam_failure': return '';  // Stage 7
       case 'gas_hazmat':  return '';  // Stage 8
       case 'landslide':   return '';  // Stage 9
       default:            return '';
     }
+  }
+
+  function _renderTsunamiHazardListItem(r) {
+    // Stage 0 Step 17 — explicit dispositive treatment in the Hazards
+    // Evaluated list. Same row layout as _renderStandardHazardListItem
+    // but the ΔT value cell is replaced with a black "Dispositive" badge.
+    // The CONTROLS badge (if r.controls) sits alongside it.
+    const hp = (typeof window !== 'undefined' && window.JOSH_DATA &&
+                window.JOSH_DATA.hazard_polygons) || {};
+    // Tsunami has no entry in hazard_polygons at Step 17 (only wildfire +
+    // flood are emitted). Fall back to a CGS-tsunami blue.
+    const dot = _pickHazardSwatchColor((hp.tsunami || {}).palette) || '#1864ab';
+    const zoneText = r.in_cgs_tha ? ' (CGS THA)' : '';
+    const dispositiveBadge =
+      '<span style="margin-left:auto;padding:1px 6px;border-radius:8px;' +
+        'background:#1864ab;color:#fff;font-size:9px;font-weight:700;' +
+        'letter-spacing:0.05em;text-transform:uppercase;">Dispositive</span>';
+    const controlsBadge = r.controls
+      ? '<span style="margin-left:6px;padding:1px 6px;border-radius:8px;' +
+          'background:#212529;color:#fff;font-size:9px;font-weight:700;' +
+          'letter-spacing:0.05em;text-transform:uppercase;">controls</span>'
+      : '';
+    return (
+      '<li style="display:flex;align-items:center;gap:8px;padding:4px 0;' +
+        'font-size:12px;color:#212529;list-style:none;">' +
+        '<span style="display:inline-block;width:8px;height:8px;border-radius:50%;' +
+          'background:' + dot + ';flex-shrink:0;"></span>' +
+        '<span>Tsunami</span>' +
+        '<span style="color:#868e96;font-size:11px;">' + _esc(zoneText) + '</span>' +
+        dispositiveBadge +
+        controlsBadge +
+      '</li>'
+    );
   }
 
   function _renderStandardHazardListItem(r) {
