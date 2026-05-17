@@ -2108,6 +2108,11 @@
   // can find their layer on toggle.
   const _hazardLayers = {};
 
+  // Module-scoped state for the multi-hazard sidebar (Stage 0 Step 9+).
+  // _mhzSelectedProjectId: dropdown selection. Step 12 renders the detail card
+  // off this. Exposed on window.joshSidebar for future-step consumers.
+  let _mhzSelectedProjectId = null;
+
   function _pickHazardSwatchColor(palette) {
     // First non-transparent palette value in dict-insertion order. Themes.py
     // writes palettes in severity-descending order so this picks the most-
@@ -2146,6 +2151,82 @@
       if (m) { cb(m); return; }
       if (attempt++ < 60) setTimeout(poll, 100);  // 6s budget
     })();
+  }
+
+  function _renderProjectDropdownPanel() {
+    // Stage 0 Step 9 [REVIEW]. Adds a "PROJECT" panel below Hazard Layers.
+    // Just selection state at this step — the detail card lands in Step 12.
+    const panel = _el('josh-project-panel');
+    if (!panel) return;
+    const projects = (typeof window !== 'undefined' && window.JOSH_DATA &&
+                      window.JOSH_DATA.projects) || [];
+    if (projects.length === 0) {
+      panel.innerHTML = '';
+      return;
+    }
+    const sorted = projects.slice().sort(function (a, b) {
+      const an = (a && a.name) || '';
+      const bn = (b && b.name) || '';
+      return an.localeCompare(bn);
+    });
+    const opts = sorted.map(function (p) {
+      const id = _esc(p.id);
+      const name = _esc(p.name || p.id);
+      const units = (p.units != null) ? ' (' + p.units + 'u)' : '';
+      return '<option value="' + id + '">' + name + units + '</option>';
+    }).join('');
+    panel.innerHTML =
+      '<div class="josh-mhz-panel" data-collapsed="false" ' +
+        'style="border-bottom:1px solid #dee2e6;background:#fff;">' +
+        '<div class="josh-mhz-panel-head" data-collapsible ' +
+          'style="padding:10px 14px;font-weight:700;font-size:10px;' +
+          'letter-spacing:0.10em;text-transform:uppercase;color:#868e96;' +
+          'background:#f8f9fa;border-bottom:1px solid #e9ecef;' +
+          'display:flex;justify-content:space-between;align-items:center;' +
+          'cursor:pointer;user-select:none;">' +
+          '<span>Project</span>' +
+          '<span class="josh-mhz-panel-caret" ' +
+            'style="display:inline-block;transition:transform 0.15s;">&#9662;</span>' +
+        '</div>' +
+        '<div class="josh-mhz-panel-body" style="padding:10px 14px;">' +
+          '<select id="josh-mhz-project-select" ' +
+            'style="width:100%;padding:6px 8px;border:1px solid #ced4da;' +
+            'border-radius:4px;background:#fff;font-size:13px;color:#212529;' +
+            'cursor:pointer;">' +
+            '<option value="">Select a project…</option>' +
+            opts +
+          '</select>' +
+        '</div>' +
+      '</div>';
+
+    // Wire the dropdown change handler.
+    const sel = _el('josh-mhz-project-select');
+    if (sel) {
+      sel.addEventListener('change', function () {
+        _mhzSelectedProjectId = sel.value || null;
+        // Step 9 only updates state. Future steps (12+) will trigger
+        // detail-card rendering off this state change.
+      });
+    }
+    // Wire the collapsible header toggle (same pattern as Hazard Layers panel).
+    const head = panel.querySelector('[data-collapsible]');
+    if (head) {
+      head.addEventListener('click', function () {
+        const wrap = head.parentElement;
+        const body = wrap.querySelector('.josh-mhz-panel-body');
+        const caret = head.querySelector('.josh-mhz-panel-caret');
+        const collapsed = wrap.getAttribute('data-collapsed') === 'true';
+        if (collapsed) {
+          wrap.setAttribute('data-collapsed', 'false');
+          if (body) body.style.display = '';
+          if (caret) caret.style.transform = '';
+        } else {
+          wrap.setAttribute('data-collapsed', 'true');
+          if (body) body.style.display = 'none';
+          if (caret) caret.style.transform = 'rotate(-90deg)';
+        }
+      });
+    }
   }
 
   function _wireHazardLayers(map) {
@@ -2244,9 +2325,11 @@
       // Container for the Hazard Layers panel (filled by _wireHazardLayers
       // once the Folium map is ready).
       '<div id="josh-hazard-layers-panel"></div>' +
-      // Placeholder for future sections (project selector, detail card, etc.).
+      // Container for the Project dropdown panel (Stage 0 Step 9).
+      '<div id="josh-project-panel"></div>' +
+      // Placeholder for the detail card (lands in Step 12) and future sections.
       '<div id="josh-sidebar-mhz-placeholder" style="padding:24px 18px;color:#868e96;font-size:12px;line-height:1.5;">' +
-      'Project selector and analysis panels load here as Stage 0 progresses.' +
+      'Project detail panel loads here when a project is selected (Step 12+).' +
       '<br><br>' +
       '<em>Multi-hazard prototype mode. To return to the production sidebar, ' +
       'set <code style="background:#f1f3f5;padding:1px 4px;border-radius:3px;">multihazard: false</code> ' +
@@ -2256,7 +2339,9 @@
     // Hide any pre-injected production left sidebar.
     const left = _el('josh-sidebar');
     if (left) left.style.display = 'none';
-    // Wire the Hazard Layers panel once the Folium map is in the DOM.
+    // Wire panels. Project dropdown doesn't need the map and can render
+    // immediately. Hazard layers wait for the Folium map to be in the DOM.
+    _renderProjectDropdownPanel();
     _waitForMapThen(_wireHazardLayers);
   }
 
