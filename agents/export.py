@@ -1039,13 +1039,15 @@ def export_app_js() -> Path:
 // ============================================================================
 
 // ── Schema compatibility check ────────────────────────────────────────────────
-// Emits console.warn if window.JOSH_DATA.schema_version does not match v1.
+// app.js v1 is compatible with JOSH_DATA schema versions 1 (wildfire-only) and 2
+// (multi-hazard; adds keys, removes none). Warns for any other version so silent
+// drift on a major upgrade is caught.
 (function () {
   var d = window.JOSH_DATA;
   if (!d) { console.warn('JOSH app.js: window.JOSH_DATA not found'); return; }
-  if (d.schema_version !== 1) {
+  if (d.schema_version !== 1 && d.schema_version !== 2) {
     console.warn(
-      'JOSH app.js v1: schema_version mismatch (got ' + d.schema_version + '). ' +
+      'JOSH app.js v1: unsupported schema_version (got ' + d.schema_version + '). ' +
       'Regenerate analysis_map.html with a matching version of app.js.'
     );
   }

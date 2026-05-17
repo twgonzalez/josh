@@ -784,6 +784,7 @@ def create_analysis_map(
             output_path, graph_json_path, params_json_path, fhsz_gdf,
             city_name=_city_name, city_slug=_city_slug,
             projects_data=_build_josh_data_projects(projects, _city_slug, proj_js_names),
+            city_config=city_config,
         )
     else:
         # graph.json not yet generated (analyze not run). Fall back to the
@@ -1134,6 +1135,7 @@ def _inject_josh_data_bundle(
     city_name: str = "City",
     city_slug: str = "",
     projects_data: list | None = None,
+    city_config: dict | None = None,
 ) -> None:
     """
     Inject window.JOSH_DATA (graph, parameters, fhsz, briefs) into analysis_map.html,
@@ -1162,8 +1164,13 @@ def _inject_josh_data_bundle(
         if path.exists():
             brief_data[fname] = path.read_text(encoding="utf-8")
 
+    # Multi-hazard schema flag (per docs/plan-multihazard-stage-0.md §6.3 Step 2).
+    # multihazard:false (default) emits v1; multihazard:true bumps to v2. v2 will add
+    # hazard_polygons + hazard_parameters in later steps; at Step 2 the only difference
+    # is this version number.
+    multihazard = bool((city_config or {}).get("multihazard", False))
     josh_data = {
-        "schema_version": 1,
+        "schema_version": 2 if multihazard else 1,
         "app_js_version": _APP_JS_VERSION,
         "city_name":      city_name,
         "city_slug":      city_slug,

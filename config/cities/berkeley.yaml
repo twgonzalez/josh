@@ -97,6 +97,17 @@ known_evacuation_routes:
   - "Claremont Avenue"
   - "College Avenue"
 
+# ============================================================
+# Multi-hazard schema (Stage 0 of feature/multi-hazard branch).
+# When `multihazard: true`, agents/visualization/analysis_map.py emits
+# JOSH_DATA.schema_version = 2 (instead of 1) and later Stage 0 steps add
+# hazard_polygons + hazard_parameters keys. Wildfire-only cities should leave
+# this absent or set false — production behavior is unchanged.
+# See docs/plan-multihazard-stage-0.md and docs/multihazard_status.md (locked
+# decision #10) for context.
+# ============================================================
+multihazard: false
+
 # Notes
 notes: >
   Berkeley Hills in FHSZ Zones 2-3. First city analyzed for MVP validation.
