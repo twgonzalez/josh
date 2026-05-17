@@ -2163,6 +2163,26 @@
   const _MHZ_HAZARD_WHITELIST = ['wildfire', 'flood', 'tsunami',
                                   'dam_failure', 'gas_hazmat', 'landslide'];
 
+  // Human-readable hazard names + tier styling, shared by the tier banner
+  // (Step 14) and Hazards Evaluated list (Step 15). Lives in this module
+  // for now; will move to whatif_utils.js if other consumers need it.
+  const _MHZ_HAZARD_DISPLAY = {
+    wildfire:    'Wildfire',
+    flood:       'Flood',
+    tsunami:     'Tsunami',
+    dam_failure: 'Dam Failure',
+    gas_hazmat:  'Gas / Hazmat',
+    landslide:   'Landslide'
+  };
+
+  // Tier color mirrors themes.py _TIER_CSS_COLOR so the v2 banner reads
+  // the same as production map markers (red=DISC, amber=MIN_W_COND, green=MIN).
+  const _MHZ_TIER_STYLE = {
+    DISCRETIONARY:                          { bg: '#fdebe9', fg: '#c0392b', label: 'DISCRETIONARY' },
+    MINISTERIAL_WITH_STANDARD_CONDITIONS:   { bg: '#fdf2d0', fg: '#a06200', label: 'MINISTERIAL with STANDARD CONDITIONS' },
+    MINISTERIAL:                            { bg: '#e3f5e3', fg: '#2c7a2c', label: 'MINISTERIAL' }
+  };
+
   function _mergeMockFixturesIntoProjects() {
     // Stage 0 Step 11 [AUTO]. Reads window.JOSH_MOCK_MULTIHAZARD and stamps
     // each entry onto the corresponding JOSH_DATA.projects[i].evaluation field.
@@ -2271,6 +2291,80 @@
     }
   }
 
+  function _renderHazardListItem(result) {
+    // Stage 0 Step 15 — Hazards Evaluated list. Discriminated-union switch
+    // over result.type, second consumer site after _renderHazardBarRow.
+    // Cases roll out in lockstep with the bar-row switch:
+    //   Step 15 — wildfire, flood
+    //   Step 17 — tsunami (dispositive shape: no ΔT, "Dispositive at Std 3" badge)
+    //   Stages 6-9 — dam_failure / gas_hazmat / landslide
+    if (!result || !result.type) return '';
+    switch (result.type) {
+      case 'wildfire':
+      case 'flood':
+        return _renderStandardHazardListItem(result);
+      case 'tsunami':     return '';  // Step 17 dispositive
+      case 'dam_failure': return '';  // Stage 7
+      case 'gas_hazmat':  return '';  // Stage 8
+      case 'landslide':   return '';  // Stage 9
+      default:            return '';
+    }
+  }
+
+  function _renderStandardHazardListItem(r) {
+    // Shared layout for non-dispositive hazards: color dot + display name +
+    // zone label + ΔT value + "controls" badge for the controlling hazard.
+    // Hazard color comes from the polygon palette (most-severe zone color);
+    // reuses _pickHazardSwatchColor to keep the swatch in the bar row visually
+    // aligned with the list-item dot.
+    const hp = (typeof window !== 'undefined' && window.JOSH_DATA &&
+                window.JOSH_DATA.hazard_polygons) || {};
+    const dot = _pickHazardSwatchColor((hp[r.type] || {}).palette);
+    const displayName = _MHZ_HAZARD_DISPLAY[r.type] || r.type;
+    const zoneLabel = r.zone_label ? ' (' + r.zone_label + ')' : '';
+    const dt = isFinite(r.delta_t) ? r.delta_t.toFixed(1) + ' min' : '—';
+    const controlsBadge = r.controls
+      ? '<span style="margin-left:6px;padding:1px 6px;border-radius:8px;' +
+          'background:#212529;color:#fff;font-size:9px;font-weight:700;' +
+          'letter-spacing:0.05em;text-transform:uppercase;">controls</span>'
+      : '';
+    return (
+      '<li style="display:flex;align-items:center;gap:8px;padding:4px 0;' +
+        'font-size:12px;color:#212529;list-style:none;">' +
+        '<span style="display:inline-block;width:8px;height:8px;border-radius:50%;' +
+          'background:' + dot + ';flex-shrink:0;"></span>' +
+        '<span>' + _esc(displayName) + '</span>' +
+        '<span style="color:#868e96;font-size:11px;">' + _esc(zoneLabel) + '</span>' +
+        '<span style="margin-left:auto;font-size:11px;color:#495057;' +
+          'font-variant-numeric:tabular-nums;">' + _esc(dt) + '</span>' +
+        controlsBadge +
+      '</li>'
+    );
+  }
+
+  function _renderTierBanner(evaluation) {
+    // Stage 0 Step 14 — tier pill + "driven by <hazard>" footer line.
+    // No banner rendered when tier is missing.
+    if (!evaluation || !evaluation.tier) return '';
+    const style = _MHZ_TIER_STYLE[evaluation.tier] ||
+                  { bg: '#f1f3f5', fg: '#495057', label: evaluation.tier };
+    const ch = evaluation.controlling_hazard;
+    const drivenLine = ch
+      ? '<div style="font-size:11px;color:#868e96;margin-top:4px;">' +
+          'driven by <span style="color:#212529;font-weight:600;">' +
+          _esc(_MHZ_HAZARD_DISPLAY[ch] || ch) + '</span></div>'
+      : '';
+    return (
+      '<div style="margin-bottom:14px;padding:10px 12px;border-radius:6px;' +
+        'background:' + style.bg + ';">' +
+        '<div style="font-size:11px;font-weight:700;color:' + style.fg + ';' +
+          'letter-spacing:0.05em;line-height:1.2;">' +
+          _esc(style.label) + '</div>' +
+        drivenLine +
+      '</div>'
+    );
+  }
+
   function _renderProjectDetail(project) {
     // Stage 0 Step 12 — project detail card. Shows name, address, stat cards
     // (units + stories), and the per-hazard ΔT bar chart. Tier banner with
@@ -2289,7 +2383,12 @@
     const evaluation = project.evaluation || {};
     const results = Array.isArray(evaluation.hazard_results) ?
                     evaluation.hazard_results : [];
-    const barRows = results.map(_renderHazardBarRow).filter(Boolean).join('');
+    // Filter out excluded hazards from bar chart and list (they show in
+    // brief Section D — Step 23 — not in the sidebar). Step 16 introduces
+    // the first excluded entries via cedar_street_infill.
+    const applicable = results.filter(function (r) { return r && !r.excluded; });
+    const barRows = applicable.map(_renderHazardBarRow).filter(Boolean).join('');
+    const listItems = applicable.map(_renderHazardListItem).filter(Boolean).join('');
 
     function statCard(value, label) {
       return (
@@ -2309,15 +2408,22 @@
           _esc(project.name || project.id) + '</div>' +
         '<div style="font-size:11px;color:#868e96;margin-bottom:12px;">' +
           _esc(project.address || '') + '</div>' +
-        '<div style="display:flex;gap:8px;margin-bottom:16px;">' +
+        '<div style="display:flex;gap:8px;margin-bottom:14px;">' +
           statCard(project.units, 'Units') +
           statCard(project.stories, 'Stories') +
         '</div>' +
+        _renderTierBanner(evaluation) +
         (barRows ? (
           '<div style="font-size:10px;font-weight:700;color:#868e96;' +
             'letter-spacing:0.10em;text-transform:uppercase;margin-bottom:8px;">' +
             'Per-Hazard ΔT</div>' +
           barRows
+        ) : '') +
+        (listItems ? (
+          '<div style="font-size:10px;font-weight:700;color:#868e96;' +
+            'letter-spacing:0.10em;text-transform:uppercase;margin:14px 0 6px;">' +
+            'Hazards Evaluated</div>' +
+          '<ul style="margin:0;padding:0;">' + listItems + '</ul>'
         ) : '') +
       '</div>';
   }
