@@ -2207,6 +2207,114 @@
     }
   }
 
+  function _renderStandardBarRow(opts) {
+    // Stage 0 Step 12 helper — one per-hazard bar row. Shared by every hazard
+    // case in _renderHazardBarRow except tsunami (which uses a dispositive
+    // treatment instead of a bar; landing in Step 17).
+    //
+    // Locked design (Step 12 PAUSE 2026-05-17):
+    //   • Two-tone: pass=green (#2ca02c), fail=red (#d62728). No marginal band.
+    //   • Width capped at 100% when failed; pass is proportional dt/threshold.
+    //   • Value text: "<dt> / <threshold> min"
+    const dt = Number(opts.delta_t);
+    const th = Number(opts.threshold);
+    const failed = !!opts.flagged;
+    const ratio = (th > 0 && isFinite(dt)) ? Math.min(1, dt / th) : 0;
+    const pct = (failed ? 100 : ratio * 100).toFixed(1);
+    const barColor = failed ? '#d62728' : '#2ca02c';
+    const valueColor = failed ? '#d62728' : '#212529';
+    return (
+      '<div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;font-size:12px;">' +
+        '<div style="width:64px;color:#495057;flex-shrink:0;">' + _esc(opts.label) + '</div>' +
+        '<div style="flex:1;height:8px;background:#e9ecef;border-radius:4px;overflow:hidden;">' +
+          '<div style="width:' + pct + '%;height:100%;background:' + barColor + ';"></div>' +
+        '</div>' +
+        '<div style="font-variant-numeric:tabular-nums;color:' + valueColor +
+          ';flex-shrink:0;text-align:right;min-width:104px;">' +
+          (isFinite(dt) ? dt.toFixed(1) : '—') + ' / ' +
+          (isFinite(th) ? th.toFixed(2) : '—') + ' min' +
+        '</div>' +
+      '</div>'
+    );
+  }
+
+  function _renderHazardBarRow(result) {
+    // Stage 0 Step 12 — discriminated-union switch over result.type. One
+    // case per finite hazard (locked decision #11). Cases land incrementally:
+    //   Step 12 — wildfire
+    //   Step 13 — flood
+    //   Step 17 — tsunami (dispositive treatment, no bar)
+    //   Stages 6-9 — dam_failure / gas_hazmat / landslide
+    if (!result || !result.type) return '';
+    switch (result.type) {
+      case 'wildfire':
+        return _renderStandardBarRow({
+          label:     'Wildfire',
+          delta_t:   result.delta_t,
+          threshold: result.threshold,
+          flagged:   result.flagged,
+          controls:  result.controls
+        });
+      case 'flood':       return '';  // Step 13
+      case 'tsunami':     return '';  // Step 17 (dispositive case)
+      case 'dam_failure': return '';  // Stage 7
+      case 'gas_hazmat':  return '';  // Stage 8
+      case 'landslide':   return '';  // Stage 9
+      default:            return '';  // unknown (already caught by merge validator)
+    }
+  }
+
+  function _renderProjectDetail(project) {
+    // Stage 0 Step 12 — project detail card. Shows name, address, stat cards
+    // (units + stories), and the per-hazard ΔT bar chart. Tier banner with
+    // controlling-hazard footer arrives in Step 14. Hazards Evaluated list
+    // in Step 15. Scenario radio in Steps 18-20. Open-Brief button later.
+    const container = _el('josh-project-detail');
+    const placeholder = _el('josh-sidebar-mhz-placeholder');
+    if (!container) return;
+    if (!project) {
+      container.innerHTML = '';
+      if (placeholder) placeholder.style.display = '';
+      return;
+    }
+    if (placeholder) placeholder.style.display = 'none';
+
+    const evaluation = project.evaluation || {};
+    const results = Array.isArray(evaluation.hazard_results) ?
+                    evaluation.hazard_results : [];
+    const barRows = results.map(_renderHazardBarRow).filter(Boolean).join('');
+
+    function statCard(value, label) {
+      return (
+        '<div style="flex:1;background:#f8f9fa;border-radius:6px;padding:10px 12px;">' +
+          '<div style="font-size:22px;font-weight:600;color:#212529;line-height:1.1;">' +
+            _esc(String(value != null && value !== '' ? value : '—')) + '</div>' +
+          '<div style="font-size:10px;font-weight:700;color:#868e96;' +
+            'letter-spacing:0.10em;text-transform:uppercase;margin-top:2px;">' +
+            _esc(label) + '</div>' +
+        '</div>'
+      );
+    }
+
+    container.innerHTML =
+      '<div style="padding:14px 16px 18px;">' +
+        '<div style="font-size:15px;font-weight:600;color:#212529;margin-bottom:2px;line-height:1.3;">' +
+          _esc(project.name || project.id) + '</div>' +
+        '<div style="font-size:11px;color:#868e96;margin-bottom:12px;">' +
+          _esc(project.address || '') + '</div>' +
+        '<div style="display:flex;gap:8px;margin-bottom:16px;">' +
+          statCard(project.units, 'Units') +
+          statCard(project.stories, 'Stories') +
+        '</div>' +
+        (barRows ? (
+          '<div style="font-size:10px;font-weight:700;color:#868e96;' +
+            'letter-spacing:0.10em;text-transform:uppercase;margin-bottom:8px;">' +
+            'Per-Hazard ΔT</div>' +
+          barRows
+        ) : '') +
+      '</div>';
+  }
+
   function _showProjectOnMap(projectId, map) {
     // Stage 0 Step 10 [REVIEW]. When the dropdown selects a project, swap the
     // visible per-project FeatureGroup on the map. Strips Folium-bound popups
@@ -2309,11 +2417,16 @@
     if (sel) {
       sel.addEventListener('change', function () {
         _mhzSelectedProjectId = sel.value || null;
-        // Stage 0 Step 10: swap the visible project FeatureGroup on the map
-        // (suppresses production popups; pans to project). Detail-card
-        // rendering off this state change lands in Step 12.
+        // Stage 0 Step 10: swap the visible project FeatureGroup on the map.
         const map = _findFoliumMap();
         if (map) _showProjectOnMap(_mhzSelectedProjectId, map);
+        // Stage 0 Step 12: render detail card with stats + bar chart.
+        const projects = (typeof window !== 'undefined' && window.JOSH_DATA &&
+                          window.JOSH_DATA.projects) || [];
+        const project = _mhzSelectedProjectId
+          ? projects.find(function (p) { return p && p.id === _mhzSelectedProjectId; })
+          : null;
+        _renderProjectDetail(project);
       });
     }
     // Wire the collapsible header toggle (same pattern as Hazard Layers panel).
@@ -2435,9 +2548,12 @@
       '<div id="josh-hazard-layers-panel"></div>' +
       // Container for the Project dropdown panel (Stage 0 Step 9).
       '<div id="josh-project-panel"></div>' +
-      // Placeholder for the detail card (lands in Step 12) and future sections.
+      // Container for the project detail card (Stage 0 Step 12+). Empty until
+      // a project is selected.
+      '<div id="josh-project-detail"></div>' +
+      // Placeholder shown when nothing is selected.
       '<div id="josh-sidebar-mhz-placeholder" style="padding:24px 18px;color:#868e96;font-size:12px;line-height:1.5;">' +
-      'Project detail panel loads here when a project is selected (Step 12+).' +
+      'Select a project above to see its detail card.' +
       '<br><br>' +
       '<em>Multi-hazard prototype mode. To return to the production sidebar, ' +
       'set <code style="background:#f1f3f5;padding:1px 4px;border-radius:3px;">multihazard: false</code> ' +
