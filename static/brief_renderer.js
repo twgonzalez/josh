@@ -177,6 +177,60 @@
     );
   }
 
+  function _buildSectionDExcluded(evaluation) {
+    // Stage 0 Step 23. Lists hazards explicitly excluded from analysis with
+    // their stated reason. Informational; omitted when empty.
+    var rs = (evaluation && evaluation.hazard_results) || [];
+    var excluded = rs.filter(function (r) { return r && r.excluded; });
+    if (excluded.length === 0) return '';
+    var items = excluded.map(function (r) {
+      var hzName = _MHZ_HAZARD_NAMES[r.type] || r.type;
+      var reason = (r.excluded && r.excluded.reason) || 'No reason provided.';
+      return '<li style="padding:4px 0;font-size:12px;">' +
+        '<b>' + hzName + '</b> — ' + reason +
+      '</li>';
+    }).join('');
+    return (
+      '<section class="legal-section legal-section-d">' +
+        '<h2 class="legal-section-h">D. Hazards Excluded</h2>' +
+        '<ul style="margin:6px 0 12px;padding-left:18px;">' + items + '</ul>' +
+      '</section>'
+    );
+  }
+
+  function _buildControllingFooterV2(evaluation) {
+    // Stage 0 Step 23. Reason line beneath the determination block naming
+    // the controlling hazard. For dispositive cases, references the
+    // dispositive-at-Standard-3 logic instead of ΔT/threshold.
+    if (!evaluation) return '';
+    var ch = evaluation.controlling_hazard;
+    if (!ch) return '';
+    var rs = (evaluation.hazard_results || [])
+      .find(function (r) { return r && r.type === ch; });
+    if (!rs) return '';
+    var hzName = _MHZ_HAZARD_NAMES[ch] || ch;
+    var line;
+    if (rs.dispositive) {
+      line = hzName + ' — Project is in the CGS Tsunami Hazard Area; ' +
+        'Standard 3 is dispositive (locked decision #2). ΔT is not ' +
+        'compared to a threshold.';
+    } else if (rs.delta_t != null && rs.threshold != null) {
+      line = hzName + ' — ' + (rs.zone_label || rs.zone || '') +
+        ': ΔT ' + Number(rs.delta_t).toFixed(2) +
+        ' min ' + (rs.flagged ? 'exceeds' : 'within') +
+        ' ' + Number(rs.threshold).toFixed(2) + ' min threshold.' +
+        (rs.bottleneck && rs.bottleneck.name ?
+          ' Controlling bottleneck: ' + rs.bottleneck.name + '.' : '');
+    } else {
+      line = hzName + ' controls.';
+    }
+    return (
+      '<p style="margin:8px 0 12px;font-size:12px;color:#495057;">' +
+        '<b>Controlled by:</b> ' + line +
+      '</p>'
+    );
+  }
+
   function _buildSectionCV2(evaluation) {
     var rows = _mhzApplicable(evaluation);
     if (rows.length === 0) return '';
@@ -267,20 +321,22 @@
     var tier = (r.tier || 'MINISTERIAL').toUpperCase().trim();
     var standardsBlock;
     if (isV2 && inp.evaluation) {
-      // v2 path: replace Sections B + C with per-hazard tables.
-      // Keep v1 Section A (applicability) by calling the existing builder
-      // BEFORE the v2 B/C; the v1 builder happens to include A/B/C/D.
-      // Cleaner: extract Section A from v1; but for Stage 0 it's enough
-      // to call the v1 builder and let the v2 path also emit the new
-      // tables underneath. Reviewer note: simplify post-Stage-0.
+      // v2 path: v1 _buildStandardsAnalysis provides Section A (applicability)
+      // and a default B/C; we follow it with v2-specific B/C/D tables. A
+      // post-Stage-0 cleanup extracts Section A from v1 and replaces the
+      // whole block; for Stage 0 the duplication is accepted to minimize
+      // risk to the v1 path.
       standardsBlock =
         _buildStandardsAnalysis(inp, tier) +
         _buildSectionBV2(inp.evaluation) +
-        _buildSectionCV2(inp.evaluation);
+        _buildSectionCV2(inp.evaluation) +
+        _buildSectionDExcluded(inp.evaluation);
     } else {
       standardsBlock = _buildStandardsAnalysis(inp, tier);
     }
 
+    var controllingFooterV2 = (isV2 && inp.evaluation)
+      ? _buildControllingFooterV2(inp.evaluation) : '';
     var body = [
       _buildPrintCss(),
       _buildScreenCss(tier),
@@ -292,6 +348,7 @@
       _buildControllingFinding(inp, tier),
       standardsBlock,
       _buildDeterminationBox(inp, tier),
+      controllingFooterV2,
       _buildConditions(inp, tier),
       _buildLegalAuthority(inp, tier),
       _buildAppealRights(inp),
