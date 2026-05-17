@@ -270,27 +270,12 @@ def create_analysis_map(
     map_js_name = m.get_name()
     roads_wgs84 = roads_gdf.to_crs("EPSG:4326")
 
-    # ── Layer 1: FHSZ Fire Zones ───────────────────────────────────────────
-    # Stage 0 Step 8: when multihazard flag is on, skip the Folium-baked FHSZ
-    # rendering — JS factory in sidebar.js + static/hazard_polygon_layer.js
-    # renders FHSZ (and flood, and future hazards) through the Hazard Layers
-    # panel. Per locked decision Option B (plan §6.3 Step 3 PAUSE), this is
-    # the visual-parity cutover moment.
-    _mhz_flag = bool((city_config or {}).get("multihazard", False))
-    if not _mhz_flag and not fhsz_gdf.empty and "HAZ_CLASS" in fhsz_gdf.columns:
-        fhsz_wgs84 = fhsz_gdf.to_crs("EPSG:4326")
-        for _, row in fhsz_wgs84.iterrows():
-            haz = _to_int_safe(row.get("HAZ_CLASS", 0))
-            color = FHSZ_COLORS.get(haz, "#ffeda0")
-            label = FHSZ_LABELS.get(haz, f"Zone {haz}")
-            folium.GeoJson(
-                mapping(row.geometry),
-                style_function=lambda _, c=color: {
-                    "fillColor": c, "color": c,
-                    "weight": 0.5, "fillOpacity": 0.20,
-                },
-                tooltip=label,
-            ).add_to(m)
+    # FHSZ Fire Zones are rendered by the JS HazardPolygonLayer factory
+    # (`static/hazard_polygon_layer.js`), wired by `static/sidebar.js`'s
+    # Hazard Layers panel. The legacy Folium-baked FHSZ render block was
+    # removed in Stage 0.5 Phase A when multi-hazard became the only
+    # rendering path. All hazard polygons (wildfire + flood + …) ride the
+    # `JOSH_DATA.hazard_polygons` data structure.
 
     # ── Layer 2: City-wide evacuation capacity background ──────────────────
     bg_buckets: dict = defaultdict(list)
@@ -1170,58 +1155,52 @@ def _inject_josh_data_bundle(
         if path.exists():
             brief_data[fname] = path.read_text(encoding="utf-8")
 
-    # Multi-hazard schema flag (per docs/plan-multihazard-stage-0.md §6.3 Step 2).
-    # multihazard:false (default) emits v1; multihazard:true bumps to v2. v2 adds
-    # hazard_polygons (Steps 4–5) + hazard_parameters (later); v1 stays unchanged.
-    multihazard = bool((city_config or {}).get("multihazard", False))
-    josh_data = {
-        "schema_version": 2 if multihazard else 1,
-        "app_js_version": _APP_JS_VERSION,
-        "city_name":      city_name,
-        "city_slug":      city_slug,
-        "graph":          graph_data,
-        "parameters":     params_data,
-        "fhsz":           fhsz_geojson,
-        "briefs":         brief_data,
-        "projects":       projects_data or [],
-    }
-
-    # Stage 0 Steps 4–5 [AUTO + REVIEW]: emit hazard_polygons under the v2 flag.
-    # Pure additive emission — Folium-baked FHSZ rendering continues unchanged
-    # through Step 7 (per plan §6.3 Step 3 Option B). Step 8 (Hazard Layers panel)
-    # wires this data through HazardPolygonLayer.create() in JS and supersedes
-    # the Folium-baked rendering. Until then, this data sits in JOSH_DATA unused.
-    if multihazard:
-        from agents.visualization.themes import (
-            WILDFIRE_ZONE_MAP, WILDFIRE_PALETTE, WILDFIRE_LABELS, WILDFIRE_LEGEND_LABEL,
-            FLOOD_ZONE_MAP,    FLOOD_PALETTE,    FLOOD_LABELS,    FLOOD_LEGEND_LABEL,
-        )
-        # Step 5 mock flood polygon — bayfront SFHA fixture from the multi-hazard
-        # mockup at output/mockup/multihazard_on_berkeley.html. Coordinates
-        # unchanged from the user-approved visual; real FEMA NFHL acquisition
-        # lands in Stage 3 (FloodAdapter) and replaces this hand-crafted feature.
-        mock_flood_fc = {
-            "type": "FeatureCollection",
-            "features": [
-                {
-                    "type": "Feature",
-                    "properties": {
-                        "FLD_ZONE":   "AE",
-                        "BFE_FT":     10.0,
-                        "STATIC_BFE": 10.0,
-                        "name":       "Bayfront SFHA (Stage 0 mock — replace in Stage 3)",
-                    },
-                    "geometry": {
-                        "type": "Polygon",
-                        "coordinates": [[
-                            [-122.330, 37.880], [-122.305, 37.880], [-122.300, 37.870],
-                            [-122.300, 37.855], [-122.330, 37.855], [-122.330, 37.880],
-                        ]],
-                    },
+    # Multi-hazard is the schema (Stage 0.5 — flag retired). The optional
+    # `multihazard` field in city configs is ignored; every emission is v2.
+    # Real per-hazard polygon data lands per the adapter rollout in
+    # docs/plan-multihazard-mvp.md; until then Stage 0 mock fixtures here +
+    # static/multihazard_fixtures.js drive the UI.
+    from agents.visualization.themes import (
+        WILDFIRE_ZONE_MAP, WILDFIRE_PALETTE, WILDFIRE_LABELS, WILDFIRE_LEGEND_LABEL,
+        FLOOD_ZONE_MAP,    FLOOD_PALETTE,    FLOOD_LABELS,    FLOOD_LEGEND_LABEL,
+    )
+    # Bayfront SFHA mock from the multi-hazard mockup. Real FEMA NFHL
+    # acquisition lands in Stage 3 (FloodAdapter) and replaces this feature.
+    mock_flood_fc = {
+        "type": "FeatureCollection",
+        "features": [
+            {
+                "type": "Feature",
+                "properties": {
+                    "FLD_ZONE":   "AE",
+                    "BFE_FT":     10.0,
+                    "STATIC_BFE": 10.0,
+                    "name":       "Bayfront SFHA (Stage 0 mock — replace in Stage 3)",
                 },
-            ],
-        }
-        josh_data["hazard_polygons"] = {
+                "geometry": {
+                    "type": "Polygon",
+                    "coordinates": [[
+                        [-122.330, 37.880], [-122.305, 37.880], [-122.300, 37.870],
+                        [-122.300, 37.855], [-122.330, 37.855], [-122.330, 37.880],
+                    ]],
+                },
+            },
+        ],
+    }
+    josh_data = {
+        "schema_version":  2,
+        "app_js_version":  _APP_JS_VERSION,
+        "city_name":       city_name,
+        "city_slug":       city_slug,
+        "graph":           graph_data,
+        "parameters":      params_data,
+        # Kept for transitional reference; v2 consumers read from
+        # hazard_polygons.wildfire instead. Removed in a later cleanup.
+        "fhsz":            fhsz_geojson,
+        "briefs":          brief_data,
+        "projects":        projects_data or [],
+        "applicable_hazards": ["wildfire", "flood"],
+        "hazard_polygons": {
             "wildfire": {
                 "feature_collection": fhsz_geojson,
                 "zone_attribute":     "HAZ_CLASS",
@@ -1238,7 +1217,8 @@ def _inject_josh_data_bundle(
                 "labels":             FLOOD_LABELS,
                 "legend_label":       FLOOD_LEGEND_LABEL,
             },
-        }
+        },
+    }
 
     data_block = (
         '\n<script id="josh-data">\n'
@@ -1288,19 +1268,24 @@ def _inject_josh_data_bundle(
     sb_note  = f"inlined ({len(sb_js) // 1024} KB)" if sb_js else "not found (skipped)"
 
     # ── Sidebar container + map layout CSS ────────────────────────────────────
-    # The sidebar (320 px) occupies one vertical edge; the brand header (54 px) the
-    # top. CSS shifts the Folium map container so it never renders under either
-    # fixed panel. z-index: sidebar=1000, header=10001, map layers<999.
-    #
-    # multihazard mode (Stage 0 Step 7): sidebar moves to the RIGHT edge (locked
-    # decision #9). Map's `left` flips from 320px to 0; width unchanged. The
-    # static #josh-sidebar div is still injected for v1 compatibility — sidebar.js
-    # hides it via display:none when v2 is detected (per Step 6).
-    _map_left = "0" if multihazard else "320px"
-    # Stage 0 Step 25 — narrow-viewport media query for v2 mode. At < 768 px,
-    # the right sidebar becomes a bottom drawer (50vh) and the map takes the
-    # top half. v1 mode keeps the existing left-sidebar layout unchanged.
-    _narrow_block = """
+    # The sidebar (320 px) is on the right edge per locked decision #9; the
+    # brand header (54 px) sits at the top. CSS pushes the Folium map container
+    # so it never renders under either fixed panel.
+    # z-index: sidebar=1000, header=10001, map layers<999.
+    # The narrow-viewport (<768px) media query collapses the sidebar to a
+    # 50vh bottom drawer and the map fills the top half.
+    layout_block = """\
+<!-- Leaflet.AntPath plugin — required by sidebar.js _drawRoutes().
+     Phase 3 removed all folium.AntPath() calls (routes now drawn by sidebar.js),
+     so Folium no longer auto-injects this CDN script.  We inject it explicitly. -->
+<script src="https://cdn.jsdelivr.net/npm/leaflet-ant-path@1.1.2/dist/leaflet-ant-path.min.js"></script>
+<style id="josh-layout">
+  .folium-map {
+    left: 0 !important;
+    width: calc(100% - 320px) !important;
+    top: 54px !important;
+    height: calc(100vh - 54px) !important;
+  }
   @media (max-width: 768px) {
     .folium-map {
       left: 0 !important;
@@ -1316,27 +1301,7 @@ def _inject_josh_data_bundle(
       box-shadow: 0 -2px 12px rgba(0,0,0,0.12) !important;
     }
   }
-""" if multihazard else ""
-    layout_block = """\
-<!-- Leaflet.AntPath plugin — required by sidebar.js _drawRoutes().
-     Phase 3 removed all folium.AntPath() calls (routes now drawn by sidebar.js),
-     so Folium no longer auto-injects this CDN script.  We inject it explicitly. -->
-<script src="https://cdn.jsdelivr.net/npm/leaflet-ant-path@1.1.2/dist/leaflet-ant-path.min.js"></script>
-<style id="josh-layout">
-  .folium-map {
-    left: """ + _map_left + """ !important;
-    width: calc(100% - 320px) !important;
-    top: 54px !important;
-    height: calc(100vh - 54px) !important;
-  }""" + _narrow_block + """
 </style>
-<div id="josh-sidebar" style="
-  position:fixed;top:54px;left:0;width:320px;height:calc(100vh - 54px);
-  background:#fff;box-shadow:2px 0 12px rgba(0,0,0,0.12);
-  display:flex;flex-direction:column;overflow:hidden;
-  font-family:system-ui,-apple-system,BlinkMacSystemFont,sans-serif;
-  font-size:13px;z-index:1000;
-"></div>
 <script id="josh-sidebar-bridge">
 (function () {
   // Expose the Leaflet map as window._joshMap once it has initialised.
@@ -1373,12 +1338,10 @@ def _inject_josh_data_bundle(
 </script>
 """
 
-    # Footer credit: bottom-right by default (production v1). In multihazard mode
-    # the right edge is occupied by #josh-sidebar-mhz, so move the footer to the
-    # left edge to keep it visible. Stage 0 Step 7 [REVIEW].
-    _footer_side = "left:8px" if multihazard else "right:8px"
+    # Footer credit: bottom-left so the right-side #josh-sidebar-mhz never
+    # covers it.
     footer_block = (
-        f'\n<div style="position:fixed;bottom:4px;{_footer_side};font-size:10px;'
+        f'\n<div style="position:fixed;bottom:4px;left:8px;font-size:10px;'
         f'color:#888;z-index:9999;pointer-events:none;">'
         f'JOSH v{_PARAMETERS_VERSION} · © 2026 Thomas Gonzalez · AGPL-3.0'
         f'</div>\n'

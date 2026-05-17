@@ -3003,23 +3003,17 @@
       // Container for the Hazard Layers panel (filled by _wireHazardLayers
       // once the Folium map is ready).
       '<div id="josh-hazard-layers-panel"></div>' +
-      // Container for the Project dropdown panel (Stage 0 Step 9).
+      // Container for the Project dropdown panel.
       '<div id="josh-project-panel"></div>' +
-      // Container for the project detail card (Stage 0 Step 12+). Empty until
-      // a project is selected.
+      // Container for the project detail card. Empty until a project is
+      // selected.
       '<div id="josh-project-detail"></div>' +
       // Placeholder shown when nothing is selected.
-      '<div id="josh-sidebar-mhz-placeholder" style="padding:24px 18px;color:#868e96;font-size:12px;line-height:1.5;">' +
-      'Select a project above to see its detail card.' +
-      '<br><br>' +
-      '<em>Multi-hazard prototype mode. To return to the production sidebar, ' +
-      'set <code style="background:#f1f3f5;padding:1px 4px;border-radius:3px;">multihazard: false</code> ' +
-      'in cities/&lt;city&gt;.yaml and rebuild.</em>' +
+      '<div id="josh-sidebar-mhz-placeholder" ' +
+        'style="padding:24px 18px;color:#868e96;font-size:12px;line-height:1.5;">' +
+        'Select a project above to see its detail card.' +
       '</div>';
     document.body.appendChild(sb);
-    // Hide any pre-injected production left sidebar.
-    const left = _el('josh-sidebar');
-    if (left) left.style.display = 'none';
     // Stage 0 Step 11: merge mock fixtures onto JOSH_DATA.projects[].evaluation
     // before any consumer reads them. Idempotent / safe to call without fixtures.
     _mergeMockFixturesIntoProjects();
@@ -3030,27 +3024,12 @@
   }
 
   // ── DOMContentLoaded — inject sidebar div ─────────────────────────────────────
+  // Stage 0.5 Phase A: flag removed; multi-hazard is the only mode. The right
+  // sidebar is always injected. Production CRUD lives inside the multi-hazard
+  // shell from Stage 0.5 Phase B onward.
   if (typeof document !== 'undefined') {
     document.addEventListener('DOMContentLoaded', () => {
-      // Stage 0 Step 6: multi-hazard mode branch. Detect via schema_version.
-      // v2 path: right shell + skip production init (no CRUD wired yet).
-      const v2 = (typeof window !== 'undefined' &&
-                  window.JOSH_DATA && window.JOSH_DATA.schema_version === 2);
-      if (v2) {
-        _injectMultiHazardSidebar();
-        return;
-      }
-      // v1 path (default) — production behavior unchanged.
-      if (_el('josh-sidebar')) return;  // already injected by demo.py
-      const sb = document.createElement('div');
-      sb.id = 'josh-sidebar';
-      sb.style.cssText =
-        'position:fixed;top:0;left:0;width:' + SIDEBAR_W + 'px;height:100vh;' +
-        'background:#fff;box-shadow:2px 0 12px rgba(0,0,0,0.12);' +
-        'display:flex;flex-direction:column;overflow:hidden;' +
-        'font-family:system-ui,-apple-system,BlinkMacSystemFont,sans-serif;font-size:13px;z-index:1000;';
-      document.body.appendChild(sb);
-      init();
+      _injectMultiHazardSidebar();
     });
   }
 

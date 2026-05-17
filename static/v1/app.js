@@ -11,16 +11,15 @@
 // ============================================================================
 
 // ── Schema compatibility check ────────────────────────────────────────────────
-// app.js v1 is compatible with JOSH_DATA schema versions 1 (wildfire-only) and 2
-// (multi-hazard; adds keys, removes none). Warns for any other version so silent
-// drift on a major upgrade is caught.
+// Multi-hazard schema v2 is the only supported runtime schema. Warns on any
+// other value so silent drift on a future schema bump is caught loudly.
 (function () {
   var d = window.JOSH_DATA;
   if (!d) { console.warn('JOSH app.js: window.JOSH_DATA not found'); return; }
-  if (d.schema_version !== 1 && d.schema_version !== 2) {
+  if (d.schema_version !== 2) {
     console.warn(
-      'JOSH app.js v1: unsupported schema_version (got ' + d.schema_version + '). ' +
-      'Regenerate analysis_map.html with a matching version of app.js.'
+      'JOSH app.js: unsupported schema_version (got ' + d.schema_version + ', expected 2). ' +
+      'Regenerate analysis_map.html with a matching pipeline version.'
     );
   }
 })();
