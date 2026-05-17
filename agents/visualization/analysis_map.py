@@ -1264,9 +1264,15 @@ def _inject_josh_data_bundle(
     sb_note  = f"inlined ({len(sb_js) // 1024} KB)" if sb_js else "not found (skipped)"
 
     # ── Sidebar container + map layout CSS ────────────────────────────────────
-    # The sidebar (320 px) occupies the left edge; the brand header (54 px) the top.
-    # CSS shifts the Folium map container right + down so it never renders under
-    # either fixed panel.  z-index: sidebar=1000, header=10001, map layers<999.
+    # The sidebar (320 px) occupies one vertical edge; the brand header (54 px) the
+    # top. CSS shifts the Folium map container so it never renders under either
+    # fixed panel. z-index: sidebar=1000, header=10001, map layers<999.
+    #
+    # multihazard mode (Stage 0 Step 7): sidebar moves to the RIGHT edge (locked
+    # decision #9). Map's `left` flips from 320px to 0; width unchanged. The
+    # static #josh-sidebar div is still injected for v1 compatibility — sidebar.js
+    # hides it via display:none when v2 is detected (per Step 6).
+    _map_left = "0" if multihazard else "320px"
     layout_block = """\
 <!-- Leaflet.AntPath plugin — required by sidebar.js _drawRoutes().
      Phase 3 removed all folium.AntPath() calls (routes now drawn by sidebar.js),
@@ -1274,7 +1280,7 @@ def _inject_josh_data_bundle(
 <script src="https://cdn.jsdelivr.net/npm/leaflet-ant-path@1.1.2/dist/leaflet-ant-path.min.js"></script>
 <style id="josh-layout">
   .folium-map {
-    left: 320px !important;
+    left: """ + _map_left + """ !important;
     width: calc(100% - 320px) !important;
     top: 54px !important;
     height: calc(100vh - 54px) !important;
@@ -1323,8 +1329,12 @@ def _inject_josh_data_bundle(
 </script>
 """
 
+    # Footer credit: bottom-right by default (production v1). In multihazard mode
+    # the right edge is occupied by #josh-sidebar-mhz, so move the footer to the
+    # left edge to keep it visible. Stage 0 Step 7 [REVIEW].
+    _footer_side = "left:8px" if multihazard else "right:8px"
     footer_block = (
-        f'\n<div style="position:fixed;bottom:4px;right:8px;font-size:10px;'
+        f'\n<div style="position:fixed;bottom:4px;{_footer_side};font-size:10px;'
         f'color:#888;z-index:9999;pointer-events:none;">'
         f'JOSH v{_PARAMETERS_VERSION} · © 2026 Thomas Gonzalez · AGPL-3.0'
         f'</div>\n'
