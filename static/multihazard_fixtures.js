@@ -63,6 +63,27 @@
           // falls back to controlling-hazard AntPath (the production Folium
           // route still renders via per-project FeatureGroup).
           route_coords: null
+        },
+        {
+          // Project is inland in the Berkeley hills; nowhere near the bayfront
+          // SFHA. Flood is informational only, easily passes.
+          type:              'flood',
+          controls:          false,
+          flagged:           false,
+          zone:              'x',
+          zone_label:        'X (outside SFHA)',
+          bfe_ft:            null,
+          flooded_exit_nodes_dropped: 0,
+          degradation:       1.00,
+          egress_window_min: 180,
+          threshold:         9.00,
+          delta_t:           1.0,
+          bottleneck:        {
+            name:        'Marin Avenue at Shattuck Avenue / The Circle',
+            eff_cap_vph: 900,
+            vehicles:    137
+          },
+          route_coords: null
         }
       ]
     },
@@ -83,6 +104,25 @@
           egress_window_min: 120,
           threshold:         6.00,
           delta_t:           4.59,
+          bottleneck:        {
+            name:        'Adeline Street at Shattuck Avenue / Ward Street',
+            eff_cap_vph: 1900,
+            vehicles:    145
+          },
+          route_coords: null
+        },
+        {
+          type:              'flood',
+          controls:          false,
+          flagged:           false,
+          zone:              'x',
+          zone_label:        'X (outside SFHA)',
+          bfe_ft:            null,
+          flooded_exit_nodes_dropped: 0,
+          degradation:       1.00,
+          egress_window_min: 180,
+          threshold:         9.00,
+          delta_t:           2.0,
           bottleneck:        {
             name:        'Adeline Street at Shattuck Avenue / Ward Street',
             eff_cap_vph: 1900,
@@ -115,6 +155,25 @@
             vehicles:    43
           },
           route_coords: null
+        },
+        {
+          type:              'flood',
+          controls:          false,
+          flagged:           false,
+          zone:              'x',
+          zone_label:        'X (outside SFHA)',
+          bfe_ft:            null,
+          flooded_exit_nodes_dropped: 0,
+          degradation:       1.00,
+          egress_window_min: 180,
+          threshold:         9.00,
+          delta_t:           0.7,
+          bottleneck:        {
+            name:        'Ridge Road at Euclid Avenue / Scenic Avenue',
+            eff_cap_vph: 1125,
+            vehicles:    43
+          },
+          route_coords: null
         }
       ]
     },
@@ -136,6 +195,27 @@
           egress_window_min: 120,
           threshold:         6.00,
           delta_t:           15.84,        // includes +9.0 min egress penalty
+          bottleneck:        {
+            name:        'North Street at Jaynes Street',
+            eff_cap_vph: 1125,
+            vehicles:    128
+          },
+          route_coords: null
+        },
+        {
+          // Same egress penalty applies in flood scenario (stories≥4), so
+          // delta_t bumped a bit but still well under the 9.0 threshold.
+          type:              'flood',
+          controls:          false,
+          flagged:           false,
+          zone:              'x',
+          zone_label:        'X (outside SFHA)',
+          bfe_ft:            null,
+          flooded_exit_nodes_dropped: 0,
+          degradation:       1.00,
+          egress_window_min: 180,
+          threshold:         9.00,
+          delta_t:           3.5,
           bottleneck:        {
             name:        'North Street at Jaynes Street',
             eff_cap_vph: 1125,

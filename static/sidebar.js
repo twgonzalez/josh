@@ -2255,7 +2255,14 @@
           flagged:   result.flagged,
           controls:  result.controls
         });
-      case 'flood':       return '';  // Step 13
+      case 'flood':
+        return _renderStandardBarRow({
+          label:     'Flood',
+          delta_t:   result.delta_t,
+          threshold: result.threshold,
+          flagged:   result.flagged,
+          controls:  result.controls
+        });
       case 'tsunami':     return '';  // Step 17 (dispositive case)
       case 'dam_failure': return '';  // Stage 7
       case 'gas_hazmat':  return '';  // Stage 8
