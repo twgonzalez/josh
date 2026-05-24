@@ -28,14 +28,15 @@
  * Prerequisites:
  *   npm install                          (installs playwright)
  *   npx playwright install chromium      (downloads headless Chrome)
- *   Generate the v2 map (must exist at the path below):
+ *   Regenerate the v2 map:
  *     uv run python build.py map --city Berkeley \
  *       --projects /path/to/josh-pipeline/projects/berkeley_demo.yaml \
  *       --data-dir /path/to/josh-pipeline/data/berkeley \
- *       --output-dir /tmp/josh_step5_on
+ *       --output-dir output/berkeley
  *
  * Run:
  *   node --test tests/smoke_multihazard.js
+ *   npm run smoke:multihazard
  */
 
 'use strict';
@@ -43,12 +44,15 @@
 const { describe, test, before, after } = require('node:test');
 const assert   = require('node:assert/strict');
 const { chromium } = require('playwright');
-const fs = require('fs');
+const fs   = require('fs');
 
-// Target the Stage 0.5 v2 demo build. Path is configurable via env var so
-// CI can point at a different build directory.
+// Target the canonical demo build at output/berkeley/analysis_map.html.
+// Path is overridable via JOSH_MHZ_DEMO env var so CI can point at a
+// different build (e.g. josh-pipeline/output/berkeley/analysis_map.html).
+const path = require('path');
 const DEMO_MAP = process.env.JOSH_MHZ_DEMO ||
-                 '/tmp/josh_step5_on/analysis_map.html';
+                 path.resolve(__dirname, '..', 'output', 'berkeley',
+                              'analysis_map.html');
 const FILE_URL = 'file://' + DEMO_MAP;
 
 let browser, page;
@@ -59,7 +63,7 @@ describe('Smoke: multi-hazard demo map', { timeout: 90_000 }, () => {
     if (!fs.existsSync(DEMO_MAP)) {
       throw new Error('Demo map not found at ' + DEMO_MAP +
         '. Regenerate with: uv run python build.py map --city Berkeley ' +
-        '--projects … --data-dir … --output-dir /tmp/josh_step5_on');
+        '--projects … --data-dir … --output-dir output/berkeley');
     }
     browser = await chromium.launch();
     page    = await browser.newPage({ viewport: { width: 1280, height: 800 } });
