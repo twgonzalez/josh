@@ -3,7 +3,9 @@
   "private": true,
   "description": "JOSH smoke tests — browser-level integration via Playwright",
   "scripts": {
-    "smoke": "node --test tests/smoke_sidebar.js"
+    "smoke":           "node --test tests/smoke_sidebar.js tests/smoke_multihazard.js",
+    "smoke:sidebar":   "node --test tests/smoke_sidebar.js",
+    "smoke:multihazard": "node --test tests/smoke_multihazard.js"
   },
   "devDependencies": {
     "playwright": "^1.50.0"
