@@ -260,12 +260,19 @@ The IT Implementation Guide contains the same reference table from the IT perspe
 
 ### Override Surface Summary
 
-| Surface | File | Engineer's role | Used for |
+| # | Surface | Engineer's role | Used for |
 |---|---|---|---|
-| **(1) Global parameter overrides** | `config/cities/{city}.yaml` → `overrides:` block | Reviewer / PE supporter | Adjust national-standard defaults (vehicles per unit, mobilization, hazard degradation) when documented local evidence supports a different value |
-| **(2) City geographic configuration** | `config/cities/{city}.yaml` (top level) | Reviewer | Define boundary source, FHSZ data source, explicit evacuation exit nodes |
-| **(3) Road network overrides** | `config/private/cities/{city}_road_overrides.yaml` | **Primary author** | Correct OSM classification errors, record physical road data, set PE-stamped direct capacity values |
-| **(4) Project-level overrides** | `config/projects/{city}_demo.yaml` (or per project) | Reviewer of applicant-submitted egress studies | Project-specific PE-stamped applicant egress overrides |
+| **1** | Global parameter overrides | Reviewer / PE supporter | Adjust national-standard defaults (vehicles per unit, mobilization, hazard degradation) when documented local evidence supports a different value |
+| **2** | City geographic configuration | Reviewer | Define boundary source, FHSZ data source, explicit evacuation exit nodes |
+| **3** | Road network overrides | **Primary author** | Correct OSM classification errors, record physical road data, set PE-stamped direct capacity values |
+| **4** | Project-level overrides | Reviewer of applicant-submitted egress studies | Project-specific PE-stamped applicant egress overrides |
+
+**Override file paths:**
+
+1. `config/cities/{city}.yaml` &mdash; the `overrides:` block at the bottom of the city config
+2. `config/cities/{city}.yaml` &mdash; the top-level keys (`place_fips`, `fhsz_local_file`, `boundary_file`, `known_exit_nodes`, etc.)
+3. `config/private/cities/{city}_road_overrides.yaml`
+4. `config/projects/{city}_demo.yaml` &mdash; or a per-project YAML
 
 ### (1) Global Parameter Overrides — When the Engineer Supports
 

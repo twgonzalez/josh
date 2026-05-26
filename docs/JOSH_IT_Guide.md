@@ -425,12 +425,19 @@ The table below is the complete list. **No JOSH source code edits are required f
 
 ### Override Surface Summary
 
-| Surface | File | Who maintains | When to use |
+| # | Surface | Who maintains | When to use |
 |---|---|---|---|
-| **(1) Global parameter overrides** | `config/cities/{city}.yaml` → `overrides:` block | Planning department + city council | Adjust national-standard defaults (vehicles per unit, unit threshold, mobilization rate, hazard degradation) when documented local evidence supports a different value |
-| **(2) City geographic configuration** | `config/cities/{city}.yaml` (top level) | City IT / GIS | Define the jurisdiction's boundary source, FHSZ data source, and (for non-municipal jurisdictions) explicit evacuation exit nodes |
-| **(3) Road network overrides** | `config/private/cities/{city}_road_overrides.yaml` | City engineer | Correct OSM classification errors, set PE-stamped direct capacity values, record physical width and access-type data |
-| **(4) Project-level overrides** | `config/projects/{city}_demo.yaml` (or per-project YAML) | Planning department + applicant | Project-specific geocode-address aliases, expected-tier regression markers, PE-stamped applicant egress calculations |
+| **1** | Global parameter overrides | Planning + city council | Adjust national-standard defaults (vehicles per unit, unit threshold, mobilization rate, hazard degradation) when documented local evidence supports a different value |
+| **2** | City geographic configuration | City IT / GIS | Define the jurisdiction's boundary source, FHSZ data source, and (for non-municipal jurisdictions) explicit evacuation exit nodes |
+| **3** | Road network overrides | City engineer | Correct OSM classification errors, set PE-stamped direct capacity values, record physical width and access-type data |
+| **4** | Project-level overrides | Planning + applicant | Project-specific geocode-address aliases, expected-tier regression markers, PE-stamped applicant egress calculations |
+
+**Override file paths:**
+
+1. `config/cities/{city}.yaml` &mdash; the `overrides:` block at the bottom of the city config
+2. `config/cities/{city}.yaml` &mdash; the top-level keys (`place_fips`, `fhsz_local_file`, `boundary_file`, `known_exit_nodes`, etc.)
+3. `config/private/cities/{city}_road_overrides.yaml`
+4. `config/projects/{city}_demo.yaml` &mdash; or a per-project YAML
 
 ### (1) Global Parameter Overrides
 
