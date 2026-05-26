@@ -865,15 +865,15 @@
       <div class="stat-row">
         <div class="stat-num">90%</div>
         <div>
-          <div class="stat-desc">Evacuation mobilization rate</div>
-          <div class="stat-source">NFPA 101 Life Safety Code</div>
+          <div class="stat-desc">Community mass-evacuation mobilization rate</div>
+          <div class="stat-source">NFPA 1660 (2024) / NFPA 1616 (2020)</div>
         </div>
       </div>
       <div class="stat-row">
         <div class="stat-num">35%</div>
         <div>
           <div class="stat-desc">Road capacity (VHFHSZ, fire conditions)</div>
-          <div class="stat-source">HCM 2022 Exhibits 10-15 &amp; 10-17 + NIST</div>
+          <div class="stat-source">Composite engineering judgment; HCM Ch. 11 weather CAFs + NIST TN 2135 (review pending)</div>
         </div>
       </div>
       <div class="stat-row">
@@ -963,11 +963,13 @@
         <p>Every standard JOSH applies existed before JOSH was written. No input was invented by the city, by California Stewardship, or by any consultant. The methodology is an assembly of published, credentialed expert sources:</p>
         <ul>
           <li>Highway Capacity Manual, 7th Ed. (2022)</li>
-          <li>NFPA 101 Life Safety Code</li>
+          <li>NFPA 1660 (2024) / NFPA 1616 (2020) &mdash; community mass evacuation</li>
+          <li>NFPA 101 Life Safety Code (2024 CA ed.) &mdash; building egress only</li>
           <li>NIST Technical Note 2135 (Camp Fire)</li>
           <li>Cal Fire FHSZ designations (Gov. Code §51175)</li>
+          <li>2025 California WUI Code (CWUIC) &mdash; State Fire Marshal</li>
           <li>U.S. Census ACS (Tables B25001, B25044)</li>
-          <li>International Building Code (egress)</li>
+          <li>International Building Code, 2024 Ch. 10 (egress)</li>
         </ul>
       </div>
       <div class="pillar-card">
@@ -997,20 +999,20 @@
       <div class="step">
         <div class="step-num">1</div>
         <h4>Count the Cars</h4>
-        <p>Multiply the project's housing units by 1.9 vehicles per household (Census ACS B25044, CA statewide all-household average — already includes zero-vehicle households), then apply the 90% behavioral mobilization factor from FHWA Emergency Transportation Operations — accounting for the share of households that successfully evacuate during an emergency.</p>
-        <p class="step-source">Sources: U.S. Census ACS B25044 &bull; FHWA Emergency Transportation Operations</p>
+        <p>Multiply the project's housing units by 1.9 vehicles per household (Census ACS B25044, CA statewide all-household average — already includes zero-vehicle households), then apply the 90% community mass-evacuation mobilization factor from NFPA 1660:2024 (which consolidates NFPA 1616:2020 *Mass Evacuation, Sheltering, and Re-entry Programs*) — the national fire-protection standard for community-scale evacuation design.</p>
+        <p class="step-source">Sources: U.S. Census ACS B25044 &bull; NFPA 1660 (2024) / NFPA 1616 (2020) community mass-evacuation design basis &bull; Roberson et al. (2012) CA empirical validation</p>
       </div>
       <div class="step">
         <div class="step-num">2</div>
         <h4>Find the Weakest Link</h4>
-        <p>Examine every road between the project and safety. Each road's capacity is taken from the Highway Capacity Manual (HCM 2022) — the national standard used by every state DOT. If a road passes through a Cal Fire Fire Hazard Severity Zone, its capacity is reduced by the HCM's own published factors for smoke and lane blockage. The road with the lowest effective capacity is the bottleneck.</p>
-        <p class="step-source">Sources: HCM 2022 Exhibits 10-15, 10-17 &bull; Cal Fire FHSZ (Gov. Code §51175)</p>
+        <p>Examine every road between the project and safety. Each road's capacity is taken from the Highway Capacity Manual (HCM 2022) — the national standard used by every state DOT. If a road passes through a Cal Fire Fire Hazard Severity Zone, its capacity is reduced by a composite engineering-judgment factor anchored against the HCM 2022 Ch. 11 worst-case weather Capacity Adjustment Factors and NIST TN 2135 Camp Fire empirical observations (independent traffic-engineering review pending per Fire Science Consulting LLC, May 2026). The road with the lowest effective capacity is the bottleneck.</p>
+        <p class="step-source">Sources: HCM 2022, 7th Ed. (TRB) &bull; Cal Fire FHSZ (Gov. Code §51175) &bull; NIST TN 2135 Camp Fire timeline &bull; FSC May 2026 review (pending)</p>
       </div>
       <div class="step">
         <div class="step-num">3</div>
         <h4>Add Building Egress Time</h4>
-        <p>A family on the sixth floor must walk down six flights of stairs before reaching a car. NFPA 101 and the International Building Code provide published methods to calculate this delay: 1.5 minutes per story for buildings over four stories, capped at 12 minutes. Single-family and low-rise multifamily projects receive no penalty.</p>
-        <p class="step-source">Sources: NFPA 101 &bull; International Building Code</p>
+        <p>A family on the sixth floor must walk down six flights of stairs before reaching a car. NFPA 101 (Life Safety Code, 2024 California edition) and the International Building Code (IBC 2024, Ch. 10 &mdash; Means of Egress) provide published methods to calculate this delay: 1.5 minutes per story for buildings over four stories, capped at 12 minutes. Single-family and low-rise multifamily projects receive no penalty.</p>
+        <p class="step-source">Sources: NFPA 101 (2024 CA ed.) &bull; IBC 2024 Ch. 10</p>
       </div>
       <div class="step">
         <div class="step-num">4</div>
@@ -1057,21 +1059,39 @@
       <tbody>
         <tr>
           <td>
-            Highway Capacity Manual, 7th Ed. (2022)
-            <div class="publisher">Exhibits 10-15, 10-17, 12-6, 12-7, Ch. 15</div>
+            Highway Capacity Manual, 7th Ed. (HCM 2022)
+            <div class="publisher">Ch. 11 weather CAFs (Ex. 11-20); Ch. 12 base capacity (Ex. 12-6, 12-7); Ch. 15 two-lane highways</div>
           </td>
           <td>Transportation Research Board<br><span class="publisher">National Academies of Sciences</span></td>
-          <td>Road capacity (pc/h/lane) by road type and speed; capacity reduction factors for smoke and incidents</td>
-          <td><span class="use-badge">Road capacity &amp; degradation</span></td>
+          <td>Road base capacity (pc/h/lane) by road type and speed. <em>Note (May 2026):</em> the FHSZ degradation factors are a composite engineering-judgment factor anchored against HCM Ch. 11 worst-case weather CAFs + NIST TN 2135, not a direct HCM exhibit; independent traffic-engineering review pending per Fire Science Consulting LLC.</td>
+          <td><span class="use-badge">Road capacity (base); FHSZ degradation factor pending review</span></td>
         </tr>
         <tr>
           <td>
-            NFPA 101 Life Safety Code
-            <div class="publisher">Current edition</div>
+            NFPA 1660 &mdash; <em>Standard for Emergency, Continuity, and Crisis Management: Preparedness, Response, and Recovery</em>
+            <div class="publisher">2024 edition; consolidates NFPA 1616:2020 <em>Mass Evacuation, Sheltering, and Re-entry Programs</em></div>
           </td>
           <td>National Fire Protection Association</td>
-          <td>90% mobilization rate (design basis: full building evacuation); building egress time calculation for structures ≥ 4 stories</td>
-          <td><span class="use-badge">Mobilization &amp; egress penalty</span></td>
+          <td>90% community mass-evacuation mobilization rate (design basis: full evacuation adjusted for ~10% zero-vehicle HHs per Census ACS B25044). Empirical California validation per Roberson et al. (2012).</td>
+          <td><span class="use-badge">Mobilization rate</span></td>
+        </tr>
+        <tr>
+          <td>
+            NFPA 101 &mdash; Life Safety Code
+            <div class="publisher">2024 California edition (Ch. 7); IBC 2024 Ch. 10 (Means of Egress)</div>
+          </td>
+          <td>National Fire Protection Association; International Code Council</td>
+          <td>Building egress time calculation for structures &ge; 4 stories (1.5 min/story, capped at 12 min). <em>Note:</em> NFPA 101 governs pedestrian egress inside buildings; it is <strong>not</strong> the source for the community mass-evacuation mobilization rate (see NFPA 1660 / 1616 above).</td>
+          <td><span class="use-badge">Egress penalty (high-rise)</span></td>
+        </tr>
+        <tr>
+          <td>
+            2025 California Wildland-Urban Interface Code (CWUIC)
+            <div class="publisher">Adopted by State Fire Marshal; supersedes CFC Ch. 49 and CBC Ch. 7A</div>
+          </td>
+          <td>California Building Standards Commission<br><span class="publisher">CWUIC adopts IWUIC 2024 with CA amendments</span></td>
+          <td>Operative California WUI code. JOSH measures civilian outbound capacity only; concurrent emergency-apparatus inbound access per <strong>CCR 1273.00</strong> requires separate analysis. JOSH positioned as a screening tool consistent with <strong>CWUIC Appendix C §C101.6</strong>, not a standalone permit-denial instrument.</td>
+          <td><span class="use-badge">Scope &amp; limitations</span></td>
         </tr>
         <tr>
           <td>
@@ -1271,7 +1291,7 @@
         <p>
           JOSH downloads data automatically from four public sources — Cal Fire, OpenStreetMap, the
           U.S. Census Bureau, and the city boundary from Census TIGER — and applies the HCM 2022
-          capacity table, NFPA 101 mobilization design basis, and NIST Camp Fire timeline as a
+          capacity table, NFPA 1660 / 1616 community mass-evacuation design basis, and NIST Camp Fire timeline as a
           pipeline of deterministic calculations. There is no machine learning, no model training,
           and no probabilistic inference. The software is an automation layer over arithmetic.
         </p>
@@ -1335,10 +1355,12 @@
       HAA — Gov. Code §65589.5(j)(1)<br>
       FHSZ — Gov. Code §51175–51189<br>
       HCM 2022 — Transportation Research Board<br>
-      NFPA 101 — Nat'l Fire Protection Association<br>
+      NFPA 1660 (2024) / NFPA 1616 (2020) — Nat'l Fire Protection Association<br>
+      NFPA 101 (2024 CA ed.) — Nat'l Fire Protection Association<br>
       NIST TN 2135 — U.S. Dept. of Commerce<br>
       ACS B25044 — U.S. Census Bureau<br>
-      IBC — International Code Council
+      IBC 2024 Ch. 10 — International Code Council<br>
+      CWUIC 2025 — California State Fire Marshal
     </div>
   </div>
 </footer>
