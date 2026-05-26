@@ -516,7 +516,7 @@
     // ── Document header (matches Python generate_audit_trail) ──
     L.push(sep70);
     L.push('FIRE EVACUATION CAPACITY ANALYSIS -- PROJECT DETERMINATION');
-    L.push('JOSH v4.0 (dT Standard -- Constant Mobilization, NFPA 101)');
+    L.push('JOSH v4.0 (dT Standard -- Constant Mobilization, NFPA 1660 / 1616)');
     L.push(sep70);
     L.push('Date:           ' + (project.analyzed_at || new Date().toISOString().slice(0, 10)));
     L.push('Project:        ' + (project.name || 'Untitled'));
@@ -535,7 +535,7 @@
     L.push('  Universal 5-Step Evacuation Capacity Algorithm v4.0 (dT Standard -- constant mobilization)');
     L.push('  Each scenario applies: (1) applicability check, (2) scale gate,');
     L.push('  (3) route identification (EvacuationPath objects with bottleneck tracking),');
-    L.push('  (4) demand calculation (mobilization rate 0.90 x vpu x units -- NFPA 101 design basis),');
+    L.push('  (4) demand calculation (mobilization rate 0.90 x vpu x units -- NFPA 1660 (2024) / NFPA 1616 (2020) community mass-evacuation design basis),');
     L.push('  (5) dT test (project_vehicles / bottleneck_effective_capacity x 60 + egress).');
     L.push('  Reference: AB 747 (California Government Code Sec.65302.15)');
 
@@ -545,9 +545,12 @@
     L.push('SCENARIO: WILDLAND_AB747');
     L.push('  Legal Basis: AB 747 (California Government Code Sec.65302.15) -- General Plan Safety Element');
     L.push('    mandatory update for evacuation route capacity analysis;');
-    L.push('    HCM 2022 (Highway Capacity Manual, 7th Edition) -- effective capacity with hazard degradation;');
-    L.push('    NFPA 101 (Life Safety Code) -- 0.90 mobilization design basis;');
-    L.push('    NIST TN 2135 (Maranghides et al.) -- safe egress windows by hazard zone');
+    L.push('    HCM 2022 (Highway Capacity Manual, 7th Edition, Transportation Research Board) -- effective capacity;');
+    L.push('    NFPA 1660 (2024) / NFPA 1616 (2020) -- community mass-evacuation design basis, 0.90 mobilization constant;');
+    L.push('    NFPA 101 (Life Safety Code, 2024 CA edition) -- building egress penalty for stories >= 4 only;');
+    L.push('    NIST TN 2135 (Maranghides et al., 2021) -- safe egress windows by hazard zone;');
+    L.push('    Composite hazard-degradation factor (HCM Ch. 11 weather CAF + NIST TN 2135 + Kincade/Glass Fire empirical refs)');
+    L.push('      -- independent traffic-engineering review pending (Fire Science Consulting LLC, May 2026)');
     L.push('  Result: ' + tier + '  |  Triggered: ' + (anyFlagged ? 'YES' : 'NO'));
     L.push(sep70);
 
@@ -561,7 +564,7 @@
            ' [HAZ_CLASS=' + hzClass + ']  hazard_zone=' + hz +
            '  (' + (result.in_fire_zone ? 'IN FIRE ZONE' : 'not in FHSZ') + ')');
     L.push('  Mobilization Rate: ' + mob.toFixed(2) +
-           ' (NFPA 101 design basis -- constant; Census ACS B25044 zero-vehicle adjustment)');
+           ' (NFPA 1660 / 1616 community mass-evacuation design basis -- constant; Census ACS B25044 zero-vehicle adjustment)');
 
     // ── STEP 2: Scale gate (Standard 1) ──
     L.push('');
@@ -599,10 +602,12 @@
       L.push('  ' + sep38);
       L.push('  Formula: ' + (project.units || 0) + ' x ' + vpu.toFixed(1) + ' x ' + mob.toFixed(2));
       L.push('  Hazard Zone: ' + hz);
-      L.push('  Mobilization Rate: ' + mob.toFixed(2) + ' (NFPA 101 design basis, constant)');
+      L.push('  Mobilization Rate: ' + mob.toFixed(2) + ' (NFPA 1660 / 1616 community mass-evacuation design basis, constant)');
       L.push('  Project vehicles (peak hour): ' + pv.toFixed(1) + ' vph');
       L.push('  Source (vehicles/unit): U.S. Census ACS B25044');
-      L.push('  Source (mobilization): NFPA 101 Life Safety Code -- constant 0.90 design basis');
+      L.push('  Source (mobilization): NFPA 1660 (Standard for Emergency, Continuity, and Crisis Management, 2024 ed.)');
+      L.push('                         consolidates NFPA 1616 (Mass Evacuation, Sheltering, and Re-entry Programs, 2020 ed.)');
+      L.push('                         0.90 = full-evacuation design basis adjusted for ~10% zero-vehicle HHs (Census ACS B25044)');
 
       // ── STEP 5: dT test (Standard 4) ──
       L.push('');
@@ -610,9 +615,9 @@
       L.push('  ' + sep38);
       L.push('  Method: dT = (project_vehicles / bottleneck_effective_capacity) x 60 + egress');
       L.push('  Hazard Zone: ' + hz);
-      L.push('  Mobilization Rate: ' + mob.toFixed(2) + ' (NFPA 101 design basis, constant)');
+      L.push('  Mobilization Rate: ' + mob.toFixed(2) + ' (NFPA 1660 / 1616 community mass-evacuation design basis, constant)');
       L.push('  Project Vehicles: ' + pv.toFixed(1) + ' vph');
-      L.push('  Egress Penalty: ' + ep.toFixed(1) + ' min (NFPA 101/IBC; applies to buildings >= 4 stories)');
+      L.push('  Egress Penalty: ' + ep.toFixed(1) + ' min (NFPA 101 Life Safety Code, 2024 CA ed., Ch. 7 + IBC 2024 Ch. 10; applies to buildings >= 4 stories)');
       L.push('  Safe Egress Window: ' + safeWin.toFixed(0) + ' min (' + hz + ', NIST TN 2135)');
       L.push('  Max Project Share:  ' + (maxShare * 100).toFixed(0) + '%');
       L.push('  dT Threshold:       ' + thr.toFixed(2) + ' min (' +
@@ -682,9 +687,9 @@
     L.push('  ' + sep38);
     L.push('  Hazard Zone:        ' + hz);
     L.push('  Behavioral Mobilization: ' + mob.toFixed(2) +
-           ' (FHWA Emergency Transportation Operations -- mandatory evacuation compliance rate)');
+           ' (NFPA 1660 (2024) / NFPA 1616 (2020) community mass-evacuation design basis)');
     L.push('  Vehicles per Unit:  1.9 (U.S. Census ACS B25044, CA statewide all-HH average)');
-    L.push('  Egress Penalty:     ' + ep.toFixed(1) + ' min (NFPA 101/IBC -- ' +
+    L.push('  Egress Penalty:     ' + ep.toFixed(1) + ' min (NFPA 101 Life Safety Code, 2024 CA ed. + IBC 2024 Ch. 10 -- ' +
            (project.stories || 0) + ' stories)');
     L.push('  Safe Egress Window: ' + safeWin.toFixed(0) + ' min (' + hz + ', per NIST TN 2135)');
     L.push('  Max Project Share:  ' + (maxShare * 100).toFixed(0) + '%');
@@ -729,6 +734,27 @@
     L.push('  This determination is based solely on objective, verifiable criteria.');
     L.push('  No professional discretion was applied. All calculations are reproducible.');
     L.push('  See legal.md for full legal basis and defense reference.');
+    L.push('');
+    L.push('  SCOPE AND LIMITATIONS');
+    L.push('  ' + sep38);
+    L.push('  Civilian outbound capacity only. JOSH measures the dT contribution of');
+    L.push('  civilian vehicles exiting the project on its serving evacuation routes.');
+    L.push('  Concurrent emergency apparatus inbound access, required by CCR 1273.00');
+    L.push('  of the 2025 California Wildland-Urban Interface Code (CWUIC) adopted by');
+    L.push('  the State Fire Marshal, requires separate analysis that is outside the');
+    L.push('  scope of this determination.');
+    L.push('');
+    L.push('  Consistent with CWUIC Appendix C Sec. C101.6, dT is an initial idealized');
+    L.push('  order-of-magnitude clearance estimate intended as a screening tool that');
+    L.push('  triggers further review under the Housing Accountability Act safety');
+    L.push('  exception (Gov. Code Sec.65589.5(j)(1)). It is not a substitute for a full');
+    L.push('  community evacuation study and is not a standalone permit-denial instrument.');
+    L.push('');
+    L.push('  Methodology open items (independent traffic-engineering review by Fire');
+    L.push('  Science Consulting LLC, May 2026): hazard-degradation factor empirical');
+    L.push('  derivation; CWUIC road-geometry pre-check (Secs. 403.1, 403.3); shadow-');
+    L.push('  evacuation and cumulative route capacity tracking; dt(egress) for low-rise');
+    L.push('  (IBC 2024 Ch. 10 + SFPE Handbook Ch. 64).');
     L.push(sep70);
 
     return L.join('\n');

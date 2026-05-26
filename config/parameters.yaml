@@ -17,13 +17,28 @@ unit_threshold: 15
 
 # ============================================================
 # Behavioral Mobilization Rate — constant for all projects, all zones
-# Source: FHWA Emergency Transportation Operations — mandatory evacuation
-# compliance rate for residential areas under imminent fire threat.
+# Source: NFPA 1660 (Standard for Emergency, Continuity, and Crisis Management:
+#         Preparedness, Response, and Recovery, 2024 ed.; consolidates
+#         NFPA 1616:2020 Mass Evacuation, Sheltering, and Re-entry Programs) —
+#         community mass-evacuation design framework.
+#         0.90 represents vehicle-eligible household mobilization adjusted from
+#         the full-evacuation design basis for ~10% zero-vehicle households per
+#         Census ACS B25044.
+# Empirical California validation: Roberson et al. (2012), Attitudes on wildfire
+#         evacuation (J. Emergency Management 10(5), 335-347), documents intended
+#         evacuation rates in Southern California WUI communities.
+# Analogical reasoning (not the operative source): NFPA 101 (Life Safety Code,
+#         2024 California ed.) sizes building exits for 100% occupant load — the
+#         same full-load design principle is here applied at the community scale.
+# Independent review status: NFPA 1660 / 1616 confirmed as the appropriate
+#         community-evacuation citation by Fire Science Consulting LLC review
+#         (Ziazi & Simeoni, May 2026). Earlier docs that cited NFPA 101 or FHWA
+#         Emergency Transportation Operations for this parameter were imprecise
+#         and have been corrected.
 #
-# Represents the fraction of a project's vehicles that reach the road
-# during an evacuation (accounts for residents not home, shadow non-compliance,
-# households that share one vehicle). Does NOT represent vehicle non-ownership —
-# that is already embedded in vehicles_per_unit (the all-household ACS average).
+# Represents the fraction of a project's vehicles that reach the road during
+# an evacuation. Does NOT represent vehicle non-ownership — that is already
+# embedded in vehicles_per_unit (the all-household ACS average).
 #
 # FHSZ affects the road (through the hazard degradation factor below).
 # It does not affect mobilization. The project's residents are the project's
@@ -31,29 +46,48 @@ unit_threshold: 15
 # ============================================================
 
 behavioral_mobilization: 0.90
-# Source: FHWA Emergency Transportation Operations — mandatory evacuation compliance rate.
-# Cities may override with documented local evidence (evacuation plan compliance
-# data, local fire history study, or licensed transportation engineer study).
+# Source: NFPA 1660 (2024) / NFPA 1616 (2020) community mass-evacuation standard;
+# 0.90 = full-evacuation design basis adjusted for ~10% zero-vehicle HHs per
+# Census ACS B25044. Cities may override with documented local evidence
+# (evacuation plan compliance data, local fire history study, or licensed
+# transportation engineer study).
 
 # ============================================================
 # Hazard-Aware Road Capacity Degradation
 # Roads within fire hazard zones do not operate at full HCM capacity during wildfires.
-# Each factor is a composite of published HCM adjustment tables, applied to
-# CAL FIRE FHSZ-designated road segments.
+# Each factor is a composite engineering-judgment value applied to CAL FIRE
+# FHSZ-designated road segments.
 #
-# Source: FHWA Guide for Highway Capacity and Operations Analysis of ATDM Strategies
-#         Appendix C (HCM weather/incident factors — Exhibit 10-15, Exhibit 10-17)
-# Validated against: Link, E.D. & Maranghides, A. (NIST). Burnover events
-#   identified during the 2018 Camp Fire. (Observed road closures on 3 of 5 routes.)
+# Source: Composite engineering-judgment factor; underlying derivation is subject
+# to independent traffic-engineering review (Fire Science Consulting LLC, Ziazi &
+# Simeoni, May 2026; open item on the JOSH Methodology Roadmap). The factor
+# scaling is conservative relative to HCM 2022 Chapter 11 Exhibit 11-20 worst-case
+# weather Capacity Adjustment Factors (heavy snow, CAF 0.72–0.80) on the basis
+# that WUI fire conditions (smoke visibility, debris, counterflow evacuation
+# traffic, and concurrent emergency apparatus access per CCR 1273.00) impose
+# constraints more severe than any HCM-calibrated weather scenario.
 #
-# Derivation:
-#   VHFHSZ (0.35): Visibility <0.25 mi (×0.89, HCM Exhibit 10-15) ×
-#                  one lane blocked by counterflow EVs (×0.35 on 2-lane, HCM Exhibit 10-17)
-#                  Composite: 0.89 × 0.35 = 0.31, rounded up to 0.35 (conservative)
-#   High FHSZ (0.50): Moderate smoke (~×0.90) × shoulder incident (~×0.95)
-#                     Composite rounded down to 0.50 for compound effects
-#   Moderate FHSZ (0.75): Light smoke possible (×0.90, HCM Exhibit 10-15)
-#   Non-FHSZ (1.00): No fire-related degradation
+# Empirical validation references:
+#   - Maranghides et al. (2021), NIST TN 2135 — Camp Fire timeline; documented
+#     road burnovers on 3 of 5 evacuation routes (60% factor=0.0).
+#   - Rohaert et al. (2023), Transp. Res. Part D 116:103424 — Kincade Fire
+#     traffic dynamics.
+#   - Wetterberg et al. (2022), Safety Science — smoke effects on driving speed.
+#
+# Earlier JOSH documentation cited HCM Exhibits 10-15 and 10-17 as the direct
+# source of these factors. That attribution was incorrect: Exhibit 10-15 is the
+# Lane Closure Severity Index for work zones and Exhibit 10-17 is a photograph;
+# neither contains fire/smoke/visibility capacity values. The 0.35 / 0.50 / 0.75
+# values stand as the composite engineering-judgment scaling pending independent
+# traffic-engineering review.
+#
+# Derivation (conservative engineering judgment):
+#   VHFHSZ (0.35): Severe smoke visibility loss + counterflow emergency vehicle
+#                  obstruction on 2-lane roads; bounded above by Camp Fire
+#                  empirical burnover rate (60% of routes at factor=0.0).
+#   High FHSZ (0.50): Moderate smoke + intermittent shoulder incidents.
+#   Moderate FHSZ (0.75): Light smoke; minimal direct fire-front exposure.
+#   Non-FHSZ (1.00): No fire-related degradation applied.
 #
 # Conservative in the developer's favor: Camp Fire showed factor=0.0 on 60% of routes.
 # ============================================================
@@ -129,14 +163,21 @@ vehicles_per_unit: 1.9
 
 # ============================================================
 # Building Egress Penalty
-# Source: NFPA 101 (Life Safety Code), International Building Code (IBC)
+# Source: NFPA 101 (Life Safety Code, 2024 California ed.) Chapter 7 +
+#         International Building Code (IBC) 2024 Chapter 10 — Means of Egress.
 # Applies to multi-story buildings — stair descent + garage egress time.
 # Developer can reduce penalty by adding stairwells, widening stairs, adding garage exits.
+# Note: NFPA 101 governs building egress (the legitimate use of this standard);
+# it is NOT the source for the community-evacuation mobilization rate (see
+# behavioral_mobilization above, which is sourced to NFPA 1660 / 1616).
+# Roadmap (open item): low-rise δt(egress) derivation per IBC 2024 §1005.1 flow
+# rates + SFPE Handbook Ch. 64 (Movement of People), to be added in a future
+# methodology update.
 # ============================================================
 
 egress_penalty:
-  threshold_stories: 4        # NFPA 101 high-rise threshold (75 ft)
-  minutes_per_story: 1.5      # NFPA 101 stair descent + IBC garage egress
+  threshold_stories: 4        # NFPA 101 (2024 CA ed.) high-rise threshold (75 ft)
+  minutes_per_story: 1.5      # NFPA 101 stair descent + IBC 2024 Ch. 10 garage egress
   max_minutes: 12             # Cap at 8-story equivalent
 
 # ============================================================

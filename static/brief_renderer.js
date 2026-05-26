@@ -65,6 +65,17 @@
   var DEG_FACTOR = { vhfhsz: 0.35, high_fhsz: 0.50, moderate_fhsz: 0.75, non_fhsz: 1.00 };
 
   // ── Formatting helpers ─────────────────────────────────────────────────────
+  // Defensive ΔT-on-a-path read. _buildBriefInput in sidebar.js normalizes
+  // path objects to carry `delta_t_minutes`, but pipeline-baked path objects
+  // (and any other ingestion path) may carry `delta_t` instead. Reading both
+  // keys prevents a silent 0.00 in the controlling-finding text when a caller
+  // hands in a path with the unnormalized schema.
+  function _pdt(p) {
+    if (!p) return 0;
+    if (p.delta_t_minutes !== undefined && p.delta_t_minutes !== null) return +p.delta_t_minutes || 0;
+    if (p.delta_t         !== undefined && p.delta_t         !== null) return +p.delta_t         || 0;
+    return 0;
+  }
   function _tc(tier)      { return TIER_COLOR[tier]  || '#555'; }
   function _tbg(tier)     { return TIER_BG[tier]     || '#f8f9fa'; }
   function _tbd(tier)     { return TIER_BORDER[tier] || '#dee2e6'; }
@@ -121,6 +132,7 @@
       _buildDeterminationBox(inp, tier),
       _buildConditions(inp, tier),
       _buildLegalAuthority(inp, tier),
+      _buildScopeAndLimitations(inp),
       _buildAppealRights(inp),
       '</main>',
       _buildFooter(),
@@ -569,9 +581,9 @@
     } else if (tier === 'DISCRETIONARY') {
       var flagged = paths.filter(function(p) { return p.flagged; });
       if (flagged.length) {
-        var worst = flagged.reduce(function(a, b) { return +(b.delta_t_minutes||0) > +(a.delta_t_minutes||0) ? b : a; });
+        var worst = flagged.reduce(function(a, b) { return _pdt(b) > _pdt(a) ? b : a; });
         var nm    = _fmtBn(worst);
-        var dt    = +(worst.delta_t_minutes || 0);
+        var dt    = _pdt(worst);
         var thr   = +(worst.threshold_minutes || threshold);
         var ratio = dt / Math.max(thr, 0.001);
         var excess = dt - thr;
@@ -585,9 +597,9 @@
     } else {
       // MINISTERIAL WITH STANDARD CONDITIONS
       if (paths.length) {
-        var worst2    = paths.reduce(function(a, b) { return +(b.delta_t_minutes||0) > +(a.delta_t_minutes||0) ? b : a; });
+        var worst2    = paths.reduce(function(a, b) { return _pdt(b) > _pdt(a) ? b : a; });
         var nm2       = _fmtBn(worst2);
-        var dt2       = +(worst2.delta_t_minutes || 0);
+        var dt2       = _pdt(worst2);
         var thr2      = +(worst2.threshold_minutes || threshold);
         var remaining = thr2 - dt2;
         var pctUsed   = (dt2 / Math.max(thr2, 0.001)) * 100;
@@ -662,9 +674,9 @@
         '<strong>Project site:</strong> ' + _esc(fhszDesc) + ' (source: CAL FIRE OSFM)<br>' +
         '<strong>CAL FIRE HAZ_CLASS:</strong> ' + fhszLevel + ' \u2014' +
         ' <code>' + hazardZone + '</code>; road capacity reduced to ' + _f(degFactor,2) + '&times; HCM base' +
-        ' (HCM Exhibit 10-15/10-17 composite + NIST Camp Fire validation).<br>' +
+        ' (composite engineering-judgment factor anchored against HCM 2022 Ch. 11 weather CAF framework + NIST TN 2135 Camp Fire empirical observations; independent traffic-engineering review pending).<br>' +
         '<strong>\u0394T threshold:</strong> reduced proportionally (shorter safe egress window applies; see Clearance Analysis below).<br>' +
-        '<strong>Mobilization rate:</strong> ' + _f(mobRate,2) + ' (NFPA 101 constant \u2014 unaffected by FHSZ zone; ~10% zero-vehicle HH per Census ACS B25044).' +
+        '<strong>Mobilization rate:</strong> ' + _f(mobRate,2) + ' (NFPA 1660 / 1616 community mass-evacuation design basis, constant \u2014 unaffected by FHSZ zone; ~10% zero-vehicle HH per Census ACS B25044).' +
         '</div>';
     } else {
       s3Chip = 'NON-FHSZ'; s3ChipCls = 'chip-na'; s3BadgeColor = '#6c757d';
@@ -673,7 +685,7 @@
         ' (<strong>CAL FIRE HAZ_CLASS: 0</strong>, <code>non_fhsz</code>).' +
         ' No road capacity degradation applied (factor = 1.00&times;).' +
         ' Standard 120-min safe egress window applies.<br>' +
-        '<strong>Mobilization rate:</strong> ' + _f(mobRate,2) + ' (NFPA 101 constant).' +
+        '<strong>Mobilization rate:</strong> ' + _f(mobRate,2) + ' (NFPA 1660 / 1616 community mass-evacuation design basis, constant).' +
         '</div>';
     }
     rows.push(_analysisRow('B', s3BadgeColor,
@@ -714,7 +726,7 @@
         '= <strong>' + _f(maxThreshold,2) + ' min</strong></div>';
 
       var egresNote = egresMin > 0
-        ? "<span style='color:#6f42c1;font-weight:600'>Building egress: +" + _f(egresMin,1) + " min (NFPA 101/IBC, stories &ge; 4)</span> &nbsp;|&nbsp; "
+        ? "<span style='color:#6f42c1;font-weight:600'>Building egress: +" + _f(egresMin,1) + " min (NFPA 101 Life Safety Code, 2024 CA ed., Ch. 7 + IBC 2024 Ch. 10, stories &ge; 4)</span> &nbsp;|&nbsp; "
         : '';
 
       if (paths.length) {
@@ -728,11 +740,11 @@
 
         // Controlling path = highest ΔT (the binding constraint for the determination)
         var controllingPath = paths.reduce(function(a, b) {
-          return +(b.delta_t_minutes||0) > +(a.delta_t_minutes||0) ? b : a;
+          return _pdt(b) > _pdt(a) ? b : a;
         });
         var controllingId   = controllingPath.path_id;
         var controllingBnNm = _fmtBn(controllingPath);
-        var controllingDt   = +(controllingPath.delta_t_minutes || 0);
+        var controllingDt   = _pdt(controllingPath);
 
         // Summary line — single-glance answer to "how bad is this?"
         // v4.13: ΔT color is red when the controlling route is flagged, green
@@ -764,7 +776,7 @@
           var pid    = rr.path_id || '\u2014';
           var bname  = _fmtBn(rr);
           var effCap = +(rr.bottleneck_eff_cap_vph || rr.bottleneck_effective_capacity_vph || 0);
-          var dt     = +(rr.delta_t_minutes  || 0);
+          var dt     = _pdt(rr);
           var thr    = +(rr.threshold_minutes || maxThreshold);
           var flg    = !!rr.flagged;
           var margin = dt - thr;
@@ -831,8 +843,8 @@
           summaryLine +
           "<div style='font-size:11px;color:#6c757d;margin-bottom:4px;'>" +
           egresNote + "Project vehicles: <strong>" + _f(projVph,0) + "</strong>" +
-          " (units &times; 1.9 vpu &times; 0.90 FHWA behavioral mobilization)." +
-          " Effective capacity = HCM raw &times; " + _f(degFactor,2) + " hazard degradation." +
+          " (units &times; 1.9 vpu &times; 0.90 mobilization; NFPA 1660 / 1616 community mass-evacuation design basis, Census ACS B25044 zero-vehicle adjustment)." +
+          " Effective capacity = HCM 2022 raw &times; " + _f(degFactor,2) + " composite hazard-degradation factor." +
           " Routes sorted fastest exit first (User Equilibrium ordering).</div>" +
           "<table class='route-table'><thead><tr>" +
           "<th>Path</th><th>Bottleneck Segment</th><th>FHSZ Zone</th>" +
@@ -997,7 +1009,7 @@
       var parts = flaggedPs.slice(0,3).map(function(p) {
         var pid   = p.path_id || '\u2014';
         var bname = _fmtBn(p);
-        var dt    = +(p.delta_t_minutes || 0);
+        var dt    = _pdt(p);
         var thr   = +(p.threshold_minutes || threshold);
         return 'Path ' + pid + ' \u2014 bottleneck: ' + _esc(bname) + ' (\u0394T ' + _f(dt,1) + ' min vs ' + _f(thr,2) + '-min threshold)';
       });
@@ -1023,8 +1035,8 @@
       '<li><strong>Evacuation Clearance Time Analysis:</strong> Applicant shall commission' +
       ' a study conforming to the JOSH v4.0 \u0394T methodology (AB 747 / Gov. Code \u00a765302.15),' +
       ' analyzing marginal evacuation clearance time on all serving paths within 0.5 miles,' +
-      ' using NFPA 101 design basis mobilization rate (0.90 constant) and HCM 2022' +
-      ' hazard-degraded capacity factors.</li>' +
+      ' using NFPA 1660 / 1616 community mass-evacuation design basis mobilization rate (0.90 constant) and HCM 2022' +
+      ' hazard-degraded capacity factors (HCM Ch. 11 weather CAF framework with WUI fire-condition composite adjustment).</li>' +
       '<li><strong>Public Hearing</strong> before the Planning Commission is required prior to any' +
       ' project approval (Gov. Code \u00a765905).</li>' +
       '<li><strong>Fire Department Review:</strong> Submit project plans to the Fire Marshal for' +
@@ -1074,7 +1086,7 @@
     var ctrlLanes    = 0;
     var hcmRawCtrl   = 0;
     if (paths.length) {
-      var worst = paths.reduce(function(a, b) { return +(b.delta_t_minutes||0) > +(a.delta_t_minutes||0) ? b : a; });
+      var worst = paths.reduce(function(a, b) { return _pdt(b) > _pdt(a) ? b : a; });
       effCapCtrl   = +(worst.bottleneck_eff_cap_vph || worst.bottleneck_effective_capacity_vph || 0);
       ctrlRoadName = _fmtBn(worst);
       hcmRawCtrl   = +(worst.bottleneck_hcm_capacity_vph || 0);
@@ -1102,7 +1114,7 @@
     }
 
     var egresLine = egresMin > 0
-      ? 'egress_penalty = min(stories &times; ' + egrMps + ', ' + egrMax + ') = ' + _f(egresMin,1) + ' min (NFPA 101/IBC)<br>'
+      ? 'egress_penalty = min(stories &times; ' + egrMps + ', ' + egrMax + ') = ' + _f(egresMin,1) + ' min (NFPA 101 Life Safety Code, 2024 CA ed. + IBC 2024 Ch. 10)<br>'
       : 'egress_penalty = 0 (building &lt; ' + egrThr + ' stories)<br>';
 
     return '<h2 class="section-label">Legal Authority</h2>\n' +
@@ -1127,14 +1139,14 @@
       '<td>Road HCM base capacity (controlling: ' + _esc(ctrlRoadName) +
       (ctrlHcmDetail ? '<br><span style="font-size:10px;color:#6c757d">' + _esc(ctrlHcmDetail) + '</span>' : '') +
       ')</td><td><strong>' + _comma(hcmRawCtrl) + ' vph</strong></td></tr>\n' +
-      '      <tr><td>' + _badge(6) + '</td><td><strong>HCM 2022</strong> Ex. 10-15/10-17 + NIST Camp Fire validation</td><td>TRB 2022 / NIST 2021</td>' +
+      '      <tr><td>' + _badge(6) + '</td><td><strong>Composite hazard-degradation factor</strong> — anchored against HCM 2022 Ch. 11 weather CAF framework + NIST TN 2135 Camp Fire empirical observations; independent traffic-engineering review pending (FSC May 2026)</td><td>TRB 2022 / NIST 2021 / FSC 2026</td>' +
       '<td>Hazard capacity degradation (' + hzLabel + ')</td><td><strong>' + _f(degFactor,2) + '&times;</strong></td></tr>\n' +
       '      <tr class="derived-row"><td>' + _badge('\u2192', true) + '</td><td colspan="2"><em>Derived from \u2464 \u00d7 \u2465</em></td>' +
       '<td>Effective bottleneck capacity</td><td><strong>' + _comma(effCapCtrl) + ' vph</strong></td></tr>\n' +
-      '      <tr><td>' + _badge(7) + '</td><td><strong>NFPA 101</strong> Life Safety Code, 2021 Ed.</td><td>2021</td>' +
-      '<td>Evacuation mobilization rate (design basis)</td><td><strong>' + _f(mobRate,2) + ' (constant)</strong></td></tr>\n' +
+      '      <tr><td>' + _badge(7) + '</td><td><strong>NFPA 1660</strong> Standard for Emergency, Continuity, and Crisis Management (2024 ed.; consolidates <strong>NFPA 1616</strong> Mass Evacuation, Sheltering, and Re-entry Programs, 2020 ed.)</td><td>NFPA 2024 / 2020</td>' +
+      '<td>Community mass-evacuation mobilization rate (design basis)</td><td><strong>' + _f(mobRate,2) + ' (constant)</strong></td></tr>\n' +
       '      <tr><td>' + _badge(8) + '</td><td><strong>U.S. Census ACS B25044</strong></td><td>2020 5-yr</td>' +
-      '<td>Zero-vehicle household adjustment (~10%)</td><td>Incorporated in NFPA 101 constant</td></tr>\n' +
+      '<td>Zero-vehicle household adjustment (~10%)</td><td>Incorporated in NFPA 1660 / 1616 mobilization constant</td></tr>\n' +
       '      <tr class="derived-row"><td>' + _badge('\u2192', true) + '</td><td colspan="2"><em>Formula result</em></td>' +
       '<td>\u0394T (marginal evacuation clearance time)</td><td><strong>' + _f(maxDt,2) + ' min</strong>' +
       (maxDt > 0 ? ' vs. ' + _f(threshold,2) + '-min limit' : '') + '</td></tr>\n' +
@@ -1143,7 +1155,7 @@
       '  <div style="margin-top:14px; font-size:11px; font-weight:700; letter-spacing:0.8px; text-transform:uppercase; color:#495057; margin-bottom:6px;">Core Formula</div>\n' +
       '  <div style="font-family:monospace; font-size:11px; background:#f1f3f5; padding:8px 12px; border-radius:4px; color:#212529; margin-bottom:12px; line-height:1.9;">' +
       '&#916;T = (project_vehicles / bottleneck_effective_capacity_vph) &times; 60 + egress_penalty<br>' +
-      'project_vehicles = ' + units + ' units &times; ' + vpu + ' vpu &times; ' + _f(mobRate,2) + ' (NFPA 101 constant) = <strong>' + _f(projVph,0) + ' vph</strong><br>' +
+      'project_vehicles = ' + units + ' units &times; ' + vpu + ' vpu &times; ' + _f(mobRate,2) + ' (NFPA 1660 / 1616 mobilization constant) = <strong>' + _f(projVph,0) + ' vph</strong><br>' +
       egresLine +
       'Flagged when &#916;T &gt; ' + _f(threshold,2) + ' min (threshold = ' + _f(safeWindow,0) + ' min &times; ' + Math.round(maxShare*100) + '%)' +
       '</div>\n' +
@@ -1152,6 +1164,41 @@
       '    The same methodology is applied uniformly to all projects under AB 747.' +
       '  </p>\n' +
       auditBlock + '\n' +
+      '</div>';
+  }
+
+  // ── Scope & Limitations ───────────────────────────────────────────────────
+  // Per the Fire Science Consulting LLC review of May 2026 (Ziazi & Simeoni),
+  // every JOSH determination should explicitly acknowledge the 2025 California
+  // Wildland-Urban Interface Code (CWUIC) and scope ΔT as a screening tool —
+  // consistent with CWUIC Appendix C §C101.6 — rather than a standalone permit-
+  // denial instrument. The concurrent inbound emergency-apparatus access
+  // requirement of CCR 1273.00 is acknowledged but not modeled by the ΔT engine
+  // (which evaluates civilian outbound capacity only).
+
+  function _buildScopeAndLimitations(inp) {
+    return '<h2 class="section-label">Scope &amp; Limitations</h2>\n' +
+      '<div class="legal-authority-box" style="border-left:3px solid #c8951a; background:#fffbec;">\n' +
+      '  <p style="margin:0 0 10px; font-size:12px; color:#212529; line-height:1.6;">' +
+      '    <strong>Civilian outbound capacity only.</strong> JOSH measures the ΔT contribution of civilian vehicles ' +
+      '    exiting the project on its serving evacuation routes. <strong>Concurrent emergency apparatus inbound access</strong>, ' +
+      '    required by CCR 1273.00 of the <strong>2025 California Wildland-Urban Interface Code (CWUIC)</strong> ' +
+      '    adopted by the State Fire Marshal, requires <strong>separate analysis</strong> that is outside the ' +
+      '    scope of this determination.' +
+      '  </p>\n' +
+      '  <p style="margin:0 0 10px; font-size:12px; color:#212529; line-height:1.6;">' +
+      '    <strong>Screening tool, not denial instrument.</strong> Consistent with <strong>CWUIC Appendix C ' +
+      '    §C101.6</strong>, ΔT provides an initial idealized order-of-magnitude clearance estimate intended ' +
+      '    to <em>trigger further review</em> under the Housing Accountability Act safety exception ' +
+      '    (Gov. Code §65589.5(j)(1)). It is <strong>not a substitute</strong> for a full community evacuation ' +
+      '    study and is not a standalone permit-denial instrument.' +
+      '  </p>\n' +
+      '  <p style="margin:0 0 0; font-size:11px; color:#6c757d; font-style:italic;">' +
+      '    Methodology open items (independent traffic-engineering review by Fire Science Consulting LLC, ' +
+      '    May 2026): hazard-degradation factor empirical derivation; CWUIC road-geometry pre-check ' +
+      '    (CWUIC §§403.1, 403.3 — 20-ft / 26-ft minimums); shadow-evacuation and cumulative route ' +
+      '    capacity tracking; δt(egress) for low-rise (IBC 2024 Ch. 10 + SFPE Handbook Ch. 64).' +
+      '  </p>\n' +
       '</div>';
   }
 

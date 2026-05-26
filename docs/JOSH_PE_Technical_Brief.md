@@ -13,7 +13,7 @@ JOSH (v3.4.1) computes a single number — **ΔT, in minutes** — for each prop
 
 No engineering judgment is required at any step. Every input is drawn from a published, authoritative source. Every calculation is arithmetic.
 
-The software does not invent a methodology. It automates the same calculations a transportation engineer would perform manually: road capacity from HCM tables, demand from Census data, mobilization from NFPA 101, hazard adjustment from HCM capacity factors applied to Cal Fire-designated zones. The software's contribution is speed, reproducibility, and a complete audit trail — not methodology.
+The software does not invent a methodology. It automates the same calculations a transportation engineer would perform manually: road capacity from HCM 2022 tables, demand from Census data, mobilization from NFPA 1660 / 1616 (community mass-evacuation design basis), composite hazard-degradation factor (anchored against HCM Ch. 11 weather CAF framework + NIST TN 2135 + Kincade/Glass Fire empirical refs; independent traffic-engineering review pending) applied to Cal Fire-designated zones. The software's contribution is speed, reproducibility, and a complete audit trail — not methodology.
 
 ---
 
@@ -50,13 +50,19 @@ The count of proposed dwelling units. This is a project input — it is the numb
 
 Default: **1.9 vehicles per dwelling unit**, sourced from U.S. Census Bureau American Community Survey 5-Year Estimates, Table B25044 (vehicles available by tenure), California statewide all-household average. This is a federal statistical dataset produced by a Congressionally-mandated enumeration. It can be overridden by a city's own ACS-derived figure.
 
-### 3.3 Behavioral Mobilization Rate — 0.90 (Constant)
+### 3.3 Community Mass-Evacuation Mobilization Rate — 0.90 (Constant)
 
-**Source: FHWA Emergency Transportation Operations — mandatory evacuation compliance rate for residential areas under imminent fire threat.**
+**Source: NFPA 1660:2024 (*Standard for Emergency, Continuity, and Crisis Management*, consolidating NFPA 1616:2020 *Mass Evacuation, Sheltering, and Re-entry Programs*) — the national fire-protection standard governing community-scale mass evacuation planning.**
 
-FHWA documents that approximately 90% of households in a mandatory evacuation zone will generate a vehicle trip during the critical evacuation window. This is an empirically measured compliance rate, not a design assumption. It accounts for residents not home, shadow non-compliance, and households sharing vehicles. It does NOT account for vehicle non-ownership — that is already embedded in the `vehicles_per_unit` figure (the all-household ACS average, which includes zero-vehicle households).
+The 0.90 factor is derived from the standard's full-evacuation design basis, adjusted from 1.00 for the approximately 10% of households with zero vehicles documented by Census ACS Table B25044 (California statewide). Empirical California validation is provided by Roberson, B.S., Peterson, D., and Parsons, R.W. (2012), *Attitudes on wildfire evacuation* (J. Emergency Management 10(5), 335-347), which documents stated-intent evacuation rates in Southern California WUI communities consistent with this magnitude.
+
+The 0.90 is a **design-basis rate**, not an observed-behavior rate. Observed evacuation rates from GPS studies (Zhao et al. 2022, ~47% during the Kincade Fire) measure behavioral patterns during specific past events; they are not the appropriate input for an evacuation-capacity *design* standard. NFPA 1660 / 1616 sizes community evacuation programs for the full demand because that is the demand the system must be designed to handle. The same full-load design principle has long governed building egress through NFPA 101 — fire marshals do not size stairwells for 47% of occupants. JOSH applies that established principle at the community scale.
+
+The 0.90 figure does NOT account for vehicle non-ownership — that is already embedded in the `vehicles_per_unit` figure (the all-household ACS average, which includes zero-vehicle households).
 
 **The mobilization rate does not vary by fire hazard zone.** In v3.4.1, FHSZ affects only road capacity (the denominator). Mobilization is constant because the demand a project generates on a road — the number of vehicles that must pass through the bottleneck — does not change based on which side of a FHSZ boundary the project site falls on.
+
+> **Citation note (May 2026).** Earlier versions of this brief and related JOSH documentation cited the FHWA Emergency Transportation Operations guide or NFPA 101 Life Safety Code as the source of the 0.90 figure. The independent technical review by Fire Science Consulting LLC (Ziazi & Simeoni, May 2026) identified those attributions as imprecise: FHWA-ETO does not publish a 90% compliance rate as a design value, and NFPA 101 governs pedestrian egress inside buildings, not vehicles on roads. **NFPA 1660 / 1616 is the operative source for the JOSH mobilization rate**, with NFPA 101 retained only as analogical reasoning (full-load design principle) and as the operative source for the high-rise building-egress penalty (§5).
 
 ---
 
@@ -88,18 +94,20 @@ Road classification and lane count are drawn from OpenStreetMap, cross-reference
 
 ### 4.2 Hazard Degradation Factors
 
-**Source: HCM Exhibits 10-15 (visibility impairment) and 10-17 (incident and lane blockage capacity adjustments); validated against NIST Technical Notes 2135, 2252, and 2262 (Camp Fire investigation).**
+**Source: Composite engineering-judgment factor anchored against the HCM 2022 Chapter 11 weather Capacity Adjustment Factor framework (Exhibit 11-20, worst-case weather CAFs) and validated against NIST Technical Notes 2135, 2252, and 2262 (Camp Fire investigation), Rohaert et al. (2023) Kincade Fire traffic dynamics, and Wetterberg et al. (2022) smoke-visibility driving-speed empirical data. Underlying derivation is subject to independent traffic-engineering review (Fire Science Consulting LLC, Ziazi & Simeoni, May 2026; open item on the JOSH Methodology Roadmap).**
 
-During the fire event that triggers evacuation, roads in fire hazard zones do not operate at full HCM base capacity. Smoke impairs sight distance; burning material and emergency apparatus affect usable lane width; civilian vehicles are more prone to breakdown under stress. The HCM provides explicit capacity adjustment factors for these conditions. Cal Fire's FHSZ designations are the trigger for applying these factors — they are state findings based on objective criteria (fuel loading, terrain, fire weather, fire history) and are not subject to local discretion.
+During the fire event that triggers evacuation, roads in fire hazard zones do not operate at full HCM base capacity. Smoke impairs sight distance; burning material and emergency apparatus affect usable lane width; civilian vehicles are more prone to breakdown under stress; and concurrent inbound emergency apparatus access (required by CCR 1273.00, CWUIC 2025) consumes part of the outbound capacity envelope. The HCM provides explicit Capacity Adjustment Factors for adverse weather conditions in Chapter 11 (Exhibit 11-20); the worst-case HCM-calibrated CAF (heavy snow) is 0.72–0.80. The JOSH composite factor of 0.35 for VHFHSZ is substantially more severe than any HCM-calibrated weather scenario, on the engineering judgment that WUI fire conditions exceed the worst HCM weather case. Cal Fire's FHSZ designations are the trigger for applying these factors — they are state findings based on objective criteria (fuel loading, terrain, fire weather, fire history) and are not subject to local discretion.
 
-| FHSZ Zone | Degradation Factor | Effective Capacity as % of HCM |
+| FHSZ Zone | Composite Degradation Factor | Effective Capacity as % of HCM |
 |---|---|---|
 | Very High (HAZ_CLASS 3) | 0.35 | 35% |
 | High (HAZ_CLASS 2) | 0.50 | 50% |
 | Moderate (HAZ_CLASS 1) | 0.75 | 75% |
 | Non-FHSZ | 1.00 | 100% |
 
-The factors are composites of HCM visibility and incident adjustments, validated against the documented Camp Fire road conditions described in NIST TN 2135 and TN 2252. The VHFHSZ factor of 0.35 reflects conditions documented in the NIST burnover event analysis (Link & Maranghides): roads within or adjacent to active fire areas experienced near-complete capacity loss due to smoke, fire apparatus staging, and vehicle abandonment. The 0.35 floor represents maintained throughput on the remaining usable lane fraction.
+The VHFHSZ factor of 0.35 is informed by conditions documented in the NIST Camp Fire burnover event analysis (Link & Maranghides): roads within or adjacent to active fire areas experienced near-complete capacity loss due to smoke, fire apparatus staging, and vehicle abandonment. NIST TN 2135 documented road burnovers on 3 of 5 evacuation routes (60% factor=0.0). The 0.35 value is conservative relative to that empirical evidence on the remaining usable lane fraction.
+
+> **Citation note (May 2026).** Earlier versions of this brief and related JOSH documentation cited HCM Exhibits 10-15 and 10-17 as the direct source of these degradation factors. The independent technical review by Fire Science Consulting LLC (May 2026) identified that attribution as factually incorrect: HCM Exhibit 10-15 is the Lane Closure Severity Index for work zones, and Exhibit 10-17 is a photograph; neither exhibit contains fire, smoke, or visibility capacity values. The 0.35 / 0.50 / 0.75 values themselves are conservative composite engineering-judgment factors and stand pending independent traffic-engineering review; only the citation has been corrected.
 
 **The FHSZ classification affects only the capacity of road segments that pass through that zone — not the demand.** This separation is architecturally significant: the demand calculation (numerator) is a function of the project; the capacity calculation (denominator) is a function of the infrastructure. They are computed independently.
 
@@ -113,9 +121,9 @@ This is a conservative choice: a project's vehicles might distribute across mult
 
 ## 5. The Egress Penalty
 
-**Source: NFPA 101 Life Safety Code; International Building Code (IBC), adopted by reference in California Building Code.**
+**Source: NFPA 101 Life Safety Code (2024 California edition), Chapter 7; International Building Code (IBC) 2024, Chapter 10 — Means of Egress, adopted by reference in the California Building Code.**
 
-For buildings of four stories or more, vertical evacuation time is added to ΔT:
+This is the legitimate use of NFPA 101 in the JOSH methodology — building egress, not community mass-evacuation mobilization. For buildings of four stories or more, vertical evacuation time is added to ΔT:
 
 ```
 egress_penalty = min(stories × 1.5, 12) minutes  for stories ≥ 4
@@ -123,6 +131,8 @@ egress_penalty = 0                                 for stories < 4
 ```
 
 The 1.5 minutes per story is the NFPA 101 design evacuation rate for stairwell descent with full occupant load. The 12-minute cap reflects the NFPA 101 maximum allowable egress travel time for the most restrictive occupancy categories. A developer may substitute a project-specific NFPA 101 egress calculation prepared by a licensed fire protection engineer to replace the default schedule.
+
+> **Roadmap note (May 2026).** Low-rise (< 4 stories) δt(egress) is not currently modeled. The Fire Science Consulting review of May 2026 recommends formalizing total clearance time as `ΔT(road) + δt(egress)(building)` using IBC 2024 §1005.1 flow rates (≈ 24 persons/min/foot of door width, ≈ 18 persons/min/foot on stairs under non-panic conditions) and SFPE Handbook 5th Ed. Ch. 64 (Movement of People) pre-evacuation case-study data, framed within the Required Safe Egress Time (RSET) concept from CFPA-E Guideline No. 19. This is on the JOSH Methodology Roadmap.
 
 ---
 
@@ -181,14 +191,14 @@ Every input to the system traces to an authoritative, publicly accessible source
 |---|---|---|---|
 | Road network (geometry, classification, lanes, speeds) | OpenStreetMap | Community-mapped; cross-referenced against Caltrans AADT | Public |
 | Road capacities | HCM 2022 Exhibits 12-6, 12-7, Ch. 15 | Transportation Research Board / National Academies | Published standard |
-| Capacity degradation factors | HCM Exhibits 10-15, 10-17; validated vs. NIST TN 2135 | Transportation Research Board; NIST | Published standards |
+| Capacity degradation factors | Composite engineering-judgment factor; anchored against HCM 2022 Ch. 11 (Ex. 11-20) weather CAFs + NIST TN 2135 + Kincade/Glass Fire empirical refs; independent review pending (FSC May 2026) | TRB / NIST / FSC | Published standards + pending review |
 | FHSZ zone designations | Cal Fire OSFM ArcGIS REST API | California Department of Forestry and Fire Protection | State GIS service |
 | Housing units | Census ACS 5-Year B25001 | U.S. Census Bureau | Federal API |
 | Vehicles per household | Census ACS 5-Year B25044 | U.S. Census Bureau | Federal API |
 | City boundary | U.S. Census TIGER | U.S. Census Bureau | Federal GIS |
-| Mobilization rate (0.90) | NFPA 101 Life Safety Code | National Fire Protection Association | Published standard |
+| Mobilization rate (0.90) | NFPA 1660:2024 (consolidates NFPA 1616:2020) community mass-evacuation design basis | National Fire Protection Association | Published standard |
 | Safe egress windows (VHFHSZ) | NIST TN 2135, 2252, 2262 | National Institute of Standards and Technology | Federal technical notes |
-| Egress penalty schedule | NFPA 101; International Building Code | NFPA; ICC | Published standards |
+| Egress penalty schedule | NFPA 101 Life Safety Code (2024 CA ed.); IBC 2024 Ch. 10 | NFPA; ICC | Published standards |
 | Unit threshold (15) | ITE Trip Generation de minimis; SB 330 anchor | Institute of Transportation Engineers; California statute | Published standard / statute |
 
 No proprietary data. No city-specific calibration required. No parameters require local engineering judgment to set.
@@ -252,10 +262,10 @@ An engineer could perform every calculation manually with standard tools (traffi
 
 The software does not:
 
-- Invent capacity values — all values come from HCM 2022
-- Invent degradation factors — all factors come from HCM Exhibits 10-15 and 10-17, calibrated against NIST Camp Fire data
-- Invent the mobilization rate — 0.90 is NFPA 101 design basis, adjusted for zero-vehicle households per Census B25044
-- Invent the safe egress windows — all windows come from NIST post-incident investigations
+- Invent capacity values — all values come from HCM 2022, 7th Edition
+- Invent degradation factors — the composite engineering-judgment factors are anchored against the HCM 2022 Ch. 11 weather CAF framework (Ex. 11-20) and NIST TN 2135 Camp Fire empirical observations; independent traffic-engineering review pending per the Fire Science Consulting LLC review of May 2026
+- Invent the mobilization rate — 0.90 is the NFPA 1660:2024 / NFPA 1616:2020 community mass-evacuation design basis, adjusted from full evacuation for ~10% zero-vehicle households per Census B25044, with empirical California validation per Roberson et al. (2012)
+- Invent the safe egress windows — all windows come from NIST post-incident investigations (TN 2135, 2252, 2262)
 - Choose significance thresholds — 5% is a standard engineering de minimis criterion
 - Make discretionary judgments — every determination is a deterministic computation
 
@@ -281,7 +291,7 @@ Where the methodology makes choices between equally defensible options, the syst
 
 | Choice | JOSH Approach | Alternative | Why Conservative |
 |---|---|---|---|
-| Mobilization | 0.90 (NFPA 101 full-evacuation basis) | 0.57 (observed peak-hour fraction, KLD study) | Sizes for the emergency, not the average case |
+| Mobilization | 0.90 (NFPA 1660 / 1616 full-evacuation design basis) | 0.57 (observed peak-hour fraction, KLD study) | Sizes for the emergency, not the average case |
 | Route capacity | Minimum capacity along full path (bottleneck) | Average capacity along path | Uses the constraint, not the average |
 | Project demand assignment | Full project demand tested on each serving route independently | Demand distributed across all routes | Tests worst-case route failure |
 | Capacity degradation | HCM lower-bound adjustments composited | Point estimates from single HCM exhibit | Accounts for compounding effects |
@@ -327,7 +337,7 @@ The JOSH system asks one question: **given this project's vehicles, this road's 
 
 The answer is computed from:
 
-- **HCM 2022** (road capacity) ÷ **Census ACS B25044 × NFPA 101** (project demand) = **minutes** (ΔT)
+- **HCM 2022** (road capacity) ÷ **Census ACS B25044 × NFPA 1660 / 1616** (project demand) = **minutes** (ΔT)
 - **NIST TN 2135** (safe window) × **5% de minimis** = **threshold**
 
 If ΔT > threshold → discretionary review. If ΔT ≤ threshold → ministerial. The software performs the arithmetic. Every input is on the table. Every source is cited. Any licensed engineer with HCM, Census data, and a calculator can reproduce the result from first principles.
@@ -340,8 +350,14 @@ If ΔT > threshold → discretionary review. If ΔT ≤ threshold → ministeria
 2. Maranghides, A., et al. *A Case Study of the Camp Fire — Fire Progression Timeline.* NIST Technical Note 2135. National Institute of Standards and Technology, 2021.
 3. Maranghides, A., et al. *A Case Study of the Camp Fire — NETTRA.* NIST Technical Note 2252. NIST, 2023.
 4. Maranghides, A., et al. *A Case Study of the Camp Fire — ESCAPE.* NIST Technical Note 2262. NIST, 2023 (updated 2025).
-5. NFPA 101. *Life Safety Code.* National Fire Protection Association (current edition).
-6. International Code Council. *International Building Code (IBC)* (current California adoption).
+5. NFPA 1660. *Standard for Emergency, Continuity, and Crisis Management: Preparedness, Response, and Recovery.* National Fire Protection Association, 2024 edition. *(Operative source for the JOSH 0.90 mobilization rate; consolidates NFPA 1616.)*
+6. NFPA 1616. *Standard on Mass Evacuation, Sheltering, and Re-entry Programs.* National Fire Protection Association, 2020 edition. *(Predecessor to NFPA 1660; cited for continuity with prior practice.)*
+7. NFPA 101. *Life Safety Code.* National Fire Protection Association, 2024 California edition. *(Operative source for the egress penalty for stories ≥ 4 only; supporting analogical reasoning for the mobilization rate.)*
+8. International Code Council. *International Building Code (IBC), Chapter 10: Means of Egress.* 2024 edition.
+9. Roberson, B.S., Peterson, D., and Parsons, R.W. *Attitudes on wildfire evacuation: Exploring the intended evacuation behavior of residents living in two Southern California communities.* J. Emergency Management 10(5), 335-347, 2012. *(Empirical California validation of the 0.90 magnitude.)*
+10. Fire Science Consulting LLC (Ziazi, R., and Simeoni, A.). *JOSH ΔT Methodology: Standards Citation Analysis — Preliminary Technical Assessment.* Prepared for California Stewardship Alliance, May 26, 2026.
+11. California State Fire Marshal. *2025 California Wildland-Urban Interface Code (CWUIC).* California Building Standards Commission, 2025 (adopting IWUIC 2024 with California amendments).
+12. SFPE Handbook of Fire Protection Engineering, 5th Edition, Chapter 64: Movement of People. SFPE / Springer, 2016. *(Referenced for future low-rise δt(egress) work per JOSH Methodology Roadmap.)*
 7. U.S. Census Bureau. *American Community Survey 5-Year Estimates.* Tables B25001, B25044. Census.gov.
 8. California Department of Forestry and Fire Protection (Cal Fire). *Fire Hazard Severity Zone Maps.* Pursuant to Government Code §51175-51189.
 9. KLD Engineering, P.C. *Evacuation Route Safety, Capacity, and Viability Analysis — AB 747 Requirement.* City of Berkeley, TR-1381. March 7, 2024.

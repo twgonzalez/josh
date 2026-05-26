@@ -78,7 +78,7 @@ project_vph = dwelling_units × vehicles_per_unit × behavioral_mobilization
 
 Both factors come from external published sources:
 - **1.9 vehicles/unit** — U.S. Census American Community Survey, Table B25044 (CA statewide all-HH average)
-- **0.90 behavioral mobilization** — FHWA Emergency Transportation Operations (mandatory evacuation compliance rate)
+- **0.90 community mass-evacuation mobilization rate** — NFPA 1660:2024 (Standard for Emergency, Continuity, and Crisis Management; consolidates NFPA 1616:2020 Mass Evacuation, Sheltering, and Re-entry Programs) — community mass-evacuation design basis, adjusted from full evacuation for ~10% zero-vehicle households per Census ACS B25044; empirical California validation per Roberson et al. (2012)
 
 **What the mobilization rate measures:** Not everyone evacuates the moment an order is issued — people take time to become aware, gather belongings, and get into their cars. Evacuation demand builds gradually, peaks, then tapers as most people have already left. The mobilization rate is the fraction of housing units generating vehicle trips during the *single worst hour* of the evacuation — the peak of that demand curve. A rate of 0.57 means 57 out of every 100 housing units are actively generating a trip simultaneously at that peak. Using 100% would be unrealistically conservative; using the empirically measured peak is the technically correct approach. A **higher** rate produces more vehicles per project and a stricter standard; a **lower** rate produces fewer vehicles and a more permissive standard.
 

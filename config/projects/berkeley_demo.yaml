@@ -57,7 +57,7 @@ projects:
 
   # -----------------------------------------------------------
   # 2 — Mid-rise downtown: at threshold, bottleneck on local street → DISCRETIONARY
-  #     3 stories → no egress penalty (below 4-story NFPA 101 threshold).
+  #     3 stories → no egress penalty (below 4-story NFPA 101 (2024 CA ed.) threshold).
   #     v4.0: non-FHSZ threshold = 120 min × 5% = 6.0 min.
   #     With 0.90 mob: 120 × 1.9 × 0.90 = 205.2 vehicles.
   #     Tipping point (Python paths ~1900 vph): floor(6.0 × 1900 / 60 / 1.71) ≈ 111 units.
@@ -71,7 +71,7 @@ projects:
     stories: 3
     description: >
       120-unit, 3-story project on Shattuck Ave. Exceeds the 15-unit threshold.
-      Non-FHSZ → no road degradation. Behavioral mobilization 0.90 (FHWA)
+      Non-FHSZ → no road degradation. Behavioral mobilization 0.90 (NFPA 1660 / 1616 community mass-evacuation design basis)
       × 1.9 vpu (ACS B25044) → 205.2 project vehicles. No egress penalty (3 stories < 4-story threshold).
       ΔT = (205.2 / bottleneck_capacity) × 60. Non-FHSZ threshold: 6.00 min.
       Demonstrates that in non-FHSZ downtown, high-density projects exceed the threshold
@@ -89,8 +89,10 @@ projects:
     stories: 3
     description: >
       80-unit project near the Berkeley Hills in FHSZ Zone 3. Mobilization rate 0.90
-      (NFPA 101 design basis, constant) → 180 project vehicles. Road capacity degraded
-      by factor 0.35 (VHFHSZ — HCM Exhibit 10-15/10-17 composite).
+      (NFPA 1660 / 1616 community mass-evacuation design basis, constant) → 180 project vehicles. Road capacity degraded
+      by factor 0.35 (VHFHSZ — composite engineering-judgment factor anchored against HCM Ch. 11 weather CAF framework
+      + NIST TN 2135 Camp Fire empirical observations; independent traffic-engineering review pending per Fire Science
+      Consulting LLC review of May 2026).
       Narrow canyon roads at effective capacity far below HCM raw value.
       VHFHSZ threshold: 45 min × 5% = 2.25 min. Max ΔT ~12.0 min → DISCRETIONARY.
       Double constraint: tight threshold (45-min window) AND degraded road capacity.
@@ -128,7 +130,7 @@ projects:
     stories: 3
     description: >
       25-unit hillside project NOT in a mapped FHSZ zone. Behavioral mobilization 0.90
-      (FHWA) × 1.9 vpu (ACS B25044) → 42.75 project vehicles. No road capacity
+      (NFPA 1660 / 1616) × 1.9 vpu (ACS B25044) → 42.75 project vehicles. No road capacity
       degradation (non-FHSZ). Ridge Road bottleneck (~904 vph) → ΔT ≈ 2.8 min.
       Non-FHSZ threshold: 120 min × 5% = 6.0 min. ΔT within threshold.
       MINISTERIAL WITH STANDARD CONDITIONS: size threshold met, pre-adopted conditions apply automatically.
@@ -149,8 +151,8 @@ projects:
     stories: 6
     description: >
       75-unit, 6-story project in North Berkeley (NOT in FHSZ). Behavioral mobilization 0.90
-      (FHWA) × 1.9 vpu (ACS B25044) → 128.25 project vehicles. Building egress penalty: 6 stories
-      × 1.5 min/story = 9.0 min (NFPA 101). Cedar Street bottleneck (~1125 vph):
+      (NFPA 1660 / 1616) × 1.9 vpu (ACS B25044) → 128.25 project vehicles. Building egress penalty: 6 stories
+      × 1.5 min/story = 9.0 min (NFPA 101 Life Safety Code, 2024 CA ed. + IBC 2024 Ch. 10). Cedar Street bottleneck (~1125 vph):
       vehicle ΔT + 9.0 min egress → max ΔT ~18.0 min > 6.0-min threshold → DISCRETIONARY.
       Mitigation: reduce stories to ≤3 (eliminates egress penalty, ΔT ≈ 9.0 min — still
       DISCRETIONARY at this unit count), or reduce units to ~20 (ΔT ~9.0+0=9.0 min;

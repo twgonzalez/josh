@@ -42,9 +42,9 @@ There are four steps. Each step uses only public data or published national stan
 
 Every home has cars. The U.S. Census tells us how many — on average, about 1.9 vehicles per household in California.
 
-When a building needs to be evacuated, nearly everyone leaves. The National Fire Protection Association's Life Safety Code (NFPA 101) — the same standard used to size stairwells, corridors, and emergency exits in every building in the country — is designed for 100% occupant evacuation. Fire marshals do not size exits assuming only some people will try to leave. They size exits for everyone.
+When a community needs to be evacuated, nearly everyone leaves. The National Fire Protection Association's standard for community mass evacuation — **NFPA 1660:2024** (which consolidates *NFPA 1616:2020 Mass Evacuation, Sheltering, and Re-entry Programs*) — is the national fire-protection standard governing community-scale evacuation planning. Like its building-scale counterpart NFPA 101 (Life Safety Code), it is built around a full-evacuation design basis: the system must be designed to move everyone, not just the people who happen to evacuate during the average past event.
 
-This standard applies the same principle. We assume 90% of the project's households will generate a vehicle during an evacuation. The remaining 10% accounts for households with no vehicle, which the Census measures directly.
+This standard applies that design principle. We assume 90% of the project's households will generate a vehicle during an evacuation. The remaining 10% accounts for households with no vehicle, which the Census measures directly. Empirical California validation for this magnitude is provided by Roberson et al. (2012), which documents intended evacuation behavior in Southern California wildland-urban interface communities.
 
 So for a proposed project of 45 homes:
 
@@ -80,7 +80,7 @@ Effective capacity: 472 vehicles per hour
 
 A family living in a single-story house walks out the front door and gets in their car in under a minute. A family on the sixth floor of an apartment building has to walk down six flights of stairs (elevators are shut down in emergencies), navigate through a corridor, enter a parking garage, and wait in a line of cars to exit through one or two driveways.
 
-This delay is real and it is measurable. The National Fire Protection Association publishes NFPA 101, the Life Safety Code, which provides standard methods for calculating how long it takes to empty a building based on its height, number of stairwells, and exit configuration. For buildings above four stories, the system adds a time penalty: about 1.5 minutes per story, up to a maximum of 12 minutes.
+This delay is real and it is measurable. The National Fire Protection Association publishes NFPA 101 (Life Safety Code, 2024 California edition), which provides standard methods for calculating how long it takes to empty a building based on its height, number of stairwells, and exit configuration. The International Building Code (IBC 2024, Chapter 10 — Means of Egress) governs the garage egress portion. For buildings above four stories, the system adds a time penalty: about 1.5 minutes per story, up to a maximum of 12 minutes. (This is the legitimate use of NFPA 101 in the JOSH methodology — building egress, distinct from the community-scale mobilization rate sourced to NFPA 1660 / 1616.)
 
 For our 45-home project, which is three stories: no penalty. The homes are low-rise.
 
@@ -158,7 +158,7 @@ When a nightclub exceeds occupancy, the owner has options: add an exit, widen th
 
 **Widen the bottleneck.** The developer can fund improvements to the constraining road segment — adding a lane, widening shoulders, removing obstructions — which increases its capacity and reduces the time calculation.
 
-**Redesign the building.** For tall buildings where the egress penalty is the problem, the developer can add stairwells, widen stairs, or provide multiple garage exits on different streets. A seven-story building with one stairwell and one garage exit is slow to empty. The same building with three stairwells and two garage exits on different streets is much faster. The fire code (NFPA 101) provides the math. The developer's architect controls the result.
+**Redesign the building.** For tall buildings where the egress penalty is the problem, the developer can add stairwells, widen stairs, or provide multiple garage exits on different streets. A seven-story building with one stairwell and one garage exit is slow to empty. The same building with three stairwells and two garage exits on different streets is much faster. The fire code (NFPA 101 Life Safety Code, 2024 California edition; IBC 2024 Ch. 10) provides the math. The developer's architect controls the result.
 
 The standard identifies a specific, measurable constraint and tells the developer exactly what number they need to hit. It enables solutions. It does not impose a blanket prohibition.
 
@@ -184,12 +184,12 @@ No number in this system is invented by the city. Every input traces to a publis
 | Input                                           | Source                                                       | Who Published It                                             |
 | ----------------------------------------------- | ------------------------------------------------------------ | ------------------------------------------------------------ |
 | Road capacity (vehicles per hour per lane)      | Highway Capacity Manual, 7th Edition (2022)                  | Transportation Research Board, National Academies of Sciences |
-| Capacity reduction from smoke and lane blockage | HCM Exhibits 10-15 and 10-17                                 | Same                                                         |
+| Capacity reduction from smoke and lane blockage | Composite engineering-judgment factor anchored against HCM 2022 Ch. 11 weather CAFs + NIST TN 2135 Camp Fire empirical data; independent traffic-engineering review pending (Fire Science Consulting LLC, May 2026) | Transportation Research Board / NIST / FSC                  |
 | Fire hazard zone designations                   | FHSZ maps under Gov. Code §51175                             | Cal Fire (State of California)                               |
 | Homes and vehicles per household                | American Community Survey, Tables B25001 and B25044          | U.S. Census Bureau                                           |
-| Evacuation mobilization rate (90%)              | NFPA 101 Life Safety Code design basis (100% occupant evacuation, adjusted for ~10% zero-vehicle households per Census B25044) | National Fire Protection Association                         |
+| Community mass-evacuation mobilization rate (90%) | NFPA 1660:2024 / NFPA 1616:2020 — community mass-evacuation design basis (full-evacuation design, adjusted from 100% for ~10% zero-vehicle households per Census B25044; empirical California validation per Roberson et al. 2012) | National Fire Protection Association                         |
 | Escape windows by hazard zone                   | Camp Fire minute-by-minute timeline reconstruction           | NIST Technical Note 2135 (2021)                              |
-| Building egress time                            | NFPA 101 (Life Safety Code), International Building Code     | National Fire Protection Association; International Code Council |
+| Building egress time                            | NFPA 101 (Life Safety Code, 2024 California edition); IBC 2024 Ch. 10 | National Fire Protection Association; International Code Council |
 | Maximum project share (5%)                      | Adopted by city resolution as the standard engineering significance threshold | City Council                                                 |
 
 If a developer hires their own engineer to run the same calculation with the same inputs, they will get the same answer. That is what makes the standard objective.
@@ -252,7 +252,7 @@ This standard measures that difference. In minutes. From public data. Using nati
 
 The standard works in four steps:
 
-1. **Count the cars** the project creates (Census data × 90% mobilization rate, consistent with NFPA 101's design basis for full building evacuation).
+1. **Count the cars** the project creates (Census data × 90% mobilization rate, sourced to NFPA 1660:2024 / NFPA 1616:2020 community mass-evacuation design basis, with empirical California validation per Roberson et al. 2012).
 2. **Find the bottleneck** — the weakest road on the way out, adjusted for fire conditions using the state's own hazard maps and the national capacity manual.
 3. **Add building egress time** for tall buildings where residents cannot reach their cars quickly (national fire code).
 4. **Divide** to get minutes. Compare to the threshold — which is 5% of the escape window documented by NIST for the project's hazard zone.

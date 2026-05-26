@@ -14,7 +14,7 @@ This guide covers three engineering tasks. First: input verification — confirm
 
 A fourth topic — physical site access under IFC §503 — is addressed separately at the end of this guide. It is currently outside the ΔT calculation but is the engineering question most often raised alongside it.
 
-The full methodology is documented in the Professional Engineer Technical Brief. This guide assumes familiarity with the HCM 2022, NFPA 101, and Cal Fire FHSZ designation criteria, and focuses on what the city engineer needs to do on a per-project basis rather than why the methodology works.
+The full methodology is documented in the Professional Engineer Technical Brief. This guide assumes familiarity with the HCM 2022 (Highway Capacity Manual, 7th Edition), NFPA 1660:2024 / NFPA 1616:2020 (community mass-evacuation framework, the operative source for the JOSH mobilization rate), NFPA 101 (Life Safety Code, 2024 California edition — used for the high-rise building-egress penalty only), the 2025 California Wildland-Urban Interface Code (CWUIC), and Cal Fire FHSZ designation criteria. It focuses on what the city engineer needs to do on a per-project basis rather than why the methodology works.
 
 ------
 
@@ -68,7 +68,7 @@ The degradation factor for fire conditions, applied to all road segments that pa
 | Moderate | 0.75 | 75% of base |
 | None | 1.00 | 100% of base |
 
-These factors are drawn from HCM 2022 Exhibits 10-15 and 10-17 (capacity reduction for smoke-reduced visibility, incidents, and lane blockage during emergency conditions), composited against the NIST Camp Fire operational findings for VHFHSZ conditions.
+These factors are **composite engineering-judgment values** anchored against the HCM 2022 Chapter 11 weather Capacity Adjustment Factor framework (Exhibit 11-20, worst-case weather CAFs) and empirically validated against NIST Technical Note 2135 (Camp Fire timeline reconstruction, documented road burnovers on 3 of 5 evacuation routes), Rohaert et al. (2023) Kincade Fire traffic dynamics, and Wetterberg et al. (2022) smoke-visibility driving-speed empirical data. The underlying derivation is subject to independent traffic-engineering review (Fire Science Consulting LLC, Ziazi & Simeoni, May 2026; open item on the JOSH Methodology Roadmap). Earlier JOSH documentation cited HCM Exhibits 10-15 (Lane Closure Severity Index for work zones) and 10-17 (a photograph) as the direct source; those exhibits contain no fire, smoke, or visibility capacity values, and the attribution has been corrected. The composite scaling and the FHSZ-segment trigger are unchanged; only the citation is corrected.
 
 ### Common classification errors to check
 
