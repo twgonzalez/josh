@@ -824,6 +824,29 @@ def export_test_vectors(
     return out_path
 
 
+def export_hazard_configs(config_dir: Path | str | None = None) -> dict[str, dict]:
+    """
+    Load every config/hazards/*.yaml and return the JS-payload projection of each.
+
+    The returned dict is keyed by hazard_id and ready to inline into
+    JOSH_DATA.hazard_configs for the JS HazardEngine to consume. See
+    docs/plan-multihazard-stage-1-hooks.md §5 for the contract.
+
+    Stage 1: only wildfire.yaml exists. Stages 3, 6, 7, 8, 9 add the other five.
+    """
+    from agents.scenarios.hazard_config import load_all_hazard_configs
+
+    if config_dir is None:
+        config_dir = Path(__file__).parent.parent / "config" / "hazards"
+    configs = load_all_hazard_configs(config_dir)
+    payloads = {hid: cfg.to_js_payload() for hid, cfg in configs.items()}
+    logger.info(
+        f"  hazard_configs loaded: {sorted(payloads.keys())} "
+        f"({len(payloads)} configs from {config_dir})"
+    )
+    return payloads
+
+
 def export_whatif_engine_js() -> Path:
     """
     Generate static/whatif_engine.js from two sources:
@@ -1000,26 +1023,39 @@ def export_app_js() -> Path:
     Generate static/v1/app.js — the CDN-hosted shared rendering bundle.
 
     The generated file embeds (in order):
-      1. WhatIfEngine IIFE  — verbatim from static/whatif_engine.js (generated first)
-      2. What-if UI panel   — DOMContentLoaded DOM injector + controller IIFE
-      3. Brief modal overlay — DOMContentLoaded DOM injector + controller IIFE
+      1. WhatIfEngine IIFE   — legacy engine; kept callable through Stage E
+                                until sidebar.js migrates to HazardEngine.
+      2. Hooks registry      — static/hooks.js (multi-hazard hook system, JS side)
+      3. Default hooks       — static/transforms/_defaults.js (default.classify
+                                + default.degradation + default.egress_window)
+      4. HazardEngine IIFE   — static/hazard_engine.js (multi-hazard runtime
+                                evaluator, Stage 1+)
+      5. Brief modal overlay — DOMContentLoaded DOM injector + controller IIFE
          (reads window.JOSH_DATA.briefs; no per-city data baked in)
 
-    All city-specific data (graph, parameters, fhsz, briefs) is read at runtime
-    from window.JOSH_DATA, which is inlined into analysis_map.html by
-    _inject_josh_data_bundle() before the <script src="...app.js"> tag.
+    All city-specific data (graph, parameters, fhsz, hazard_configs, briefs)
+    is read at runtime from window.JOSH_DATA, which is inlined into
+    analysis_map.html by _inject_josh_data_bundle() before this bundle.
 
-    Called by demo command before _inject_josh_data_bundle().
-    Internally calls export_whatif_engine_js() to ensure the engine is fresh.
+    Called by map command before _inject_josh_data_bundle().
+    Internally calls export_whatif_engine_js() to ensure the legacy engine
+    is fresh during the transition.
 
     Returns: Path to generated static/v1/app.js
     """
-    # Refresh the engine first (keeps whatif_engine.js and app.js in sync).
+    # Refresh the legacy engine first (keeps whatif_engine.js and app.js in sync).
     export_whatif_engine_js()
 
     static_dir = Path(__file__).parent.parent / "static"
     engine_path = static_dir / "whatif_engine.js"
     engine_js = engine_path.read_text(encoding="utf-8")
+
+    # New multi-hazard JS bundle (Stage 1+). These ship as hand-written UMD
+    # modules — no generation step — and just need to be concatenated in
+    # dependency order: hooks → defaults (register on import) → hazard_engine.
+    hooks_js = (static_dir / "hooks.js").read_text(encoding="utf-8")
+    defaults_js = (static_dir / "transforms" / "_defaults.js").read_text(encoding="utf-8")
+    hazard_engine_js = (static_dir / "hazard_engine.js").read_text(encoding="utf-8")
 
     # ── Assemble app.js ───────────────────────────────────────────────────────
     # Phase 3: what-if UI panel (joshWhatIf FAB + floating panel) removed.
@@ -1058,8 +1094,17 @@ def export_app_js() -> Path:
 
     parts = [
         header,
-        "// ── WhatIfEngine IIFE (from static/whatif_engine.js) " + "─" * 26 + "\n\n",
+        "// ── WhatIfEngine IIFE (legacy — from static/whatif_engine.js) " + "─" * 17 + "\n\n",
         engine_js,
+        section_sep,
+        "// ── Hooks registry (multi-hazard, JS-side) — static/hooks.js " + "─" * 16 + "\n\n",
+        hooks_js,
+        section_sep,
+        "// ── Default hook impls — static/transforms/_defaults.js " + "─" * 21 + "\n\n",
+        defaults_js,
+        section_sep,
+        "// ── HazardEngine IIFE (multi-hazard) — static/hazard_engine.js " + "─" * 14 + "\n\n",
+        hazard_engine_js,
         section_sep,
         "// ── Brief modal overlay injector " + "─" * 45 + "\n\n",
         _build_brief_modal_overlay_js(),

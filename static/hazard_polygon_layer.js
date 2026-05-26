@@ -142,16 +142,24 @@
    *     labels:             { [normalized_zone_id]: tooltip_string } (optional)
    *     legend_label:       string for hazard panel chip (required)
    *     style:              optional overrides — { fillOpacity?, weight?, color? }
+   * @param {object} options — optional:
+   *     renderer:           Leaflet renderer instance (L.canvas() or L.svg()).
+   *                         REQUIRED when adding to a map created with
+   *                         `preferCanvas: true` (e.g. all Folium-built JOSH
+   *                         maps) — without this, vector layers silently
+   *                         fall back to SVG and render nothing on the
+   *                         canvas-preferred overlay pane.
    * @returns {object} Leaflet L.geoJSON layer (NOT yet added to a map).
    *                   Caller invokes map.addLayer(layer) / map.removeLayer(layer).
    */
-  function create(L, record) {
+  function create(L, record, options) {
     if (!L || typeof L.geoJSON !== 'function') {
       throw new Error('HazardPolygonLayer: L (Leaflet) is required and must expose L.geoJSON');
     }
     validateRecord(record);
+    options = options || {};
 
-    var layer = L.geoJSON(record.feature_collection, {
+    var geoJsonOptions = {
       style: function (feature) {
         return styleForFeature(record, feature);
       },
@@ -160,7 +168,12 @@
           lyr.bindTooltip(tooltipForFeature(record, feature), { sticky: true });
         }
       }
-    });
+    };
+    if (options.renderer) {
+      geoJsonOptions.renderer = options.renderer;
+    }
+
+    var layer = L.geoJSON(record.feature_collection, geoJsonOptions);
     return layer;
   }
 

@@ -1,0 +1,24 @@
+{
+  "project": {
+    "id": "ashby_small_infill",
+    "name": "Ashby Small Infill",
+    "lat": 37.8528,
+    "lng": -122.2699,
+    "units": 10,
+    "stories": 2
+  },
+  "expected": {
+    "schema_version": 2,
+    "controlling_hazard": null,
+    "tier": "MINISTERIAL",
+    "hazard_results": []
+  },
+  "_provenance": {
+    "computed_by": "JOSH pipeline (build.py map)",
+    "computed_date": "2026-05-24",
+    "methodology": "v4.11 ΔT — Standard 1 (size gate, units >= 15) fails at 10 < 15; ministerial without ΔT computation per agents/scenarios/base.py:check_scale.",
+    "source_test_vector": "output/berkeley/test_vectors.json (name='Ashby Small Infill')",
+    "parameters_version": "4.0",
+    "notes": "Standard 1 short-circuit; controlling_hazard is null per schema v2 §7 (size gate not met). hazard_results is empty because no per-hazard evaluation runs."
+  }
+}

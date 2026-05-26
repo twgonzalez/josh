@@ -1,0 +1,42 @@
+{
+  "project": {
+    "id": "hills_gateway",
+    "name": "Hills Gateway",
+    "lat": 37.8914,
+    "lng": -122.2494,
+    "units": 80,
+    "stories": 3
+  },
+  "expected": {
+    "schema_version": 2,
+    "controlling_hazard": "wildfire",
+    "tier": "DISCRETIONARY",
+    "hazard_results": [
+      {
+        "type": "wildfire",
+        "controls": true,
+        "flagged": true,
+        "zone": "vhfhsz",
+        "zone_label": "Very High FHSZ",
+        "fhsz_haz_class": 3,
+        "degradation": 0.35,
+        "egress_window_min": 45,
+        "threshold": 2.25,
+        "delta_t": 26.06,
+        "bottleneck": {
+          "name": "Marin Avenue at Shattuck Avenue / The Circle",
+          "eff_cap_vph": 315,
+          "vehicles": 137
+        }
+      }
+    ]
+  },
+  "_provenance": {
+    "computed_by": "JOSH pipeline (build.py map)",
+    "computed_date": "2026-05-24",
+    "methodology": "v4.11 ΔT — Standard 1 passes (80 ≥ 15). Standard 3 zone=vhfhsz (HAZ_CLASS=3, CAL FIRE FHSZ point-in-polygon). Standard 4: project_vehicles = 80 × 1.9 × 0.90 = 136.8 (rounded 137); bottleneck eff_cap = 900 vph (HCM two-lane @20mph) × 0.35 (VHFHSZ degradation) = 315 vph; ΔT = (137 / 315) × 60 = 26.06 min; threshold = 45 min safe_egress_window × 0.05 max_project_share = 2.25 min. ΔT >> threshold → DISCRETIONARY.",
+    "source_test_vector": "output/berkeley/test_vectors.json (name='Hills Gateway'); rolled-up shape from static/multihazard_fixtures.js[hills_gateway]",
+    "parameters_version": "4.0",
+    "notes": "Canonical Stage 1 DISCRETIONARY golden — exercises VHFHSZ + two-lane bottleneck + the 0.35 hazard degradation factor. ΔT is ~11.6× the threshold, demonstrating that even a moderate-size project in VHFHSZ fails Standard 4 with margin. The 'fastest exit also fails' pattern: all 13 paths produced flagged outcomes (paths 1-9 via Marin Ave bottleneck at delta_t=26.06, paths 10-13 via alternate exit at delta_t=20.85, both above 2.25 threshold)."
+  }
+}

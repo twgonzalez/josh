@@ -281,8 +281,95 @@
       return;
     }
     const result = _normalizeResult(engineResult);
-    updateProject(id, { result, parameters_version: _paramsVer(), brief_cache: null });
+    // Phase E (Stage 1, 2026-05-24): also populate v2 evaluation via the
+    // multi-hazard HazardEngine. Resolves the Phase D deferral — custom
+    // projects ("+ New") used to render with empty hazard bars because only
+    // the v1 result was produced; now they get the full v2 evaluation too.
+    const evaluation = _hydrateProjectEvaluation(project);
+    const patch = { result, parameters_version: _paramsVer(), brief_cache: null };
+    if (evaluation) patch.evaluation = evaluation;
+    updateProject(id, patch);
     if (onDone) onDone(result, null);
+  }
+
+  /**
+   * Call HazardEngine.evaluateProject(project) and return a v2 ProjectEvaluation
+   * shape. Returns null if HazardEngine isn't loaded or evaluation fails — the
+   * caller is responsible for tolerating null (v2 panels render empty when
+   * evaluation is absent).
+   *
+   * Used by:
+   *   • _runAnalysis (custom projects via the + New flow)
+   *   • _hydrateSeededProjects (any pipeline-seeded project missing evaluation —
+   *     becomes active once the multihazard_fixtures.js merge is retired in
+   *     Stage 3+; today the fixture covers all 6 seeded projects so hydration
+   *     is a no-op for them).
+   */
+  function _hydrateProjectEvaluation(project) {
+    if (typeof window === 'undefined' || !window.HazardEngine) return null;
+    if (!project || project.lat == null || project.lng == null) return null;
+    try {
+      const engineOut = window.HazardEngine.evaluateProject({
+        id:      project.id,
+        lat:     project.lat,
+        lng:     project.lng,
+        units:   project.units,
+        stories: project.stories,
+        additional_egress_points: project.additional_egress_points || [],
+      });
+      // engineOut shape: { results: {hazard_id: HazardResult}, controlling_hazard, tier }
+      const hazardResults = engineOut.results
+        ? Object.keys(engineOut.results).sort().map(k => engineOut.results[k])
+        : [];
+      // Map engine's v3.1 tier strings to the v2 schema spelling used by sidebar.
+      const tierMap = {
+        'DISCRETIONARY': 'DISCRETIONARY',
+        'MINISTERIAL_WITH_STANDARD_CONDITIONS': 'MINISTERIAL_WITH_STANDARD_CONDITIONS',
+        'MINISTERIAL': 'MINISTERIAL',
+      };
+      return {
+        schema_version: 2,
+        controlling_hazard: engineOut.controlling_hazard || null,
+        tier: tierMap[engineOut.tier] || engineOut.tier,
+        hazard_results: hazardResults,
+      };
+    } catch (e) {
+      if (typeof console !== 'undefined') {
+        console.warn('[josh-sidebar] _hydrateProjectEvaluation failed:', e.message);
+      }
+      return null;
+    }
+  }
+
+  /**
+   * Stage 1 Phase E: backfill v2 evaluation onto any seeded project missing it.
+   *
+   * Runs once at sidebar load. For projects that already have evaluation
+   * (provided by either the pipeline pre-bake — about to be removed — or the
+   * static/multihazard_fixtures.js merge that covers all 6 seeded projects
+   * today), this is a no-op. For projects without evaluation (custom user
+   * projects loaded from localStorage; future seeded projects after the
+   * fixture is trimmed in Stage 3+), this calls HazardEngine to compute
+   * evaluation client-side.
+   *
+   * The v1 result field continues to be populated by _runAnalysis for any
+   * project that needs it (legacy WhatIfEngine path).
+   */
+  function _hydrateSeededProjects() {
+    if (typeof window === 'undefined' || !window.HazardEngine) return;
+    let hydrated = 0;
+    for (const p of _projects) {
+      if (p.evaluation && p.evaluation.hazard_results &&
+          p.evaluation.hazard_results.length > 0) continue;
+      const evaluation = _hydrateProjectEvaluation(p);
+      if (evaluation) {
+        p.evaluation = evaluation;
+        hydrated++;
+      }
+    }
+    if (hydrated > 0 && typeof console !== 'undefined') {
+      console.info('[josh-sidebar] hydrated v2 evaluation for ' + hydrated + ' project(s).');
+    }
   }
 
   function _scheduleAnalysis(id, onDone) {
@@ -2109,6 +2196,12 @@
     window.joshSidebar_save           = id => saveFile(id).then(() => _render());
     window.joshSidebar_saveAs         = id => saveAsFile(id).then(() => _render());
     window.joshSidebar_exportYaml     = () => exportYaml();
+    // Stage 1 Phase E test hooks (2026-05-24): exposed for smoke-test
+    // automation — create a project programmatically + read its state.
+    // Production CRUD still flows through the form (joshSidebar_submitForm).
+    window.joshSidebar_createProject  = fields => createProject(fields).id;
+    window.joshSidebar_getProject     = id => getProject(id);
+    window.joshSidebar_runAnalysis    = (id, onDone) => _runAnalysis(id, onDone);
     window.joshSidebar_doRestore      = () => _doSessionRestore();
     window.joshSidebar_dismissRestore = () => _dismissRestore();
     // v4.12 (all-viable-routes): per-route map visibility toggle.
@@ -2874,12 +2967,30 @@
       },
       // v1-shaped result for the legacy sections to consume. Controlling-hazard
       // data fills the slots that the wildfire-only schema had.
+      //
+      // Field-name discipline (2026-05-24 bug fix): the legacy brief renderer
+      // reads `max_delta_t_minutes` / `threshold_minutes` / `delta_t_minutes`
+      // (canonical wildland.py field names). Earlier versions of this builder
+      // only wrote `delta_t_min` / `threshold_min` (v2 shorthand) — that left
+      // the top stat cards + controlling-finding card showing ΔT 0 even
+      // though the per-hazard tables below them showed the correct value.
+      // Both name forms are emitted now so v1 and v2 consumers all see the
+      // same data.
       result: {
         tier:         tierV1,
         hazard_zone:  ctrl.zone || 'non_fhsz',
-        delta_t_min:  ctrl.delta_t != null ? ctrl.delta_t : (ctrl.delta_t_informational || 0),
+        // v1 canonical names — read by _buildSummaryStats, _buildControllingFinding,
+        // _buildDeterminationBox, _buildConditions, _buildLegalAuthority.
+        max_delta_t_minutes:        ctrl.delta_t != null ? ctrl.delta_t : (ctrl.delta_t_informational || 0),
+        threshold_minutes:          ctrl.threshold,
+        safe_egress_window_minutes: ctrl.egress_window_min,
+        max_project_share:          0.05,
+        // v2 shorthand — retained for any downstream readers (none today,
+        // but the field names are intentionally short for the per-hazard
+        // bar chart layout where row width is tight).
+        delta_t_min:   ctrl.delta_t != null ? ctrl.delta_t : (ctrl.delta_t_informational || 0),
         threshold_min: ctrl.threshold,
-        flagged:       !!ctrl.flagged,
+        flagged:        !!ctrl.flagged,
         bottleneck_name: (ctrl.bottleneck && ctrl.bottleneck.name) || '—',
         // Minimal paths shape — v1 sections iterate this for route detail.
         paths: results
@@ -2892,6 +3003,13 @@
               bottleneck_cross_street_b:   '',
               bottleneck_distance_mi:      0,
               effective_capacity_vph:      (r.bottleneck && r.bottleneck.eff_cap_vph) || 0,
+              // v1 canonical path-level names — read by _buildControllingFinding
+              // and _buildStandardsAnalysis route loops.
+              delta_t_minutes:             r.delta_t,
+              threshold_minutes:           r.threshold,
+              safe_egress_window_minutes:  r.egress_window_min,
+              max_project_share:           0.05,
+              // v2 shorthand retained.
               delta_t:                     r.delta_t,
               hazard_degradation_factor:   r.degradation,
               flagged:                     !!r.flagged
@@ -3100,11 +3218,33 @@
     const hazardIds = Object.keys(hp);
     if (hazardIds.length === 0) return;
 
+    // Folium-built JOSH maps use `preferCanvas: true` (required for the
+    // ~12K road-segment heatmap to render at acceptable frame rates).
+    //
+    // 2026-05-24 bug history:
+    //   v1 — no renderer passed → Leaflet defaulted to SVG, layers added but
+    //        produced no visible DOM. Reported by user.
+    //   v2 — `renderer: L.canvas()` passed → created a SECOND canvas stacked
+    //        in the overlay pane. Worked in Chromium; user reported NOT
+    //        visible in Safari. Safari handles stacked canvases with
+    //        `transform: translate3d` differently than Chromium during
+    //        compositing.
+    //   v3 (current) — share the map's EXISTING renderer (the one Folium's
+    //        road heatmap uses). Single canvas, no compositing issue.
+    //
+    // map.getRenderer(layer) gives the renderer Leaflet would assign to that
+    // layer. For a map with preferCanvas:true and no explicit renderer
+    // option, Leaflet lazy-creates one default L.Canvas at `map._renderer`.
+    // We grab it directly with a no-op layer to materialize it.
+    const sharedRenderer = (map.options && map.options.preferCanvas)
+      ? (map._renderer || (map._renderer = window.L.canvas().addTo(map)))
+      : null;
+
     // Build a Leaflet layer per hazard, add all to map initially (locked: both
     // checked on first paint per Step 8 PAUSE decision).
     const rows = hazardIds.map(function (id) {
       const record = hp[id];
-      const layer = HPL.create(window.L, record);
+      const layer = HPL.create(window.L, record, { renderer: sharedRenderer });
       _hazardLayers[id] = layer;
       map.addLayer(layer);
       const swatch = _pickHazardSwatchColor(record.palette);
@@ -3205,6 +3345,12 @@
     // seeds + localStorage + restores FSAPI handles). Triggers _render() which
     // paints the dropdown / detail / form into the multi-hazard containers.
     init();
+    // Stage 1 Phase E (2026-05-24): backfill v2 evaluation for any project
+    // that's missing it (post-pipeline-pre-bake-removal). No-op for projects
+    // already evaluated via the multihazard_fixtures merge above.
+    _hydrateSeededProjects();
+    // Re-render after hydration so any newly-filled evaluations paint.
+    _render();
     // Hazard layers wait for the Folium map to be in the DOM.
     _waitForMapThen(_wireHazardLayers);
   }

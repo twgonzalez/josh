@@ -1,0 +1,42 @@
+{
+  "project": {
+    "id": "cedar_street_infill",
+    "name": "Cedar Street Infill",
+    "lat": 37.879,
+    "lng": -122.278,
+    "units": 75,
+    "stories": 6
+  },
+  "expected": {
+    "schema_version": 2,
+    "controlling_hazard": "wildfire",
+    "tier": "DISCRETIONARY",
+    "hazard_results": [
+      {
+        "type": "wildfire",
+        "controls": true,
+        "flagged": true,
+        "zone": "non_fhsz",
+        "zone_label": "Not in FHSZ",
+        "fhsz_haz_class": 0,
+        "degradation": 1.00,
+        "egress_window_min": 120,
+        "threshold": 6.00,
+        "delta_t": 15.84,
+        "bottleneck": {
+          "name": "North Street at Jaynes Street",
+          "eff_cap_vph": 1125,
+          "vehicles": 128
+        }
+      }
+    ]
+  },
+  "_provenance": {
+    "computed_by": "JOSH pipeline (build.py map)",
+    "computed_date": "2026-05-24",
+    "methodology": "v4.11 ΔT — Standard 1 passes (75 ≥ 15). Standard 3 zone=non_fhsz. Standard 4: project_vehicles = 75 × 1.9 × 0.90 = 128.25 (rounded 128); bottleneck eff_cap = 1125 vph (HCM two-lane @25mph) × 1.00 non-FHSZ degradation; raw ΔT = (128 / 1125) × 60 = 6.83 min. NFPA 101 egress penalty: stories=6 ≥ 4 threshold → 6 × 1.5 = 9.0 min capped at max_minutes=12.0 → penalty = 9.0 min. Total ΔT = 6.83 + 9.0 = 15.83 (rounded 15.84). Threshold = 6.00 min. ΔT > threshold → DISCRETIONARY.",
+    "source_test_vector": "output/berkeley/test_vectors.json (name='Cedar Street Infill'); rolled-up shape from static/multihazard_fixtures.js[cedar_street_infill]",
+    "parameters_version": "4.0",
+    "notes": "Canonical egress-penalty golden — a 6-story project that would pass Standard 4 on raw road capacity alone (6.83 min raw ΔT just over the 6.00 threshold) but gets pushed firmly DISCRETIONARY by the NFPA 101 / IBC building-egress penalty. Validates that the engine correctly applies the stories≥4 penalty and matches it to the right tier."
+  }
+}

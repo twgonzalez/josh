@@ -1,0 +1,97 @@
+# Copyright (C) 2026 Thomas Gonzalez
+# SPDX-License-Identifier: AGPL-3.0-or-later
+#
+# Wildfire hazard configuration — JOSH multi-hazard Stage 1.
+#
+# Source authority: CAL FIRE Office of the State Fire Marshal (OSFM)
+#   Fire Hazard Severity Zone (FHSZ) maps for State Responsibility Areas
+#   plus Local Responsibility Areas (LRA) where adopted.
+#
+# Parameters per docs/multihazard_first_principles.md §3 + config/parameters.yaml
+# v4.11. Mobilization=0.90 per NFPA 101 design basis (locked decision #4).
+# Zero hooks registered — wildfire uses default engine behavior (canonical case).
+
+hazard_id: wildfire
+
+data_source:
+  type:      arcgis_rest
+  url:       "https://egis.fire.ca.gov/arcgis/rest/services/FHSZ_SRA_LRA_Combined/MapServer/0"
+  cache_key: fhsz.geojson
+
+# Universal parameters
+mobilization:              0.90      # NFPA 101 design floor
+dispositive_at_standard_3: false     # wildfire runs through full Standard 4 ΔT test
+
+# Zone classification (CAL FIRE HAZ_CLASS integer → normalized zone id)
+zone_attribute: HAZ_CLASS
+zone_map:
+  "3": vhfhsz          # Very High FHSZ
+  "2": high_fhsz       # High FHSZ
+  "1": moderate_fhsz   # Moderate FHSZ
+
+# Per-zone parameters — HCM composite degradation × NIST TN 2135 safe egress windows
+degradation:
+  vhfhsz:        0.35
+  high_fhsz:     0.50
+  moderate_fhsz: 0.75
+  non_fhsz:      1.00
+safe_egress_window:
+  vhfhsz:        45      # min — Camp Fire (Paradise 2018) timeline
+  high_fhsz:     90
+  moderate_fhsz: 120
+  non_fhsz:      120     # FEMA standard
+
+# Wildfire pre-pivot behavior used max(HAZ_CLASS) when a point fell in
+# overlapping FHSZ polygons. Keep that behavior under the new engine.
+classify_strategy: most_severe
+
+# Zone for projects outside all FHSZ polygons (not in any HAZ_CLASS 1/2/3
+# zone). Wildfire's "not in FHSZ" convention is non_fhsz, which has
+# degradation 1.0 and safe_egress_window 120 min.
+default_zone: non_fhsz
+
+# UI vocab. Two label maps:
+#   labels       — long-form tooltip text for the polygon layer on the map.
+#                  Read by static/hazard_polygon_layer.js + themes.py.
+#   zone_labels  — short-form display text for HazardResult.zone_label, shown
+#                  in the brief modal + sidebar bar chart. Read by the engine.
+palette:
+  vhfhsz:        "#d7301f"
+  high_fhsz:     "#fc8d59"
+  moderate_fhsz: "#ffeda0"
+  non_fhsz:      transparent
+labels:
+  vhfhsz:        "CAL FIRE FHSZ — Very High Fire Hazard (VHFHSZ)"
+  high_fhsz:     "CAL FIRE FHSZ — High Fire Hazard"
+  moderate_fhsz: "CAL FIRE FHSZ — Moderate Fire Hazard"
+  non_fhsz:      "Not in FHSZ"
+zone_labels:
+  vhfhsz:        "Very High FHSZ"
+  high_fhsz:     "High FHSZ"
+  moderate_fhsz: "Moderate FHSZ"
+  non_fhsz:      "Not in FHSZ"
+legend_label: "Wildfire (FHSZ)"
+
+# Wildfire is the simplest case — truly zero hooks. All five hookable phases
+# use engine defaults:
+#   post_fetch:    no-op (features used as-fetched)
+#   augment_graph: no-op (no graph augmentation needed)
+#   classify:      default sjoin + classify_strategy=most_severe lookup
+#   degradation:   default zone-table lookup
+#   egress_window: default zone-table lookup
+# (`build_result` is engine-internal, driven by result_extras below — not a hook phase.)
+hooks: {}
+
+# No hazard-specific extras needed
+runtime_extras: {}
+
+# Variant-specific fields added to WildfireResult per schema v2 §5.2.
+# fhsz_haz_class preserves the raw CAL FIRE integer for legal/audit traceability.
+result_extras:
+  fhsz_haz_class:
+    from: zone_lookup
+    table:
+      vhfhsz:        3
+      high_fhsz:     2
+      moderate_fhsz: 1
+      non_fhsz:      0

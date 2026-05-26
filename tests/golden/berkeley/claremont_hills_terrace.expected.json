@@ -1,0 +1,42 @@
+{
+  "project": {
+    "id": "claremont_hills_terrace",
+    "name": "Claremont Hills Terrace",
+    "lat": 37.876,
+    "lng": -122.26,
+    "units": 25,
+    "stories": 3
+  },
+  "expected": {
+    "schema_version": 2,
+    "controlling_hazard": "wildfire",
+    "tier": "MINISTERIAL_WITH_STANDARD_CONDITIONS",
+    "hazard_results": [
+      {
+        "type": "wildfire",
+        "controls": true,
+        "flagged": false,
+        "zone": "non_fhsz",
+        "zone_label": "Not in FHSZ",
+        "fhsz_haz_class": 0,
+        "degradation": 1.00,
+        "egress_window_min": 120,
+        "threshold": 6.00,
+        "delta_t": 2.28,
+        "bottleneck": {
+          "name": "Ridge Road at Euclid Avenue / Scenic Avenue",
+          "eff_cap_vph": 1125,
+          "vehicles": 43
+        }
+      }
+    ]
+  },
+  "_provenance": {
+    "computed_by": "JOSH pipeline (build.py map)",
+    "computed_date": "2026-05-24",
+    "methodology": "v4.11 ΔT — Standard 1 passes (25 ≥ 15). Standard 3 zone=non_fhsz (point just outside the VHFHSZ boundary). Standard 4: project_vehicles = 25 × 1.9 × 0.90 = 42.75 (rounded 43); bottleneck eff_cap = 1125 vph (HCM two-lane @25mph) × 1.00 non-FHSZ degradation; ΔT = (43 / 1125) × 60 = 2.28 min; threshold = 120 min × 0.05 = 6.00 min. ΔT << threshold → MINISTERIAL_WITH_STANDARD_CONDITIONS.",
+    "source_test_vector": "output/berkeley/test_vectors.json (name='Claremont Hills Terrace'); rolled-up shape from static/multihazard_fixtures.js[claremont_hills_terrace]",
+    "parameters_version": "4.0",
+    "notes": "Small project well under threshold — useful for validating that the engine doesn't false-positive on low-demand projects."
+  }
+}

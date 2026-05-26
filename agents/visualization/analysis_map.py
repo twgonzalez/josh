@@ -1045,47 +1045,34 @@ def _build_josh_data_projects(
 ) -> list[dict]:
     """
     Serialize pipeline-seeded Project objects into the JOSH_DATA.projects schema
-    (spec §7) so sidebar.js can initialize with full result data including
-    path_coords (full geometry from wildland.py) and bottleneck metadata.
+    (spec §7) so sidebar.js can initialize with the per-project inputs.
 
-    Each project's delta_t_results contains the full per-path audit dict from
-    base.py compute_delta_t(), including path_wgs84_coords.
+    **Stage 1 Phase E (2026-05-24):** the per-project `result` pre-bake (the
+    legacy v1 wildland.py output) is no longer emitted here. Evaluation is
+    performed in the browser by `static/hazard_engine.js` at sidebar load
+    time (see sidebar.js `_hydrateSeededProjects`), with mock-hazard data
+    layered on by `static/multihazard_fixtures.js` until the per-hazard
+    adapters ship in Stages 3-9.
+
+    Path geometry from the WildlandScenario evacuation run is still rendered
+    by Folium FeatureGroups (proj_js_names) — that's a visualization concern,
+    not an evaluation concern; the engine produces its own per-hazard route
+    coordinates at runtime independently.
 
     proj_js_names — parallel list of Folium FeatureGroup JS variable names
     (e.g. "feature_group_abc123").  When provided, each project dict includes
     ``folium_fg_name`` so sidebar.js can show/hide the Folium layer when the
     user selects a project.
     """
-    route_labels = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
     result = []
     for i, proj in enumerate(projects):
+        # Skip projects with no analysis (e.g. below-threshold with no routes).
+        # We keep this gate because proj.delta_t_results is the signal that the
+        # pipeline considered the project — projects that never ran an analysis
+        # (e.g. a YAML with no lat/lng) wouldn't make sense to ship even as inputs.
         paths_raw: list[dict] = proj.delta_t_results or []
-        if not paths_raw:
-            continue  # skip projects with no analysis (e.g. below-threshold with no routes)
-
-        # Derive result-level fields from the first path (all paths share these values)
-        first = paths_raw[0]
-        paths_out = []
-        for idx, p in enumerate(paths_raw):
-            paths_out.append({
-                "path_id":                   str(p.get("path_id", "") or f"proj_seed_{idx}"),
-                "route_id":                  route_labels[idx] if idx < len(route_labels) else str(idx),
-                "cost_s":                    round(float(p.get("travel_time_s", 0)), 2),
-                "delta_t":                   round(float(p.get("delta_t_minutes", 0)), 2),
-                "flagged":                   bool(p.get("flagged", False)),
-                "bottleneck_osmid":          str(p.get("bottleneck_osmid", "")),
-                "bottleneck_name":           str(p.get("bottleneck_name", "")),
-                "bottleneck_road_type":      str(p.get("bottleneck_road_type", "")),
-                "bottleneck_lanes":          int(p.get("bottleneck_lane_count", 0) or 0),
-                "bottleneck_speed":          int(p.get("bottleneck_speed_limit", 0) or 0),
-                "effective_capacity_vph":    round(float(p.get("bottleneck_effective_capacity_vph", 0)), 1),
-                "hazard_degradation_factor": round(float(p.get("bottleneck_hazard_degradation", 1.0)), 4),
-                "bottleneck_cross_street_a": str(p.get("bottleneck_cross_street_a", "")),
-                "bottleneck_cross_street_b": str(p.get("bottleneck_cross_street_b", "")),
-                "bottleneck_distance_mi":    round(float(p.get("bottleneck_distance_mi", 0)), 2),
-                "bottleneck_bearing":        str(p.get("bottleneck_bearing", "")),
-                "path_coords":               p.get("path_wgs84_coords") or [],
-            })
+        if not paths_raw and not (proj.location_lat and proj.location_lon):
+            continue
 
         fg_name = proj_js_names[i] if (proj_js_names and i < len(proj_js_names)) else None
         result.append({
@@ -1099,15 +1086,8 @@ def _build_josh_data_projects(
             "source":         "pipeline",
             "city_slug":      city_slug,
             "folium_fg_name": fg_name,   # Folium FeatureGroup JS var; sidebar shows/hides on select
-            "result": {
-                "tier":               proj.determination or "",
-                "hazard_zone":        proj.hazard_zone or "non_fhsz",
-                "in_fire_zone":       bool(proj.in_fire_zone),
-                "project_vehicles":   round(float(proj.project_vehicles_peak_hour), 1),
-                "egress_minutes":     round(float(proj.egress_minutes), 1),
-                "delta_t_threshold":  round(float(first.get("threshold_minutes", 0)), 4),
-                "paths":              paths_out,
-            },
+            # NOTE: `result` field intentionally omitted as of Stage 1 Phase E.
+            # Evaluation is computed client-side by HazardEngine at load time.
         })
     return result
 
@@ -1140,11 +1120,17 @@ def _inject_josh_data_bundle(
     window.JOSH_DATA is set BEFORE the app.js block so the engine can read it
     synchronously on parse regardless of which strategy is used.
     """
-    from agents.export import _APP_JS_VERSION, JOSH_VERSION, _PARAMETERS_VERSION
+    from agents.export import _APP_JS_VERSION, JOSH_VERSION, _PARAMETERS_VERSION, export_hazard_configs
 
     graph_data   = json.loads(graph_json_path.read_text(encoding="utf-8"))
     params_data  = json.loads(params_json_path.read_text(encoding="utf-8"))
     fhsz_geojson = json.loads(fhsz_gdf.to_crs("EPSG:4326").to_json())
+
+    # Multi-hazard config bundle — loaded from config/hazards/*.yaml via
+    # the Python HazardConfig dataclass (single source of truth). The JS
+    # HazardEngine reads this from JOSH_DATA.hazard_configs at runtime.
+    # Stage 1: only wildfire is real. Stages 3+ add the remaining hazards.
+    hazard_configs = export_hazard_configs()
 
     html = html_path.read_text(encoding="utf-8")
 
@@ -1331,6 +1317,10 @@ def _inject_josh_data_bundle(
                 "legend_label":       LANDSLIDE_LEGEND_LABEL,
             },
         },
+        # Multi-hazard runtime config (Stage 1+) — consumed by JS HazardEngine.
+        # Loaded from config/hazards/*.yaml at build time. Empty {} until
+        # Stage 1 ships wildfire; gets populated incrementally per stage.
+        "hazard_configs":  hazard_configs,
     }
 
     data_block = (

@@ -1,0 +1,42 @@
+{
+  "project": {
+    "id": "downtown_mid_rise",
+    "name": "Downtown Mid-Rise",
+    "lat": 37.8695,
+    "lng": -122.2685,
+    "units": 85,
+    "stories": 3
+  },
+  "expected": {
+    "schema_version": 2,
+    "controlling_hazard": "wildfire",
+    "tier": "MINISTERIAL_WITH_STANDARD_CONDITIONS",
+    "hazard_results": [
+      {
+        "type": "wildfire",
+        "controls": true,
+        "flagged": false,
+        "zone": "non_fhsz",
+        "zone_label": "Not in FHSZ",
+        "fhsz_haz_class": 0,
+        "degradation": 1.00,
+        "egress_window_min": 120,
+        "threshold": 6.00,
+        "delta_t": 4.59,
+        "bottleneck": {
+          "name": "Adeline Street at Shattuck Avenue / Ward Street",
+          "eff_cap_vph": 1900,
+          "vehicles": 145
+        }
+      }
+    ]
+  },
+  "_provenance": {
+    "computed_by": "JOSH pipeline (build.py map)",
+    "computed_date": "2026-05-24",
+    "methodology": "v4.11 ΔT — Standard 1 passes (85 ≥ 15). Standard 3 zone=non_fhsz. Standard 4: project_vehicles = 85 × 1.9 × 0.90 = 145.4 (rounded 145); bottleneck eff_cap = 1900 vph (HCM 2022 multilane × 1.00 non-FHSZ degradation); ΔT = (145 / 1900) × 60 = 4.59 min; threshold = 120 min safe_egress_window × 0.05 max_project_share = 6.00 min. ΔT < threshold → MINISTERIAL_WITH_STANDARD_CONDITIONS.",
+    "source_test_vector": "output/berkeley/test_vectors.json (name='Downtown Mid-Rise'); rolled-up shape from static/multihazard_fixtures.js[downtown_mid_rise]",
+    "parameters_version": "4.0",
+    "notes": "Validates Standard 4 pass on a non-FHSZ multilane corridor. Stories=3 means no NFPA 101 egress penalty (threshold_stories=4)."
+  }
+}
