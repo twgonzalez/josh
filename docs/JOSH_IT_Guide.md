@@ -114,19 +114,19 @@ JOSH runs on any modern workstation or laptop. 8 GB RAM and a standard SSD are c
 
 ```
 josh/
-├── build.py                        # CLI — analyze and demo commands
+├── build.py                        # CLI — analyze, evaluate, map, report
 ├── config/
 │   ├── parameters.yaml             # All methodology constants — annotated with citations
-│   └── cities/
-│       ├── berkeley.yaml           # City config schema reference
-│       └── projects/
-│           └── berkeley_demo.yaml  # Project inventory for the Berkeley demo
+│   ├── cities/
+│   │   └── berkeley.yaml           # City config schema reference
+│   └── projects/
+│       └── berkeley_demo.yaml      # Project inventory for the Berkeley demo
 ├── agents/                         # Analysis modules
 │   ├── capacity_analysis.py        # HCM calculations, exit node identification
 │   ├── objective_standards.py      # ΔT evaluation, tier determination
 │   ├── export.py                   # JOSH_DATA serializer, whatif_engine.js generator
-│   └── scenarios/wildland.py       # Dijkstra routing, path geometry, ΔT engine
-│   └── visualization/demo.py       # Folium map renderer
+│   ├── scenarios/wildland.py       # Dijkstra routing, path geometry, ΔT engine
+│   └── visualization/analysis_map.py  # Folium map renderer (renamed from demo.py in 4693c9b)
 ├── models/                         # Data model dataclasses
 ├── static/                         # Browser client source
 ├── tests/                          # Anti-divergence and unit tests
@@ -154,7 +154,9 @@ Reads the city data files, runs HCM 2022 capacity calculations on every road seg
 - `static/whatif_engine.js` — regenerated JavaScript ΔT engine
 - `output/{city}/routes.csv` — tabular evacuation route inventory
 
-### `demo` — determination map
+### `map` — determination map
+
+> Note: this command was named `demo` until commit 4693c9b (renamed because the map *is* the deliverable, not a demo). Any scripts or runbooks that still reference `build.py demo` need to be updated to `build.py map`.
 
 ```bash
 uv run python build.py map \
@@ -163,11 +165,26 @@ uv run python build.py map \
   --projects config/projects/berkeley_demo.yaml
 ```
 
-Reads the project inventory, runs Dijkstra routing from each project site to the network boundary, computes ΔT and egress penalty, assigns determination tier, generates the Folium map with all layers and animated route traces, embeds the full JOSH_DATA bundle and browser client, and writes:
+Reads the project inventory, runs Dijkstra routing from each project site to the regional-network exit nodes (returning all paths within 3.5× the fastest-exit travel time under User Equilibrium semantics), computes ΔT and egress penalty, assigns determination tier, generates the Folium map with all layers and animated route traces, embeds the full JOSH_DATA bundle and browser client, and writes:
 
 - `output/{city}/analysis_map.html` — the self-contained determination map
+- `output/{city}/brief_v3_*.html` — per-project determination brief (one per seeded project)
+- `output/{city}/determination_*.txt` — per-project plaintext audit trail
 
-`analyze` must run before `demo`. After that, adding a new project only requires updating the projects YAML and re-running `demo` — the capacity analysis does not need to repeat.
+`analyze` must run before `map`. After that, adding a new project only requires updating the projects YAML and re-running `map` — the capacity analysis does not need to repeat.
+
+### `evaluate` — single-project determination (optional)
+
+```bash
+uv run python build.py evaluate \
+  --city "Berkeley" \
+  --lat 37.8914 --lon -122.2494 \
+  --units 80 --stories 4 \
+  --name "Example Project" \
+  --data-dir data/berkeley
+```
+
+Same algorithm as `map`, but for a single ad-hoc project specified on the command line rather than from a YAML inventory. Writes the same `brief_v3_*.html` + `determination_*.txt` pair for the one project. Use this for what-if checks during a planning department conversation. For the city's standing demonstration map, use `map`.
 
 ### `report` — AB 747 city-wide evacuation capacity report
 
@@ -189,7 +206,7 @@ The included Berkeley data files already contain everything `report` needs:
 |---|---|
 | `data/berkeley/block_groups.geojson` | Census ACS block groups with residential unit counts |
 
-`analyze` and `demo` are the city-specific steps. `report` is the policy-facing output that connects the technical analysis to the Safety Element and nexus study workflows.
+`analyze` and `map` are the city-specific steps. `report` is the policy-facing output that connects the technical analysis to the Safety Element and nexus study workflows.
 
 ------
 
@@ -202,12 +219,20 @@ parameters_version: "4.0"
 
 unit_threshold: 15           # Size gate — integer comparison, ITE de minimis / SB 330
 
-behavioral_mobilization: 0.90  # FHWA Emergency Transportation Operations — mandatory
-                               # evacuation compliance rate (constant, all zones)
+behavioral_mobilization: 0.90  # NFPA 1660:2024 / NFPA 1616:2020 community mass-evacuation
+                               # design basis (constant, all zones); 0.90 = full evacuation
+                               # adjusted for ~10% zero-vehicle HHs per Census ACS B25044;
+                               # CA empirical validation per Roberson et al. (2012).
+                               # (Earlier docs cited FHWA Emergency Transportation
+                               #  Operations — corrected per FSC review May 2026.)
 
 hazard_degradation:
   factors:
-    vhfhsz: 0.35             # HCM Exhibit 10-15/10-17 + NIST Camp Fire validation
+    vhfhsz: 0.35             # Composite engineering-judgment factor anchored against
+                              # HCM 2022 Ch. 11 weather CAFs (Ex. 11-20) + NIST TN 2135;
+                              # independent traffic-engineering review pending (FSC May 2026).
+                              # (Earlier docs cited HCM Ex. 10-15/10-17 directly — corrected;
+                              #  those exhibits are work-zone and a photograph, not fire data.)
     high_fhsz: 0.50
     moderate_fhsz: 0.75
     non_fhsz: 1.00
@@ -224,8 +249,8 @@ max_project_share: 0.05      # The single policy value the city adopts by resolu
 vehicles_per_unit: 1.9       # Census ACS Table B25044 — California statewide all-HH average
 
 egress_penalty:
-  threshold_stories: 4       # NFPA 101 high-rise threshold
-  minutes_per_story: 1.5     # NFPA 101 stair descent rate
+  threshold_stories: 4       # NFPA 101 (Life Safety Code, 2024 CA ed.) high-rise threshold
+  minutes_per_story: 1.5     # NFPA 101 stair descent + IBC 2024 Ch. 10 garage egress
   max_minutes: 12            # Cap at 8-story equivalent
 
 hcm_capacity:
@@ -242,13 +267,21 @@ hcm_capacity:
       40: 1700
 ```
 
+> **Citation note (May 2026).** The Fire Science Consulting LLC preliminary technical assessment (Ziazi & Simeoni, May 26 2026) identified three citation errors in earlier JOSH documentation that have been corrected throughout the parameters file, engine, docs, and web pages:
+>
+> 1. **0.90 mobilization rate** sourced to NFPA 1660 / NFPA 1616 community mass-evacuation design basis (not NFPA 101 — which governs pedestrian egress inside buildings — and not FHWA Emergency Transportation Operations).
+> 2. **FHSZ degradation factors** (0.35 / 0.50 / 0.75) are a composite engineering-judgment factor anchored against HCM 2022 Ch. 11 weather CAFs + NIST TN 2135 (not HCM Exhibits 10-15 / 10-17, which are work-zone and a photograph respectively); independent traffic-engineering review is pending and is tracked on the JOSH Methodology Roadmap.
+> 3. **2025 California Wildland-Urban Interface Code (CWUIC)** is now cited explicitly; CCR 1273.00 concurrent civilian/apparatus access requires *separate* analysis outside JOSH (the ΔT engine measures civilian outbound capacity only), and consistent with CWUIC Appendix C §C101.6 the JOSH output is positioned as a screening tool, not a standalone permit-denial instrument.
+>
+> No methodology *values* changed — only source attributions. See [JOSH_Legal_Defensibility_Memo.md §3.7](JOSH_Legal_Defensibility_Memo.md) for the full open-items roadmap.
+
 City-specific overrides — a different `vehicles_per_unit` from local ACS data, for instance — go in the city config file, not here. The global parameters file is shared by all cities and is not edited per project.
 
 **How to override `vehicles_per_unit` and `behavioral_mobilization` correctly.** These two parameters cover separate concerns and should be adjusted independently:
 
 - `vehicles_per_unit` captures the vehicle *ownership* dimension. The default 1.9 is the Census ACS B25044 California statewide all-household average, which already includes zero-vehicle households (they reduce the average by contributing zero vehicles). Override this with the city's own ACS B25044 figure if the local rate differs materially from the statewide average. Cities with high transit ridership typically have lower local averages.
 
-- `behavioral_mobilization` captures the evacuation *compliance* dimension — the fraction of households that reach the road during a mandatory evacuation. The default 0.90 is the FHWA Emergency Transportation Operations compliance rate. Override this only with documented local evidence: an adopted evacuation plan with a modeled compliance rate, a post-event study, or a licensed transportation engineer's finding.
+- `behavioral_mobilization` captures the community mass-evacuation design dimension. The default 0.90 is the NFPA 1660:2024 / NFPA 1616:2020 community mass-evacuation design basis (full evacuation adjusted from 100% for the ~10% zero-vehicle household share documented in Census ACS B25044), with empirical California validation per Roberson et al. (2012). The same full-load design principle governs building egress at the smaller scale through NFPA 101. Override this only with documented local evidence: an adopted evacuation plan with a modeled compliance rate, a post-event study, or a licensed transportation engineer's finding.
 
 Do not adjust both parameters to account for the same population. Zero-vehicle households are already reflected in `vehicles_per_unit`; if you lower `vehicles_per_unit` to reflect local zero-car rates, do not also lower `behavioral_mobilization` to further account for them. That would undercount demand by applying the same deduction twice.
 
