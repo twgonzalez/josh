@@ -417,6 +417,98 @@ Fire protection districts and other non-municipal jurisdictions: constructed fro
 
 ------
 
+## Configuration & Overrides — Complete Reference
+
+JOSH ships with a set of national-standard default parameters, but every parameter that may need to be tuned for a local jurisdiction is a documented override surface. The four override surfaces below are the only places a city should make changes — none of the engine code itself should need modification.
+
+The table below is the complete list. **No JOSH source code edits are required for any of these — every override is a YAML change in `config/`.**
+
+### Override Surface Summary
+
+| Surface | File | Who maintains | When to use |
+|---|---|---|---|
+| **(1) Global parameter overrides** | `config/cities/{city}.yaml` → `overrides:` block | Planning department + city council | Adjust national-standard defaults (vehicles per unit, unit threshold, mobilization rate, hazard degradation) when documented local evidence supports a different value |
+| **(2) City geographic configuration** | `config/cities/{city}.yaml` (top level) | City IT / GIS | Define the jurisdiction's boundary source, FHSZ data source, and (for non-municipal jurisdictions) explicit evacuation exit nodes |
+| **(3) Road network overrides** | `config/private/cities/{city}_road_overrides.yaml` | City engineer | Correct OSM classification errors, set PE-stamped direct capacity values, record physical width and access-type data |
+| **(4) Project-level overrides** | `config/projects/{city}_demo.yaml` (or per-project YAML) | Planning department + applicant | Project-specific geocode-address aliases, expected-tier regression markers, PE-stamped applicant egress calculations |
+
+### (1) Global Parameter Overrides
+
+Every value in `config/parameters.yaml` is the engine default. To override one for a specific city, add an entry to the `overrides:` block in that city's config — do NOT edit `config/parameters.yaml` (that file is shared by all cities).
+
+| Parameter | Default | Override authority | Example use |
+|---|---|---|---|
+| `unit_threshold` | `15` | Staff (lower); PE/council (raise) | A city adopts a 10-unit threshold by resolution |
+| `vehicles_per_unit` | `1.9` (Census ACS B25044, CA statewide) | City engineer | Local ACS B25044 data shows the city averages 1.6 vph |
+| `behavioral_mobilization` | `0.90` (NFPA 1660 / 1616 design basis) | PE certification or council | Adopted evacuation plan with modeled compliance rate; post-event study |
+| `hazard_degradation.factors.{vhfhsz, high_fhsz, moderate_fhsz}` | `0.35 / 0.50 / 0.75` | Staff (lower = more conservative); PE (raise) | A city with documented historical road closures during local fires |
+| `safe_egress_window.{vhfhsz, high_fhsz, moderate_fhsz, non_fhsz}` | `45 / 90 / 120 / 120` (NIST TN 2135) | PE certification or council | A city-specific fire-spread study supersedes Camp Fire as the calibration event |
+| `max_project_share` | `0.05` (5%) | **Council resolution only** | The single legislative policy value the city adopts (engineering significance threshold) |
+| `egress_penalty.threshold_stories` | `4` (NFPA 101 high-rise) | Staff (lower) | A city with predominantly three-story new construction may set this to 3 |
+| `egress_penalty.minutes_per_story` | `1.5` (NFPA 101 + IBC 2024 Ch. 10) | PE certification | Project-specific PE-stamped egress study supersedes the per-story default |
+| `egress_penalty.max_minutes` | `12` | PE certification | — |
+| `evacuation.max_path_length_ratio` | `3.5` (User Equilibrium cap) | PE certification | A jurisdiction with documented multi-route compliance during past events |
+| `evacuation.exit_highway_types` | `[motorway, motorway_link, trunk, trunk_link, primary, primary_link]` | City engineer | Cities where secondary roads are the primary regional evacuation corridors (no freeway access) |
+| `evacuation.serving_route_radius_miles` | `0.5` | City engineer | Audit-trail display radius for nearby segments |
+
+**Override direction principle:** Any override that makes the standard *more conservative* (harder for projects to pass) may be applied by city staff without council action. Any override that makes the standard *less conservative* requires either PE-stamped supporting evidence or formal council adoption — see [JOSH_v341_Specification.md §7](JOSH_v341_Specification.md) for the full authority matrix.
+
+### (2) City Geographic Configuration
+
+These fields define how JOSH finds the jurisdiction's boundary, hazard layer, and evacuation exit points.
+
+| Field | Required for | Effect |
+|---|---|---|
+| `city_name`, `state`, `analysis_crs` | All cities | Display labels and the metric coordinate reference system used for distance calculations |
+| `place_fips` | Standard (incorporated) cities | Census PLACE code used to download the TIGER boundary |
+| `osmnx_place` | Standard cities | Place query string passed to OSMnx for road network download |
+| `fhsz_local_file` | LRA cities and fire districts | Path to a pre-downloaded FHSZ GeoJSON (Cal Fire's standard API returns SRA zones only) |
+| `fhsz_fallback_api` | LRA cities, alternative to local file | FeatureServer URL (e.g., county GIS) returning LRA FHSZ polygons |
+| `boundary_file` | Fire districts and other non-municipal jurisdictions | Path to a pre-built GeoJSON (Census TIGER has no entries for fire districts) |
+| `known_exit_nodes` | Clipped networks (fire districts, jurisdictions where primary road endpoints are 100–500 m inside the boundary) | Explicit list of OSM node IDs that bypass the default 50-m boundary proximity check |
+
+See the Berkeley config (`config/cities/berkeley.yaml`) for the standard-city pattern and the RSF FPD pattern in `josh-pipeline/cities/` for the fire-district variant.
+
+### (3) Road Network Overrides
+
+The road override file corrects OSM classification errors and records PE-verified physical or capacity values for specific segments. Every override applies uniformly to all future analyses — overrides cannot be project-specific (that would be a discretionary adjustment, which the standard does not permit).
+
+| Field | Matches by | Effect | Authority required |
+|---|---|---|---|
+| `highway` | `name` or `osmid` | Reclassify OSM highway tag; auto-re-derives road type and lane count | City engineer (documented reason) |
+| `lanes` | `name` or `osmid` | Set explicit lane count; clears the "estimated" flag | City engineer (city striping records or field observation) |
+| `speed` | `name` or `osmid` | Set posted speed limit (mph); clears the "estimated" flag | City engineer (posted speed observation) |
+| `width_ft` | `osmid` | Record physical road width in feet (audit-trail field; pending Standard 6 use) | City engineer (field measurement or signed plans) |
+| `access_type` | `osmid` | Record access classification: `dead_end` / `single_access` / `one_way` / `two_way` (audit-trail field; pending Standard 6 use) | City engineer (field observation) |
+| `capacity_vph` | `osmid` only | **Set bottleneck capacity directly**, bypassing HCM. Effective capacity = `capacity_vph` × FHSZ degradation factor still applies. | **PE certification required** — entry must include `reason` AND `source` (PE stamp, agency, report date); missing either is skipped with a logged warning |
+| `reason` | All entries | Required text field documenting why the override exists | Author of the entry |
+| `source` | Required for `capacity_vph` | Citation: PE stamp, report date, agency | Author of the entry |
+| `osm_correction_pending: true` | Optional flag | Tracks corrections that should also be submitted upstream to OpenStreetMap | Author of the entry |
+
+The override file is also subject to audit-trail tagging: every overridden segment gains two columns in `roads.gpkg` — `highway_original` (original OSM tag) and `override_reason` (the reason string). The number of corrected segments is logged at `analyze` time and recorded in `data/{city}/metadata.yaml`.
+
+### (4) Project-Level Overrides
+
+| Field | Where | Purpose |
+|---|---|---|
+| `geocode_address` | Projects YAML, per project | Override the human-readable `address` with a clean geocodable form when the address is an intersection description or annotated access note |
+| `lat` / `lon` | Projects YAML, per project | Set coordinates from the Census Geocoder result, or hand-placed from a parcel viewer when geocoding fails |
+| `expected_tier` | Projects YAML, per project | Regression-test annotation — the value the analysis should produce; used for pre-deployment verification |
+| Applicant egress calculation | Submitted with project application (out of repo) | A PE-stamped project-specific NFPA 101 egress study supersedes the default `egress_penalty` schedule for that one project only — see [JOSH_v341_Specification.md §4.7](JOSH_v341_Specification.md) for submission requirements |
+
+### What You Cannot Override
+
+The following are not configurable — they are first-principles engineering or legal constants:
+
+- The ΔT formula itself (`(project_vehicles / bottleneck_capacity) × 60 + egress_penalty`)
+- The HCM 2022 base-capacity table (Ch. 12, Ch. 15) — these are the published national standard
+- The 5% derivation of zone thresholds from `safe_egress_window × max_project_share` — this is the mathematical product of the safe window and the council-adopted significance threshold
+- The User Equilibrium routing semantics (Dijkstra to all exit nodes, 3.5× cap) — adopted as the only objective routing rule consistent with HAA §65589.5(d)(5); see [JOSH_Legal_Defensibility_Memo.md §3.6](JOSH_Legal_Defensibility_Memo.md) for the legal rationale
+
+If your city believes one of these needs to change, that is a methodology amendment — not an override — and requires coordination with California Stewardship rather than a local YAML edit.
+
+------
+
 ## Validation
 
 The test suite verifies that the JavaScript browser engine produces results identical to the Python reference implementation. Run it after initial setup and after any methodology update:

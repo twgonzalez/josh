@@ -124,7 +124,7 @@ egress_penalty       = 0 if stories < 4; min(stories × 1.5, 12) if stories ≥ 
 
 A five-row spreadsheet is sufficient. The audit trail states the unit count, the bottleneck road type, the posted speed, the FHSZ zone, and the story count. Cross-reference each against the classification tables above. If the hand calculation matches the audit trail result within rounding, the output is verified.
 
-**What the two demand parameters represent.** The 1.9 factor is the Census ACS B25044 California statewide average vehicles per housing unit across *all* occupied households, including zero-vehicle households. Those households contribute zero vehicles to the numerator of that average, so they are already reflected in the 1.9 figure — no additional adjustment for zero-car households is applied. The 0.90 factor is the FHWA behavioral mobilization rate: the fraction of vehicle-owning households that reach the road during a mandatory evacuation, accounting for residents away from home, delayed mobilization, and shadow non-compliance. The two parameters cover separate concerns — vehicle ownership and evacuation behavior — and their product, 1.71 effective vehicles per unit, is the design demand rate. If a city overrides `vehicles_per_unit` with local ACS B25044 data to reflect a higher or lower vehicle ownership rate, `behavioral_mobilization` should not also be adjusted to account for zero-car households. Each parameter has one job.
+**What the two demand parameters represent.** The 1.9 factor is the Census ACS B25044 California statewide average vehicles per housing unit across *all* occupied households, including zero-vehicle households. Those households contribute zero vehicles to the numerator of that average, so they are already reflected in the 1.9 figure — no additional adjustment for zero-car households is applied. The 0.90 factor is the **community mass-evacuation mobilization rate sourced to NFPA 1660 (2024) / NFPA 1616 (2020)** — the national fire-protection standard for community-scale mass evacuation. The 0.90 magnitude is derived from the standard's full-evacuation design basis adjusted from 100% for the ~10% zero-vehicle household share in Census ACS B25044, with empirical California validation per Roberson et al. (2012). The two parameters cover separate concerns — vehicle ownership and community-scale evacuation design — and their product, 1.71 effective vehicles per unit, is the design demand rate. If a city overrides `vehicles_per_unit` with local ACS B25044 data to reflect a higher or lower vehicle ownership rate, `behavioral_mobilization` should not also be adjusted to account for zero-car households. Each parameter has one job. *(Earlier versions of this guide cited FHWA Emergency Transportation Operations as the source of the 0.90 figure; that attribution was imprecise and has been corrected per the Fire Science Consulting LLC review of May 2026.)*
 
 ### Example verification
 
@@ -249,6 +249,87 @@ Flag the following conditions to planning staff before the determination is fina
 **FHSZ boundary near the site.** Where a parcel straddles or is immediately adjacent to an FHSZ boundary, a small error in the parcel geocode can change the zone assignment and therefore the threshold. Confirm the zone against the Cal Fire FHSZ viewer using the parcel APN.
 
 **Very large projects near the threshold.** A project of 100 or more units with ΔT within 0.5 minutes of the threshold warrants input verification before the determination is finalized. The arithmetic is correct if the inputs are correct, but a misclassified lane count or speed limit at this scale can move the result across the threshold.
+
+------
+
+## Configuration & Overrides — What the City Engineer Can Set
+
+JOSH provides four documented override surfaces. The road network override file (Surface 3 below) is the one most directly under the city engineer's authority and the most frequently used. The other three surfaces are described here for completeness so you understand the full picture when a developer, planner, or attorney asks "can the city change X?"
+
+The IT Implementation Guide contains the same reference table from the IT perspective. This version frames the overrides around the engineering judgment they require.
+
+### Override Surface Summary
+
+| Surface | File | Engineer's role | Used for |
+|---|---|---|---|
+| **(1) Global parameter overrides** | `config/cities/{city}.yaml` → `overrides:` block | Reviewer / PE supporter | Adjust national-standard defaults (vehicles per unit, mobilization, hazard degradation) when documented local evidence supports a different value |
+| **(2) City geographic configuration** | `config/cities/{city}.yaml` (top level) | Reviewer | Define boundary source, FHSZ data source, explicit evacuation exit nodes |
+| **(3) Road network overrides** | `config/private/cities/{city}_road_overrides.yaml` | **Primary author** | Correct OSM classification errors, record physical road data, set PE-stamped direct capacity values |
+| **(4) Project-level overrides** | `config/projects/{city}_demo.yaml` (or per project) | Reviewer of applicant-submitted egress studies | Project-specific PE-stamped applicant egress overrides |
+
+### (1) Global Parameter Overrides — When the Engineer Supports
+
+The city engineer rarely *authors* a parameter override, but a planning department or city attorney often *requires the engineer to support* one. The engineering question for each:
+
+| Parameter | Default | Engineering review required |
+|---|---|---|
+| `vehicles_per_unit` | `1.9` (Census ACS B25044, CA statewide) | Confirm local ACS B25044 figure is current and that the difference from statewide is material (typically > 0.1 vph). |
+| `behavioral_mobilization` | `0.90` (NFPA 1660 / 1616 community mass-evacuation design basis) | If the city seeks to lower this (less conservative), require PE-stamped supporting evidence: an adopted evacuation plan with a modeled compliance rate, a post-event traffic study, or a licensed transportation engineer's finding. Earlier docs cited FHWA Emergency Transportation Operations — that attribution has been corrected per the May 2026 FSC review; the rate itself (0.90) is unchanged. |
+| `hazard_degradation.factors.{zone}` | `0.35 / 0.50 / 0.75` (composite engineering judgment; pending FSC review) | If the city seeks to *raise* a factor (less capacity loss = less conservative), require a PE-stamped engineering report citing the specific HCM 2022 Ch. 11 weather CAFs and the local fire-condition data supporting departure from the conservative composite. |
+| `unit_threshold` | `15` (ITE de minimis / SB 330 anchor) | Lower thresholds may be adopted by staff without PE review. Raising requires PE certification (documented reason why projects below the city's adopted threshold should escape analysis). |
+| `egress_penalty.threshold_stories` | `4` (NFPA 101 high-rise threshold, 75 ft) | A city with predominantly three-story new construction may lower this to 3 with documented building-stock characteristics. |
+| `evacuation.exit_highway_types` | `[motorway, motorway_link, trunk, trunk_link, primary, primary_link]` | For cities without freeway access, the engineer designates the secondary or major-arterial road types that constitute the regional evacuation network. |
+| `evacuation.max_path_length_ratio` | `3.5` (User Equilibrium cap) | Engineering judgment: a jurisdiction with documented multi-route compliance during past events may justify a different cap. PE certification recommended. |
+
+**Override direction principle:** Any override that makes the standard *more conservative* (harder for projects to pass) may be applied by city staff without council action. Any override that makes the standard *less conservative* requires PE-stamped supporting evidence or formal council adoption.
+
+### (2) City Geographic Configuration
+
+The engineer's role here is generally to verify that the GIS sources are authoritative for the jurisdiction:
+
+| Field | Engineering verification |
+|---|---|
+| `place_fips` | Confirm the Census PLACE code matches the jurisdiction (incorporated cities only). |
+| `fhsz_local_file` / `fhsz_fallback_api` | For LRA jurisdictions, confirm the FHSZ data source is the authoritative county GIS or Cal Fire FRAP statewide layer clipped to the city boundary. Cal Fire's standard API returns SRA zones only and is insufficient for incorporated LRA cities. |
+| `boundary_file` | For fire districts and other non-municipal jurisdictions, confirm the boundary GeoJSON is from the county LAFCO or equivalent authoritative GIS source. |
+| `known_exit_nodes` | For clipped networks, identify primary regional exits (freeway ramps, trunk highway crossings) and verify OSM node IDs against the OSM iD editor. Each entry should include a comment with lat/lon and the road name. |
+
+### (3) Road Network Overrides — The Engineer's Primary Authority
+
+This is the override surface the city engineer authors directly. Every entry corrects an OSM classification error or records PE-verified physical or capacity data. Overrides apply uniformly to all future analyses — they are NOT project-specific (a project-specific adjustment would be a discretionary act, which the standard does not permit).
+
+| Override field | Matches by | Effect | What the engineer must verify |
+|---|---|---|---|
+| `highway` | `name` or `osmid` | Reclassify OSM highway tag; the engine auto-re-derives road type and lane count | The road's actual functional classification (covenant road tagged primary, etc.) from city GIS or functional classification map |
+| `lanes` | `name` or `osmid` | Set explicit lane count; clears the "estimated" flag | Lane count from city striping records or field observation |
+| `speed` | `name` or `osmid` | Set posted speed limit (mph); clears the "estimated" flag | Posted speed limit |
+| `width_ft` | `osmid` | Record physical road width in feet (audit-trail field; pending Standard 6 use) | Field measurement or signed plans |
+| `access_type` | `osmid` | Record access classification: `dead_end` / `single_access` / `one_way` / `two_way` | Field observation or COA-mandated restriction |
+| `capacity_vph` | `osmid` | **Set bottleneck capacity directly**, bypassing HCM. Effective capacity = `capacity_vph` × FHSZ degradation factor still applies. | **PE-stamped** field count or agency traffic study (e.g., Caltrans TMC report) showing peak-hour throughput that the HCM formula cannot reproduce. `reason` AND `source` (PE stamp, agency, report date) are both required — missing either is skipped with a logged warning. See "Setting road capacity directly" earlier in this guide for the detailed protocol. |
+| `reason` | All entries | Required text field documenting why the override exists | The engineer's documented basis |
+| `source` | Required for `capacity_vph` | Citation: PE stamp, report date, agency | The supporting document |
+| `osm_correction_pending: true` | Optional flag | Indicates the correction should also be submitted upstream to OpenStreetMap | Engineer's assessment of whether the OSM data is wrong (vs. a correction that requires local knowledge not in OSM) |
+
+**Audit trail.** Every overridden segment gains two columns in `roads.gpkg`: `highway_original` (the original OSM tag before correction) and `override_reason` (the reason string from the YAML). The number of corrected segments is logged at `analyze` time and recorded in `data/{city}/metadata.yaml` under `roads_overrides`.
+
+**When to fix OSM upstream vs. use an override.** Fix in OSM first when the tag is clearly wrong (e.g., a residential cul-de-sac tagged as `primary`) — mark with `osm_correction_pending: true` in the YAML. Use overrides for corrections that require local knowledge not in OSM (physical widths, gated access, COA-mandated restrictions), or where OSM edits may be reverted. Never use overrides to tune ΔT results — only to correct factual OSM errors or add physically-verified data.
+
+### (4) Project-Level Overrides — Applicant PE-Stamped Egress
+
+When a project's egress penalty calculation governs the ΔT result and the developer submits a PE-stamped NFPA 101 egress study showing that the project-specific egress time is shorter than the default schedule (1.5 min/story up to 12 min cap), the applicant calculation may substitute for the default for that one project. The city engineer reviews the submitted egress study against NFPA 101 (Life Safety Code, 2024 California edition, Ch. 7) and IBC 2024 Ch. 10 (Means of Egress).
+
+This is the only project-level override the city engineer typically encounters. All other project fields (`name`, `lat`, `lon`, `units`, `stories`, `geocode_address`) are factual inputs from the application, not engineering overrides.
+
+### What Cannot Be Overridden
+
+The following are not configurable — they are first-principles engineering or legal constants:
+
+- The ΔT formula itself (`(project_vehicles / bottleneck_capacity) × 60 + egress_penalty`)
+- The HCM 2022 base-capacity table (Ch. 12, Ch. 15) — these are the published national standard
+- The 5% derivation of zone thresholds from `safe_egress_window × max_project_share`
+- The User Equilibrium routing semantics (Dijkstra to all exit nodes, 3.5× cap) — adopted as the only objective routing rule consistent with HAA §65589.5(d)(5)
+
+If a developer or attorney argues that one of these should change for their project, the engineer's answer is: that is a methodology amendment, not a project-specific adjustment, and the standard does not permit per-project changes. Document the request in the record and refer to planning staff for a legal response.
 
 ------
 
