@@ -2,7 +2,9 @@
 
 **Open-source Python tool for fire evacuation capacity analysis in California cities.**
 
-JOSH is a first-principles calculator built entirely from established national and state standards — HCM 2022, NFPA 101, NIST TN 2135, Cal Fire FHSZ, and U.S. Census data. It gives cities and applicants a legally defensible, fully algorithmic determination of whether a proposed housing project triggers discretionary review under AB 747, with zero engineering judgment and a full audit trail. Every result is reproducible by any licensed engineer with a spreadsheet.
+JOSH is a first-principles calculator built entirely from established national and state standards — HCM 2022, NFPA 1660 (2024) / NFPA 1616 (2020), NFPA 101, NIST TN 2135, the 2025 California Wildland-Urban Interface Code (CWUIC), Cal Fire FHSZ, and U.S. Census data. It gives cities and applicants a legally defensible, fully algorithmic determination of whether a proposed housing project triggers discretionary review under AB 747, with zero engineering judgment and a full audit trail. Every result is reproducible by any licensed engineer with a spreadsheet.
+
+> **Citation note (May 2026).** The Fire Science Consulting LLC preliminary technical assessment (Ziazi & Simeoni, May 26 2026) identified three citation errors in earlier JOSH documentation that have been corrected throughout the engine, docs, and web pages: (1) the 0.90 mobilization rate is sourced to **NFPA 1660 / 1616** community mass-evacuation design basis (not NFPA 101, which governs pedestrian egress inside buildings, and not FHWA Emergency Transportation Operations); (2) the FHSZ road-capacity degradation factor (0.35/0.50/0.75) is a **composite engineering-judgment factor** anchored against HCM 2022 Ch. 11 weather Capacity Adjustment Factors + NIST TN 2135 (not the previously-cited HCM Exhibits 10-15 and 10-17, which are work-zone and photograph respectively) — independent traffic-engineering review pending; (3) the **2025 California Wildland-Urban Interface Code (CWUIC)** is now cited as the operative CA WUI code (CCR 1273.00 concurrent civilian/apparatus access, Appendix C §C101.6 screening-tool framing). See [docs/JOSH_Legal_Defensibility_Memo.md §3.7](docs/JOSH_Legal_Defensibility_Memo.md) for the full open-items roadmap. **No methodology values changed**; only source attributions.
 
 ---
 
@@ -12,7 +14,7 @@ California AB 747 (Gov. Code §65302.15) requires cities to analyze fire evacuat
 
 1. **Downloads** CAL FIRE FHSZ zones, the OSM road network, and Census housing data for any California city
 2. **Identifies** evacuation routes and computes per-route bottleneck capacity (HCM 2022)
-3. **Applies** hazard degradation to road capacity based on FHSZ zone (NIST Camp Fire / HCM composite)
+3. **Applies** hazard degradation to road capacity based on FHSZ zone (composite engineering judgment anchored against HCM 2022 Ch. 11 weather CAFs + NIST TN 2135 Camp Fire empirical observations; independent traffic-engineering review pending)
 4. **Runs** the ΔT test — marginal evacuation clearance time added by the proposed project (v4.0 standard)
 5. **Issues** a three-tier determination: `MINISTERIAL`, `CONDITIONAL MINISTERIAL`, or `DISCRETIONARY`
 6. **Generates** a full audit trail for city attorney and planning commission review
@@ -40,8 +42,11 @@ The home page covers the methodology, legal framework, adoption pathway, and doc
 | SB 330 (Housing Crisis Act) | Requires development standards to be objective and non-discretionary — the reason a fixed numerical threshold must be used rather than case-by-case judgment |
 | AB 1600 | Impact fee nexus study framework (Phase 2) |
 | SB 79 | Transit proximity flag (informational, no tier impact) |
-| NFPA 101 / IBC | Building egress penalty for structures ≥ 4 stories |
-| NIST TN 2135 | Camp Fire timeline → safe egress window calibration |
+| HCM 2022 (7th Ed., TRB) | Road base capacity (Ch. 12 freeway + multilane; Ch. 15 two-lane); composite hazard-degradation factor anchored against Ch. 11 weather CAFs (Ex. 11-20) — pending independent traffic-engineering review |
+| NFPA 1660 (2024) / NFPA 1616 (2020) | Community mass-evacuation design basis — operative source for the 0.90 mobilization rate (adjusted from full evacuation for ~10% zero-vehicle HHs per Census ACS B25044; CA empirical validation per Roberson et al. 2012) |
+| NFPA 101 (2024 CA ed.) / IBC 2024 Ch. 10 | Building egress penalty for structures ≥ 4 stories. Note: NFPA 101 governs pedestrian egress inside buildings — it is *not* the source for the community-scale vehicle mobilization rate (see NFPA 1660 / 1616 above) |
+| NIST TN 2135 | Camp Fire timeline → safe egress window calibration (45 / 90 / 120 min by FHSZ zone) |
+| 2025 California WUI Code (CWUIC) | Operative CA WUI code adopted by the State Fire Marshal. CCR 1273.00 concurrent emergency-apparatus access requires *separate* analysis (JOSH measures civilian outbound only). Consistent with CWUIC Appendix C §C101.6, ΔT is a screening tool that triggers discretionary review — not a standalone permit-denial instrument |
 
 ---
 
@@ -49,17 +54,35 @@ The home page covers the methodology, legal framework, adoption pathway, and doc
 
 ```
 Standard 1 — Size gate:       units ≥ 15
-Standard 2 — Route ID:        buffer 0.5 mi → identify serving evacuation paths
+Standard 2 — Route ID:        travel-time-weighted Dijkstra → every regional-network
+                               exit node; return all paths within 3.5× the fastest exit
+                               (User Equilibrium semantics, no per-bottleneck dedup).
+                               The 0.5-mi network walk is an audit-trail display + a
+                               legacy fallback only.
 Standard 3 — Hazard zone:     GIS point-in-polygon → CAL FIRE FHSZ
 Standard 4 — ΔT test:         ΔT = (project_vehicles / bottleneck_capacity) × 60 + egress_penalty
-                               project_vehicles = units × 1.9 vpu × 0.90 (FHWA, constant)
+                               project_vehicles = units × 1.9 vpu × 0.90
+                                  (0.90 = NFPA 1660:2024 / NFPA 1616:2020 community
+                                   mass-evacuation design basis, constant; adjusted
+                                   from full evacuation for ~10% zero-vehicle HHs)
+                               bottleneck_capacity = HCM 2022 raw × composite hazard-
+                                   degradation factor (independent traffic-engineering
+                                   review pending; see Citation note above)
+                               egress_penalty = NFPA 101 (2024 CA ed.) + IBC 2024 Ch. 10
+                                   for stories ≥ 4
                                threshold: VHFHSZ=2.25 min, High=4.50 min, Mod/Non=6.00 min
+                                   (safe_egress_window × 5% max_project_share)
 Standard 5 — SB 79 transit:   informational flag only
 
 DISCRETIONARY           — Std 1 met AND any serving path ΔT > threshold
 CONDITIONAL MINISTERIAL — Std 1 met AND all paths ΔT within threshold
 MINISTERIAL             — below size threshold (Std 1 not met)
 ```
+
+> **Scope & limitations.** ΔT measures civilian outbound capacity only. Concurrent
+> emergency-apparatus access per CCR 1273.00 (CWUIC 2025) requires separate analysis.
+> Consistent with CWUIC Appendix C §C101.6, ΔT is a screening tool that triggers
+> discretionary review — it is not a standalone permit-denial instrument.
 
 ---
 
@@ -122,7 +145,7 @@ models/                  # Project, EvacuationPath, RoadSegment dataclasses
 config/
   parameters.yaml        # CANONICAL — all thresholds (HCM tables, ΔT limits, egress penalties)
   cities/berkeley.yaml   # Schema example — city config format
-build.py                 # CLI: analyze, demo, evaluate, report
+build.py                 # CLI: analyze, evaluate, map, report  (`demo` was renamed to `map` in 4693c9b)
 static/                  # JS what-if engine (whatif_engine.js, app.js)
 output/berkeley/         # Live Berkeley demo output (tracked)
 tests/                   # Anti-divergence + unit tests
